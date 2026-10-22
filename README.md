@@ -13,6 +13,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Embed comment images | Shows images, GIFs, Imgur albums and emotes in comments and post text as images, plays videos uploaded in comments and video links in place with BaconReader's ExoPlayer, shows bare YouTube links with the channel, title and a thumbnail, and shows bare X and Bluesky links as the post. Depends on Fix Imgur API, for albums. |
 | Improve post media loading | Shows a dimmed still preview with a progress bar and the downloaded size while post media loads, and a red bar when loading fails. GIFs load through BaconReader's own cache loader, which reports the progress. Galleries use small previews for their thumbnail strip, and download the image shown with a progress bar. A deleted or missing RedGIFs video shows a message instead of RedGIFs' broken web page. Settings decide which link post pages run JavaScript. |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
+| Prompt to open Reddit links | Since Android 12, an app can't turn on its own links, and reddit.com only verifies Reddit's app. While no Reddit link opens in BaconReader, asks once, on the main screen, whether to open Android's "Open by default" screen to select them. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
@@ -74,6 +75,8 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **Extension.** ReVanced's Java extension and shared Redgifs code are rewritten in Kotlin. The shared extension init hook isn't needed.
 - **Settings screen.** ReVanced adds a "ReVanced" entry to BaconReader's settings and shows its settings in `GoogleApiActivity`, in BaconReader's theme. This port adds a "Patches" entry that opens Reseam's settings screen, which follows the system's light or dark theme. Settings whose summary changed with the switch have one summary here, and settings ReVanced greys out under another stay editable.
 - **Error dialog.** ReVanced's dialog has a close icon, and Copy and Save keep it open. This port uses Reseam's branded dialog, where Copy, Save to file and Close each close it. The "Patches" line shows the bundle's version and the Reseam version.
+- **Open Reddit links row.** ReVanced adds a row on its Links page that shows how many Reddit links open in BaconReader and opens Android's "Open by default" screen. Reseam's settings screen has no rows that run code, so the port leaves it out; the prompt is the only way in. Whether the prompt was answered is kept in the app's `baconreader_patches` preferences, not as a setting.
+- **Links prompt.** ReVanced shows the prompt as a plain Android dialog. The port uses the bundle's branded dialog, with the same buttons; answering or backing out stops it, as in ReVanced.
 - **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test

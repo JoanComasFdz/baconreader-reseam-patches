@@ -58,4 +58,9 @@
     <string name="link_preview_javascript_allowed_summary">Sites whose page in a link post runs JavaScript, while JavaScript in link posts is off. One per line, subdomains included</string>
     <string name="post_media_redgifs_deleted">This RedGIFs video was deleted</string>
     <string name="post_media_redgifs_not_found">This RedGIFs video was not found</string>
+    <!-- Prompt to open Reddit links -->
+    <string name="open_links_prompt_title">Open Reddit links with BaconReader?</string>
+    <string name="open_links_prompt_message">Android does not allow BaconReader to turn this on by itself. Tap \"Set up\", then select the Reddit links.\n\nThis can be done later in Android\'s settings: App info → Open by default.</string>
+    <string name="open_links_prompt_set_up">Set up</string>
+    <string name="open_links_prompt_not_now">Not now</string>
 </resources>
