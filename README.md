@@ -31,6 +31,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Markdown editor | Makes the text box of comments, replies, edits, messages and text posts as big as the screen allows, with a bar of Reddit's formats above it in place of BaconReader's "A" button, and shows the markdown formatted while typing. A counter shows the characters against Reddit's limit, or the subreddit's own post requirements for text posts. |
 | Hide formatted spoilers | Hides spoilers (`>!...!<`) that contain formatting, a link or code behind the spoiler box. BaconReader only hides spoilers of plain text, and showed the others in plain sight. |
 | Save videos with sound | After "Save to device" saves a Reddit video, downloads its audio track, from the DASH manifest or Reddit's usual file names, and combines both into the saved file without re-encoding. |
+| Reddit chat | Adds Chat to the menu, after the Inbox, which opens Reddit's chat from its mobile website, www.reddit.com/chat, in a full screen. Links to the chat that BaconReader opens go there too. See [Reddit chat](#reddit-chat). |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
@@ -97,6 +98,15 @@ On the Comments page, in the Load more comments section:
 | `userAgent` | `org.quantumbadger.redreader/1.25.1` | Keeps BaconReader's |
 
 To use your own Reddit app, create an "Installed app" at https://www.reddit.com/prefs/apps, then set `clientId` and the `redirectUri` you gave it.
+
+## Reddit chat
+
+Reddit has no public API for its chat, so the Reddit chat patch shows the chat of Reddit's mobile website, the one at https://www.reddit.com/chat in a phone's browser, inside BaconReader. It's not a ReVanced patch.
+
+- **Login.** BaconReader's own login can't be used for the website. Log in to Reddit's website once on the Chat screen, with the user name and password. Google sign-in may refuse to work inside an app's web view; when it does, set a password for the Reddit account on Reddit's website and log in with it. The login stays in BaconReader's web view cookies, apart from BaconReader's accounts.
+- **Links.** Chat and login pages stay on the Chat screen. Other Reddit links open in BaconReader, and other sites in the browser. Back goes back in the chat's pages before it closes the screen.
+- **Images.** The chat's attach button opens Android's file picker.
+- **Theme.** The screen follows the system's dark or light theme. On Android 10 and later, the web view darkens the pages in the dark theme.
 
 ## Differences from ReVanced
 

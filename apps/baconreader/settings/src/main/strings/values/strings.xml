@@ -122,4 +122,8 @@
     <string name="markdown_counter"><xliff:g id="count">%1$s</xliff:g> / <xliff:g id="limit">%2$s</xliff:g></string>
     <string name="markdown_counter_min"><xliff:g id="count">%1$s</xliff:g> / <xliff:g id="limit">%2$s</xliff:g> (min. <xliff:g id="minimum">%3$s</xliff:g>)</string>
     <string name="markdown_counter_not_allowed">No text in r/<xliff:g id="subreddit">%1$s</xliff:g></string>
+    <!-- Reddit chat -->
+    <string name="chat_entry">Chat</string>
+    <string name="chat_load_error">Could not load Reddit chat. Check the connection and try again.</string>
+    <string name="chat_retry">Retry</string>
 </resources>
