@@ -14,6 +14,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Improve post media loading | Shows a dimmed still preview with a progress bar and the downloaded size while post media loads, and a red bar when loading fails. GIFs load through BaconReader's own cache loader, which reports the progress. Galleries use small previews for their thumbnail strip, and download the image shown with a progress bar. A deleted or missing RedGIFs video shows a message instead of RedGIFs' broken web page. Settings decide which link post pages run JavaScript. |
 | Fix empty saved files | Saving media to the device no longer leaves an empty file named after the post next to the saved one. |
 | Flair filter | Adds a "Flair" button to the sort bar of subreddits. It lists the subreddit's flairs, from Reddit or from the loaded posts, and shows only the posts with the chosen ones, through a Reddit search in the subreddit. |
+| Show user avatars | Shows the author's avatar before the name in comments, on the reply screen and in the inbox, as on Reddit's website. Reads the authors' ids from the comments' JSON and asks Reddit for up to 100 avatars at once. Off by default. |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 | Prompt to open Reddit links | Since Android 12, an app can't turn on its own links, and reddit.com only verifies Reddit's app. While no Reddit link opens in BaconReader, asks once, on the main screen, whether to open Android's "Open by default" screen to select them. |
 | Fix lost post votes | Keeps a vote made on a post while its comments load. The copy of the post that comes with the comments was requested before the vote, and replaced the voted post in the post list. |
@@ -58,6 +59,15 @@ On the Links page, under Link posts:
 | Allowed sites | `post_media.link_preview_javascript_allowed` | BaconReader's own list without the sites that shut down, plus Bluesky and x.com |
 
 Sites go one per line, and include their subdomains.
+### Show user avatars settings
+
+On the Comments page, in the User avatars section:
+
+| Setting | Key | Default |
+|---|---|---|
+| Show user avatars | `user_avatars.user_avatars` | Off |
+| Avatar size: Normal, Medium, Large or Extra large | `user_avatars.user_avatar_size` | Normal (`0`) |
+| Avatar background | `user_avatars.user_avatar_background` | On |
 
 ## Spoof client options
 
@@ -89,6 +99,7 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **Links prompt.** ReVanced shows the prompt as a plain Android dialog. The port uses the bundle's branded dialog, with the same buttons; answering or backing out stops it, as in ReVanced.
 - **Request errors.** ReVanced rebuilds the request task without its `IOException` try block. Reseam has no edit for try blocks, so the port turns the handler into `move-exception` and `throw`: the same error reaches the app, through the handler.
 - **Removed list entries.** For the Random feeds and the "Hide Reddit Awards" settings, ReVanced replaces the `list.add` call with a `nop`. Reseam has no edit that removes a call, so the port skips it with `skipWhen` on a constant `true`, which leaves the call behind a branch that is never taken.
+- **User avatars.** ReVanced greys out Avatar size and Avatar background while Show user avatars is off. Here they stay editable and only apply while it's on. Avatar images are downloaded with the user agent `android:com.onelouder.baconreader`, without ReVanced's "(ReVanced)".
 - **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test

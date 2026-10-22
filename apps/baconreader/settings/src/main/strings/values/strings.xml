@@ -72,4 +72,17 @@
     <string name="flair_filter_apply">Apply</string>
     <string name="flair_filter_clear">Clear</string>
     <string name="flair_filter_empty">No flairs found yet. Scroll the subreddit to load posts with flairs, then try again.</string>
+    <!-- Show user avatars -->
+    <string name="section_user_avatars">User avatars</string>
+    <string name="user_avatars">Show user avatars</string>
+    <string name="user_avatars_summary">The author\'s avatar is shown before the name in comments, the reply screen and the inbox, as on Reddit\'s website</string>
+    <string name="user_avatar_size">Avatar size</string>
+    <string name="user_avatar_size_summary">Normal is as tall as the text, Large as on Reddit\'s website. Needs Show user avatars</string>
+    <string name="user_avatar_size_normal">Normal</string>
+    <string name="user_avatar_size_medium">Medium</string>
+    <string name="user_avatar_size_large">Large</string>
+    <string name="user_avatar_size_extra_large">Extra large</string>
+    <string name="user_avatar_background">Avatar background</string>
+    <string name="user_avatar_background_summary">A faint disc behind avatars, as on Reddit\'s website. Needs Show user avatars</string>
+    <string name="user_avatars_error">Could not load user avatars: <xliff:g id="error">%1$s</xliff:g></string>
 </resources>
