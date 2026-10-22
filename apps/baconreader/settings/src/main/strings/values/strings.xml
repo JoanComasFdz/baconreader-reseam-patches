@@ -66,4 +66,10 @@
     <!-- Fix meme templates -->
     <string name="meme_template_loading">Loading template…</string>
     <string name="meme_template_error">Could not load the full template</string>
+    <!-- Flair filter -->
+    <string name="flair_filter_button">Flair</string>
+    <string name="flair_filter_title">Show posts with flair</string>
+    <string name="flair_filter_apply">Apply</string>
+    <string name="flair_filter_clear">Clear</string>
+    <string name="flair_filter_empty">No flairs found yet. Scroll the subreddit to load posts with flairs, then try again.</string>
 </resources>
