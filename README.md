@@ -2,7 +2,27 @@
 
 BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Built from the [Reseam patch bundle template](https://git.reseam.app/reseam/patches-template) for Reseam 0.28.0.
 
+| Patch | What it does |
+|---|---|
+| Spoof client | Logs in to Reddit with another app's client ID, since Reddit no longer accepts BaconReader's own. Defaults to RedReader's client ID, redirect URI and user agent, like ReVanced. Also rewrites `ssl.reddit.com` URLs to `www.reddit.com`. |
+
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
+
+## Spoof client options
+
+| Key | Default | Empty value |
+|---|---|---|
+| `clientId` | RedReader's, `yH0aTnJEt6qUgGn835B4vg` | Not allowed |
+| `redirectUri` | `redreader://rr_oauth_redir` | Keeps `http://baconreader.com/auth` |
+| `userAgent` | `org.quantumbadger.redreader/1.25.1` | Keeps BaconReader's |
+
+To use your own Reddit app, create an "Installed app" at https://www.reddit.com/prefs/apps, then set `clientId` and the `redirectUri` you gave it.
+
+## Differences from ReVanced
+
+- **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
+- **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
+- **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test
 
@@ -15,6 +35,8 @@ reseam patch BaconReader.apk \
   --trust <your public key> \
   --output patched.apk
 ```
+
+Set an option with `--option com.joancomasfdz.patches.baconreader.account.spoofClient.clientId=<id>`.
 
 ## Release
 
