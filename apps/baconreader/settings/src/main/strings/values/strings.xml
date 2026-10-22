@@ -4,4 +4,11 @@
     <string name="page_images">Images and videos</string>
     <string name="page_links">Links</string>
     <string name="page_comments">Comments</string>
+    <string name="error_title">Something went wrong</string>
+    <string name="error_close">Close</string>
+    <string name="error_copy">Copy</string>
+    <string name="error_save">Save to file</string>
+    <string name="error_copied">Copied to the clipboard</string>
+    <string name="error_saved">Saved to <xliff:g id="location">%1$s</xliff:g></string>
+    <string name="error_save_failed">Could not save the file: <xliff:g id="error">%1$s</xliff:g></string>
 </resources>
