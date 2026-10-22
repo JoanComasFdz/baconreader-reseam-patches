@@ -91,4 +91,16 @@
     <string name="comment_search_filter">Show only matching comments</string>
     <string name="comment_search_loading">LOADING…</string>
     <string name="comment_search_error">Could not load all comments: <xliff:g id="error">%1$s</xliff:g></string>
+    <!-- Load more comments -->
+    <string name="section_load_more_comments">Load more comments</string>
+    <string name="comment_limit">Comments to load</string>
+    <string name="comment_limit_summary">Comments when a post opens, from 200 to 500. Fewer load faster on slow connections</string>
+    <string name="auto_load_more_comments">Auto-load \"load more comments\"</string>
+    <string name="auto_load_more_comments_summary">Loads the \"load more comments\" with up to this many replies right after the post\'s comments</string>
+    <string name="auto_load_more_comments_off">Off</string>
+    <string name="auto_load_more_comments_1">1 reply</string>
+    <string name="auto_load_more_comments_2">Up to 2 replies</string>
+    <string name="auto_load_more_comments_3">Up to 3 replies</string>
+    <string name="auto_load_more_comments_4">Up to 4 replies</string>
+    <string name="auto_load_more_comments_5">Up to 5 replies</string>
 </resources>

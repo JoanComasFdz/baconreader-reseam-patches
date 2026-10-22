@@ -16,6 +16,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Flair filter | Adds a "Flair" button to the sort bar of subreddits. It lists the subreddit's flairs, from Reddit or from the loaded posts, and shows only the posts with the chosen ones, through a Reddit search in the subreddit. |
 | Show user avatars | Shows the author's avatar before the name in comments, on the reply screen and in the inbox, as on Reddit's website. Reads the authors' ids from the comments' JSON and asks Reddit for up to 100 avatars at once. Off by default. |
 | Search comments | Adds a search button next to "COLLAPSE ALL" on posts. It finds the comments with a text or user name, also inside collapsed ones, highlights the matches and jumps between them, or shows only those comments. "Search all" first loads the comments behind "load more comments". |
+| Load more comments | Requests up to 500 comments when a post opens, instead of Reddit's default of about 200, and loads the "load more comments" with few replies right after the post's comments. |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 | Prompt to open Reddit links | Since Android 12, an app can't turn on its own links, and reddit.com only verifies Reddit's app. While no Reddit link opens in BaconReader, asks once, on the main screen, whether to open Android's "Open by default" screen to select them. |
 | Fix lost post votes | Keeps a vote made on a post while its comments load. The copy of the post that comes with the comments was requested before the vote, and replaced the voted post in the post list. |
@@ -70,6 +71,15 @@ On the Comments page, in the User avatars section:
 | Avatar size: Normal, Medium, Large or Extra large | `user_avatars.user_avatar_size` | Normal (`0`) |
 | Avatar background | `user_avatars.user_avatar_background` | On |
 
+### Load more comments settings
+
+On the Comments page, in the Load more comments section:
+
+| Setting | Key | Default |
+|---|---|---|
+| Comments to load: a number from 200 to 500 | `load_more_comments.comment_limit` | `500` |
+| Auto-load "load more comments": Off, or up to 1 to 5 replies | `load_more_comments.auto_load_more_comments` | Up to 2 replies (`2`) |
+
 ## Spoof client options
 
 | Key | Default | Empty value |
@@ -101,6 +111,7 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **Request errors.** ReVanced rebuilds the request task without its `IOException` try block. Reseam has no edit for try blocks, so the port turns the handler into `move-exception` and `throw`: the same error reaches the app, through the handler.
 - **Removed list entries.** For the Random feeds and the "Hide Reddit Awards" settings, ReVanced replaces the `list.add` call with a `nop`. Reseam has no edit that removes a call, so the port skips it with `skipWhen` on a constant `true`, which leaves the call behind a branch that is never taken.
 - **User avatars.** ReVanced greys out Avatar size and Avatar background while Show user avatars is off. Here they stay editable and only apply while it's on. Avatar images are downloaded with the user agent `android:com.onelouder.baconreader`, without ReVanced's "(ReVanced)".
+- **Comments to load.** ReVanced edits the number in a dialog with a number box and a slider, clamps it to 200–500 when saving, and shows it in the summary. Here it's a plain text setting: the patch clamps the value to 200–500 when a post loads, and uses 500 when it isn't a number. The summary names the range instead of the current number.
 - **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test
