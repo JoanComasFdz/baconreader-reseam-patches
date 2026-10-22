@@ -26,6 +26,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Show request errors | Shows the actual error of a failed Reddit request, such as "reddit: 404 Not Found" or a timeout, instead of BaconReader's message that it stopped working in July 2023. |
 | Remove Random feeds | Removes Random and My Random from the feed list. Reddit removed r/random and r/myrandom in December 2024, so they never load. |
 | Disable feedback popup | Stops the "Please take a few moments to provide feedback about BaconReader" popup, and the time tracking that triggers it. |
+| Fix unread messages | Turns the orange inbox envelope back to normal, and clears the new messages notification, when "Mark read" leaves no unread message. Removes "Mark unread", since Reddit answers its request with 404. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
@@ -112,6 +113,7 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **Removed list entries.** For the Random feeds and the "Hide Reddit Awards" settings, ReVanced replaces the `list.add` call with a `nop`. Reseam has no edit that removes a call, so the port skips it with `skipWhen` on a constant `true`, which leaves the call behind a branch that is never taken.
 - **User avatars.** ReVanced greys out Avatar size and Avatar background while Show user avatars is off. Here they stay editable and only apply while it's on. Avatar images are downloaded with the user agent `android:com.onelouder.baconreader`, without ReVanced's "(ReVanced)".
 - **Comments to load.** ReVanced edits the number in a dialog with a number box and a slider, clamps it to 200–500 when saving, and shows it in the summary. Here it's a plain text setting: the patch clamps the value to 200–500 when a post loads, and uses 500 when it isn't a number. The summary names the range instead of the current number.
+- **"Mark unread".** ReVanced removes it from the inbox item's menu just before the menu shows, by its type, through reflection. The port skips the call that adds it to the menu, the same way as the removed list entries above.
 - **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test
