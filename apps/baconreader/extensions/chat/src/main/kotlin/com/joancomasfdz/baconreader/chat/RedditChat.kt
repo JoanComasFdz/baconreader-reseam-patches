@@ -5,16 +5,20 @@
 
 package com.joancomasfdz.baconreader.chat
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.widget.AdapterView
 import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.common.ErrorDialog
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.onelouder.baconreader.DrawerHandler
 import com.onelouder.baconreader.adapters.DrawerAdapter
+import java.lang.ref.WeakReference
 import java.util.Locale
 
 // Reddit has no public chat API, and the app's OAuth login can't open Reddit's website. So the chat
@@ -34,16 +38,63 @@ private const val TAG_SETTINGS = 10
 // Not one of DrawerHandler's ACTION_ tags, so its click handler ignores the item.
 private const val TAG_CHAT = 0x43484154
 
+private val main = Handler(Looper.getMainLooper())
+
 private var app: Application? = null
 private var chatIconGrey = 0
 private var chatIconWhite = 0
 
-/** Called when the app starts, with the icons the patch added to the app's resources. */
+/** The main screen's drawer, to show a new unread count. Only used on the main thread. */
+private var drawer = WeakReference<DrawerHandler>(null)
+
+/**
+ * Called when the app starts, with the icons the patch added to the app's resources and the app's
+ * own notification icon and color.
+ */
 @Export
-fun init(application: Application?, iconGrey: Int, iconWhite: Int) {
+fun init(
+    application: Application?,
+    iconGrey: Int,
+    iconWhite: Int,
+    notificationIcon: Int,
+    notificationColor: Int,
+) {
     app = application
     chatIconGrey = iconGrey
     chatIconWhite = iconWhite
+    ChatCheck.notificationIcon = notificationIcon
+    ChatCheck.notificationColor = notificationColor
+}
+
+/** Called at the start of MainActivity.onResume: checks for chat messages in the background. */
+@Export
+fun onMainResume(activity: Activity?) {
+    checkInBackground()
+}
+
+/** Called when the inbox has loaded its messages, in MessageManager.receiveInbox. */
+@Export
+fun onInboxLoaded() {
+    checkInBackground()
+}
+
+private fun checkInBackground() {
+    val context = app ?: return
+    try {
+        Thread({ ChatCheck.check(context) { refreshDrawer() } }, "RedditChatCheck").start()
+    } catch (exception: Exception) {
+        ErrorDialog.report(TAG, "Could not check for chat messages", exception)
+    }
+}
+
+private fun refreshDrawer() {
+    main.post {
+        try {
+            drawer.get()?.updateDrawer()
+        } catch (exception: Exception) {
+            ErrorDialog.report(TAG, "Could not show the unread chat messages", exception)
+        }
+    }
 }
 
 /**
@@ -54,6 +105,7 @@ fun init(application: Application?, iconGrey: Int, iconWhite: Int) {
 fun addChatItem(handler: DrawerHandler?, items: MutableList<Any?>?) {
     if (items == null) return
     try {
+        if (handler != null) drawer = WeakReference(handler)
         val drawerItems = items.filterIsInstance<DrawerAdapter.DrawerItem>()
         val item = DrawerAdapter.DrawerItem(TYPE_ITEM, chatLabel(), chatIcon(drawerItems), TAG_CHAT)
         val lastInbox = items.indexOfLast { (it as? DrawerAdapter.DrawerItem)?.tag == TAG_INBOX }
@@ -121,7 +173,11 @@ internal fun isChatLink(uri: Uri): Boolean {
     return path == "/chat" || path.startsWith("/chat/")
 }
 
-private fun chatLabel(): String = BaconReaderStrings.chatEntry
+private fun chatLabel(): String {
+    val unread = app?.let { ChatCheck.unread(it) } ?: 0
+    return if (unread > 0) BaconReaderStrings.chatEntryUnread(unread.toString())
+    else BaconReaderStrings.chatEntry
+}
 
 /**
  * The icon in the color of the drawer's own icons: their dark themes use white icons, the light one

@@ -126,4 +126,13 @@
     <string name="chat_entry">Chat</string>
     <string name="chat_load_error">Could not load Reddit chat. Check the connection and try again.</string>
     <string name="chat_retry">Retry</string>
+    <string name="chat_entry_unread">Chat (<xliff:g id="count">%1$s</xliff:g>)</string>
+    <string name="page_chat">Chat</string>
+    <string name="section_reddit_chat">Reddit chat</string>
+    <string name="check_chat_messages">Check for new chat messages</string>
+    <string name="check_chat_messages_summary">Shows the unread chat messages next to Chat in the menu, and notifies of new ones. Checks when the main screen shows and when the inbox loads, at most once a minute, not while the app is closed. Needs a login on the Chat screen</string>
+    <string name="chat_notification_one">1 new chat message</string>
+    <string name="chat_notification_many"><xliff:g id="count">%1$s</xliff:g> new chat messages</string>
+    <string name="chat_notification_text">Tap to open Reddit chat</string>
+    <string name="chat_notification_channel">Reddit chat</string>
 </resources>

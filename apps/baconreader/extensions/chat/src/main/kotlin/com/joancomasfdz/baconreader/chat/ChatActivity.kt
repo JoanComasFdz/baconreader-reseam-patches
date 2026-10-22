@@ -96,6 +96,9 @@ class ChatActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        ChatCheck.chatShowing = false
+        // The messages read here change the count in the menu.
+        ChatCheck.checkSoon()
         webView?.onPause()
         // Keeps the login when Android closes the app in the background.
         CookieManager.getInstance().flush()
@@ -103,6 +106,7 @@ class ChatActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        ChatCheck.onChatShown(this)
         webView?.onResume()
     }
 

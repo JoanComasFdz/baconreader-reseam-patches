@@ -31,14 +31,14 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Markdown editor | Makes the text box of comments, replies, edits, messages and text posts as big as the screen allows, with a bar of Reddit's formats above it in place of BaconReader's "A" button, and shows the markdown formatted while typing. A counter shows the characters against Reddit's limit, or the subreddit's own post requirements for text posts. |
 | Hide formatted spoilers | Hides spoilers (`>!...!<`) that contain formatting, a link or code behind the spoiler box. BaconReader only hides spoilers of plain text, and showed the others in plain sight. |
 | Save videos with sound | After "Save to device" saves a Reddit video, downloads its audio track, from the DASH manifest or Reddit's usual file names, and combines both into the saved file without re-encoding. |
-| Reddit chat | Adds Chat to the menu, after the Inbox, which opens Reddit's chat from its mobile website, www.reddit.com/chat, in a full screen. Links to the chat that BaconReader opens go there too. See [Reddit chat](#reddit-chat). |
+| Reddit chat | Adds Chat to the menu, after the Inbox, which opens Reddit's chat from its mobile website, www.reddit.com/chat, in a full screen. Links to the chat that BaconReader opens go there too. Checks for unread chat messages, shows their count next to Chat and notifies of new ones. See [Reddit chat](#reddit-chat). |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
 ## Settings
 
-Patches with settings add them to one settings screen, made by Reseam's app runtime. Open it from BaconReader's settings → Patches. Its pages are Images and videos, Links and Comments; a page shows once a selected patch has settings on it. The screen also has an about card and exports and imports the settings.
+Patches with settings add them to one settings screen, made by Reseam's app runtime. Open it from BaconReader's settings → Patches. Its pages are Images and videos, Links, Comments and Chat; a page shows once a selected patch has settings on it. The screen also has an about card and exports and imports the settings.
 
 Errors of the patches show in a dialog over the current screen, with the details to copy or save to Downloads. That includes any error that escapes a patch's code, on any thread: the dialog shows it and the app stays open. A crash that doesn't come from the patches still closes BaconReader, as it would without them, and its details show in the dialog when the app opens again.
 
@@ -89,6 +89,14 @@ On the Comments page, in the Load more comments section:
 | Comments to load: a number from 200 to 500 | `load_more_comments.comment_limit` | `500` |
 | Auto-load "load more comments": Off, or up to 1 to 5 replies | `load_more_comments.auto_load_more_comments` | Up to 2 replies (`2`) |
 
+### Reddit chat settings
+
+On the Chat page, in the Reddit chat section:
+
+| Setting | Key | Default |
+|---|---|---|
+| Check for new chat messages | `reddit_chat.check_chat_messages` | On |
+
 ## Spoof client options
 
 | Key | Default | Empty value |
@@ -107,6 +115,9 @@ Reddit has no public API for its chat, so the Reddit chat patch shows the chat o
 - **Links.** Chat and login pages stay on the Chat screen. Other Reddit links open in BaconReader, and other sites in the browser. Back goes back in the chat's pages before it closes the screen.
 - **Images.** The chat's attach button opens Android's file picker.
 - **Theme.** The screen follows the system's dark or light theme. On Android 10 and later, the web view darkens the pages in the dark theme.
+- **Unread messages.** With Check for new chat messages on, BaconReader asks Reddit's chat for the unread messages each time the main screen shows, and when an inbox page loads, at most once a minute. Nothing checks while the app is closed. Chat in the menu shows their count, such as "Chat (3)", and a notification in BaconReader's Messages channel says "3 new chat messages" when there are more than at the last check; tapping it opens the chat. The notification goes away when the chat opens or no unread messages are left. Chat requests count as unread messages. Without a login on the Chat screen, nothing is checked.
+- **How the check works.** It uses Reddit's unofficial chat endpoints, the ones its website uses, which Reddit can change or close at any time: it opens www.reddit.com/chat with the Chat screen's cookies and the web view's user agent to get a chat token, registers it with Reddit's chat server, matrix.redditspace.com, as one device named BaconReader, and asks that server for the unread counts. The token is kept in the app's `baconreader_patches` preferences until it expires or the server refuses it. Network errors are only logged.
+- **Reddit's bot check.** Reddit sometimes answers a request with a page that checks for a browser instead. The Chat screen's web view passes it and keeps a cookie of it; the unread check doesn't, and skips that check until the next one. Opening the Chat screen now and then keeps the cookies fresh and the check working.
 
 ## Differences from ReVanced
 

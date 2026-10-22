@@ -5,13 +5,12 @@
 package com.joancomasfdz.patches.baconreader.links
 
 import app.reseam.patch.before
-import app.reseam.patch.klass
-import app.reseam.patch.method
 import app.reseam.patch.patch
 import com.joancomasfdz.baconreader.openlinks.bindings.OpenLinks
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.mainActivityResume
 
 // Since Android 12, an app can't turn on its own links: Android only opens a site's links in the
 // apps the site verifies, and reddit.com only verifies Reddit's official app. Users must select
@@ -24,7 +23,5 @@ val promptToOpenRedditLinks =
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 
-        execute { mainResume.before { OpenLinks.onMainResume(thisObject) } }
+        execute { mainActivityResume.before { OpenLinks.onMainResume(thisObject) } }
     }
-
-private val mainResume = klass("com.onelouder.baconreader.ui.main.MainActivity").method("onResume")

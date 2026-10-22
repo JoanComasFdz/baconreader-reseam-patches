@@ -10,10 +10,15 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import app.reseam.patch.settings.section
 import com.joancomasfdz.baconreader.chat.bindings.RedditChat
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
+import com.joancomasfdz.baconreader.settings.ChatSettings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
+import com.joancomasfdz.patches.baconreader.core.SettingsPages
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.mainActivityResume
 
 private const val CHAT_ACTIVITY = "com.joancomasfdz.baconreader.chat.ChatActivity"
 private const val DRAWER_HANDLER = "com.onelouder.baconreader.DrawerHandler"
@@ -24,10 +29,17 @@ private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 val redditChat =
     patch("Reddit chat") {
         description(
-            "Adds Chat to the menu, next to the Inbox, which opens Reddit's chat from its mobile website."
+            "Adds Chat to the menu, next to the Inbox, which opens Reddit's chat from its mobile website, and notifies of new chat messages."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
-        dependsOn(baconReaderSettings)
+        settings(
+            baconReaderSettings,
+            section(
+                SettingsPages.Chat,
+                BaconReaderStrings.sectionRedditChat,
+                ChatSettings.checkChatMessages,
+            ),
+        )
 
         execute {
             manifest.addActivity(CHAT_ACTIVITY) {
@@ -55,8 +67,19 @@ val redditChat =
                     "res/drawable/baconreader_patches_chat_white.xml",
                     chatIcon("#FFFFFFFF").toByteArray(),
                 )
+            // The icon and color of BaconReader's own notification of new messages.
+            val notificationIcon =
+                resources.id("drawable", "notify_new") ?: error("The notification icon is missing")
+            val notificationColor =
+                resources.id("color", "dkPrimary") ?: error("The notification color is missing")
             appEntry {
-                RedditChat.init(application, int(iconGrey.toInt()), int(iconWhite.toInt()))
+                RedditChat.init(
+                    application,
+                    int(iconGrey.toInt()),
+                    int(iconWhite.toInt()),
+                    int(notificationIcon.toInt()),
+                    int(notificationColor.toInt()),
+                )
             }
 
             drawerItems.before { RedditChat.addChatItem(thisObject, capture("items")) }
@@ -67,6 +90,8 @@ val redditChat =
                     returnVoid()
                 }
             }
+            mainActivityResume.before { RedditChat.onMainResume(thisObject) }
+            inboxLoaded.before { RedditChat.onInboxLoaded() }
             linkIntent.before {
                 val intent =
                     RedditChat.chatIntent(
@@ -125,3 +150,8 @@ private val linkIntent = klass(LINK_PROCESSOR).method("getIntent")
 private val linkContext = klass(LINK_PROCESSOR).field("context")
 private val linkUrl = klass(LINK_PROCESSOR).field("url")
 private val linkForceBrowser = klass(LINK_PROCESSOR).field("forceBrowser")
+
+// Called with the messages of an inbox page each time it loads or refreshes.
+private val inboxLoaded =
+    klass("com.onelouder.baconreader.data.MessageManager").method("receiveInbox")
+

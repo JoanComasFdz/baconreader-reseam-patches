@@ -12,4 +12,5 @@ object SettingsPages {
     val Images = SettingsPage("images", BaconReaderStrings.pageImages, order = 10)
     val Links = SettingsPage("links", BaconReaderStrings.pageLinks, order = 20)
     val Comments = SettingsPage("comments", BaconReaderStrings.pageComments, order = 30)
+    val Chat = SettingsPage("chat", BaconReaderStrings.pageChat, order = 40)
 }
