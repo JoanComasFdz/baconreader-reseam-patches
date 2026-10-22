@@ -11,6 +11,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Text post icon | Replaces the button that opens a text post's text in the post list, which looks like a video's play button, with a page icon and a chevron that flips when the text is open. In the list and card views. |
 | Fix Imgur API | Calls Imgur's own API instead of the RapidAPI proxy BaconReader used, which refuses every request, so Imgur albums and galleries load again. Also sends image uploads in comments and posts with a content type, which Imgur's API requires. |
 | Embed comment images | Shows images, GIFs, Imgur albums and emotes in comments and post text as images, plays videos uploaded in comments and video links in place with BaconReader's ExoPlayer, shows bare YouTube links with the channel, title and a thumbnail, and shows bare X and Bluesky links as the post. Depends on Fix Imgur API, for albums. |
+| Improve post media loading | Shows a dimmed still preview with a progress bar and the downloaded size while post media loads, and a red bar when loading fails. GIFs load through BaconReader's own cache loader, which reports the progress. Galleries use small previews for their thumbnail strip, and download the image shown with a progress bar. A deleted or missing RedGIFs video shows a message instead of RedGIFs' broken web page. Settings decide which link post pages run JavaScript. |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
@@ -36,6 +37,17 @@ Errors of the patches show in a dialog over the current screen, with the details
 | Links | Show Bluesky posts | `embed_comment_images.bluesky_posts` | On |
 
 Tap an image to switch between full width and 200×200, double tap it to open it in full screen, and long press it to save it to Downloads/BaconReader.
+## Improve post media loading settings
+
+On the Links page, under Link posts:
+
+| Setting | Key | Default |
+|---|---|---|
+| JavaScript in link posts | `post_media.link_preview_javascript` | On: every site runs JavaScript, except the blocked ones. Off: only the allowed ones |
+| Blocked sites | `post_media.link_preview_javascript_blocked` | Empty |
+| Allowed sites | `post_media.link_preview_javascript_allowed` | BaconReader's own list without the sites that shut down, plus Bluesky and x.com |
+
+Sites go one per line, and include their subdomains.
 
 ## Spoof client options
 
@@ -57,6 +69,8 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
 - **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
 - **List thumbnails.** ReVanced replaces the thumbnail's `into` call and the `isGallery` reads instruction by instruction. This port returns from `loadThumbnail` just before the app's `into` call, and overwrites the value read from `isGallery` right after the read. ReVanced reads the posts' fields by reflection; this port reads them through stubs, and passes the post itself where ReVanced passes the parameter BaconReader overwrites with the URL of Imgur posts.
+- **Post media.** ReVanced's extension reads BaconReader's private fields and calls its private methods by reflection. This port passes the fields from the patched code, which also calls `showPage`, `loadToCache` and `handleCurrentItemSaving` itself, and shows the gallery's image page with the view flipper directly. Without that reflection, a failure in them no longer falls back to Glide. ExoPlayer 2.12.1 and PhotoView aren't on Maven Central, so the two ExoPlayer methods and the one PhotoView method the extension calls are stubbed.
+- **JavaScript settings.** ReVanced greys out the blocked sites while JavaScript in link posts is off, and the allowed sites while it is on, and changes the switch's summary with it. Here both lists stay editable, and the summaries say when each applies. As in ReVanced, only the list that applies is used.
 - **Extension.** ReVanced's Java extension and shared Redgifs code are rewritten in Kotlin. The shared extension init hook isn't needed.
 - **Settings screen.** ReVanced adds a "ReVanced" entry to BaconReader's settings and shows its settings in `GoogleApiActivity`, in BaconReader's theme. This port adds a "Patches" entry that opens Reseam's settings screen, which follows the system's light or dark theme. Settings whose summary changed with the switch have one summary here, and settings ReVanced greys out under another stay editable.
 - **Error dialog.** ReVanced's dialog has a close icon, and Copy and Save keep it open. This port uses Reseam's branded dialog, where Copy, Save to file and Close each close it. The "Patches" line shows the bundle's version and the Reseam version.

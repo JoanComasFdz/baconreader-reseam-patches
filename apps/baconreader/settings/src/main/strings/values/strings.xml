@@ -48,4 +48,14 @@
     <string name="embed_image_tap_to_load">Tap to load image</string>
     <string name="embed_image_downloading">Downloading image…</string>
     <string name="embed_image_download_failed">Could not download image</string>
+    <!-- Improve post media loading -->
+    <string name="section_post_media">Link posts</string>
+    <string name="link_preview_javascript">JavaScript in link posts</string>
+    <string name="link_preview_javascript_summary">All sites run JavaScript in the page of a link post, except the blocked ones. Off: only the allowed sites run it</string>
+    <string name="link_preview_javascript_blocked">Blocked sites</string>
+    <string name="link_preview_javascript_blocked_summary">Sites whose page in a link post never runs JavaScript, while JavaScript in link posts is on. One per line, subdomains included</string>
+    <string name="link_preview_javascript_allowed">Allowed sites</string>
+    <string name="link_preview_javascript_allowed_summary">Sites whose page in a link post runs JavaScript, while JavaScript in link posts is off. One per line, subdomains included</string>
+    <string name="post_media_redgifs_deleted">This RedGIFs video was deleted</string>
+    <string name="post_media_redgifs_not_found">This RedGIFs video was not found</string>
 </resources>
