@@ -12,25 +12,25 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Fix Imgur API | Calls Imgur's own API instead of the RapidAPI proxy BaconReader used, which refuses every request, so Imgur albums and galleries load again. Also sends image uploads in comments and posts with a content type, which Imgur's API requires. |
 | Embed comment images | Shows images, GIFs, Imgur albums and emotes in comments and post text as images, plays videos uploaded in comments and video links in place with BaconReader's ExoPlayer, shows bare YouTube links with the channel, title and a thumbnail, and shows bare X and Bluesky links as the post. Depends on Fix Imgur API, for albums. |
 | Improve post media loading | Shows a dimmed still preview with a progress bar and the downloaded size while post media loads, and a red bar when loading fails. GIFs load through BaconReader's own cache loader, which reports the progress. Galleries use small previews for their thumbnail strip, and download the image shown with a progress bar. A deleted or missing RedGIFs video shows a message instead of RedGIFs' broken web page. Settings decide which link post pages run JavaScript. |
-| Fix empty saved files | Saving media to the device no longer leaves an empty file named after the post next to the saved one. |
-| Flair filter | Adds a "Flair" button to the sort bar of subreddits. It lists the subreddit's flairs, from Reddit or from the loaded posts, and shows only the posts with the chosen ones, through a Reddit search in the subreddit. |
-| Show user avatars | Shows the author's avatar before the name in comments, on the reply screen and in the inbox, as on Reddit's website. Reads the authors' ids from the comments' JSON and asks Reddit for up to 100 avatars at once. Off by default. |
-| Search comments | Adds a search button next to "COLLAPSE ALL" on posts. It finds the comments with a text or user name, also inside collapsed ones, highlights the matches and jumps between them, or shows only those comments. "Search all" first loads the comments behind "load more comments". |
-| Load more comments | Requests up to 500 comments when a post opens, instead of Reddit's default of about 200, and loads the "load more comments" with few replies right after the post's comments. |
-| Markdown editor | Makes the text box of comments, replies, edits, messages and text posts as big as the screen allows, with a bar of Reddit's formats above it in place of BaconReader's "A" button, and shows the markdown formatted while typing. A counter shows the characters against Reddit's limit, or the subreddit's own post requirements for text posts. |
-| Hide formatted spoilers | Hides spoilers (`>!...!<`) that contain formatting, a link or code behind the spoiler box. BaconReader only hides spoilers of plain text, and showed the others in plain sight. |
-| Save videos with sound | After "Save to device" saves a Reddit video, downloads its audio track, from the DASH manifest or Reddit's usual file names, and combines both into the saved file without re-encoding. |
-| Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 | Prompt to open Reddit links | Since Android 12, an app can't turn on its own links, and reddit.com only verifies Reddit's app. While no Reddit link opens in BaconReader, asks once, on the main screen, whether to open Android's "Open by default" screen to select them. |
 | Fix lost post votes | Keeps a vote made on a post while its comments load. The copy of the post that comes with the comments was requested before the vote, and replaced the voted post in the post list. |
 | Fix meme templates | Shows Imgflip's 100 most used meme templates in the drawing screen's template grid, since BaconReader's own server answers 404 for its templates. A tapped template is downloaded at full size, up to 1440 px wide. |
+| Fix empty saved files | Saving media to the device no longer leaves an empty file named after the post next to the saved one. |
 | Remove awards | Removes the award icons of posts and comments, "Give Award" and "View Award Details" from the action bars and the post menu, and the two "Hide Reddit Awards" settings. Reddit's API no longer reports awards, and giving them used Reddit's discontinued coins. |
 | Disable unavailable sidebar | Greys out "View Sidebar" in the post list's menu on feeds without a sidebar: Front Page, All, Popular, Friends and multireddits, and Random until its posts load. |
 | Show request errors | Shows the actual error of a failed Reddit request, such as "reddit: 404 Not Found" or a timeout, instead of BaconReader's message that it stopped working in July 2023. |
 | Remove Random feeds | Removes Random and My Random from the feed list. Reddit removed r/random and r/myrandom in December 2024, so they never load. |
 | Disable feedback popup | Stops the "Please take a few moments to provide feedback about BaconReader" popup, and the time tracking that triggers it. |
+| Flair filter | Adds a "Flair" button to the sort bar of subreddits. It lists the subreddit's flairs, from Reddit or from the loaded posts, and shows only the posts with the chosen ones, through a Reddit search in the subreddit. |
+| Show user avatars | Shows the author's avatar before the name in comments, on the reply screen and in the inbox, as on Reddit's website. Reads the authors' ids from the comments' JSON and asks Reddit for up to 100 avatars at once. Off by default. |
+| Search comments | Adds a search button next to "COLLAPSE ALL" on posts. It finds the comments with a text or user name, also inside collapsed ones, highlights the matches and jumps between them, or shows only those comments. "Search all" first loads the comments behind "load more comments". |
+| Load more comments | Requests up to 500 comments when a post opens, instead of Reddit's default of about 200, and loads the "load more comments" with few replies right after the post's comments. |
 | Fix unread messages | Turns the orange inbox envelope back to normal, and clears the new messages notification, when "Mark read" leaves no unread message. Removes "Mark unread", since Reddit answers its request with 404. |
 | Inbox comment reply screen | "Reply" in the inbox opens the comment reply screen, with the comment or message being replied to, instead of the plain "Send message" form. Both post the same reply. Private messages show on it as a comment of the other person, without "in r/null". |
+| Markdown editor | Makes the text box of comments, replies, edits, messages and text posts as big as the screen allows, with a bar of Reddit's formats above it in place of BaconReader's "A" button, and shows the markdown formatted while typing. A counter shows the characters against Reddit's limit, or the subreddit's own post requirements for text posts. |
+| Hide formatted spoilers | Hides spoilers (`>!...!<`) that contain formatting, a link or code behind the spoiler box. BaconReader only hides spoilers of plain text, and showed the others in plain sight. |
+| Save videos with sound | After "Save to device" saves a Reddit video, downloads its audio track, from the DASH manifest or Reddit's usual file names, and combines both into the saved file without re-encoding. |
+| Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
@@ -40,7 +40,7 @@ Patches with settings add them to one settings screen, made by Reseam's app runt
 
 Errors of the patches show in a dialog over the current screen, with the details to copy or save to Downloads.
 
-## Embed comment images settings
+### Embed comment images settings
 
 | Page | Setting | Key | Default |
 |---|---|---|---|
@@ -55,7 +55,8 @@ Errors of the patches show in a dialog over the current screen, with the details
 | Links | Show Bluesky posts | `embed_comment_images.bluesky_posts` | On |
 
 Tap an image to switch between full width and 200×200, double tap it to open it in full screen, and long press it to save it to Downloads/BaconReader.
-## Improve post media loading settings
+
+### Improve post media loading settings
 
 On the Links page, under Link posts:
 
@@ -66,6 +67,7 @@ On the Links page, under Link posts:
 | Allowed sites | `post_media.link_preview_javascript_allowed` | BaconReader's own list without the sites that shut down, plus Bluesky and x.com |
 
 Sites go one per line, and include their subdomains.
+
 ### Show user avatars settings
 
 On the Comments page, in the User avatars section:
@@ -97,29 +99,29 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 
 ## Differences from ReVanced
 
-- **Redgifs hook.** ReVanced deletes the five instructions that add BaconReader's interceptor and replaces the first `build()` call. This port redirects the `addInterceptor` call instead, so the new interceptor also applies on the method's second `build()` path, the one taken when setting up SSL fails.
-- **Redgifs `/info`.** ReVanced's shared Redgifs code fakes the removed `/info` endpoint for Sync. BaconReader never calls it, so the port leaves it out.
-- **Imgur base URL.** ReVanced replaces the first instructions of `ImgurV3Constants.getBaseURL` with a constant return. This port replaces the method's body with the same constant return.
-- **Embed comment images settings.** ReVanced's Gestures row only shows text. Here the gestures are described in Show images' summary.
-- **Embed comment images hooks.** ReVanced saves the comment from the start of `CommentHolder.updateView` and reads its markdown by reflection when the text is set. This port passes the comment's `body` to the extension at the `setText` call itself. ReVanced's reflection on `ExpandableTextView`, `ImagesRetriever`, `ImgurImage` and ExoPlayer is replaced by direct calls, against stubs; only the protected `ImagesRetriever.doInBackground` is still called by reflection. ExoPlayer 2.12.1, the version BaconReader bundles, isn't on Maven Central or Google's Maven, so its classes are stubbed too.
-- **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
-- **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
-- **List thumbnails.** ReVanced replaces the thumbnail's `into` call and the `isGallery` reads instruction by instruction. This port returns from `loadThumbnail` just before the app's `into` call, and overwrites the value read from `isGallery` right after the read. ReVanced reads the posts' fields by reflection; this port reads them through stubs, and passes the post itself where ReVanced passes the parameter BaconReader overwrites with the URL of Imgur posts.
-- **Post media.** ReVanced's extension reads BaconReader's private fields and calls its private methods by reflection. This port passes the fields from the patched code, which also calls `showPage`, `loadToCache` and `handleCurrentItemSaving` itself, and shows the gallery's image page with the view flipper directly. Without that reflection, a failure in them no longer falls back to Glide. ExoPlayer 2.12.1 and PhotoView aren't on Maven Central, so the two ExoPlayer methods and the one PhotoView method the extension calls are stubbed.
-- **JavaScript settings.** ReVanced greys out the blocked sites while JavaScript in link posts is off, and the allowed sites while it is on, and changes the switch's summary with it. Here both lists stay editable, and the summaries say when each applies. As in ReVanced, only the list that applies is used.
-- **Saved files.** ReVanced reads and writes the service's `completeFile` and the `DocumentFile` methods by reflection. This port passes `completeFile` from the patched code, which writes back the file the extension returns. AndroidX DocumentFile 1.0.0 isn't on Maven Central, so the four methods the extension calls are stubbed.
-- **Videos with sound.** ReVanced reads the service's post and the video's fields by reflection; this port passes the post from the patched code and reads the rest through stubs. The audio download's user agent names the BaconReader patches instead of ReVanced.
+- **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 - **Extension.** ReVanced's Java extension and shared Redgifs code are rewritten in Kotlin. The shared extension init hook isn't needed.
 - **Settings screen.** ReVanced adds a "ReVanced" entry to BaconReader's settings and shows its settings in `GoogleApiActivity`, in BaconReader's theme. This port adds a "Patches" entry that opens Reseam's settings screen, which follows the system's light or dark theme. Settings whose summary changed with the switch have one summary here, and settings ReVanced greys out under another stay editable.
 - **Error dialog.** ReVanced's dialog has a close icon, and Copy and Save keep it open. This port uses Reseam's branded dialog, where Copy, Save to file and Close each close it. The "Patches" line shows the bundle's version and the Reseam version.
-- **Open Reddit links row.** ReVanced adds a row on its Links page that shows how many Reddit links open in BaconReader and opens Android's "Open by default" screen. Reseam's settings screen has no rows that run code, so the port leaves it out; the prompt is the only way in. Whether the prompt was answered is kept in the app's `baconreader_patches` preferences, not as a setting.
+- **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
+- **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
+- **Redgifs hook.** ReVanced deletes the five instructions that add BaconReader's interceptor and replaces the first `build()` call. This port redirects the `addInterceptor` call instead, so the new interceptor also applies on the method's second `build()` path, the one taken when setting up SSL fails.
+- **Redgifs `/info`.** ReVanced's shared Redgifs code fakes the removed `/info` endpoint for Sync. BaconReader never calls it, so the port leaves it out.
+- **List thumbnails.** ReVanced replaces the thumbnail's `into` call and the `isGallery` reads instruction by instruction. This port returns from `loadThumbnail` just before the app's `into` call, and overwrites the value read from `isGallery` right after the read. ReVanced reads the posts' fields by reflection; this port reads them through stubs, and passes the post itself where ReVanced passes the parameter BaconReader overwrites with the URL of Imgur posts.
+- **Imgur base URL.** ReVanced replaces the first instructions of `ImgurV3Constants.getBaseURL` with a constant return. This port replaces the method's body with the same constant return.
+- **Embed comment images settings.** ReVanced's Gestures row only shows text. Here the gestures are described in Show images' summary.
+- **Embed comment images hooks.** ReVanced saves the comment from the start of `CommentHolder.updateView` and reads its markdown by reflection when the text is set. This port passes the comment's `body` to the extension at the `setText` call itself. ReVanced's reflection on `ExpandableTextView`, `ImagesRetriever`, `ImgurImage` and ExoPlayer is replaced by direct calls, against stubs; only the protected `ImagesRetriever.doInBackground` is still called by reflection. ExoPlayer 2.12.1, the version BaconReader bundles, isn't on Maven Central or Google's Maven, so its classes are stubbed too.
+- **Post media.** ReVanced's extension reads BaconReader's private fields and calls its private methods by reflection. This port passes the fields from the patched code, which also calls `showPage`, `loadToCache` and `handleCurrentItemSaving` itself, and shows the gallery's image page with the view flipper directly. Without that reflection, a failure in them no longer falls back to Glide. ExoPlayer 2.12.1 and PhotoView aren't on Maven Central, so the two ExoPlayer methods and the one PhotoView method the extension calls are stubbed.
+- **JavaScript settings.** ReVanced greys out the blocked sites while JavaScript in link posts is off, and the allowed sites while it is on, and changes the switch's summary with it. Here both lists stay editable, and the summaries say when each applies. As in ReVanced, only the list that applies is used.
+- **Open Reddit links row.** ReVanced adds a row on its Links page that shows how many Reddit links open in BaconReader and opens Android's "Open by default" screen. Reseam's settings screen has no rows that run code, so the port leaves it out. The prompt says to use Android's App info → Open by default instead. Whether the prompt was answered is kept in the app's `baconreader_patches` preferences, not as a setting.
 - **Links prompt.** ReVanced shows the prompt as a plain Android dialog. The port uses the bundle's branded dialog, with the same buttons; answering or backing out stops it, as in ReVanced.
-- **Request errors.** ReVanced rebuilds the request task without its `IOException` try block. Reseam has no edit for try blocks, so the port turns the handler into `move-exception` and `throw`: the same error reaches the app, through the handler.
+- **Saved files.** ReVanced reads and writes the service's `completeFile` and the `DocumentFile` methods by reflection. This port passes `completeFile` from the patched code, which writes back the file the extension returns. AndroidX DocumentFile 1.0.0 isn't on Maven Central, so the four methods the extension calls are stubbed.
 - **Removed list entries.** For the Random feeds and the "Hide Reddit Awards" settings, ReVanced replaces the `list.add` call with a `nop`. Reseam has no edit that removes a call, so the port skips it with `skipWhen` on a constant `true`, which leaves the call behind a branch that is never taken.
+- **Request errors.** ReVanced rebuilds the request task without its `IOException` try block. Reseam has no edit for try blocks, so the port turns the handler into `move-exception` and `throw`: the same error reaches the app, through the handler.
 - **User avatars.** ReVanced greys out Avatar size and Avatar background while Show user avatars is off. Here they stay editable and only apply while it's on. Avatar images are downloaded with the user agent `android:com.onelouder.baconreader`, without ReVanced's "(ReVanced)".
 - **Comments to load.** ReVanced edits the number in a dialog with a number box and a slider, clamps it to 200–500 when saving, and shows it in the summary. Here it's a plain text setting: the patch clamps the value to 200–500 when a post loads, and uses 500 when it isn't a number. The summary names the range instead of the current number.
 - **"Mark unread".** ReVanced removes it from the inbox item's menu just before the menu shows, by its type, through reflection. The port skips the call that adds it to the menu, the same way as the removed list entries above.
-- **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
+- **Videos with sound.** ReVanced reads the service's post and the video's fields by reflection; this port passes the post from the patched code and reads the rest through stubs. The audio download's user agent names the BaconReader patches instead of ReVanced.
 
 ## Build and test
 
