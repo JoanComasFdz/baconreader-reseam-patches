@@ -16,4 +16,36 @@
     <string name="tables_fit_to_screen">Fit to screen</string>
     <!-- Text post icon -->
     <string name="text_post_icon_content_description">Show post text</string>
+    <!-- Embed comment images -->
+    <string name="section_embed_comment_images">In comments and posts</string>
+    <string name="show_images">Show images</string>
+    <string name="show_images_summary">GIFs, image links, Imgur albums and emotes are shown as images. Tap an image to switch between full width and 200×200, double tap it to open it in full screen, where you can pinch to zoom.</string>
+    <string name="images_full_width">Full width by default</string>
+    <string name="images_full_width_summary">Images are shown at full width instead of up to 200×200.</string>
+    <string name="images_long_press_download">Long press to download</string>
+    <string name="images_long_press_download_summary">Long press an image to save it to Downloads/BaconReader.</string>
+    <string name="images_wifi_only">Load images only on Wi-Fi</string>
+    <string name="images_wifi_only_summary">On mobile data, images and video previews load when tapped.</string>
+    <string name="show_videos">Play videos in comments</string>
+    <string name="show_videos_summary">Videos uploaded in comments and video links are played in the comment.</string>
+    <string name="youtube_titles">Show YouTube video titles</string>
+    <string name="youtube_titles_summary">Bare YouTube links show the channel and video title.</string>
+    <string name="youtube_thumbnails">Show YouTube thumbnails</string>
+    <string name="youtube_thumbnails_summary">A preview is shown under each YouTube link.</string>
+    <string name="x_posts">Show X posts</string>
+    <string name="x_posts_summary">Bare X (Twitter) links show the post.</string>
+    <string name="bluesky_posts">Show Bluesky posts</string>
+    <string name="bluesky_posts_summary">Bare Bluesky links show the post.</string>
+    <!-- Added after a YouTube video title, when the link starts at a given time. For example: "(from 1:23)". -->
+    <string name="youtube_title_from_time">(from <xliff:g id="time">%1$s</xliff:g>)</string>
+    <!-- Added after the title of a YouTube Short. -->
+    <string name="youtube_title_short">[Short]</string>
+    <!-- Added after the title of a YouTube playlist. -->
+    <string name="youtube_title_playlist">[Playlist]</string>
+    <!-- Added after the @handle of a YouTube channel. -->
+    <string name="youtube_title_channel">[Channel]</string>
+    <string name="embed_image_unavailable">Image unavailable</string>
+    <string name="embed_image_tap_to_load">Tap to load image</string>
+    <string name="embed_image_downloading">Downloading image…</string>
+    <string name="embed_image_download_failed">Could not download image</string>
 </resources>
