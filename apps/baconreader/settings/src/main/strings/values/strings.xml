@@ -11,4 +11,7 @@
     <string name="error_copied">Copied to the clipboard</string>
     <string name="error_saved">Saved to <xliff:g id="location">%1$s</xliff:g></string>
     <string name="error_save_failed">Could not save the file: <xliff:g id="error">%1$s</xliff:g></string>
+    <!-- Show tables -->
+    <string name="tables_expand">↔ Expand</string>
+    <string name="tables_fit_to_screen">Fit to screen</string>
 </resources>
