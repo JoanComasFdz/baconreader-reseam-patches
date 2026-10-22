@@ -22,3 +22,11 @@ name other than "Reseam".
 
 This license grants no rights under trademark law to use the name
 "Reseam" or its logos.
+
+ReVanced Patches
+
+The patches and extension under apps/baconreader/ are ported from ReVanced
+Patches (https://gitlab.com/ReVanced/revanced-patches), dev branch at commit
+c9583e2, which is licensed under the GNU General Public License, version 3.
+Those files carry ReVanced's copyright and stay under that license; see
+LICENSES/GPL-3.0-only.txt. The additional terms above do not cover them.

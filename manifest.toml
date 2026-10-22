@@ -1,5 +1,6 @@
 [bundle]
-name = "example-patches"
-author = "Your Name"
-description = "Example patches for Reseam"
+name = "baconreader-patches"
+author = "JoanComasFdz"
+description = "Patches for BaconReader, ported from ReVanced"
+license = "GPL-3.0"
 format_version = 1
