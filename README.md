@@ -9,6 +9,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Fix list thumbnails | Fixes empty thumbnails in the post list: unescapes the signed preview URLs Reddit sends and tries again when loading fails. Link posts get a thumbnail from Reddit's preview, the embed or YouTube, crossposted galleries the preview of their first image and BaconReader's gallery indicator, and RedGIFs posts theirs from the RedGIFs API. NSFW posts (with "Show NSFW images" off) and spoilers get a blurred thumbnail on Android 12 and later. |
 | Show tables | Draws tables in comments and posts as a grid instead of BaconReader's "header: value" lines. Tables wider than the text get an Expand button, and then scroll sideways. Links in cells open as anywhere else in the text. |
 | Text post icon | Replaces the button that opens a text post's text in the post list, which looks like a video's play button, with a page icon and a chevron that flips when the text is open. In the list and card views. |
+| Fix Imgur API | Calls Imgur's own API instead of the RapidAPI proxy BaconReader used, which refuses every request, so Imgur albums and galleries load again. Also sends image uploads in comments and posts with a content type, which Imgur's API requires. |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
@@ -33,6 +34,7 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 
 - **Redgifs hook.** ReVanced deletes the five instructions that add BaconReader's interceptor and replaces the first `build()` call. This port redirects the `addInterceptor` call instead, so the new interceptor also applies on the method's second `build()` path, the one taken when setting up SSL fails.
 - **Redgifs `/info`.** ReVanced's shared Redgifs code fakes the removed `/info` endpoint for Sync. BaconReader never calls it, so the port leaves it out.
+- **Imgur base URL.** ReVanced replaces the first instructions of `ImgurV3Constants.getBaseURL` with a constant return. This port replaces the method's body with the same constant return.
 - **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
 - **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
 - **List thumbnails.** ReVanced replaces the thumbnail's `into` call and the `isGallery` reads instruction by instruction. This port returns from `loadThumbnail` just before the app's `into` call, and overwrites the value read from `isGallery` right after the read. ReVanced reads the posts' fields by reflection; this port reads them through stubs, and passes the post itself where ReVanced passes the parameter BaconReader overwrites with the URL of Imgur posts.
