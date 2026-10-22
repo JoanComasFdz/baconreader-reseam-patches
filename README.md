@@ -20,6 +20,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Remove awards | Removes the award icons of posts and comments, "Give Award" and "View Award Details" from the action bars and the post menu, and the two "Hide Reddit Awards" settings. Reddit's API no longer reports awards, and giving them used Reddit's discontinued coins. |
 | Disable unavailable sidebar | Greys out "View Sidebar" in the post list's menu on feeds without a sidebar: Front Page, All, Popular, Friends and multireddits, and Random until its posts load. |
 | Show request errors | Shows the actual error of a failed Reddit request, such as "reddit: 404 Not Found" or a timeout, instead of BaconReader's message that it stopped working in July 2023. |
+| Remove Random feeds | Removes Random and My Random from the feed list. Reddit removed r/random and r/myrandom in December 2024, so they never load. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
@@ -85,6 +86,7 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **Open Reddit links row.** ReVanced adds a row on its Links page that shows how many Reddit links open in BaconReader and opens Android's "Open by default" screen. Reseam's settings screen has no rows that run code, so the port leaves it out; the prompt is the only way in. Whether the prompt was answered is kept in the app's `baconreader_patches` preferences, not as a setting.
 - **Links prompt.** ReVanced shows the prompt as a plain Android dialog. The port uses the bundle's branded dialog, with the same buttons; answering or backing out stops it, as in ReVanced.
 - **Request errors.** ReVanced rebuilds the request task without its `IOException` try block. Reseam has no edit for try blocks, so the port turns the handler into `move-exception` and `throw`: the same error reaches the app, through the handler.
+- **Removed list entries.** For the Random feeds and the "Hide Reddit Awards" settings, ReVanced replaces the `list.add` call with a `nop`. Reseam has no edit that removes a call, so the port skips it with `skipWhen` on a constant `true`, which leaves the call behind a branch that is never taken.
 - **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test
