@@ -18,6 +18,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Fix lost post votes | Keeps a vote made on a post while its comments load. The copy of the post that comes with the comments was requested before the vote, and replaced the voted post in the post list. |
 | Fix meme templates | Shows Imgflip's 100 most used meme templates in the drawing screen's template grid, since BaconReader's own server answers 404 for its templates. A tapped template is downloaded at full size, up to 1440 px wide. |
 | Remove awards | Removes the award icons of posts and comments, "Give Award" and "View Award Details" from the action bars and the post menu, and the two "Hide Reddit Awards" settings. Reddit's API no longer reports awards, and giving them used Reddit's discontinued coins. |
+| Disable unavailable sidebar | Greys out "View Sidebar" in the post list's menu on feeds without a sidebar: Front Page, All, Popular, Friends and multireddits, and Random until its posts load. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
