@@ -85,4 +85,10 @@
     <string name="user_avatar_background">Avatar background</string>
     <string name="user_avatar_background_summary">A faint disc behind avatars, as on Reddit\'s website. Needs Show user avatars</string>
     <string name="user_avatars_error">Could not load user avatars: <xliff:g id="error">%1$s</xliff:g></string>
+    <!-- Search comments -->
+    <string name="comment_search_hint">Search comments</string>
+    <string name="comment_search_all">SEARCH ALL</string>
+    <string name="comment_search_filter">Show only matching comments</string>
+    <string name="comment_search_loading">LOADING…</string>
+    <string name="comment_search_error">Could not load all comments: <xliff:g id="error">%1$s</xliff:g></string>
 </resources>
