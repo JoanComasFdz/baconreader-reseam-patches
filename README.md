@@ -21,6 +21,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Show request errors | Shows the actual error of a failed Reddit request, such as "reddit: 404 Not Found" or a timeout, instead of BaconReader's message that it stopped working in July 2023. |
 | Remove Random feeds | Removes Random and My Random from the feed list. Reddit removed r/random and r/myrandom in December 2024, so they never load. |
 | Disable feedback popup | Stops the "Please take a few moments to provide feedback about BaconReader" popup, and the time tracking that triggers it. |
+| Disable final release announcement | Stops the "FINAL RELEASE ANNOUNCEMENT!" popup, which says BaconReader stops working on July 1, 2023, from showing when the app starts after a new install. |
 | Flair filter | Adds a "Flair" button to the sort bar of subreddits. It lists the subreddit's flairs, from Reddit or from the loaded posts, and shows only the posts with the chosen ones, through a Reddit search in the subreddit. |
 | Show user avatars | Shows the author's avatar before the name in comments, on the reply screen and in the inbox, as on Reddit's website. Reads the authors' ids from the comments' JSON and asks Reddit for up to 100 avatars at once. Off by default. |
 | Search comments | Adds a search button next to "COLLAPSE ALL" on posts. It finds the comments with a text or user name, also inside collapsed ones, highlights the matches and jumps between them, or shows only those comments. "Search all" first loads the comments behind "load more comments". |
