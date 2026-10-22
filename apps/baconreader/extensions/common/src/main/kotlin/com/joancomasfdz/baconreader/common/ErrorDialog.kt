@@ -45,6 +45,8 @@ object ErrorDialog {
     // A repeating error must not grow the open dialog forever.
     private const val MAX_ERRORS = 20
     private const val SEPARATOR = "\n\n────────────\n\n"
+    private const val PATCHES_PACKAGE = "com.joancomasfdz."
+    private const val CRASH_FILE = "patches_last_crash.txt"
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -97,6 +99,73 @@ object ErrorDialog {
                 override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
             }
         )
+        catchErrors(application)
+    }
+
+    // A patch's error is caught wherever it escapes to, and shown here instead of closing the app.
+    // Any other crash still closes it, as it would without the patches, but its details are kept
+    // and shown when the app opens again.
+    private fun catchErrors(application: Application) {
+        showLastCrash(application)
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            if (thread !== Looper.getMainLooper().thread && fromPatches(error)) {
+                report("Patches", "A patch failed on the thread ${thread.name}", error)
+            } else {
+                saveCrash(application, thread, error)
+                previous?.uncaughtException(thread, error)
+            }
+        }
+        // An error on the main thread ends its message loop. Running the loop again inside a
+        // message lets a patch's error be caught there and the loop continue.
+        main.post(::loopMainThread)
+    }
+
+    private fun loopMainThread() {
+        while (true) {
+            try {
+                Looper.loop()
+                return
+            } catch (error: Throwable) {
+                if (!fromPatches(error)) throw error
+                report("Patches", "A patch failed", error)
+            }
+        }
+    }
+
+    private fun fromPatches(error: Throwable): Boolean {
+        var cause: Throwable? = error
+        while (cause != null) {
+            if (cause.stackTrace.any { it.className.startsWith(PATCHES_PACKAGE) }) return true
+            cause = cause.cause.takeIf { it !== cause }
+        }
+        return false
+    }
+
+    private fun saveCrash(application: Application, thread: Thread, error: Throwable) {
+        try {
+            val details =
+                details(
+                    "BaconReader",
+                    "BaconReader closed because of this error on the thread ${thread.name}",
+                    error,
+                )
+            File(application.filesDir, CRASH_FILE).writeText(details)
+        } catch (ignored: Throwable) {
+            // The crash is in the log either way.
+        }
+    }
+
+    private fun showLastCrash(application: Application) {
+        val file = File(application.filesDir, CRASH_FILE)
+        if (!file.exists()) return
+        try {
+            show(file.readText())
+        } catch (exception: IOException) {
+            Log.e(TAG, "Could not read the last crash", exception)
+        } finally {
+            file.delete()
+        }
     }
 
     /**
@@ -107,7 +176,10 @@ object ErrorDialog {
      */
     fun report(tag: String, message: String, error: Throwable? = null) {
         Log.e(tag, message, error)
-        val details = details(tag, message, error)
+        show(details(tag, message, error))
+    }
+
+    private fun show(details: String) {
         main.post {
             val activity = resumed.get()
             if (activity == null || activity.isFinishing) {
