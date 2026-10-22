@@ -27,6 +27,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Remove Random feeds | Removes Random and My Random from the feed list. Reddit removed r/random and r/myrandom in December 2024, so they never load. |
 | Disable feedback popup | Stops the "Please take a few moments to provide feedback about BaconReader" popup, and the time tracking that triggers it. |
 | Fix unread messages | Turns the orange inbox envelope back to normal, and clears the new messages notification, when "Mark read" leaves no unread message. Removes "Mark unread", since Reddit answers its request with 404. |
+| Inbox comment reply screen | "Reply" in the inbox opens the comment reply screen, with the comment or message being replied to, instead of the plain "Send message" form. Both post the same reply. Private messages show on it as a comment of the other person, without "in r/null". |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
