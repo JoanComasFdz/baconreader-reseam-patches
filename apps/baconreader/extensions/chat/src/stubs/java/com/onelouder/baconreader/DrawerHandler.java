@@ -6,5 +6,7 @@ package com.onelouder.baconreader;
 public class DrawerHandler {
     public native void closeDrawer();
 
+    public native boolean handleReturn();
+
     public native void updateDrawer();
 }

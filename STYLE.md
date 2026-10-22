@@ -77,7 +77,7 @@ private val target = method("target") { strings("...") }
 - Don't pass Kotlin function types or other `kotlin.*` types to app code or to other bundles.
 - **HTTP:** disconnect every `HttpURLConnection` in a `finally` block. Only set a fixed-length body when sending one.
 - **Logging:** `android.util.Log` with a `TAG` constant inside the object.
-- **Screens:** a new screen is an `@Export class ... : Activity()` in the extension, declared by the patch with `manifest.addActivity(name) { ... }`: a platform theme, and `configChanges` when a rotation must not rebuild it (`inbox/RedditChatPatch.kt`). It opens with an explicit `Intent(context, X::class.java)`. Mount builds leave out patches that edit the manifest.
+- **Screens:** show a feature inside one of the app's screens where it fits, as Reddit chat does over MainActivity's post list (`inbox/RedditChatPatch.kt`): views added to the app's layout, found by the ids the patch passes, and the activity's lifecycle, back, menu and result methods hooked. A new `Activity` needs `manifest.addActivity(name) { ... }`, and mount builds leave out patches that edit the manifest.
 - **Images in the app's resources:** `resources.addFile("drawable", name, "res/drawable/<name>.xml", xml)` compiles a vector drawable and returns its id, which the patch passes to the extension, for example from `appEntry { }`.
 - **No code without a user.** Before porting a branch from ReVanced's shared code, check that BaconReader reaches it: grep the app for the endpoint, string or call. Leave out what it never uses, and say so in the README.
 

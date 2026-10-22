@@ -12,6 +12,7 @@ import com.joancomasfdz.baconreader.flairs.bindings.FlairFilter
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.mainActivityOpenLinkset
 
 // BaconReader can't filter a subreddit by flair. Reddit's search can, and BaconReader already
 // loads a feed whose key has a query as a search in the subreddit, so the filter is a search.
@@ -24,15 +25,10 @@ val flairFilter =
         dependsOn(baconReaderSettings)
 
         execute {
-            openLinkset.before { FlairFilter.onOpenLinkset(thisObject) }
+            mainActivityOpenLinkset.before { FlairFilter.onOpenLinkset(thisObject) }
             addToLinkset.before { FlairFilter.onListingLoaded(param(1)) }
         }
     }
-
-// Opens the feed of MainActivity.linksetKey: on start, and when the subreddit, sort or query
-// changes.
-private val openLinkset =
-    klass("com.onelouder.baconreader.ui.main.MainActivity").method("openLinkset")
 
 // Adds a page of posts from Reddit to a feed. Their flairs are the list for subreddits whose
 // flairs aren't public.

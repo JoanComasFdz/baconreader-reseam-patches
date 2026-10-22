@@ -3,6 +3,7 @@
 
 package com.joancomasfdz.patches.baconreader.inbox
 
+import app.reseam.patch.after
 import app.reseam.patch.appEntry
 import app.reseam.patch.before
 import app.reseam.patch.field
@@ -18,18 +19,21 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.SettingsPages
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.mainActivity
+import com.joancomasfdz.patches.baconreader.core.mainActivityOpenLinkset
+import com.joancomasfdz.patches.baconreader.core.mainActivityPrepareMenu
 import com.joancomasfdz.patches.baconreader.core.mainActivityResume
 
-private const val CHAT_ACTIVITY = "com.joancomasfdz.baconreader.chat.ChatActivity"
 private const val DRAWER_HANDLER = "com.onelouder.baconreader.DrawerHandler"
 private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 
 // BaconReader predates Reddit's chat, and Reddit has no public API for it. Reddit's mobile website
-// has the chat, but it needs a login to the website: the app's OAuth login doesn't carry over.
+// has the chat, but it needs a login to the website: the app's OAuth login doesn't carry over. The
+// chat shows over the main screen's post list, below its toolbar, so the drawer stays.
 val redditChat =
     patch("Reddit chat") {
         description(
-            "Adds Chat to the menu, next to the Inbox, which opens Reddit's chat from its mobile website, and notifies of new chat messages."
+            "Adds Chat to the menu, next to the Inbox, which shows Reddit's chat from its mobile website on the main screen, and notifies of new chat messages."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
@@ -42,15 +46,6 @@ val redditChat =
         )
 
         execute {
-            manifest.addActivity(CHAT_ACTIVITY) {
-                this["android:theme"] = "@android:style/Theme.DeviceDefault.NoActionBar"
-                // Rotating or opening a keyboard would otherwise reload the chat.
-                this["android:configChanges"] =
-                    "orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
-                this["android:windowSoftInputMode"] = "adjustResize"
-                this["android:launchMode"] = "singleTop"
-            }
-
             // The drawer's own icons come as grey PNGs for the light theme and white ones for the
             // dark themes, in 24 dp.
             val iconGrey =
@@ -72,6 +67,18 @@ val redditChat =
                 resources.id("drawable", "notify_new") ?: error("The notification icon is missing")
             val notificationColor =
                 resources.id("color", "dkPrimary") ?: error("The notification color is missing")
+            // MainActivity's views the chat goes between, and its toolbar's refresh.
+            val viewIds =
+                listOf(
+                        "listLayout",
+                        "ad_container",
+                        "toolbar",
+                        "toolbarTitle",
+                        "toolbarFlipper",
+                        "appBar",
+                        "action_refresh",
+                    )
+                    .map { (resources.id("id", it) ?: error("id/$it is missing")).toInt() }
             appEntry {
                 RedditChat.init(
                     application,
@@ -79,6 +86,15 @@ val redditChat =
                     int(iconWhite.toInt()),
                     int(notificationIcon.toInt()),
                     int(notificationColor.toInt()),
+                )
+                RedditChat.initViews(
+                    int(viewIds[0]),
+                    int(viewIds[1]),
+                    int(viewIds[2]),
+                    int(viewIds[3]),
+                    int(viewIds[4]),
+                    int(viewIds[5]),
+                    int(viewIds[6]),
                 )
             }
 
@@ -90,7 +106,27 @@ val redditChat =
                     returnVoid()
                 }
             }
+            mainCreate.before { RedditChat.onMainCreate(thisObject) }
+            mainActivityOpenLinkset.after { RedditChat.onFeedOpened(thisObject) }
             mainActivityResume.before { RedditChat.onMainResume(thisObject) }
+            mainPause.before { RedditChat.onMainPause(thisObject) }
+            mainDestroy.before { RedditChat.onMainDestroy(thisObject) }
+            mainBack.before {
+                whenTrue(RedditChat.onMainBack(thisObject, thisObject.field(mainDrawer))) {
+                    returnVoid()
+                }
+            }
+            mainActivityPrepareMenu.after { RedditChat.prepareMenu(thisObject, param(0)) }
+            mainMenuItem.before {
+                whenTrue(RedditChat.onMenuItem(thisObject, param(0))) { returnTrue() }
+            }
+            mainActivityResult.before {
+                whenTrue(
+                    RedditChat.onMainActivityResult(thisObject, param(0), param(1), param(2))
+                ) {
+                    returnVoid()
+                }
+            }
             inboxLoaded.before { RedditChat.onInboxLoaded() }
             linkIntent.before {
                 val intent =
@@ -155,3 +191,13 @@ private val linkForceBrowser = klass(LINK_PROCESSOR).field("forceBrowser")
 private val inboxLoaded =
     klass("com.onelouder.baconreader.data.MessageManager").method("receiveInbox")
 
+private val mainCreate = mainActivity.method("onCreate")
+private val mainPause = mainActivity.method("onPause")
+private val mainDestroy = mainActivity.method("onDestroy")
+private val mainBack = mainActivity.method("onBackPressed")
+private val mainMenuItem = mainActivity.method("onOptionsItemSelected")
+
+// Delivers the result of the chat's file chooser, which the activity started.
+private val mainActivityResult = mainActivity.method("onActivityResult")
+
+private val mainDrawer = mainActivity.field("drawerHandler")

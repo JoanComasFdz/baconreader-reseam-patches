@@ -31,7 +31,7 @@ import org.json.JSONObject
 /**
  * Counts the unread chat messages with Reddit's unofficial chat endpoints, which its website uses:
  * the chat page hands out a token for Reddit's Matrix server, whose /sync tells the unread messages
- * of each chat. It needs the cookies of the login on the chat screen.
+ * of each chat. It needs the cookies of the login in the chat.
  */
 internal object ChatCheck {
     private const val TAG = "ChatCheck"
@@ -76,7 +76,7 @@ internal object ChatCheck {
     private val running = AtomicBoolean(false)
     @Volatile private var lastCheck = 0L
 
-    /** While the chat screen shows, new messages don't notify: the user sees them. */
+    /** While the chat shows, new messages don't notify: the user sees them. */
     @Volatile var chatShowing = false
 
     var notificationIcon = 0
@@ -97,7 +97,7 @@ internal object ChatCheck {
 
     /**
      * Checks for new chat messages on this thread, at most once a minute, then calls [onChecked] on
-     * it. Nothing happens without a login on the chat screen.
+     * it. Nothing happens without a login in the chat.
      */
     fun check(context: Context, onChecked: () -> Unit) {
         if (!ChatSettings.checkChatMessages.value) return
@@ -120,7 +120,13 @@ internal object ChatCheck {
         }
     }
 
-    /** Called when the chat screen shows: its notification is no longer needed. */
+    /** Called when the chat stops showing: the messages read there change the count. */
+    fun onChatHidden() {
+        chatShowing = false
+        checkSoon()
+    }
+
+    /** Called when the chat shows: its notification is no longer needed. */
     fun onChatShown(context: Context) {
         chatShowing = true
         try {
@@ -152,7 +158,7 @@ internal object ChatCheck {
         }
     }
 
-    /** The WebView's reddit.com cookies, or null when nobody logged in on the chat screen. */
+    /** The WebView's reddit.com cookies, or null when nobody logged in to the chat. */
     private fun webCookies(): String? {
         val cookies =
             try {
@@ -188,11 +194,11 @@ internal object ChatCheck {
         val match = RS_APP_TOKEN.find(page)
         if (match == null) {
             if (page.contains("js_challenge")) {
-                // Reddit's bot check, which the chat screen's WebView passes and keeps a cookie of.
+                // Reddit's bot check, which the chat's WebView passes and keeps a cookie of.
                 // It isn't solved here: the next check tries again.
                 Log.i(TAG, "Reddit answered the chat page with its bot check")
             } else {
-                Log.i(TAG, "The chat page has no chat token; logged out on the chat screen?")
+                Log.i(TAG, "The chat page has no chat token; logged out of the chat?")
             }
             return null
         }
