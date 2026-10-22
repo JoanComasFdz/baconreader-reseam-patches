@@ -103,4 +103,23 @@
     <string name="auto_load_more_comments_3">Up to 3 replies</string>
     <string name="auto_load_more_comments_4">Up to 4 replies</string>
     <string name="auto_load_more_comments_5">Up to 5 replies</string>
+    <!-- Markdown editor -->
+    <string name="markdown_bold">Bold</string>
+    <string name="markdown_italic">Italic</string>
+    <string name="markdown_strikethrough">Strikethrough</string>
+    <string name="markdown_superscript">Superscript</string>
+    <string name="markdown_spoiler">Spoiler</string>
+    <string name="markdown_code">Inline code</string>
+    <string name="markdown_link">Link</string>
+    <string name="markdown_heading">Heading</string>
+    <string name="markdown_bullets">Bulleted list</string>
+    <string name="markdown_numbers">Numbered list</string>
+    <string name="markdown_quote">Quote</string>
+    <string name="markdown_code_block">Code block</string>
+    <string name="markdown_table">Table</string>
+    <string name="markdown_table_column">Column</string>
+    <string name="markdown_rule">Horizontal line</string>
+    <string name="markdown_counter"><xliff:g id="count">%1$s</xliff:g> / <xliff:g id="limit">%2$s</xliff:g></string>
+    <string name="markdown_counter_min"><xliff:g id="count">%1$s</xliff:g> / <xliff:g id="limit">%2$s</xliff:g> (min. <xliff:g id="minimum">%3$s</xliff:g>)</string>
+    <string name="markdown_counter_not_allowed">No text in r/<xliff:g id="subreddit">%1$s</xliff:g></string>
 </resources>
