@@ -21,6 +21,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Disable unavailable sidebar | Greys out "View Sidebar" in the post list's menu on feeds without a sidebar: Front Page, All, Popular, Friends and multireddits, and Random until its posts load. |
 | Show request errors | Shows the actual error of a failed Reddit request, such as "reddit: 404 Not Found" or a timeout, instead of BaconReader's message that it stopped working in July 2023. |
 | Remove Random feeds | Removes Random and My Random from the feed list. Reddit removed r/random and r/myrandom in December 2024, so they never load. |
+| Disable feedback popup | Stops the "Please take a few moments to provide feedback about BaconReader" popup, and the time tracking that triggers it. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
