@@ -182,6 +182,7 @@ Nothing in `common` is `@Export`ed except `ErrorDialog.init`. Patches call the f
 - Declare only the members the extension uses, with the app's exact modifiers and types. Abstract methods or empty bodies, no logic. SPDX headers like any file.
 - Check each one against the smali: a wrong descriptor compiles and fails in the app. `verify.sh`'s last step lists calls that don't resolve.
 - Library classes BaconReader bundles (okhttp 4.10.0, Glide 4.14.2) come from `compileOnly`, not stubs.
+- **Only public classes and members.** Extension code lives outside BaconReader's packages, so Android throws `IllegalAccessError` when it uses a class or member that isn't public (or protected and inherited). A stub can't show that: it compiles whatever it declares. Either make the class or member public at patch time (`setAccessFlags`, like `core/ThreadAccess.kt`, as a dependency of every patch that needs it), or use reflection as ReVanced does. `verify.sh` lists every one it finds.
 
 ## Porting from ReVanced
 
