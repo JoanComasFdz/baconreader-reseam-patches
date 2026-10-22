@@ -15,6 +15,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 | Prompt to open Reddit links | Since Android 12, an app can't turn on its own links, and reddit.com only verifies Reddit's app. While no Reddit link opens in BaconReader, asks once, on the main screen, whether to open Android's "Open by default" screen to select them. |
 | Fix lost post votes | Keeps a vote made on a post while its comments load. The copy of the post that comes with the comments was requested before the vote, and replaced the voted post in the post list. |
+| Fix meme templates | Shows Imgflip's 100 most used meme templates in the drawing screen's template grid, since BaconReader's own server answers 404 for its templates. A tapped template is downloaded at full size, up to 1440 px wide. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 

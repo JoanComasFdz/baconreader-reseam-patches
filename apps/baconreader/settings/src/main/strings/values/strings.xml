@@ -63,4 +63,7 @@
     <string name="open_links_prompt_message">Android does not allow BaconReader to turn this on by itself. Tap \"Set up\", then select the Reddit links.\n\nThis can be done later in Android\'s settings: App info → Open by default.</string>
     <string name="open_links_prompt_set_up">Set up</string>
     <string name="open_links_prompt_not_now">Not now</string>
+    <!-- Fix meme templates -->
+    <string name="meme_template_loading">Loading template…</string>
+    <string name="meme_template_error">Could not load the full template</string>
 </resources>
