@@ -140,7 +140,7 @@ What the patches share. Use these names; don't add a second of any.
 | ReVanced | Reseam |
 |---|---|
 | `SwitchPreference`, `BooleanSetting` | `toggle`. One `_summary` for both states: describe what "on" does. |
-| `parent(...)`, `parentNot(...)` | No equivalent: the child stays editable. The extension checks the parent too. `covers` is not it: it forces the children on. |
+| `parent(...)`, `parentNot(...)` | Nothing in code. In ReVanced they only grey a setting out on the settings screen, and the child's value still applies while the parent is off. Read each setting's own value where ReVanced does; don't add parent checks. Reseam can't grey settings out, so say in the summary when a setting needs its parent. `covers` is not it: it forces the children on. |
 | `ListPreference` with `IntegerSetting` | `choice` with values `"0"`, `"1"`…, read with `toInt()`. |
 | `TextPreference` (multiline) | `text(default, multiline = true)`, one entry per line. |
 | `IntegerSetting` with a custom dialog (`CommentLimitPreference`) | `text(default = "500")`. The extension clamps it and falls back to the default when it isn't a number. No slider. |
