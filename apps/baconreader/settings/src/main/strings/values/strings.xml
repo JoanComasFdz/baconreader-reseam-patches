@@ -14,4 +14,6 @@
     <!-- Show tables -->
     <string name="tables_expand">↔ Expand</string>
     <string name="tables_fit_to_screen">Fit to screen</string>
+    <!-- Text post icon -->
+    <string name="text_post_icon_content_description">Show post text</string>
 </resources>

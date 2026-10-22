@@ -8,6 +8,7 @@ BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Buil
 | Fix Redgifs API | Replaces BaconReader's Redgifs interceptor with one that fetches the temporary tokens the Redgifs API now requires. |
 | Fix list thumbnails | Fixes empty thumbnails in the post list: unescapes the signed preview URLs Reddit sends and tries again when loading fails. Link posts get a thumbnail from Reddit's preview, the embed or YouTube, crossposted galleries the preview of their first image and BaconReader's gallery indicator, and RedGIFs posts theirs from the RedGIFs API. NSFW posts (with "Show NSFW images" off) and spoilers get a blurred thumbnail on Android 12 and later. |
 | Show tables | Draws tables in comments and posts as a grid instead of BaconReader's "header: value" lines. Tables wider than the text get an Expand button, and then scroll sideways. Links in cells open as anywhere else in the text. |
+| Text post icon | Replaces the button that opens a text post's text in the post list, which looks like a video's play button, with a page icon and a chevron that flips when the text is open. In the list and card views. |
 | Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
