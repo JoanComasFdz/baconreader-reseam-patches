@@ -1,0 +1,129 @@
+name: Reseam update
+
+# Reseam Manager loads only bundles built with its own minor version while Reseam is on 0.x, so each Reseam release
+# breaks the published bundle until it's rebuilt. Once a day this checks for a newer app.reseam.workspace plugin. When
+# there is one, it builds the bundle with it and patches the clean BaconReader APK with every patch. When all of them
+# apply, it commits the new version to main and runs release.yml with the next patch version.
+# One-time setup (docs/DEVELOPMENT.md, "Reseam updates"): the CLEAN_APK_URL secret, and main open to the workflow's pushes.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency: reseam-update
+
+jobs:
+  update:
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
+    env:
+      RESEAM_BIN: ${{ github.workspace }}/engine/reseam
+      RESEAM_BUNDLE_KEY: ${{ github.workspace }}/bundle-signing.key
+    steps:
+      # Full history with tags, to find the last release.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Find a newer Reseam
+        id: find
+        run: |
+          current=$(sed -n 's/.*id("app.reseam.workspace") version "\(.*\)".*/\1/p' settings.gradle.kts)
+          latest=$(curl -fsSL https://git.reseam.app/api/packages/reseam/maven/app/reseam/workspace/app.reseam.workspace.gradle.plugin/maven-metadata.xml \
+            | sed -n 's:.*<release>\([^<]*\)</release>.*:\1:p')
+          if ! [[ "$current" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$latest" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Couldn't read the versions: current '$current', latest '$latest'." >&2
+            exit 1
+          fi
+          if [ "$latest" = "$current" ] || [ "$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -1)" != "$latest" ]; then
+            echo "Reseam $current is the newest."
+            exit 0
+          fi
+          # The plugin can be published before its CLI; the next run picks it up.
+          if ! curl -fsIL -o /dev/null "https://cdn.reseam.app/engine/v$latest/reseam-linux-x64"; then
+            echo "Reseam $latest has no CLI yet."
+            exit 0
+          fi
+          last=$(git tag --list 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          IFS=. read -r major minor patch <<< "${last#v}"
+          echo "Reseam $current → $latest, release v$major.$minor.$((patch + 1))."
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "tag=v$major.$minor.$((patch + 1))" >> "$GITHUB_OUTPUT"
+
+      - name: Use the new version
+        if: steps.find.outputs.latest
+        env:
+          CURRENT: ${{ steps.find.outputs.current }}
+          LATEST: ${{ steps.find.outputs.latest }}
+        run: |
+          sed -i "s/id(\"app.reseam.workspace\") version \"$CURRENT\"/id(\"app.reseam.workspace\") version \"$LATEST\"/" settings.gradle.kts
+          sed -i "s/Reseam-$CURRENT-/Reseam-$LATEST-/" README.md
+          sed -i "s/\`reseam\` CLI $CURRENT\]/\`reseam\` CLI $LATEST]/" docs/DEVELOPMENT.md
+          git diff --stat
+          grep -q "version \"$LATEST\"" settings.gradle.kts
+
+      - uses: actions/setup-java@v6
+        if: steps.find.outputs.latest
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+        if: steps.find.outputs.latest
+
+      - name: Install the Reseam CLI and signing key
+        if: steps.find.outputs.latest
+        run: |
+          mkdir -p engine
+          curl -fsSL -o engine/reseam "https://cdn.reseam.app/engine/v${{ steps.find.outputs.latest }}/reseam-linux-x64"
+          chmod +x engine/reseam
+          echo "${{ secrets.BUNDLE_SIGNING_KEY_B64 }}" | base64 -d > bundle-signing.key
+
+      - name: Build the bundle
+        if: steps.find.outputs.latest
+        run: ./gradlew bundle --no-daemon
+
+      # Every patch, not only the recommended ones: a patch that no longer applies must stop the release.
+      - name: Patch the clean APK
+        if: steps.find.outputs.latest
+        env:
+          CLEAN_APK_URL: ${{ secrets.CLEAN_APK_URL }}
+        run: |
+          if [ -z "$CLEAN_APK_URL" ]; then
+            echo "Add the CLEAN_APK_URL secret (docs/DEVELOPMENT.md, \"Reseam updates\")." >&2
+            exit 1
+          fi
+          mkdir -p patch-check
+          curl -fsSL -o patch-check/clean.apk "$CLEAN_APK_URL"
+          bundle=build/reseam/baconreader-patches.reseam
+          signer=$(engine/reseam bundle list "$bundle" | sed -n 's/^signer: \([0-9a-f]\{64\}\).*/\1/p')
+          status=0
+          engine/reseam patch patch-check/clean.apk --bundle "$bundle" --trust "$signer" --preset all \
+            --output patch-check/patched.apk > patch-check/patch.log 2>&1 || status=$?
+          sed 's/\x1b\[[0-9;]*m//g' patch-check/patch.log | tee patch-check/plain.log
+          finished=$(grep 'patch run finished' patch-check/plain.log || true)
+          if [ "$status" != 0 ] || ! grep -Eq 'skipped=0([^0-9]|$)' <<< "$finished" || ! grep -Eq 'failed=0([^0-9]|$)' <<< "$finished"; then
+            echo "Not every patch applied with Reseam ${{ steps.find.outputs.latest }}." >&2
+            exit 1
+          fi
+
+      # A push or tag made with the workflow's token starts no other run, but a workflow_dispatch does.
+      - name: Commit to main and release
+        if: steps.find.outputs.latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LATEST: ${{ steps.find.outputs.latest }}
+          TAG: ${{ steps.find.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add settings.gradle.kts README.md docs/DEVELOPMENT.md
+          git commit -m "chore: build with Reseam $LATEST, so Reseam Manager $LATEST loads the bundle"
+          git push origin HEAD:main
+          gh workflow run release.yml --ref main -f tag="$TAG"
