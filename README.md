@@ -80,3 +80,7 @@ How each patch works, its settings, how it differs from ReVanced, and how to bui
 ## 📜 License
 
 [GPL-3.0](LICENSE). Most patches are ported from [ReVanced Patches](https://gitlab.com/ReVanced/revanced-patches). Not affiliated with Reddit, BaconReader or Reseam.
+
+## 🤖 AI disclosure
+
+I developed these patches with AI assistance (Claude Code). The AI wrote most of the code following my requirements, and I test the patches on my device and review the results. The commits say so too.
