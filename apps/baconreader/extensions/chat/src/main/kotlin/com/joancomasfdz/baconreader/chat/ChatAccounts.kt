@@ -98,17 +98,6 @@ internal object ChatAccounts {
         onSwapped()
     }
 
-    /** True when the chat's login may be counted for the account shown. */
-    fun matches(context: Context): Boolean {
-        val session = cookies()?.let { sessionOf(it) } ?: return true
-        val preferences = preferences(context)
-        // Not known yet: counted as before logins were kept per account.
-        val owner = preferences.getString(KEY_ACCOUNT, null) ?: return true
-        // A new login, which belongs to the account shown.
-        if (hash(session) != preferences.getString(KEY_SESSION, null)) return true
-        return owner.equals(current(), ignoreCase = true)
-    }
-
     /** The BaconReader account shown, or "" while none is logged in. */
     private fun current(): String = SessionManager.getUsername() ?: ""
 

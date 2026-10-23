@@ -10,8 +10,10 @@ import android.app.NotificationManager
 import android.content.Context
 import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.common.ErrorDialog
+import com.joancomasfdz.baconreader.common.InboxChats
 import com.onelouder.baconreader.connectivity.Tasks
 import com.onelouder.baconreader.data.MessageManager
+import com.onelouder.baconreader.reddit.Comment
 import com.onelouder.baconreader.reddit.Listing
 import com.onelouder.baconreader.reddit.Message
 import com.onelouder.baconreader.reddit.RedditApi
@@ -72,7 +74,8 @@ private fun post(context: Context, path: String, params: Map<String, String?>) {
 
 /**
  * Asks Reddit for the unread messages with the request of the app's background check,
- * message/unread, and updates the envelope.
+ * message/unread, and updates the envelope. Chat messages, which the Reddit chat patch counts
+ * apart, don't make it orange.
  */
 private fun checkUnread(context: Context) {
     try {
@@ -81,12 +84,14 @@ private fun checkUnread(context: Context) {
             "unread",
             null,
             null,
-            1,
+            if (InboxChats.separate) 100 else 1,
             object : Tasks.OnCompleteListener<Listing>() {
                 override fun onComplete(result: Listing?) {
                     try {
-                        val hasUnread =
-                            result?.getChildren(Message::class.java)?.isNotEmpty() ?: return
+                        val messages = result?.getChildren(Message::class.java) ?: return
+                        val hasUnread = messages.any {
+                            !InboxChats.isChat(it.subject, it is Comment)
+                        }
                         MessageManager.setNewMessages(hasUnread)
                         if (!hasUnread) {
                             val notifications =

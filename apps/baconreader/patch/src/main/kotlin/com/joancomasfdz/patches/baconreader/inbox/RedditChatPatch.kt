@@ -11,6 +11,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import app.reseam.patch.redirectTo
 import app.reseam.patch.settings.section
 import com.joancomasfdz.baconreader.chat.bindings.RedditChat
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
@@ -26,6 +27,7 @@ import com.joancomasfdz.patches.baconreader.core.mainActivityResume
 
 private const val DRAWER_HANDLER = "com.onelouder.baconreader.DrawerHandler"
 private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
+private const val LISTING = "com.onelouder.baconreader.reddit.Listing"
 
 // BaconReader predates Reddit's chat, and Reddit has no public API for it. Reddit's mobile website
 // has the chat, but it needs a login to the website: the app's OAuth login doesn't carry over. The
@@ -33,7 +35,7 @@ private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 val redditChat =
     patch("Reddit chat") {
         description(
-            "Adds Chat to the menu, next to the Inbox, which shows Reddit's chat from its mobile website on the main screen, and notifies of new chat messages."
+            "Adds Chat to the menu, next to the Inbox, which shows Reddit's chat from its mobile website on the main screen. The chat messages Reddit also sends to the inbox are counted next to Chat and notified as chat messages instead."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
@@ -127,7 +129,8 @@ val redditChat =
                     returnVoid()
                 }
             }
-            inboxLoaded.before { RedditChat.onInboxLoaded() }
+            unreadMessages.redirectTo(RedditChat.unreadMessages)
+            inboxMessages.redirectTo(RedditChat.inboxMessages)
             linkIntent.before {
                 val intent =
                     RedditChat.chatIntent(
@@ -187,9 +190,28 @@ private val linkContext = klass(LINK_PROCESSOR).field("context")
 private val linkUrl = klass(LINK_PROCESSOR).field("url")
 private val linkForceBrowser = klass(LINK_PROCESSOR).field("forceBrowser")
 
-// Called with the messages of an inbox page each time it loads or refreshes.
-private val inboxLoaded =
-    klass("com.onelouder.baconreader.data.MessageManager").method("receiveInbox")
+// The unread messages of the app's background message check, which notifies of them and sets the
+// inbox envelope.
+private val unreadMessages =
+    klass("com.onelouder.baconreader.services.workmanager.CheckMessagesExecutor")
+        .method("onMessagesReceived")
+        .point {
+            invokeVirtual {
+                owner(LISTING)
+                name("getChildren")
+            }
+        }
+
+// A page of messages the inbox loads, on any of its tabs.
+private val inboxMessages =
+    klass("com.onelouder.baconreader.adapters.InboxAdapter\$1")
+        .method("onComplete") { params(LISTING) }
+        .point {
+            invokeVirtual {
+                owner(LISTING)
+                name("getChildren")
+            }
+        }
 
 private val mainCreate = mainActivity.method("onCreate")
 private val mainPause = mainActivity.method("onPause")

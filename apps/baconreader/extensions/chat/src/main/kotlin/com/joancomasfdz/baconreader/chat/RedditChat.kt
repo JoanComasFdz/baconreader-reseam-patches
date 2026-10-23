@@ -17,9 +17,11 @@ import android.view.MenuItem
 import android.widget.AdapterView
 import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.common.ErrorDialog
+import com.joancomasfdz.baconreader.common.InboxChats
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.onelouder.baconreader.DrawerHandler
 import com.onelouder.baconreader.adapters.DrawerAdapter
+import com.onelouder.baconreader.reddit.Listing
 import java.lang.ref.WeakReference
 import java.util.Locale
 import java.util.WeakHashMap
@@ -84,10 +86,12 @@ fun init(
     notificationColor: Int,
 ) {
     app = application
+    InboxChats.patched = true
+    application?.let { ChatMessages.init(it) }
     chatIconGrey = iconGrey
     chatIconWhite = iconWhite
-    ChatCheck.notificationIcon = notificationIcon
-    ChatCheck.notificationColor = notificationColor
+    ChatMessages.notificationIcon = notificationIcon
+    ChatMessages.notificationColor = notificationColor
 }
 
 /** Called when the app starts, with the ids of MainActivity's views and its refresh menu item. */
@@ -143,7 +147,7 @@ fun onFeedOpened(activity: Activity?) {
             show(activity, url)
         } else {
             screen.panel?.hide(restoreTitle = false)
-            ChatCheck.onChatHidden()
+            ChatMessages.onChatHidden()
         }
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not leave the chat", exception)
@@ -161,7 +165,7 @@ fun onMainBack(activity: Activity?, drawerHandler: DrawerHandler?): Boolean {
         // An open drawer closes first, as on the post list.
         if (drawerHandler?.handleReturn() == true) return true
         val handled = panel.back(finishInstead = screen.openedForChat && !activity.isTaskRoot)
-        if (!panel.showing) ChatCheck.onChatHidden()
+        if (!panel.showing) ChatMessages.onChatHidden()
         handled
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not go back in the chat", exception)
@@ -223,13 +227,12 @@ fun onMainResume(activity: Activity?) {
         val panel = activity?.let { screens[it]?.panel }
         if (panel != null && panel.showing) {
             panel.onResume()
-            ChatCheck.onChatShown(activity)
+            ChatMessages.onChatShown(activity)
         }
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not resume the chat", exception)
     }
     followAccount()
-    checkInBackground()
 }
 
 /** Called at the start of MainActivity.onPause. */
@@ -239,7 +242,7 @@ fun onMainPause(activity: Activity?) {
     try {
         val panel = screens[activity]?.panel ?: return
         panel.onPause()
-        if (panel.showing) ChatCheck.onChatHidden()
+        if (panel.showing) ChatMessages.onChatHidden()
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not pause the chat", exception)
     }
@@ -251,7 +254,7 @@ fun onMainDestroy(activity: Activity?) {
     if (activity == null) return
     try {
         val screen = screens.remove(activity) ?: return
-        if (screen.panel?.showing == true) ChatCheck.onChatHidden()
+        if (screen.panel?.showing == true) ChatMessages.onChatHidden()
         screen.panel?.destroy()
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not close the chat", exception)
@@ -264,7 +267,7 @@ private fun show(activity: Activity, url: String?) {
     val screen = screens.getOrPut(activity) { MainScreen() }
     val panel = screen.panel ?: ChatPanel(activity, views).also { screen.panel = it }
     panel.show(url)
-    ChatCheck.onChatShown(activity)
+    ChatMessages.onChatShown(activity)
 }
 
 /** On the main thread: gives the chat the login of the account shown. */
@@ -273,26 +276,43 @@ private fun followAccount() {
     try {
         ChatAccounts.follow(context) {
             for (screen in screens.values) screen.panel?.restart()
-            ChatCheck.onAccountSwapped(context)
-            refreshDrawer()
         }
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not switch the chat to the account shown", exception)
     }
 }
 
-/** Called when the inbox has loaded its messages, in MessageManager.receiveInbox. */
+/**
+ * Called in place of Listing.getChildren in the app's background message check, which asks Reddit
+ * for the unread messages: the chat messages are counted for Chat, and the rest returned.
+ */
 @Export
-fun onInboxLoaded() {
-    checkInBackground()
+fun unreadMessages(listing: Listing?, type: Class<*>?): List<*>? {
+    @Suppress("UNCHECKED_CAST")
+    val messages = listing?.getChildren(type as Class<Any?>?) ?: return null
+    val context = app ?: return messages
+    return try {
+        ChatMessages.onUnread(context, messages).also { refreshDrawer() }
+    } catch (exception: Exception) {
+        ErrorDialog.report(TAG, "Could not count the chat messages", exception)
+        messages
+    }
 }
 
-private fun checkInBackground() {
-    val context = app ?: return
-    try {
-        Thread({ ChatCheck.check(context) { refreshDrawer() } }, "RedditChatCheck").start()
+/**
+ * Called in place of Listing.getChildren when the inbox loads a page of messages: the chat messages
+ * are left out.
+ */
+@Export
+fun inboxMessages(listing: Listing?, type: Class<*>?): List<*>? {
+    @Suppress("UNCHECKED_CAST")
+    val messages = listing?.getChildren(type as Class<Any?>?) ?: return null
+    return try {
+        if (!InboxChats.separate) messages
+        else messages.filterNot { ChatMessages.isChat(it) }.toMutableList()
     } catch (exception: Exception) {
-        ErrorDialog.report(TAG, "Could not check for chat messages", exception)
+        ErrorDialog.report(TAG, "Could not leave the chat messages out of the inbox", exception)
+        messages
     }
 }
 
@@ -383,7 +403,7 @@ internal fun isChatLink(uri: Uri): Boolean {
 }
 
 private fun chatLabel(): String {
-    val unread = app?.let { ChatCheck.unread(it) } ?: 0
+    val unread = app?.let { ChatMessages.unread(it) } ?: 0
     return if (unread > 0) BaconReaderStrings.chatEntryUnread(unread.toString())
     else BaconReaderStrings.chatEntry
 }
