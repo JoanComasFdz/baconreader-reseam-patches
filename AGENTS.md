@@ -24,6 +24,21 @@ Follow [STYLE.md](STYLE.md). A change is done when the checks below pass for eve
 
 Only a phone shows whether a patch works. Say in the PR what was tested on one and what only passed these checks.
 
+## Test APKs
+
+- Name each APK built for the user `BaconReaderPremium_reseam_<n>.apk`, with `n` one more than the last one.
+- Build its bundle with `-PreleaseTag=build-<n>`, so the drawer footer shows "Patches build-<n>" and matches the file.
+- Sign it with a test key made in the session, the same one for every build of a session, so each build installs over the last.
+
+## Pull requests
+
+- Branch from `main` and open the PR against `main`. Don't stack PRs on other branches: one merged into its base branch never reaches `main`.
+- Don't merge PRs; the user reviews and merges.
+
+## Releases
+
+Run the release workflow on `main` (Actions → release → Run workflow) with the new version, such as `v0.1.2`. It tags `main`, then builds, signs and publishes the bundle. Cloud sessions can't push tags; with GitHub access, start it with the workflow dispatch API.
+
 ## Porting a ReVanced patch
 
 1. Read the ReVanced patch, its fingerprints and its extension at the newest commit that works.
