@@ -1,0 +1,27 @@
+version = 1
+
+# ── This bundle's own files, including the ports from ReVanced ─────────────
+
+[[annotations]]
+path = ["**"]
+SPDX-FileCopyrightText = "2026 JoanComasFdz"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+# ── From the Reseam patch bundle template ──────────────────────────────────
+
+[[annotations]]
+path = [".github/**", ".gitignore", "settings.gradle.kts", "NOTICE", "LICENSES/AGPL-3.0-or-later.txt"]
+SPDX-FileCopyrightText = "2026 Cossale <hello@auna.li>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# ── Gradle wrapper ─────────────────────────────────────────────────────────
+
+[[annotations]]
+path = [
+    "gradle/wrapper/gradle-wrapper.jar",
+    "gradle/wrapper/gradle-wrapper.properties",
+    "gradlew",
+    "gradlew.bat",
+]
+SPDX-FileCopyrightText = "2015-2024 the original authors"
+SPDX-License-Identifier = "Apache-2.0"

@@ -1,74 +1,68 @@
-<p align="center">
-  <img src="https://reseam.app/logo.svg" alt="Reseam logo" width="96">
-</p>
+# BaconReader patches for Reseam
 
-<h1 align="center">Reseam patch bundle template</h1>
+BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Built from the [Reseam patch bundle template](https://git.reseam.app/reseam/patches-template) for Reseam 0.28.0.
 
-Start here to write your own patches for [Reseam](https://reseam.app). Copy this repository, rename a few things, and you have a bundle that builds, signs itself, and publishes releases Reseam Manager can install.
+| Patch | What it does |
+|---|---|
+| Spoof client | Logs in to Reddit with another app's client ID, since Reddit no longer accepts BaconReader's own. Defaults to RedReader's client ID, redirect URI and user agent, like ReVanced. Also rewrites `ssl.reddit.com` URLs to `www.reddit.com`. |
+| Fix Redgifs API | Replaces BaconReader's Redgifs interceptor with one that fetches the temporary tokens the Redgifs API now requires. |
 
-It ships two example patches that work on any app:
+The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
-- `Enable debugging` edits the manifest.
-- `Allow screenshots` redirects calls into Kotlin code shipped in the bundle (an extension).
+## Spoof client options
 
-The [docs](https://reseam.app/docs/authoring/start/) walk through this template step by step.
+| Key | Default | Empty value |
+|---|---|---|
+| `clientId` | RedReader's, `yH0aTnJEt6qUgGn835B4vg` | Not allowed |
+| `redirectUri` | `redreader://rr_oauth_redir` | Keeps `http://baconreader.com/auth` |
+| `userAgent` | `org.quantumbadger.redreader/1.25.1` | Keeps BaconReader's |
 
-## Setup
+To use your own Reddit app, create an "Installed app" at https://www.reddit.com/prefs/apps, then set `clientId` and the `redirectUri` you gave it.
 
-- JDK 17.
-- Android SDK, with `ANDROID_HOME` pointing at it.
-- The `reseam` CLI, on `PATH` or at the path in `RESEAM_BIN`. Use the version that matches the plugin version in `settings.gradle.kts`. Releases ship Linux x64 and Windows x64 binaries; on other platforms [build it from source](https://reseam.app/docs/cli/install/).
-- A signing key: `reseam bundle keygen --out ~/.reseam/bundle-signing.key`. It prints the public key users will trust. Keep the key file private and out of the repository.
+## Differences from ReVanced
 
-## Make it yours
-
-1. Set `name`, `author`, and `description` in `manifest.toml`, and `rootProject.name` in `settings.gradle.kts`.
-2. Rename `apps/example` to the app you patch and change the `app.example` packages to your own.
-3. Replace the example patches with your own.
-
-Layout:
-
-```text
-manifest.toml                     bundle name, author, description
-settings.gradle.kts               Reseam plugin version
-apps/<app>/patch/                 Kotlin patches, one module per app
-apps/<app>/extensions/<name>/     Kotlin code injected into the app
-apps/<app>/settings/              in-app settings and translated strings (optional)
-shared/<name>/                    extensions used by more than one app
-```
-
-Modules need no build script. The `app.reseam.workspace` plugin configures them from the layout. How to write patches is in [Your first patch](https://reseam.app/docs/authoring/first_patch/).
+- **Redgifs hook.** ReVanced deletes the five instructions that add BaconReader's interceptor and replaces the first `build()` call. This port redirects the `addInterceptor` call instead, so the new interceptor also applies on the method's second `build()` path, the one taken when setting up SSL fails.
+- **Redgifs `/info`.** ReVanced's shared Redgifs code fakes the removed `/info` endpoint for Sync. BaconReader never calls it, so the port leaves it out.
+- **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
+- **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
+- **Extension.** ReVanced's Java extension and shared Redgifs code are rewritten in Kotlin. The shared extension init hook isn't needed.
+- **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
 
 ## Build and test
 
+Needs JDK 17, the Android SDK with `ANDROID_HOME` set, and the [`reseam` CLI 0.28.0](https://reseam.app/download/). Create a signing key once with `reseam bundle keygen --out ~/.reseam/bundle-signing.key`, and keep it out of the repository.
+
 ```shell
 ./gradlew bundle
-reseam bundle list build/reseam/example-patches.reseam
-reseam patch app.apk \
-  --bundle build/reseam/example-patches.reseam \
-  --trust <public key> \
-  --enable "Enable debugging" \
+reseam patch BaconReader.apk \
+  --bundle build/reseam/baconreader-patches.reseam \
+  --trust <your public key> \
   --output patched.apk
 ```
 
+Set an option with `--option com.joancomasfdz.patches.baconreader.account.spoofClient.clientId=<id>`.
+
 ## Release
 
-The workflow in `.github/workflows/release.yml` runs on `v*` tags, on GitHub and on Forgejo, including Codeberg. It builds and signs the bundle, then [`reseam release patches`](https://reseam.app/docs/cli/release/) adds the release to the `patches.json` of your latest release with the commit subjects since the previous tag as its notes, and publishes both on a release.
+`.github/workflows/release.yml`, from the template, runs on `v*` tags. It builds and signs the bundle, then publishes it with its `patches.json` on a GitHub release.
 
 1. Add the signing key as the repository secret `BUNDLE_SIGNING_KEY_B64`: `base64 -w0 ~/.reseam/bundle-signing.key`.
-2. On Forgejo, set the repository variable `RUNNER` to the label of a runner with Java and Node.js. GitHub uses `ubuntu-latest`.
-3. Push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
+2. Push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
 
-Share your patch source with this link. It opens Reseam Manager, which shows the source's apps, patches and signing key before adding it, and keeps it up to date from your latest release. Every release lists the link too.
+Users add the bundle to Reseam Manager with this link, then check the signing key it shows against the one published here:
 
 ```text
-https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2F<owner>%2F<repo>
+https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches
 ```
 
-Without Reseam Manager, the link opens a page with the steps to add the source. Publish your public key where users can check it against the one Reseam Manager shows.
+## Layout and style
 
-When you move to a new Reseam version, bump the plugin version in `settings.gradle.kts`. The release workflow downloads the CLI of that same version.
+[STYLE.md](STYLE.md) has the full guidelines, and [AGENTS.md](AGENTS.md) the checks every change passes. In short, the layout follows Reseam's own bundle: `core/BaconReader.kt` holds the packages and pinned versions, patches sit in one package per area (`account`, `media`), and targets are private values after the patch that uses them. Kotlin is formatted with ktfmt's kotlinlang style, which Reseam uses:
+
+```shell
+java -jar ktfmt.jar --kotlinlang-style $(git ls-files 'apps/*.kt' 'apps/*.kts')
+```
 
 ## License
 
-AGPL-3.0-or-later, with additional terms under section 7 in [NOTICE](NOTICE).
+GPL-3.0-only, like [ReVanced Patches](https://gitlab.com/ReVanced/revanced-patches), which the patches and extension are ported from. The files from the Reseam template stay AGPL-3.0-or-later, with the additional terms in [NOTICE](NOTICE), and the Gradle wrapper is Apache-2.0. [REUSE.toml](REUSE.toml) and each file's SPDX header say which applies, and [LICENSES/](LICENSES) holds the texts.
