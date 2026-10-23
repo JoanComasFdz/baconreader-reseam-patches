@@ -106,6 +106,7 @@ internal object ChatCheck {
         if (!running.compareAndSet(false, true)) return
         try {
             lastCheck = now
+            if (!ChatAccounts.matches(context)) return
             val count = count(context) ?: return
             onCount(context, count)
             onChecked()
@@ -124,6 +125,19 @@ internal object ChatCheck {
     fun onChatHidden() {
         chatShowing = false
         checkSoon()
+    }
+
+    /** Called when the chat's login changed to another account's: its token and counts go. */
+    fun onAccountSwapped(context: Context) {
+        val preferences = preferences(context)
+        forgetToken(preferences)
+        preferences.edit().remove(KEY_UNREAD).remove(KEY_NOTIFIED).apply()
+        checkSoon()
+        try {
+            notifications(context).cancel(NOTIFICATION_ID)
+        } catch (exception: Exception) {
+            Log.i(TAG, "Could not clear the chat notification", exception)
+        }
     }
 
     /** Called when the chat shows: its notification is no longer needed. */

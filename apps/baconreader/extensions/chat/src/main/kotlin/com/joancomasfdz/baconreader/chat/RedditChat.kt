@@ -228,6 +228,7 @@ fun onMainResume(activity: Activity?) {
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not resume the chat", exception)
     }
+    followAccount()
     checkInBackground()
 }
 
@@ -258,11 +259,26 @@ fun onMainDestroy(activity: Activity?) {
 }
 
 private fun show(activity: Activity, url: String?) {
+    followAccount()
     val views = views ?: error("The chat's view ids are missing")
     val screen = screens.getOrPut(activity) { MainScreen() }
     val panel = screen.panel ?: ChatPanel(activity, views).also { screen.panel = it }
     panel.show(url)
     ChatCheck.onChatShown(activity)
+}
+
+/** On the main thread: gives the chat the login of the account shown. */
+private fun followAccount() {
+    val context = app ?: return
+    try {
+        ChatAccounts.follow(context) {
+            for (screen in screens.values) screen.panel?.restart()
+            ChatCheck.onAccountSwapped(context)
+            refreshDrawer()
+        }
+    } catch (exception: Exception) {
+        ErrorDialog.report(TAG, "Could not switch the chat to the account shown", exception)
+    }
 }
 
 /** Called when the inbox has loaded its messages, in MessageManager.receiveInbox. */
@@ -299,6 +315,8 @@ fun addChatItem(handler: DrawerHandler?, items: MutableList<Any?>?) {
     if (items == null) return
     try {
         if (handler != null) drawer = WeakReference(handler)
+        // The drawer updates when the account changes.
+        followAccount()
         val drawerItems = items.filterIsInstance<DrawerAdapter.DrawerItem>()
         val item = DrawerAdapter.DrawerItem(TYPE_ITEM, chatLabel(), chatIcon(drawerItems), TAG_CHAT)
         val lastInbox = items.indexOfLast { (it as? DrawerAdapter.DrawerItem)?.tag == TAG_INBOX }

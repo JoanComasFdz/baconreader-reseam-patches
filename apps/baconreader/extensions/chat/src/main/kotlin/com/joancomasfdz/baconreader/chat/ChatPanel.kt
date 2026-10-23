@@ -150,6 +150,12 @@ internal class ChatPanel(private val activity: Activity, private val views: Main
         return true
     }
 
+    /** Starts the chat over in a new web view, such as for another account's login. */
+    fun restart() {
+        destroyWebView()
+        if (showing) createWebView().loadUrl(CHAT_URL)
+    }
+
     fun reload() {
         val webView = webView
         if (webView == null) {
