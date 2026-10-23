@@ -121,6 +121,13 @@ public abstract class BaseE2E : IAsyncLifetime
             options.AddAdditionalAppiumOption("skipServerInstallation", true);
             options.AddAdditionalAppiumOption("skipDeviceInitialization", true);
         }
+        else
+        {
+            // Installing the helper apps over a slow link to the emulator (a cloud session's, ~3–4 Mbit/s) takes longer
+            // than Appium's 20 s defaults.
+            options.AddAdditionalAppiumOption("uiautomator2ServerInstallTimeout", 180_000);
+            options.AddAdditionalAppiumOption("adbExecTimeout", 180_000);
+        }
 
         return new AndroidDriver(E2EDevice.AppiumUrl!, options, CommandTimeout);
     }

@@ -8,20 +8,22 @@ project).
 
 It is destiny-loopsmith's
 [Loopsmith.Web.E2E](https://github.com/JoanComasFdz/destiny-loopsmith/tree/main/tests/Loopsmith.Web.E2E) for Android:
-Appium (UiAutomator2, its server next to the emulator) instead of Playwright, and an emulator instead of a locally
+Appium (UiAutomator2) instead of Playwright, and an emulator instead of a locally
 served site.
 
 ## The emulator
 
-The scenarios need an Android 14 emulator with Appium 3 + UiAutomator2 next to it, and BaconReader Premium 6.1.4's
-clean APK. The owner's emulator tooling (android-workbench, outside this repository) provides all three: sourcing its
-connection script, in the shell that then runs the scenarios, joins the emulator and exports what they read:
+The scenarios need an Android 14 emulator reachable over adb, an Appium 3.8 server with the UiAutomator2 driver 8.7
+that drives it over adb, and BaconReader Premium 6.1.4's clean APK. The owner's emulator tooling (android-workbench,
+outside this repository) provides all three: its session-start hook installs Appium, and sourcing its connection
+script, in the shell that then runs the scenarios, joins the emulator, starts Appium in the session and exports what
+they read:
 
 | Variable | Default | |
 |---|---|---|
 | `E2E_APPIUM_URL` | unset | the Appium server; without it, every scenario skips |
 | `E2E_ADB_SERIAL` | `127.0.0.1:15555` | the emulator for adb (installs, data, recording) |
-| `E2E_APPIUM_UDID` | `emulator-5554` | the emulator as the Appium server sees it |
+| `E2E_APPIUM_UDID` | `E2E_ADB_SERIAL` | the emulator as the Appium server sees it (its adb serial, when Appium runs next to the tests) |
 | `E2E_ARTIFACTS_DIR` | unset | the folder holding `com.onelouder.baconreader.premium-6.1.4-clean-base-*.apk` |
 | `E2E_BASE_APK` | that APK | the APK to patch, if it's elsewhere |
 | `E2E_BUNDLE` | `build/reseam/baconreader-patches.reseam` | the bundle to patch with (`./gradlew bundle`) |
@@ -31,8 +33,8 @@ connection script, in the shell that then runs the scenarios, joins the emulator
 | `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (an emulator just recreated) |
 
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the
-emulator, so a session starts in ~5 s without reinstalling them; a new emulator needs one run with
-`E2E_APPIUM_INSTALL_HELPERS=1`.
+emulator, so a session starts without reinstalling them; a new emulator needs one run with
+`E2E_APPIUM_INSTALL_HELPERS=1` (the connection script sets it when they're missing).
 
 ## What a scenario does
 

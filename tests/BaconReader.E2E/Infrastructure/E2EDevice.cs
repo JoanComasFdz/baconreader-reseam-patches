@@ -20,10 +20,10 @@ public static class E2EDevice
     public const string Package = "com.onelouder.baconreader.premium";
 
     /// <summary>
-    /// The device as the Appium server sees it, <c>E2E_APPIUM_UDID</c>: the server runs next to the emulator, so it isn't
-    /// <c>E2E_ADB_SERIAL</c>, the session's forwarded port.
+    /// The device as the Appium server sees it, <c>E2E_APPIUM_UDID</c>: by default <see cref="AdbSerial"/>, as an Appium
+    /// running next to the tests sees it; an Appium running next to the emulator sees it under its own name.
     /// </summary>
-    public static string AppiumUdid => Environment.GetEnvironmentVariable("E2E_APPIUM_UDID") is { Length: > 0 } udid ? udid : "emulator-5554";
+    public static string AppiumUdid => Environment.GetEnvironmentVariable("E2E_APPIUM_UDID") is { Length: > 0 } udid ? udid : AdbSerial;
 
     public static Uri? AppiumUrl => Environment.GetEnvironmentVariable("E2E_APPIUM_URL") is { Length: > 0 } url ? new Uri(url) : null;
 
