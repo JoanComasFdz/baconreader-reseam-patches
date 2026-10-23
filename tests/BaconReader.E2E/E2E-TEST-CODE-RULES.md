@@ -87,7 +87,7 @@ public sealed class SpoofClientTests : BaseE2E
   emulator was recreated), that never launches or resets the app itself: the scenario opens it;
 - **the recording:** when the run records (`E2E_VIDEO_DIR`), Android's `screenrecord` records the screen from before
   the app opens to the end, 540×960 at 1 Mbit/s, with each touch drawn (`show_touches`), in parts of 3 minutes joined at
-  the end (`Device/ScreenRecording`); it holds the end on screen a moment and saves the video, also when the scenario
+  the end (`Device/ScreenRecording`); it saves the video (record.sh holds its last frame 3 s), also when the scenario
   fails, with its record next to it (title, Gherkin, screen, patches, GIF name, domain folder, when the main screen
   first showed, whether it passed);
 - the `Frontend` property.

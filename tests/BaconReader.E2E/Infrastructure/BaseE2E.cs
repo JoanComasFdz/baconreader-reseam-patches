@@ -23,14 +23,13 @@ namespace BaconReader.E2E.Infrastructure;
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it;
 /// - when the run records (<c>E2E_VIDEO_DIR</c>): records the screen from before the app opens to the end
-///   (<see cref="ScreenRecording"/>), holds the end on screen a moment, and saves the video, also when the scenario fails,
+///   (<see cref="ScreenRecording"/>) and saves the video, also when the scenario fails,
 ///   with its record next to it (title, Gherkin, screen, patches, GIF name, domain folder, when the main screen first
 ///   showed, whether it passed);
 /// - gives the scenario its <see cref="Frontend"/>.
 /// </summary>
 public abstract class BaseE2E : IAsyncLifetime
 {
-    private static readonly TimeSpan Hold = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromMinutes(2);
 
     private AndroidDriver? driver;
@@ -86,7 +85,6 @@ public abstract class BaseE2E : IAsyncLifetime
         driver = null;
         if (recording is not null)
         {
-            await Task.Delay(Hold);
             var stopping = recording;
             recording = null;
             await SaveRecordingAsync(stopping, passed);
@@ -115,6 +113,9 @@ public abstract class BaseE2E : IAsyncLifetime
         options.AddAdditionalAppiumOption("noReset", true);
         options.AddAdditionalAppiumOption("autoLaunch", false);
         options.AddAdditionalAppiumOption("newCommandTimeout", 300);
+        // UiAutomator2 waits for the app to go idle before each command, up to 10 s, and BaconReader's dialogs never
+        // do: each lookup on one stood still for those 10 s, on screen. The scenarios wait for what they need themselves.
+        options.AddAdditionalAppiumOption("waitForIdleTimeout", 0);
         if (Environment.GetEnvironmentVariable("E2E_APPIUM_INSTALL_HELPERS") is not "1")
         {
             options.AddAdditionalAppiumOption("skipServerInstallation", true);
