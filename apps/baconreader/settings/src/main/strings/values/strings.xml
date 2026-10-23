@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="settings_entry">Patches</string>
+    <string name="page_images">Images and videos</string>
+    <string name="page_links">Links</string>
+    <string name="page_comments">Comments</string>
+    <string name="error_title">Something went wrong</string>
+    <string name="error_close">Close</string>
+    <string name="error_copy">Copy</string>
+    <string name="error_save">Save to file</string>
+    <string name="error_copied">Copied to the clipboard</string>
+    <string name="error_saved">Saved to <xliff:g id="location">%1$s</xliff:g></string>
+    <string name="error_save_failed">Could not save the file: <xliff:g id="error">%1$s</xliff:g></string>
+    <!-- Show tables -->
+    <string name="tables_expand">↔ Expand</string>
+    <string name="tables_fit_to_screen">Fit to screen</string>
+    <!-- Text post icon -->
+    <string name="text_post_icon_content_description">Show post text</string>
+    <!-- Embed comment images -->
+    <string name="section_embed_comment_images">In comments and posts</string>
+    <string name="show_images">Show images</string>
+    <string name="show_images_summary">GIFs, image links, Imgur albums and emotes are shown as images. Tap an image to switch between full width and 200×200, double tap it to open it in full screen, where you can pinch to zoom.</string>
+    <string name="images_full_width">Full width by default</string>
+    <string name="images_full_width_summary">Images are shown at full width instead of up to 200×200.</string>
+    <string name="images_long_press_download">Long press to download</string>
+    <string name="images_long_press_download_summary">Long press an image to save it to Downloads/BaconReader.</string>
+    <string name="images_wifi_only">Load images only on Wi-Fi</string>
+    <string name="images_wifi_only_summary">On mobile data, images and video previews load when tapped.</string>
+    <string name="show_videos">Play videos in comments</string>
+    <string name="show_videos_summary">Videos uploaded in comments and video links are played in the comment.</string>
+    <string name="youtube_titles">Show YouTube video titles</string>
+    <string name="youtube_titles_summary">Bare YouTube links show the channel and video title.</string>
+    <string name="youtube_thumbnails">Show YouTube thumbnails</string>
+    <string name="youtube_thumbnails_summary">A preview is shown under each YouTube link.</string>
+    <string name="x_posts">Show X posts</string>
+    <string name="x_posts_summary">Bare X (Twitter) links show the post.</string>
+    <string name="bluesky_posts">Show Bluesky posts</string>
+    <string name="bluesky_posts_summary">Bare Bluesky links show the post.</string>
+    <!-- Added after a YouTube video title, when the link starts at a given time. For example: "(from 1:23)". -->
+    <string name="youtube_title_from_time">(from <xliff:g id="time">%1$s</xliff:g>)</string>
+    <!-- Added after the title of a YouTube Short. -->
+    <string name="youtube_title_short">[Short]</string>
+    <!-- Added after the title of a YouTube playlist. -->
+    <string name="youtube_title_playlist">[Playlist]</string>
+    <!-- Added after the @handle of a YouTube channel. -->
+    <string name="youtube_title_channel">[Channel]</string>
+    <string name="embed_image_unavailable">Image unavailable</string>
+    <string name="embed_image_tap_to_load">Tap to load image</string>
+    <string name="embed_image_downloading">Downloading image…</string>
+    <string name="embed_image_download_failed">Could not download image</string>
+    <!-- Improve post media loading -->
+    <string name="section_post_media">Link posts</string>
+    <string name="link_preview_javascript">JavaScript in link posts</string>
+    <string name="link_preview_javascript_summary">All sites run JavaScript in the page of a link post, except the blocked ones. Off: only the allowed sites run it</string>
+    <string name="link_preview_javascript_blocked">Blocked sites</string>
+    <string name="link_preview_javascript_blocked_summary">Sites whose page in a link post never runs JavaScript, while JavaScript in link posts is on. One per line, subdomains included</string>
+    <string name="link_preview_javascript_allowed">Allowed sites</string>
+    <string name="link_preview_javascript_allowed_summary">Sites whose page in a link post runs JavaScript, while JavaScript in link posts is off. One per line, subdomains included</string>
+    <string name="post_media_redgifs_deleted">This RedGIFs video was deleted</string>
+    <string name="post_media_redgifs_not_found">This RedGIFs video was not found</string>
+    <!-- Prompt to open Reddit links -->
+    <string name="open_links_prompt_title">Open Reddit links with BaconReader?</string>
+    <string name="open_links_prompt_message">Android does not allow BaconReader to turn this on by itself. Tap \"Set up\", then select the Reddit links.\n\nThis can be done later in Android\'s settings: App info → Open by default.</string>
+    <string name="open_links_prompt_set_up">Set up</string>
+    <string name="open_links_prompt_not_now">Not now</string>
+    <!-- Fix meme templates -->
+    <string name="meme_template_loading">Loading template…</string>
+    <string name="meme_template_error">Could not load the full template</string>
+    <!-- Flair filter -->
+    <string name="flair_filter_button">Flair</string>
+    <string name="flair_filter_title">Show posts with flair</string>
+    <string name="flair_filter_apply">Apply</string>
+    <string name="flair_filter_clear">Clear</string>
+    <string name="flair_filter_empty">No flairs found yet. Scroll the subreddit to load posts with flairs, then try again.</string>
+    <!-- Show user avatars -->
+    <string name="section_user_avatars">User avatars</string>
+    <string name="user_avatars">Show user avatars</string>
+    <string name="user_avatars_summary">The author\'s avatar is shown before the name in comments, the reply screen and the inbox, as on Reddit\'s website</string>
+    <string name="user_avatar_size">Avatar size</string>
+    <string name="user_avatar_size_summary">Normal is as tall as the text, Large as on Reddit\'s website. Needs Show user avatars</string>
+    <string name="user_avatar_size_normal">Normal</string>
+    <string name="user_avatar_size_medium">Medium</string>
+    <string name="user_avatar_size_large">Large</string>
+    <string name="user_avatar_size_extra_large">Extra large</string>
+    <string name="user_avatar_background">Avatar background</string>
+    <string name="user_avatar_background_summary">A faint disc behind avatars, as on Reddit\'s website. Needs Show user avatars</string>
+    <string name="user_avatars_error">Could not load user avatars: <xliff:g id="error">%1$s</xliff:g></string>
+    <!-- Search comments -->
+    <string name="comment_search_hint">Search comments</string>
+    <string name="comment_search_all">SEARCH ALL</string>
+    <string name="comment_search_filter">Show only matching comments</string>
+    <string name="comment_search_loading">LOADING…</string>
+    <string name="comment_search_error">Could not load all comments: <xliff:g id="error">%1$s</xliff:g></string>
+    <!-- Load more comments -->
+    <string name="section_load_more_comments">Load more comments</string>
+    <string name="comment_limit">Comments to load</string>
+    <string name="comment_limit_summary">Comments when a post opens, from 200 to 500. Fewer load faster on slow connections</string>
+    <string name="auto_load_more_comments">Auto-load \"load more comments\"</string>
+    <string name="auto_load_more_comments_summary">Loads the \"load more comments\" with up to this many replies right after the post\'s comments</string>
+    <string name="auto_load_more_comments_off">Off</string>
+    <string name="auto_load_more_comments_1">1 reply</string>
+    <string name="auto_load_more_comments_2">Up to 2 replies</string>
+    <string name="auto_load_more_comments_3">Up to 3 replies</string>
+    <string name="auto_load_more_comments_4">Up to 4 replies</string>
+    <string name="auto_load_more_comments_5">Up to 5 replies</string>
+    <!-- Markdown editor -->
+    <string name="markdown_bold">Bold</string>
+    <string name="markdown_italic">Italic</string>
+    <string name="markdown_strikethrough">Strikethrough</string>
+    <string name="markdown_superscript">Superscript</string>
+    <string name="markdown_spoiler">Spoiler</string>
+    <string name="markdown_code">Inline code</string>
+    <string name="markdown_link">Link</string>
+    <string name="markdown_heading">Heading</string>
+    <string name="markdown_bullets">Bulleted list</string>
+    <string name="markdown_numbers">Numbered list</string>
+    <string name="markdown_quote">Quote</string>
+    <string name="markdown_code_block">Code block</string>
+    <string name="markdown_table">Table</string>
+    <string name="markdown_table_column">Column</string>
+    <string name="markdown_rule">Horizontal line</string>
+    <string name="markdown_counter"><xliff:g id="count">%1$s</xliff:g> / <xliff:g id="limit">%2$s</xliff:g></string>
+    <string name="markdown_counter_min"><xliff:g id="count">%1$s</xliff:g> / <xliff:g id="limit">%2$s</xliff:g> (min. <xliff:g id="minimum">%3$s</xliff:g>)</string>
+    <string name="markdown_counter_not_allowed">No text in r/<xliff:g id="subreddit">%1$s</xliff:g></string>
+    <!-- Reddit chat -->
+    <string name="chat_entry">Chat</string>
+    <string name="chat_load_error">Could not load Reddit chat. Check the connection and try again.</string>
+    <string name="chat_retry">Retry</string>
+    <string name="chat_entry_unread">Chat (<xliff:g id="count">%1$s</xliff:g>)</string>
+    <string name="page_chat">Chat</string>
+    <string name="section_reddit_chat">Reddit chat</string>
+    <string name="check_chat_messages">Check for new chat messages</string>
+    <string name="check_chat_messages_summary">Shows the unread chat messages next to Chat in the menu, and notifies of new ones. Checks when the main screen shows and when the inbox loads, at most once a minute, not while the app is closed. Needs a login on the Chat screen</string>
+    <string name="chat_notification_one">1 new chat message</string>
+    <string name="chat_notification_many"><xliff:g id="count">%1$s</xliff:g> new chat messages</string>
+    <string name="chat_notification_text">Tap to open Reddit chat</string>
+    <string name="chat_notification_channel">Reddit chat</string>
+</resources>

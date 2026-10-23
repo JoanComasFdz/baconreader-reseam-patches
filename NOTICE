@@ -26,7 +26,8 @@ This license grants no rights under trademark law to use the name
 ReVanced Patches
 
 The patches and extension under apps/baconreader/ are ported from ReVanced
-Patches (https://gitlab.com/ReVanced/revanced-patches), dev branch at commit
-c9583e2, which is licensed under the GNU General Public License, version 3.
+Patches (https://gitlab.com/ReVanced/revanced-patches): the dev branch at commit
+c9583e2, and the BaconReader merge requests 6989 and 6998 at commit 7486631,
+which are licensed under the GNU General Public License, version 3.
 Those files carry ReVanced's copyright and stay under that license; see
 LICENSES/GPL-3.0-only.txt. The additional terms above do not cover them.

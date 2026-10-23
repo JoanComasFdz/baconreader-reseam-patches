@@ -1,68 +1,79 @@
-# BaconReader patches for Reseam
+<div align="center">
 
-BaconReader patches for [Reseam](https://reseam.app), ported from ReVanced. Built from the [Reseam patch bundle template](https://git.reseam.app/reseam/patches-template) for Reseam 0.28.0.
+# 🥓 BaconReader Patches
 
-| Patch | What it does |
+**BaconReader, alive again.** Patches for [Reseam](https://reseam.app) that make BaconReader work with today's Reddit, and add what it never had.
+
+[![Reseam](https://img.shields.io/badge/Reseam-0.28.0-ff4500?style=flat-square)](https://reseam.app)
+[![BaconReader](https://img.shields.io/badge/BaconReader-6.1.4-f57c00?style=flat-square)](#-install)
+[![Patches](https://img.shields.io/badge/patches-29-2ea44f?style=flat-square)](#-whats-inside)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)
+
+[**➕ Add to Reseam Manager**](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches)
+
+</div>
+
+## ⚡ Install
+
+1. Install [Reseam Manager](https://reseam.app/download/).
+2. On your phone, open [**Add to Reseam Manager**](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches) and add the source.
+3. Patch your **BaconReader 6.1.4** APK, free or Premium.
+4. Uninstall the original BaconReader, then install the patched one.
+
+Settings live in BaconReader → **Settings → Patches**.
+
+> [!WARNING]
+> Use an APK you trust. Repackaged "Premium" APKs often carry malware.
+
+## 🧩 What's inside
+
+**🔧 Fixes**: what broke since 2023
+
+| Patch | |
 |---|---|
-| Spoof client | Logs in to Reddit with another app's client ID, since Reddit no longer accepts BaconReader's own. Defaults to RedReader's client ID, redirect URI and user agent, like ReVanced. Also rewrites `ssl.reddit.com` URLs to `www.reddit.com`. |
-| Fix Redgifs API | Replaces BaconReader's Redgifs interceptor with one that fetches the temporary tokens the Redgifs API now requires. |
+| Spoof client | Log in to Reddit again |
+| Fix Redgifs API | Redgifs videos play again |
+| Fix Imgur API | Imgur albums, galleries and uploads work again |
+| Fix list thumbnails | Thumbnails are back; NSFW and spoilers are blurred |
+| Fix unread messages | The inbox envelope resets once you've read everything |
+| Fix lost post votes | Votes made while comments load stick |
+| Fix meme templates | Meme templates load again |
+| Fix empty saved files | Saving media no longer leaves empty files |
+| Save videos with sound | Saved Reddit videos keep their audio |
+| Show request errors | The real error instead of "BaconReader stopped working" |
 
-The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
+**✨ Features**
 
-## Spoof client options
+| Patch | |
+|---|---|
+| Reddit chat | Reddit's chat inside the app, with unread notifications |
+| Embed comment images | Images, GIFs, albums, videos, YouTube, X and Bluesky in comments |
+| Improve post media loading | Previews and download progress while media loads |
+| Show tables | Reddit tables as a real grid |
+| Markdown editor | A big editor with a formatting bar and live formatting |
+| Search comments | Find and jump between comments by text or user |
+| Load more comments | Up to 500 comments per post, and auto-load small threads |
+| Show user avatars | Avatars next to names |
+| Flair filter | Show only posts with the flairs you pick |
+| Inbox comment reply screen | Reply from the inbox with the full reply screen |
+| Hide formatted spoilers | Every spoiler stays hidden |
+| Text post icon | A page icon instead of a play button on text posts |
+| Prompt to open Reddit links | Reddit links open in BaconReader |
 
-| Key | Default | Empty value |
-|---|---|---|
-| `clientId` | RedReader's, `yH0aTnJEt6qUgGn835B4vg` | Not allowed |
-| `redirectUri` | `redreader://rr_oauth_redir` | Keeps `http://baconreader.com/auth` |
-| `userAgent` | `org.quantumbadger.redreader/1.25.1` | Keeps BaconReader's |
+**🧹 Cleanups**
 
-To use your own Reddit app, create an "Installed app" at https://www.reddit.com/prefs/apps, then set `clientId` and the `redirectUri` you gave it.
+| Patch | |
+|---|---|
+| Remove awards | No more dead award icons and buttons |
+| Remove Random feeds | Drops Random and My Random, which no longer load |
+| Disable unavailable sidebar | Greys out "View Sidebar" where there's none |
+| Disable feedback popup | No feedback nag |
+| Disable final release announcement | No goodbye popup |
 
-## Differences from ReVanced
+## 🛠️ Development
 
-- **Redgifs hook.** ReVanced deletes the five instructions that add BaconReader's interceptor and replaces the first `build()` call. This port redirects the `addInterceptor` call instead, so the new interceptor also applies on the method's second `build()` path, the one taken when setting up SSL fails.
-- **Redgifs `/info`.** ReVanced's shared Redgifs code fakes the removed `/info` endpoint for Sync. BaconReader never calls it, so the port leaves it out.
-- **User agent.** ReVanced returns early from the two `getUserAgent` methods. This port replaces their bodies with the same constant return.
-- **Empty options.** ReVanced skips the redirect URI and user agent when unset. Reseam always applies an option's default, so an empty value skips them here.
-- **Extension.** ReVanced's Java extension and shared Redgifs code are rewritten in Kotlin. The shared extension init hook isn't needed.
-- **Versions.** ReVanced's patches run on any version. These are pinned, like every patch in Reseam's own bundle.
+How each patch works, its settings, how it differs from ReVanced, and how to build and release: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Code style and checks: [STYLE.md](STYLE.md) and [AGENTS.md](AGENTS.md).
 
-## Build and test
+## 📜 License
 
-Needs JDK 17, the Android SDK with `ANDROID_HOME` set, and the [`reseam` CLI 0.28.0](https://reseam.app/download/). Create a signing key once with `reseam bundle keygen --out ~/.reseam/bundle-signing.key`, and keep it out of the repository.
-
-```shell
-./gradlew bundle
-reseam patch BaconReader.apk \
-  --bundle build/reseam/baconreader-patches.reseam \
-  --trust <your public key> \
-  --output patched.apk
-```
-
-Set an option with `--option com.joancomasfdz.patches.baconreader.account.spoofClient.clientId=<id>`.
-
-## Release
-
-`.github/workflows/release.yml`, from the template, runs on `v*` tags. It builds and signs the bundle, then publishes it with its `patches.json` on a GitHub release.
-
-1. Add the signing key as the repository secret `BUNDLE_SIGNING_KEY_B64`: `base64 -w0 ~/.reseam/bundle-signing.key`.
-2. Push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
-
-Users add the bundle to Reseam Manager with this link, then check the signing key it shows against the one published here:
-
-```text
-https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches
-```
-
-## Layout and style
-
-[STYLE.md](STYLE.md) has the full guidelines, and [AGENTS.md](AGENTS.md) the checks every change passes. In short, the layout follows Reseam's own bundle: `core/BaconReader.kt` holds the packages and pinned versions, patches sit in one package per area (`account`, `media`), and targets are private values after the patch that uses them. Kotlin is formatted with ktfmt's kotlinlang style, which Reseam uses:
-
-```shell
-java -jar ktfmt.jar --kotlinlang-style $(git ls-files 'apps/*.kt' 'apps/*.kts')
-```
-
-## License
-
-GPL-3.0-only, like [ReVanced Patches](https://gitlab.com/ReVanced/revanced-patches), which the patches and extension are ported from. The files from the Reseam template stay AGPL-3.0-or-later, with the additional terms in [NOTICE](NOTICE), and the Gradle wrapper is Apache-2.0. [REUSE.toml](REUSE.toml) and each file's SPDX header say which applies, and [LICENSES/](LICENSES) holds the texts.
+[GPL-3.0](LICENSE). Most patches are ported from [ReVanced Patches](https://gitlab.com/ReVanced/revanced-patches). Not affiliated with Reddit, BaconReader or Reseam.

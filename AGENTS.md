@@ -19,7 +19,8 @@ Follow [STYLE.md](STYLE.md). A change is done when the checks below pass for eve
 4. **Inspect the result:** disassemble `patched.apk` with apktool and read the changed methods.
    - When a ReVanced build of the same patch exists, compare the changed classes with it. Strip `.line`, `.local` and `.param` lines and comments, and treat `const-string/jumbo` as `const-string`.
 5. **Extension calls:** every method an extension calls on app or library classes exists in the patched app's smali, with the same descriptor.
-6. **Formatting:** ktfmt's kotlinlang style leaves the bundle's `.kt` and `.kts` files unchanged.
+6. **Access:** every app class, method and field an extension uses is public in the patched app, or protected and inherited. Android checks this when the code runs, not when it's built.
+7. **Formatting:** ktfmt's kotlinlang style leaves the bundle's `.kt` and `.kts` files unchanged.
 
 Only a phone shows whether a patch works. Say in the PR what was tested on one and what only passed these checks.
 
@@ -29,4 +30,4 @@ Only a phone shows whether a patch works. Say in the PR what was tested on one a
 2. Find each fingerprint's method in BaconReader 6.1.4 (jadx or apktool) and write a Reseam target for it.
 3. Rewrite the extension in Kotlin. Check that BaconReader reaches every branch you keep.
 4. Map its settings to a `SettingsGroup` (see STYLE.md).
-5. Run the checks, then add the patch to the README: its row, its settings or options, and its differences from ReVanced.
+5. Run the checks, then add the patch's one-line row to the README, in Fixes, Features or Cleanups. Its full row, settings or options, and differences from ReVanced go in `docs/DEVELOPMENT.md`.
