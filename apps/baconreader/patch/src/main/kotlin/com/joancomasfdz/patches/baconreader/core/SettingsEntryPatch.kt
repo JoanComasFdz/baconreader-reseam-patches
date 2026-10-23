@@ -21,12 +21,14 @@ private const val SETTINGS_FRAGMENT = "com.onelouder.baconreader.SettingsFragmen
 val settingsEntry =
     patch("Patches entry in settings") {
         description(
-            "Adds a Patches entry at the end of BaconReader's settings, which opens the patches' settings."
+            "Adds a Patches entry at the end of BaconReader's settings, which opens the patches' settings, and shows the patches' version at the bottom of the menu."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 
         execute {
+            val textColor =
+                resources.id("attr", "textColor") ?: error("The drawer's text color is missing")
             menuSections.after {
                 capture("sections").assign(SettingsEntry.withEntry(capture("sections")))
             }
@@ -35,6 +37,9 @@ val settingsEntry =
                     openSettings()
                     returnVoid()
                 }
+            }
+            drawerItems.before {
+                SettingsEntry.addVersionFooter(thisObject.field(drawerList), int(textColor.toInt()))
             }
         }
     }
@@ -53,3 +58,17 @@ private val menuSections =
         .captureAs("sections")
 
 private val openSection = klass("com.onelouder.baconreader.SettingsActivity").method("openFragment")
+
+private const val DRAWER_HANDLER = "com.onelouder.baconreader.DrawerHandler"
+
+private val drawerList = klass(DRAWER_HANDLER).field("listView")
+
+// The drawer's items, just before they show: updateDrawer builds them, then hands them to the
+// adapter. It runs when the drawer is made, and again on each change.
+private val drawerItems =
+    klass(DRAWER_HANDLER).method("updateDrawer").point("setItems") {
+        invokeVirtual {
+            owner("com.onelouder.baconreader.adapters.DrawerAdapter")
+            name("setItems")
+        }
+    }
