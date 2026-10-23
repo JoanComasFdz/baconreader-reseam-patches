@@ -166,7 +166,9 @@ Set an option with `--option com.joancomasfdz.patches.baconreader.account.spoofC
 `.github/workflows/release.yml`, from the template, runs on `v*` tags. It builds and signs the bundle, then publishes it with its `patches.json` on a GitHub release.
 
 1. Add the signing key as the repository secret `BUNDLE_SIGNING_KEY_B64`: `base64 -w0 ~/.reseam/bundle-signing.key`.
-2. Push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
+2. Release, either way:
+   - In GitHub, Actions → release → Run workflow, on main, with the new version, such as `v0.1.2`. The workflow tags main with it.
+   - Or push a tag: `git tag v0.1.2 && git push origin v0.1.2`.
 
 `scripts/publish.sh` does both from a throwaway Docker container, and creates the key on the first run. The `docker run` command is at its top. It keeps the key in `./keys`; back that folder up.
 
