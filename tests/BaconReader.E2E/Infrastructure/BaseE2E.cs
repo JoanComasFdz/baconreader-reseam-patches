@@ -26,7 +26,7 @@ namespace BaconReader.E2E.Infrastructure;
 ///   (<see cref="ScreenRecording"/>) and saves the video, also when the scenario fails,
 ///   with its record next to it (title, Gherkin, screen, patches, GIF name, domain folder, when the main screen first
 ///   showed, whether it passed);
-/// - gives the scenario its <see cref="Frontend"/>.
+/// - gives the scenario its <see cref="Phone"/>.
 /// </summary>
 public abstract class BaseE2E : IAsyncLifetime
 {
@@ -39,8 +39,8 @@ public abstract class BaseE2E : IAsyncLifetime
     private readonly Stopwatch sinceRecording = new();
     private double? appShownAt;
 
-    /// <summary>BaconReader as the user sees it.</summary>
-    protected Frontend.Frontend Frontend { get; private set; } = null!;
+    /// <summary>The phone as the user holds it: Android's screens and BaconReader on it.</summary>
+    protected Phone.Phone Phone { get; private set; } = null!;
 
     public async ValueTask InitializeAsync()
     {
@@ -54,7 +54,7 @@ public abstract class BaseE2E : IAsyncLifetime
         await PatchedApps.InstallAsync(apk);
         await PatchedApps.ResetAsync();
         driver = await Task.Run(OpenDriver);
-        Frontend = new Frontend.Frontend(driver, patches, NoteAppShown);
+        Phone = new Phone.Phone(driver, patches, NoteAppShown);
 
         if (E2EDevice.VideoDirectory is not null)
         {

@@ -3,7 +3,7 @@
 
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend.Dialogs;
+namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 
 /// <summary>
 /// "Open Reddit links with BaconReader?", the dialog the "Prompt to open Reddit links" patch shows once: "Set up" opens

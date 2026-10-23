@@ -47,9 +47,9 @@ For each scenario, `BaseE2E`:
 3. clears the app's data, so the scenario starts from a fresh install;
 4. starts recording the screen, when the run records.
 
-The scenario then opens the app itself: `Frontend.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
+The scenario then opens the app itself: `Phone.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
 (`FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
-BaconReader?" → "Not now" or "Set up"), or `Frontend.OpenAsync()`, which does all of it. Then it taps and checks what
+BaconReader?" → "Not now" or "Set up"), or `Phone.BaconReader.OpenAsync()`, which does all of it. Then it taps and checks what
 its patch changes.
 
 A scenario replaces the installed BaconReader with its own test-signed build and clears its data: whatever was
@@ -80,7 +80,7 @@ By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep 
 ## Where tests go
 
 `Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
-recording), the `Frontend` page objects, the `Vocabulary`, the assertions, and what a scenario is (its Gherkin,
+recording), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), the `Vocabulary`, the assertions, and what a scenario is (its Gherkin,
 `[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record). `Scenarios/` is organized by the patches'
 areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`, `posts`): folder = area, class = one patch
 (`<Patch>Tests.cs`) in a folder of its own, method = one scenario (one Gherkin).
@@ -97,7 +97,7 @@ Not built yet. Reddit refuses a logged-out BaconReader even with "Spoof client" 
 1. a Reddit account for the tests only, with two-factor authentication off;
 2. its user name and password in the environment, `E2E_REDDIT_USERNAME` and `E2E_REDDIT_PASSWORD`, never in the
    repository;
-3. `Frontend.LogInAsync()`, built with the first scenario that needs it: the drawer's account entry, Reddit's login page
+3. `Phone.BaconReader.LogInAsync()`, built with the first scenario that needs it: the drawer's account entry, Reddit's login page
    in the app's web view (user name, password, "Log in"), "Allow" on Reddit's authorization page for the spoofed app,
    then back on the main screen, logged in. Its Given: `… is open, logged in`.
 

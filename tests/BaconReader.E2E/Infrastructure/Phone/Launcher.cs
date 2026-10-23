@@ -3,7 +3,7 @@
 
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend;
+namespace BaconReader.E2E.Infrastructure.Phone;
 
 /// <summary>Android's launcher, from which the user opens BaconReader.</summary>
 public sealed class Launcher(AndroidDriver driver)

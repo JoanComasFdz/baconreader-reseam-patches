@@ -3,7 +3,7 @@
 
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend.Screens;
+namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 
 /// <summary>BaconReader's main screen (MainActivity): a feed of posts under its toolbar.</summary>
 public sealed class Main(AndroidDriver driver, Action noteShown)

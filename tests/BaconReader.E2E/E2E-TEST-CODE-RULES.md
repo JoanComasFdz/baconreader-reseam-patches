@@ -15,7 +15,7 @@ isn't the scenario lives in `Infrastructure/`. What every app's e2e project shar
 
 ```csharp
 using BaconReader.E2E.Infrastructure;
-using BaconReader.E2E.Infrastructure.Frontend.Screens;
+using BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
@@ -39,13 +39,13 @@ public sealed class SpoofClientTests : BaseE2E
         // Given
 
         // When
-        await Frontend.Launcher.OpenBaconReaderAsync();
-        await Frontend.FinalReleaseAnnouncement.WaitUntilShownAsync();
-        await Frontend.FinalReleaseAnnouncement.ClickGotItAsync();
-        await Frontend.Main.WaitUntilShownAsync();
+        await Phone.Launcher.OpenBaconReaderAsync();
+        await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
+        await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
+        await Phone.BaconReader.Main.WaitUntilShownAsync();
 
         // Then
-        var toolbar = await Frontend.Main.Toolbar.ReadAsync();
+        var toolbar = await Phone.BaconReader.Main.Toolbar.ReadAsync();
         Asserting.That(toolbar).ShowsFeed(new Feed.FrontPage());
     }
 }
@@ -68,7 +68,7 @@ public sealed class SpoofClientTests : BaseE2E
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't
   its Gherkin's tag, or that has no `[PatchedWith]` or a patch its Given doesn't quote.
 - The body is `// Given` once, then a `// When` and a `// Then` for each round of the Gherkin, in its order (rule h).
-  It calls only `Frontend` and `Asserting.That`: no Appium API, no locators, no adb, no `Assert.*`, no delays.
+  It calls only `Phone` and `Asserting.That`: no Appium API, no locators, no adb, no `Assert.*`, no delays.
 - Strings appear only for text the app composes around names and numbers (a post's title, a comment line, a toast:
   rule e).
 
@@ -90,24 +90,26 @@ public sealed class SpoofClientTests : BaseE2E
   the end (`Device/ScreenRecording`); it saves the video (record.sh holds its last frame 3 s), also when the scenario
   fails, with its record next to it (title, Gherkin, screen, patches, GIF name, domain folder, when the main screen
   first showed, whether it passed);
-- the `Frontend` property.
+- the `Phone` property.
 
 A scenario never repeats any of that.
 
-## c. Frontend
+## c. Phone
 
-`Infrastructure/Frontend/` is an object model of the app as the user sees it:
-- one class per screen (an activity: `MainActivity` → `Frontend.Main`) in `Screens/` and per dialog in `Dialogs/`,
-  named as the app names them, nested as the app nests them: `Frontend.Main.Toolbar`. A part of a screen that the user
-  sees as its own (the toolbar, the sort bar, a post's row) gets its own class, named as the app labels it. Android's own
-  screens the scenario passes through (the launcher, a permission dialog, "Open by default") get one too;
-- `Frontend.OpenAsync()` is a scenario's "Given BaconReader … is open": it opens the app, answers the first-start
-  dialogs its patches show ("GOT IT :(", "Not now") and waits for the main screen;
+`Infrastructure/Phone/` models the phone as the user holds it: Android, and the apps on it.
+- **`Phone`**: Android's own screens, one class each (`Phone.Launcher`; later a permission dialog, "Open by default").
+- **`Phone.BaconReader`** (`Phone/BaconReader/BaconReaderApp.cs`): the app. One class per screen (an activity:
+  `MainActivity` → `Phone.BaconReader.Main`) in `Screens/` and per dialog in `Dialogs/`, named and nested as the app
+  does: `Phone.BaconReader.Main.Toolbar`. A part the user sees as its own (a toolbar, a post's row) gets its own class.
+- An action belongs to the part that shows it: `Phone.Launcher.OpenBaconReaderAsync()` (Android),
+  `Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync()` (the app).
+- `Phone.BaconReader.OpenAsync()` is "Given BaconReader … is open": open from the launcher, answer the first-start
+  dialogs its patches show, wait for the main screen.
 - every member touches the device, so every member is async with an `Async` suffix:
   - **Act**, what a user does, by verb: `Click…Async` (a tap), `Type…Async` (a text field), `Select…Async` (a menu,
     a spinner), `Tick…Async` (a checkbox or a switch), `Swipe…Async`, `Open…Async` (an app, a link);
-  - **Wait**: `WaitUntil<what the user expects>Async` (`Main.WaitUntilShownAsync()`), always for something the user
-    would see;
+  - **Wait**: `WaitUntil<what the user expects>Async` (`Phone.BaconReader.Main.WaitUntilShownAsync()`), always for
+    something the user would see;
   - **Read**: `ReadAsync()` returns an immutable record snapshot of what that part shows, never the raw UI tree:
     vocabulary values (rule e) where it shows one kind of thing, the shown text where it composes a line;
     `ReadLayoutAsync()` returns where its views are on the screen (their bounds, in pixels) for layout checks (rule d).
@@ -181,12 +183,12 @@ Line for line, in the Gherkin's order:
 | The whole Gherkin | `[TestDescription("""…""")]`, word for word |
 | `Scenario: BaconReader patched with Spoof client opens on the front page` | `public async Task BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage(Screen screen)` |
 | `Given BaconReader is patched with "Spoof client" and installed` | `[PatchedWith(Patch.SpoofClient)]`; `// Given` stays empty: BaseE2E installed it |
-| `Given BaconReader patched with "Spoof client" and "Show tables" is open` | `[PatchedWith(Patch.SpoofClient, Patch.ShowTables)]`; `// Given`: `Frontend.OpenAsync()` |
+| `Given BaconReader patched with "Spoof client" and "Show tables" is open` | `[PatchedWith(Patch.SpoofClient, Patch.ShowTables)]`; `// Given`: `Phone.BaconReader.OpenAsync()` |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
-| `I open BaconReader` | `Launcher.OpenBaconReaderAsync()` |
-| `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
+| `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
+| `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
 | A `Then`, and the `And` lines after it | One `// Then` block: one read per part it checks, then one assertion per line, chained |
-| `the toolbar shows the "Front Page" feed` | `Main.Toolbar.ReadAsync()`, `ShowsFeed(new Feed.FrontPage())` |
+| `the toolbar shows the "Front Page" feed` | `Phone.BaconReader.Main.Toolbar.ReadAsync()`, `ShowsFeed(new Feed.FrontPage())` |
 | A quoted name of a thing | A vocabulary case (rule e) |
 | A `#` line (why it surprises) | Stays in the Gherkin; a `//` line above the read it explains, when it explains a check |
 

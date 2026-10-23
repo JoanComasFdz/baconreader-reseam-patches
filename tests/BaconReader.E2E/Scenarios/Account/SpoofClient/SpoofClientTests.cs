@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using BaconReader.E2E.Infrastructure;
-using BaconReader.E2E.Infrastructure.Frontend.Screens;
+using BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
@@ -26,13 +26,13 @@ public sealed class SpoofClientTests : BaseE2E
         // Given
 
         // When
-        await Frontend.Launcher.OpenBaconReaderAsync();
-        await Frontend.FinalReleaseAnnouncement.WaitUntilShownAsync();
-        await Frontend.FinalReleaseAnnouncement.ClickGotItAsync();
-        await Frontend.Main.WaitUntilShownAsync();
+        await Phone.Launcher.OpenBaconReaderAsync();
+        await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
+        await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
+        await Phone.BaconReader.Main.WaitUntilShownAsync();
 
         // Then
-        var toolbar = await Frontend.Main.Toolbar.ReadAsync();
+        var toolbar = await Phone.BaconReader.Main.Toolbar.ReadAsync();
         Asserting.That(toolbar).ShowsFeed(new Feed.FrontPage());
     }
 }

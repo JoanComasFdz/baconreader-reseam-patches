@@ -3,7 +3,7 @@
 
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend.Dialogs;
+namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 
 /// <summary>"FINAL RELEASE ANNOUNCEMENT!", the dialog BaconReader shows on its first start, with one button, "GOT IT :(".</summary>
 public sealed class FinalReleaseAnnouncement(AndroidDriver driver)

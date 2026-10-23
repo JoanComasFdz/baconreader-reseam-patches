@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend;
+namespace BaconReader.E2E.Infrastructure.Phone;
 
 /// <summary>
 /// Every Act and Read member of a page object goes through here (E2E-TEST-CODE-RULES.md, rule c), so the video shows
