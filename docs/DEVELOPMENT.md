@@ -168,6 +168,8 @@ Set an option with `--option com.joancomasfdz.patches.baconreader.account.spoofC
 1. Add the signing key as the repository secret `BUNDLE_SIGNING_KEY_B64`: `base64 -w0 ~/.reseam/bundle-signing.key`.
 2. Push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
 
+`scripts/publish.sh` does both from a throwaway Docker container, and creates the key on the first run. The `docker run` command is at its top. It keeps the key in `./keys`; back that folder up.
+
 Users add the bundle to Reseam Manager with this link, then check the signing key it shows against the one published here:
 
 ```text
