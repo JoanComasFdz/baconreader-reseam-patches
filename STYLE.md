@@ -63,7 +63,7 @@ private val target = method("target") { strings("...") }
 - Settings live in `apps/baconreader/settings`: one `SettingsGroup` object per feature, in its own file.
 - Every setting's title is the string named after its property in snake case, and its summary the same name with `_summary`. They go in `src/main/strings/values/strings.xml`.
 - Pin a setting's storage key with `key = "..."` before a release. Renaming the object or property otherwise resets it for every user.
-- ReVanced's custom preference screens have no equivalent. Map them to `toggle`, `choice`, `text` (multiline for lists) or `folder`, and note anything that can't be mapped under "Differences from ReVanced" in the README.
+- ReVanced's custom preference screens have no equivalent. Map them to `toggle`, `choice`, `text` (multiline for lists) or `folder`, and note anything that can't be mapped under "Differences from ReVanced" in `docs/DEVELOPMENT.md`.
 
 ## Extensions
 
@@ -79,7 +79,7 @@ private val target = method("target") { strings("...") }
 - **Logging:** `android.util.Log` with a `TAG` constant inside the object.
 - **Screens:** show a feature inside one of the app's screens where it fits, as Reddit chat does over MainActivity's post list (`inbox/RedditChatPatch.kt`): views added to the app's layout, found by the ids the patch passes, and the activity's lifecycle, back, menu and result methods hooked. A new `Activity` needs `manifest.addActivity(name) { ... }`, and mount builds leave out patches that edit the manifest.
 - **Images in the app's resources:** `resources.addFile("drawable", name, "res/drawable/<name>.xml", xml)` compiles a vector drawable and returns its id, which the patch passes to the extension, for example from `appEntry { }`.
-- **No code without a user.** Before porting a branch from ReVanced's shared code, check that BaconReader reaches it: grep the app for the endpoint, string or call. Leave out what it never uses, and say so in the README.
+- **No code without a user.** Before porting a branch from ReVanced's shared code, check that BaconReader reaches it: grep the app for the endpoint, string or call. Leave out what it never uses, and say so in `docs/DEVELOPMENT.md`.
 
 ## Shared building blocks
 
@@ -148,7 +148,7 @@ What the patches share. Use these names; don't add a second of any.
 | `TextPreference` (multiline) | `text(default, multiline = true)`, one entry per line. |
 | `IntegerSetting` with a custom dialog (`CommentLimitPreference`) | `text(default = "500")`. The extension clamps it and falls back to the default when it isn't a number. No slider. |
 | `NonInteractivePreference` with only text (`images_gestures`) | No info row. Fold the text into a related setting's summary. |
-| A row that runs code (`OpenLinksPreference`) | No action row. Can't be mapped: leave it out and say so in the README. |
+| A row that runs code (`OpenLinksPreference`) | No action row. Can't be mapped: leave it out and say so in `docs/DEVELOPMENT.md`. |
 | A hidden setting (`OPEN_LINKS_PROMPT_SHOWN`) | Not a setting. Use the app's `SharedPreferences` file `baconreader_patches`. |
 | The About row | The screen's own about card. |
 
@@ -189,7 +189,7 @@ Nothing in `common` is `@Export`ed except `ErrorDialog.init`. Patches call the f
 
 ## Porting from ReVanced
 
-- Port from the newest ReVanced source that works, and name the branch and commit in the README and `NOTICE`.
+- Port from the newest ReVanced source that works, and name the branch and commit in `docs/DEVELOPMENT.md` and `NOTICE`.
 - Keep ReVanced's "why" comments, reworded to stand on their own. Drop comments that narrate.
 - **Credit:** files ported from ReVanced start with:
 
@@ -200,7 +200,7 @@ Nothing in `common` is `@Export`ed except `ErrorDialog.init`. Patches call the f
   ```
 
   New files leave out the ReVanced line. No "Ported from" comments.
-- **Behavior differences:** any change in behavior goes under "Differences from ReVanced" in the README: what ReVanced does, what the port does, and why.
+- **Behavior differences:** any change in behavior goes under "Differences from ReVanced" in `docs/DEVELOPMENT.md`: what ReVanced does, what the port does, and why.
 
 ## Comments
 

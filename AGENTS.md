@@ -30,4 +30,4 @@ Only a phone shows whether a patch works. Say in the PR what was tested on one a
 2. Find each fingerprint's method in BaconReader 6.1.4 (jadx or apktool) and write a Reseam target for it.
 3. Rewrite the extension in Kotlin. Check that BaconReader reaches every branch you keep.
 4. Map its settings to a `SettingsGroup` (see STYLE.md).
-5. Run the checks, then add the patch to the README: its row, its settings or options, and its differences from ReVanced.
+5. Run the checks, then add the patch's one-line row to the README, in Fixes, Features or Cleanups. Its full row, settings or options, and differences from ReVanced go in `docs/DEVELOPMENT.md`.
