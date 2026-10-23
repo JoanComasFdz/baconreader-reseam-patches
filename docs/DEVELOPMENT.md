@@ -149,7 +149,7 @@ Reddit has no public API for its chat, so the Reddit chat patch shows the chat o
 
 ## Build and test
 
-Needs JDK 17, the Android SDK with `ANDROID_HOME` set, and the [`reseam` CLI 0.28.0](https://reseam.app/download/). Create a signing key once with `reseam bundle keygen --out ~/.reseam/bundle-signing.key`, and keep it out of the repository.
+Needs JDK 17, the Android SDK with `ANDROID_HOME` set, and the [`reseam` CLI 0.29.0](https://reseam.app/download/). Create a signing key once with `reseam bundle keygen --out ~/.reseam/bundle-signing.key`, and keep it out of the repository.
 
 ```shell
 ./gradlew bundle
