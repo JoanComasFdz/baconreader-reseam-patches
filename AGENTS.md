@@ -6,6 +6,7 @@ Follow [STYLE.md](STYLE.md). A change is done when the checks below pass for eve
 
 - JDK 17, the Android SDK with `ANDROID_HOME` set, and the `reseam` CLI matching the plugin version in `settings.gradle.kts` (`RESEAM_BIN` or on `PATH`).
 - A bundle signing key in `RESEAM_BUNDLE_KEY` or `~/.reseam/bundle-signing.key`. Never commit it.
+- A clean BaconReader Premium 6.1.4 APK to patch. In an AndroidDev cloud session, android-workbench's `tools/e2e/connect.sh` downloads it to `.e2e/com.onelouder.baconreader.premium-6.1.4-clean-base-8ec05eeb.apk` (see android-workbench's CLAUDE.md). Never commit it.
 - `./gradlew bundle --no-daemon` writes `build/reseam/baconreader-patches.reseam`.
 - One Gradle build at a time per machine when several agents share it. Use `--no-daemon`.
 - A stale ignored `build/` folder of a removed module still makes Gradle configure it ("nothing to dex"). Check commits in a clean worktree: `git worktree add --detach <dir> <commit>`.
@@ -32,7 +33,7 @@ Only a phone shows whether a patch works. Say in the PR what was tested on one a
 
 ## Pull requests
 
-- Branch from `main` and open the PR against `main`. Don't stack PRs on other branches: one merged into its base branch never reaches `main`.
+- Branch from `main` and open the PR against `main`, unless the user asks for a stacked PR.
 - Don't merge PRs; the user reviews and merges.
 
 ## Releases
