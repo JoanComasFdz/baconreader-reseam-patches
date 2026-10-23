@@ -32,7 +32,6 @@ import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import org.json.JSONObject
 
 /**
  * Shows the errors of the patches in a dialog with all the details, instead of only logging them:
@@ -208,7 +207,7 @@ object ErrorDialog {
         append(SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.US).format(Date())).append('\n')
         application?.let { app ->
             append("App: ").append(app.packageName).append(' ').append(appVersion(app)).append('\n')
-            append("Patches: ").append(patchesVersion(app)).append('\n')
+            append("Patches: ").append(BaconReaderPatches.version(app)).append('\n')
         }
         append("Android: ").append(Build.VERSION.RELEASE).append(" (API ")
         append(Build.VERSION.SDK_INT).append("), ").append(Build.MANUFACTURER).append(' ')
@@ -225,19 +224,6 @@ object ErrorDialog {
     private fun appVersion(app: Application): String =
         try {
             app.packageManager.getPackageInfo(app.packageName, 0).versionName.toString()
-        } catch (exception: Exception) {
-            "unknown"
-        }
-
-    // The settings host writes the bundle's version, when it has one, and the engine's into the
-    // app's assets.
-    private fun patchesVersion(app: Application): String =
-        try {
-            val path = "reseam/${BaconReaderPatches.NAME}/settings.json"
-            val json = JSONObject(app.assets.open(path).bufferedReader().use { it.readText() })
-            val bundle = json.getJSONObject("bundle")
-            val version = if (bundle.isNull("version")) "unknown" else bundle.getString("version")
-            "$version (Reseam ${json.optString("engine")})"
         } catch (exception: Exception) {
             "unknown"
         }

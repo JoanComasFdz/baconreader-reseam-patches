@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="settings_entry">Patches</string>
+    <string name="drawer_patches_version">Patches <xliff:g id="version">%1$s</xliff:g></string>
     <string name="page_images">Images and videos</string>
     <string name="page_links">Links</string>
     <string name="page_comments">Comments</string>

@@ -32,7 +32,7 @@ The details behind the patches: what each one changes, its settings, how it diff
 | Hide formatted spoilers | Hides spoilers (`>!...!<`) that contain formatting, a link or code behind the spoiler box. BaconReader only hides spoilers of plain text, and showed the others in plain sight. |
 | Save videos with sound | After "Save to device" saves a Reddit video, downloads its audio track, from the DASH manifest or Reddit's usual file names, and combines both into the saved file without re-encoding. |
 | Reddit chat | Adds Chat to the menu, after the Inbox, which shows Reddit's chat from its mobile website, www.reddit.com/chat, in place of the post list, below BaconReader's toolbar. Links to the chat that BaconReader opens go there too. Takes the chat messages Reddit also sends to the inbox out of it, shows their count next to Chat and notifies of them as chat messages. See [Reddit chat](#reddit-chat). |
-| Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. |
+| Patches entry in settings | Adds "Patches" at the end of BaconReader's settings menu, which opens the patches' settings. Shows the patches' version at the bottom of the drawer, under the menu, such as "Patches 0.1.1 (Reseam 0.28.0)", to tell which build is installed; a bundle built without a release tag shows "unknown". |
 
 The patches are pinned to version 6.1.4, BaconReader's last release, of `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`. Only Premium has been tested. To try another version anyway, pass `--ignore-versions`.
 
