@@ -4,7 +4,7 @@
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend.Screens;
+namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 
 /// <summary>The main screen's toolbar: the name of the feed shown, then Refresh, Search and More options.</summary>
 public sealed class Toolbar(AndroidDriver driver)

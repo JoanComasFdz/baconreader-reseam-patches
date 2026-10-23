@@ -4,7 +4,7 @@
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Infrastructure.Frontend.Screens;
+namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 
 /// <summary>What a test checks on the main screen's toolbar.</summary>
 public static class ToolbarSnapshotAssertions

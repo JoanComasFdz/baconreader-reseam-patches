@@ -4,7 +4,7 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium.Android;
 
-namespace BaconReader.E2E.Infrastructure.Frontend;
+namespace BaconReader.E2E.Infrastructure.Phone;
 
 /// <summary>The page objects' waits: until something the user would see is on the screen.</summary>
 public static class Waiting

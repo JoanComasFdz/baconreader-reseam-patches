@@ -4,7 +4,7 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 
-namespace BaconReader.E2E.Infrastructure.Frontend;
+namespace BaconReader.E2E.Infrastructure.Phone;
 
 /// <summary>
 /// The only ways a page object finds a view (E2E-TEST-CODE-RULES.md, rule c): its resource id, its content description or
