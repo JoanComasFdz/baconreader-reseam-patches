@@ -1,0 +1,27 @@
+name: E2E CI
+
+# Builds the end-to-end tests and their tools (.NET) and runs what needs no emulator: the e2e tool's tests, and the
+# e2e project's shape and naming tests (its scenarios skip themselves without an emulator). Recording is the session's
+# job (tests/BaconReader.E2E/README.md). The bundle itself is built by release.yml.
+
+on:
+  push:
+    branches: [main]
+    paths: ['tests/**', 'tools/e2e/**', 'BaconReader.E2E.slnx', 'Directory.Build.props', 'Directory.Packages.props', 'global.json', '.github/workflows/e2e-ci.yml']
+  pull_request:
+    paths: ['tests/**', 'tools/e2e/**', 'BaconReader.E2E.slnx', 'Directory.Build.props', 'Directory.Packages.props', 'global.json', '.github/workflows/e2e-ci.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - run: dotnet build BaconReader.E2E.slnx -c Release
+      - run: dotnet test tools/e2e/BaconReader.E2ETools.Tests -c Release --no-build
+      - run: dotnet test tests/BaconReader.E2E -c Release --no-build
