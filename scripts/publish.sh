@@ -4,7 +4,7 @@
 #
 # Sets up and publishes a release of this bundle, from a throwaway container:
 #
-#   docker run --rm -it --platform linux/amd64 -v "$PWD/keys:/keys" debian:bookworm-slim \
+#   docker run --rm -it --platform linux/amd64 -v "$PWD/keys:/keys" ubuntu:24.04 \
 #     bash -c 'apt-get update -qq && apt-get install -y -qq curl >/dev/null &&
 #              bash <(curl -fsSL https://raw.githubusercontent.com/JoanComasFdz/baconreader-reseam-patches/main/scripts/publish.sh) v0.1.0'
 #
@@ -12,6 +12,8 @@
 # stores the key as the repository secret BUNDLE_SIGNING_KEY_B64, and, when given a tag such as
 # v0.1.0, tags main with it. The tag starts the release workflow, which builds, signs and
 # publishes the bundle. Without a tag it stops after the secret.
+#
+# Ubuntu 24.04 because the reseam CLI needs glibc 2.39 or newer.
 #
 # GitHub login: set GH_TOKEN to a token that can write the repository's contents and secrets, or
 # log in with the one-time code it shows.
