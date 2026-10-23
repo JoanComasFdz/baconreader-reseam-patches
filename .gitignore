@@ -3,6 +3,10 @@ build/
 .kotlin/
 out/
 
+# .NET build output (the end-to-end tests and their tools)
+bin/
+obj/
+
 .idea/
 *.iml
 .vscode/
