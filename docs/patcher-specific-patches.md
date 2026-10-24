@@ -51,6 +51,16 @@ On the Links page, under Link posts:
 
 Sites go one per line, and include their subdomains.
 
+### Video autoplay in detail view settings
+
+On the Images and videos page, in the Detail view section:
+
+| Setting | Key | Default |
+|---|---|---|
+| Autoplay videos in Detail View | `detail_video.autoplay_videos_in_detail_view` | On |
+
+Off, a video shown by ExoPlayer in a post's detail view (v.redd.it, and the MP4 and GIFV videos of Imgur and RedGIFs) is created paused, so it loads and shows its first frame. It stays paused when the post comes on screen again or BaconReader returns to the foreground, until the first tap on play, pause or restart; after that BaconReader's own rules apply. The detail view is the one whose `PostMediaHandler` listener is `DetailLinkFragment$6`: the full-screen photo viewer and the browser keep autoplaying, and so do the videos in comments.
+
 ### Show user avatars settings
 
 On the Comments page, in the User avatars section:
