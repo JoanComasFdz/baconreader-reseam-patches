@@ -46,7 +46,7 @@ Only a phone shows whether a patch works. Say in the PR what was tested on one a
 
 ## End-to-end tests
 
-In the repos that have [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md) (the Reseam repo; the Morphe repo doesn't yet):
+In both repos, [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md):
 
 - **When the user asks to test a patch, first write its Gherkins,** each in a ```` ```gherkin ```` code block, by [docs/given-when-then-test-rules.md](docs/given-when-then-test-rules.md) and [docs/given-when-then-patch-scenarios.md](docs/given-when-then-patch-scenarios.md), and agree them with the user before writing any C#. Copy every quoted text from the screen, never from the patch's code.
 - The tests are C# (.NET 10, xUnit v3) and Appium, one Gherkin per scenario, written by their [E2E-TEST-CODE-RULES.md](tests/BaconReader.E2E/E2E-TEST-CODE-RULES.md) (binding). Each scenario patches the clean APK with only the patches it names.
