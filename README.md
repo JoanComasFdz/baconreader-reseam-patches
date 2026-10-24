@@ -75,7 +75,7 @@ Settings live in BaconReader → **Settings → Patches**.
 
 ## 🛠️ Development
 
-How each patch works, its settings, how it differs from ReVanced, and how to build and release: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Code style and checks: [STYLE.md](STYLE.md) and [AGENTS.md](AGENTS.md).
+What each patch does: [docs/patches.md](docs/patches.md); its settings and differences from ReVanced: [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md). Build and release: [patcher-specific-build.md](patcher-specific-build.md), [patcher-specific-release.md](patcher-specific-release.md). Code style and checks: [STYLE.md](STYLE.md), [patcher-specific-code.md](patcher-specific-code.md) and [AGENTS.md](AGENTS.md).
 
 ## 📜 License
 
