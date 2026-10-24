@@ -17,6 +17,10 @@ The same BaconReader patches exist for two patchers: [baconreader-reseam-patches
   - [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md): settings and keys, differences from ReVanced.
 - A new patch or a behavior change goes to both repos. A difference between them is either a patcher limit, written down in `docs/patcher-specific-patches.md`, or a bug.
 
+## Cloud sessions with both repos
+
+A cloud session created with both repos starts in `/home/user`, above the clones, and runs neither repo's session-start hook. In such a session, before the first task, check whether `/opt/patch-tools` exists. If it doesn't, run both repos' hooks and set the JDK as "Two-repo sessions" in [patcher-specific-build.md](patcher-specific-build.md) says (the same steps in both repos), then tell the user what ran and any `session-start:` warning. A session on one repo alone runs its hook on start and needs none of this.
+
 ## Build
 
 - The tools, the build command and its output: [patcher-specific-build.md](patcher-specific-build.md).
