@@ -33,7 +33,7 @@ session that works the PR records them on the emulator; CI records nothing (it c
 - **What the workflow does** (`.github/workflows/e2e-videos.yml`, on a push to `e2e-gifs/**`): it checks the push (the
   name is `e2e-gifs/pr-<n>-<hex>`; PR #n is open and from this repository; the commit sits on a commit of the PR and only
   adds `e2e-gifs/scenarios.json`, `e2e-gifs/what-changed.md`, real GIFs (they start with `GIF8`) and real MP4s (an
-  `ftyp` box first)), then the e2e tool (`dotnet run --project tools/e2e/Workbench.E2ETools -- post … --out e2e-gifs`)
+  `ftyp` box first)), then the e2e tool (`dotnet run --project tools/e2e/BaconReader.E2ETools -- post … --out e2e-gifs`)
   uploads the GIFs and MP4s and posts them, and the branch is deleted whatever happened (the run's log says why one
   failed). A push that fails the checks uploads and posts nothing. The runner's own .NET 10 SDK builds the tool (it
   needs only its Core, so it builds in seconds); no emulator, no ffmpeg.
@@ -78,7 +78,7 @@ session that works the PR records them on the emulator; CI records nothing (it c
   come first; those only re-recorded because a fixture they use changed follow under
   `### Re-recorded: their fixtures changed`, each naming its changed fixtures (with both kinds, the first sits under
   `### Added or changed by this PR`). Every post ends with `---` and `_Recorded by the e2e workflow · Claude Code_`. The
-  workflow never touches the PR's description. `tools/e2e/Workbench.E2ETools.Tests` tests the layout.
+  workflow never touches the PR's description. `tools/e2e/BaconReader.E2ETools.Tests` tests the layout.
 - **Earlier versions collapse and are hidden as Outdated:** once a new post is up, the tool edits each earlier post
   still open into a closed `<details>` holding it unchanged, summary **Scenarios (V1)** · 12 scenarios · replaced by V2,
   then hides every earlier post as Outdated (GraphQL's `minimizeComment`, with the workflow's token; a session gets 403
@@ -102,7 +102,7 @@ session that works the PR records them on the emulator; CI records nothing (it c
     still counted).
 - **The release's limit:** a release holds at most 1,000 assets (a run takes two). The cleanup's log warns above 900.
   Near the limit, the owner creates a new pre-release (e.g. `prs-resources-2`) and points `PrsRelease` in
-  `tools/e2e/Workbench.E2ETools.Core/ReleaseNaming.cs` and `release` in `site/e2e-player.html` at it (or lets the
+  `tools/e2e/BaconReader.E2ETools.Core/ReleaseNaming.cs` and `release` in `site/e2e-player.html` at it (or lets the
   workflow create it on the next post). The old release stays, so the posts that embed its GIFs keep showing them; their
   player links look in the new release, so their MP4s no longer play.
 - Pull requests from forks are skipped (they never get a write token).

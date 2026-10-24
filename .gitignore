@@ -18,3 +18,7 @@ local.properties
 
 .DS_Store
 Thumbs.db
+
+# Clean base APK and screenshots fetched by tools/e2e/connect.sh
+.e2e/
+*.apk

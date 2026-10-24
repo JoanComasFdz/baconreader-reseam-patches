@@ -14,10 +14,10 @@ served site.
 ## The emulator
 
 The scenarios need an Android 14 emulator reachable over adb, an Appium 3.8 server with the UiAutomator2 driver 8.7
-that drives it over adb, and BaconReader Premium 6.1.4's clean APK. The owner's emulator tooling (android-workbench,
-outside this repository) provides all three: its session-start hook installs Appium, and sourcing its connection
-script, in the shell that then runs the scenarios, joins the emulator, starts Appium in the session and exports what
-they read:
+that drives it over adb, and BaconReader Premium 6.1.4's clean APK. In an AndroidDev cloud session, the session-start
+hook (`.claude/hooks/session-start.sh`) installs Appium, and sourcing `tools/e2e/connect.sh` in the shell that then runs
+the scenarios joins the emulator, starts Appium in the session and exports what they read
+([patcher-specific-build.md](../../patcher-specific-build.md), "Cloud sessions"):
 
 | Variable | Default | |
 |---|---|---|
