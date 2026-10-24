@@ -169,7 +169,7 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qs 'DOTNET_NOLOGO' "$CLAUDE_ENV_FILE
     echo 'export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1'
   } >> "$CLAUDE_ENV_FILE"
 fi
-if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qs 'ANDROID_HOME' "$CLAUDE_ENV_FILE"; then
+if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qs "$JDK17" "$CLAUDE_ENV_FILE"; then
   {
     echo "export JAVA_HOME=$JDK17"
     echo "export ANDROID_HOME=$ANDROID_SDK"
