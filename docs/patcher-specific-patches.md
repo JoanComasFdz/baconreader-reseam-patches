@@ -59,7 +59,7 @@ On the Images and videos page, in the Detail view section:
 |---|---|---|
 | Autoplay videos in Detail View | `detail_video.autoplay_videos_in_detail_view` | On |
 
-Off, a video shown by ExoPlayer in a post's detail view (v.redd.it, and the MP4 and GIFV videos of Imgur and RedGIFs) is created paused, so it loads and shows its first frame. It stays paused when the post comes on screen again or BaconReader returns to the foreground, until the first tap on play, pause or restart; after that BaconReader's own rules apply. The detail view is the one whose `PostMediaHandler` listener is `DetailLinkFragment$6`: the full-screen photo viewer and the browser keep autoplaying, and so do the videos in comments.
+Off, the detail view of a post shows the post's preview image (the largest of Reddit's preview resolutions) with a play button in place of a video shown by ExoPlayer (v.redd.it, and the MP4 and GIFV videos of Imgur and RedGIFs), and doesn't load the video. A tap on it gives the video back to BaconReader, which shows and plays it as it does with the setting on. The detail view is the one whose `PostMediaHandler` listener is `DetailLinkFragment$6`: the full-screen photo viewer and the browser keep autoplaying, and so do the videos in comments. A post without a preview image shows a black page with the play button.
 
 ### Show user avatars settings
 

@@ -20,7 +20,8 @@
     <!-- Detail view videos -->
     <string name="section_detail_video">Detail view</string>
     <string name="autoplay_videos_in_detail_view">Autoplay videos in Detail View</string>
-    <string name="autoplay_videos_in_detail_view_summary">Videos in a post\'s detail view, such as v.redd.it videos, start playing when the post opens. When off, they load but wait for you to tap play. GIFs are not affected.</string>
+    <string name="autoplay_videos_in_detail_view_summary">Videos in a post\'s detail view, such as v.redd.it videos, start playing when the post opens. When off, the post shows its preview image with a play button, and the video loads when you tap it. GIFs are not affected.</string>
+    <string name="detail_video_play">Play video</string>
     <!-- Embed comment images -->
     <string name="section_embed_comment_images">In comments and posts</string>
     <string name="show_images">Show images</string>
