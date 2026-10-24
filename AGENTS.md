@@ -20,7 +20,7 @@ The same BaconReader patches exist for two patchers: [baconreader-reseam-patches
 ## Build
 
 - The tools, the build command and its output: [patcher-specific-build.md](patcher-specific-build.md).
-- A clean BaconReader Premium 6.1.4 APK to patch. In an AndroidDev cloud session, android-workbench's `tools/e2e/connect.sh` downloads it to `.e2e/com.onelouder.baconreader.premium-6.1.4-clean-base-8ec05eeb.apk` and exports that folder as `E2E_ARTIFACTS_DIR` (see android-workbench's CLAUDE.md). Never commit it.
+- A clean BaconReader Premium 6.1.4 APK to patch. In an AndroidDev cloud session, `tools/e2e/connect.sh` downloads it to `.e2e/com.onelouder.baconreader.premium-6.1.4-clean-base-<first 8 characters of E2E_APK_CHECKSUM>.apk` and exports that folder as `E2E_ARTIFACTS_DIR` ([patcher-specific-build.md](patcher-specific-build.md), "Cloud sessions"). Never commit it.
 - One Gradle build at a time per machine when several agents share it. Use `--no-daemon`.
 - A stale ignored `build/` folder of a removed module still makes Gradle configure it. Check commits in a clean worktree: `git worktree add --detach <dir> <commit>`.
 - If Maven Central answers 429, point Gradle at `https://maven-central.storage-download.googleapis.com/maven2/` with an init script in `~/.gradle/init.d`. Don't commit it.
@@ -46,7 +46,7 @@ In the repos that have [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md) 
 
 - **When the user asks to test a patch, first write its Gherkins,** each in a ```` ```gherkin ```` code block, by [docs/given-when-then-test-rules.md](docs/given-when-then-test-rules.md) and [docs/given-when-then-patch-scenarios.md](docs/given-when-then-patch-scenarios.md), and agree them with the user before writing any C#. Copy every quoted text from the screen, never from the patch's code.
 - The tests are C# (.NET 10, xUnit v3) and Appium, one Gherkin per scenario, written by their [E2E-TEST-CODE-RULES.md](tests/BaconReader.E2E/E2E-TEST-CODE-RULES.md) (binding). Each scenario patches the clean APK with only the patches it names.
-- They need an emulator, reached through the environment their README lists ("The emulator"). In an AndroidDev cloud session, android-workbench provides it: `source <android-workbench>/tools/e2e/connect.sh`, then run the tests in the same shell.
+- They need an emulator, reached through the environment their README lists ("The emulator"). In an AndroidDev cloud session, `source tools/e2e/connect.sh` provides it ([patcher-specific-build.md](patcher-specific-build.md), "Cloud sessions"), then run the tests in the same shell.
 - A patch's scenarios go in the patch's PR. While working: `tools/e2e/record.sh --no-video <TestClass>`. Right before the push: `tools/e2e/record.sh --changed-since origin/<base branch>`. Right after it: `tools/e2e/push-gifs.sh`; the "E2E videos" workflow posts the GIFs on the PR ([docs/hosting.md](docs/hosting.md)).
 - `dotnet build BaconReader.E2E.slnx` and `dotnet test BaconReader.E2E.slnx` pass with no warnings (without an emulator, the scenarios skip).
 
