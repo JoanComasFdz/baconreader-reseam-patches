@@ -4,7 +4,7 @@ name: Reseam update
 # breaks the published bundle until it's rebuilt. Once a day this checks for a newer app.reseam.workspace plugin. When
 # there is one, it builds the bundle with it and patches the clean BaconReader APK with every patch. When all of them
 # apply, it commits the new version to main and runs release.yml with the next patch version.
-# One-time setup (docs/DEVELOPMENT.md, "Reseam updates"): the CLEAN_APK_URL secret, and main open to the workflow's pushes.
+# One-time setup (patcher-specific-release.md, "Reseam updates"): the CLEAN_APK_URL secret, and main open to the workflow's pushes.
 
 on:
   schedule:
@@ -64,7 +64,6 @@ jobs:
         run: |
           sed -i "s/id(\"app.reseam.workspace\") version \"$CURRENT\"/id(\"app.reseam.workspace\") version \"$LATEST\"/" settings.gradle.kts
           sed -i "s/Reseam-$CURRENT-/Reseam-$LATEST-/" README.md
-          sed -i "s/\`reseam\` CLI $CURRENT\]/\`reseam\` CLI $LATEST]/" docs/DEVELOPMENT.md
           git diff --stat
           grep -q "version \"$LATEST\"" settings.gradle.kts
 
@@ -96,7 +95,7 @@ jobs:
           CLEAN_APK_URL: ${{ secrets.CLEAN_APK_URL }}
         run: |
           if [ -z "$CLEAN_APK_URL" ]; then
-            echo "Add the CLEAN_APK_URL secret (docs/DEVELOPMENT.md, \"Reseam updates\")." >&2
+            echo "Add the CLEAN_APK_URL secret (patcher-specific-release.md, \"Reseam updates\")." >&2
             exit 1
           fi
           mkdir -p patch-check
@@ -123,7 +122,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add settings.gradle.kts README.md docs/DEVELOPMENT.md
+          git add settings.gradle.kts README.md
           git commit -m "chore: build with Reseam $LATEST, so Reseam Manager $LATEST loads the bundle"
           git push origin HEAD:main
           gh workflow run release.yml --ref main -f tag="$TAG"
