@@ -26,9 +26,9 @@ path = [
 SPDX-FileCopyrightText = "2015-2024 the original authors"
 SPDX-License-Identifier = "Apache-2.0"
 
-# ── This bundle's own workflows: the end-to-end tests' and shared docs' (not from the template)
+# ── This bundle's own workflows: the end-to-end tests' (not from the template)
 
 [[annotations]]
-path = [".github/workflows/e2e-videos.yml", ".github/workflows/e2e-ci.yml", ".github/workflows/pages.yml", ".github/workflows/shared-docs.yml", ".github/workflows/reseam-update.yml"]
+path = [".github/workflows/e2e-videos.yml", ".github/workflows/e2e-ci.yml", ".github/workflows/pages.yml", ".github/workflows/reseam-update.yml"]
 SPDX-FileCopyrightText = "2026 JoanComasFdz"
 SPDX-License-Identifier = "GPL-3.0-only"
