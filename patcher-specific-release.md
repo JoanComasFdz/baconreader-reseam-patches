@@ -21,3 +21,16 @@ Users add the bundle to Reseam Manager with this link, then check the signing ke
 ```text
 https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches
 ```
+
+## Reseam updates
+
+While Reseam is on 0.x, Reseam Manager loads only bundles built with its own minor version, so a new Reseam breaks the published bundle until it's rebuilt. `.github/workflows/reseam-update.yml` checks for one every day at 06:17 UTC, or on Actions → Reseam update → Run workflow. When there is a newer `app.reseam.workspace` plugin with its CLI, it:
+
+1. Puts the new version in `settings.gradle.kts` and the README badge.
+2. Builds the bundle with it and patches the clean BaconReader Premium 6.1.4 APK with every patch (`--preset all`). It stops unless the run ends with `skipped=0` and `failed=0`.
+3. Commits the new version to main and runs the release workflow with the next patch version, such as `v0.1.3`.
+
+When it stops, GitHub emails the failed run, and the bundle needs a fix by hand. It needs, once:
+
+- The repository secret `CLEAN_APK_URL`: a private download link to the clean APK, never a public one.
+- Pushes to main from GitHub Actions. If main is protected, let `github-actions[bot]` bypass the rule.

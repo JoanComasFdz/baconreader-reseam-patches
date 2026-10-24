@@ -62,6 +62,7 @@ Settings live in BaconReader → **Settings → Patches**.
 | Hide formatted spoilers | Every spoiler stays hidden |
 | Text post icon | A page icon instead of a play button on text posts |
 | Prompt to open Reddit links | Reddit links open in BaconReader |
+| Video autoplay in detail view | A setting to show a preview with a play button instead of autoplaying videos |
 
 **🧹 Cleanups**
 

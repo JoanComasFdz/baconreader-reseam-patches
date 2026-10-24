@@ -51,6 +51,16 @@ On the Links page, under Link posts:
 
 Sites go one per line, and include their subdomains.
 
+### Video autoplay in detail view settings
+
+On the Images and videos page, in the Detail view section:
+
+| Setting | Key | Default |
+|---|---|---|
+| Autoplay videos in Detail View | `detail_video.autoplay_videos_in_detail_view` | On |
+
+Off, the detail view of a post shows the post's preview image (the largest of Reddit's preview resolutions) with a play button in place of a video shown by ExoPlayer (v.redd.it, and the MP4 and GIFV videos of Imgur and RedGIFs), and doesn't load the video. A tap on it gives the video back to BaconReader, which shows and plays it as it does with the setting on. The detail view is the one whose `PostMediaHandler` listener is `DetailLinkFragment$6`: the full-screen photo viewer and the browser keep autoplaying, and so do the videos in comments. A post without a preview image shows a black page with the play button.
+
 ### Show user avatars settings
 
 On the Comments page, in the User avatars section:
