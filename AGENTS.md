@@ -19,7 +19,7 @@ The same BaconReader patches exist for two patchers: [baconreader-reseam-patches
 
 ## Cloud sessions with both repos
 
-A cloud session created with both repos starts in `/home/user`, above the clones, and runs neither repo's session-start hook. In such a session, before the first task, check whether `/opt/patch-tools` exists. If it doesn't, run both repos' hooks and set the JDK as "Two-repo sessions" in [patcher-specific-build.md](patcher-specific-build.md) says (the same steps in both repos), then tell the user what ran and any `session-start:` warning. A session on one repo alone runs its hook on start and needs none of this.
+A cloud session created with both repos starts in `/home/user`, above the clones, and runs neither repo's session-start hook. In such a session, before the first task, always run both repos' hooks and set the JDK as "Two-repo sessions" in [patcher-specific-build.md](patcher-specific-build.md) says (the same steps in both repos), then tell the user what ran and any `session-start:` warning. The hooks skip what is already installed, so this takes seconds when the machine is set up. Don't skip them because some tools are there: a reused machine can be half set up (`/opt/patch-tools` present, but the Android SDK without its platform). A session on one repo alone runs its hook on start and needs none of this.
 
 ## Build
 
