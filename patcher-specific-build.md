@@ -56,21 +56,23 @@ The environment needs network access "Full" and these variables, set in the envi
 
 ### Two-repo sessions
 
-A session created with both BaconReader repos starts in `/home/user`, above the clones, so neither hook runs and no tool is installed. Run each hook by hand, then set the JDK before each build: both builds work on JDK 17, but Morphe Desktop, the Morphe patcher, needs JDK 21.
+A session created with both BaconReader repos starts in `/home/user`, above the clones, so neither hook runs and no tool is installed. Run each hook by hand once:
 
 ```bash
 cd /home/user
 (cd baconreader-reseam-patches && CLAUDE_PROJECT_DIR=$PWD CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh)
 (cd baconreader-morphe-patches && CLAUDE_PROJECT_DIR=$PWD CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh)
-export ANDROID_HOME=/opt/android-sdk
-# Reseam: JDK 17
-export JAVA_HOME=/opt/patch-tools/jdk17 PATH=/opt/patch-tools/jdk17/bin:$PATH
-# Morphe, and always for Morphe Desktop: JDK 21
-export JAVA_HOME=/opt/patch-tools/jdk21 PATH=/opt/patch-tools/jdk21/bin:$PATH
 ```
 
-- Run one Gradle build at a time, with `--no-daemon`. If the first build stops on a 429 from Maven Central (through the Gradle Plugin Portal), run it again.
-- `tools/e2e/connect.sh` is the same file in both repos: source it from either one.
+Such a session has no env file for the hooks to write to, and each Bash tool call is a new shell, so nothing exported in one call reaches the next. Set the Android SDK and the JDK in the same call as each command: JDK 17 for Reseam, JDK 21 for Morphe (Morphe Desktop, the Morphe patcher, needs it):
+
+```bash
+cd /home/user/baconreader-reseam-patches && ANDROID_HOME=/opt/android-sdk JAVA_HOME=/opt/patch-tools/jdk17 PATH=/opt/patch-tools/jdk17/bin:$PATH ./gradlew bundle --no-daemon
+cd /home/user/baconreader-morphe-patches && ANDROID_HOME=/opt/android-sdk JAVA_HOME=/opt/patch-tools/jdk21 PATH=/opt/patch-tools/jdk21/bin:$PATH ./gradlew buildAndroid --no-daemon
+```
+
+- Run one Gradle build at a time, with `--no-daemon`. If the first build of the session can't fetch a plugin (a 429 from Maven Central, or `git.reseam.app` not answering), run it again.
+- `tools/e2e/connect.sh` is the same file in both repos: source it from either one, in the same call as the commands that use the emulator.
 - A session on one repo alone needs none of this: its hook runs on start.
 
 ### The emulator
