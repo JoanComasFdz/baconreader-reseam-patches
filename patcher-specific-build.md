@@ -81,7 +81,22 @@ cd /home/user/baconreader-morphe-patches && /opt/patch-tools/jdk21/bin/java -jar
 - Run these calls one after another, not in parallel: parallel Bash calls that `cd` into different repos can run in the wrong folder.
 - The Reseam bundle lists one patch more than the Morphe one: "Patches entry in settings", which Morphe has as its internal `settingsPatch`, without a name (the Morphe repo's `docs/patcher-specific-patches.md`, "Settings").
 - `tools/compare-patch-lists.sh`, the same file in both repos, lists both built bundles with their JDKs and prints each side's count and the patch names only in one of them, with "Patches entry in settings" as expected. It exits 0 when that is the only difference, 1 when there is another, and 2 when a bundle can't be listed.
-- `tools/e2e/connect.sh` is the same file in both repos: source it from either one, in the same call as the commands that use the emulator.
+- `tools/e2e/connect.sh` is the same file in both repos. Source it from the repo whose tests use it, in the same call as the commands that use the emulator: its exports point at that repo's `.e2e/`.
+
+#### E2E tests in a two-repo session
+
+A new scenario goes into both repos, one PR each, and is tested in each repo on its own with that repo's `tools/e2e/record.sh` (AGENTS.md, "End-to-end tests"). It builds the repo's bundle and runs only the scenarios it is given, so each call sets the repo's JDK and sources the repo's `connect.sh`:
+
+```bash
+# While working, in each repo (a class takes a minute or two):
+cd /home/user/baconreader-reseam-patches && export ANDROID_HOME=/opt/android-sdk JAVA_HOME=/opt/patch-tools/jdk17 PATH=/opt/patch-tools/jdk17/bin:$PATH && source tools/e2e/connect.sh && tools/e2e/record.sh --no-video <TestClass>
+cd /home/user/baconreader-morphe-patches && export ANDROID_HOME=/opt/android-sdk JAVA_HOME=/opt/patch-tools/jdk21 PATH=/opt/patch-tools/jdk21/bin:$PATH && source tools/e2e/connect.sh && tools/e2e/record.sh --no-video <TestClass>
+```
+
+- Right before each repo's push, the same call with `tools/e2e/record.sh --changed-since origin/main` (Reseam) or `--changed-since origin/dev` (Morphe); right after it, that repo's `tools/e2e/push-gifs.sh`.
+- Run the repos one after the other: they share one emulator and its lease. Sourcing `connect.sh` again renews the lease; `tools/e2e/connect.sh --down` once, at the end of the session.
+- A whole suite is `dotnet test BaconReader.E2E.slnx` in the same call, with the same exports. It runs two projects, the e2e tool's unit tests and the scenarios, and can take longer than a foreground Bash call allows: run it in the background with its output in a file, and follow the file.
+- The first `dotnet` run on a new machine prints .NET's welcome text and installs a development certificate, once.
 - A session on one repo alone needs none of this: its hook runs on start.
 
 ### The emulator
