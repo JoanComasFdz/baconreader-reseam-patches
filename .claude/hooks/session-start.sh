@@ -181,4 +181,6 @@ fi
 for variable in TS_AUTHKEY_CLOUD E2E_EMULATOR_HOST E2E_APK_CHECKSUM; do
   [ -n "${!variable:-}" ] || warn "$variable is not set: the emulator won't be reachable (tools/e2e/connect.sh)"
 done
+# Quiet by design: say it ran, so a run with nothing left to install doesn't look like no run.
+echo "session-start hook done: tools in /opt/patch-tools, Android SDK in /opt/android-sdk"
 exit 0

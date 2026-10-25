@@ -53,15 +53,19 @@ The environment needs network access "Full" and these variables, set in the envi
 | `TS_AUTHKEY_CLOUD` | A reusable, ephemeral Tailscale auth key, tagged for cloud sessions |
 | `E2E_EMULATOR_HOST` | The emulator's name on the tailnet |
 | `E2E_APK_CHECKSUM` | The sha256 of the clean BaconReader Premium 6.1.4 APK the emulator host serves |
+| `E2E_REDDIT_USERNAME`, `E2E_REDDIT_PASSWORD` | The e2e tests' Reddit account ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)) |
+
+Never print these variables or the environment (`env`, `env | grep E2E_`, `printenv`): a session's transcript keeps what it prints. To check one, use `[ -n "$NAME" ] && echo set || echo "not set"`.
 
 ### Two-repo sessions
 
-A session created with both BaconReader repos starts in `/home/user`, above the clones, so neither hook runs and no tool is installed. Run each hook by hand once:
+A session created with both BaconReader repos starts in `/home/user`, above the clones, so neither hook runs and no tool is installed. Run each hook by hand once, and then Morphe Desktop's installer, which needs the Morphe repo attached to the session. Each hook ends with "session-start hook done"; any line starting with `session-start:` is a warning.
 
 ```bash
 cd /home/user
 (cd baconreader-reseam-patches && CLAUDE_PROJECT_DIR=$PWD CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh)
 (cd baconreader-morphe-patches && CLAUDE_PROJECT_DIR=$PWD CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh)
+baconreader-morphe-patches/tools/morphe-desktop.sh
 ```
 
 Such a session has no env file for the hooks to write to, and each Bash tool call is a new shell, so nothing exported in one call reaches the next. Set the Android SDK and the JDK in the same call as each command: JDK 17 for Reseam, JDK 21 for Morphe (Morphe Desktop, the Morphe patcher, needs it):
@@ -69,9 +73,13 @@ Such a session has no env file for the hooks to write to, and each Bash tool cal
 ```bash
 cd /home/user/baconreader-reseam-patches && ANDROID_HOME=/opt/android-sdk JAVA_HOME=/opt/patch-tools/jdk17 PATH=/opt/patch-tools/jdk17/bin:$PATH ./gradlew bundle --no-daemon
 cd /home/user/baconreader-morphe-patches && ANDROID_HOME=/opt/android-sdk JAVA_HOME=/opt/patch-tools/jdk21 PATH=/opt/patch-tools/jdk21/bin:$PATH ./gradlew buildAndroid --no-daemon
+cd /home/user/baconreader-reseam-patches && reseam bundle list build/reseam/baconreader-patches.reseam
+cd /home/user/baconreader-morphe-patches && /opt/patch-tools/jdk21/bin/java -jar /opt/patch-tools/morphe-desktop.jar list-patches -o -p -v --patches patches/build/libs/patches-*.mpp
 ```
 
-- Run one Gradle build at a time, with `--no-daemon`. If the first build of the session can't fetch a plugin (a 429 from Maven Central, or `git.reseam.app` not answering), run it again.
+- Run one Gradle build at a time, with `--no-daemon`. If the first build of the session can't fetch a plugin, from any of its repositories (Maven Central, `git.reseam.app`, GitHub Packages), run it again once.
+- Run these calls one after another, not in parallel: parallel Bash calls that `cd` into different repos can run in the wrong folder.
+- The Reseam bundle lists one patch more than the Morphe one: "Patches entry in settings", which Morphe has as its internal `settingsPatch`, without a name (the Morphe repo's `docs/patcher-specific-patches.md`, "Settings").
 - `tools/e2e/connect.sh` is the same file in both repos: source it from either one, in the same call as the commands that use the emulator.
 - A session on one repo alone needs none of this: its hook runs on start.
 
