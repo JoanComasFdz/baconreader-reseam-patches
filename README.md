@@ -4,7 +4,7 @@
 
 **BaconReader, alive again.** Patches for [Reseam](https://reseam.app) that make BaconReader work with today's Reddit, and add what it never had.
 
-[![Reseam](https://img.shields.io/badge/Reseam-0.29.0-ff4500?style=flat-square)](https://reseam.app)
+[![Reseam](https://img.shields.io/badge/Reseam-0.30.2-ff4500?style=flat-square)](https://reseam.app)
 [![BaconReader](https://img.shields.io/badge/BaconReader-6.1.4-f57c00?style=flat-square)](#-install)
 [![Patches](https://img.shields.io/badge/patches-29-2ea44f?style=flat-square)](#-whats-inside)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)

@@ -10,10 +10,10 @@ import app.reseam.patch.dex.AccessFlags
 import app.reseam.patch.field
 import app.reseam.patch.klass
 import app.reseam.patch.method
-import app.reseam.patch.native.NewField
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.settings.section
+import app.reseam.patch.types.NewField
 import com.joancomasfdz.baconreader.avatars.bindings.UserAvatars
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.settings.UserAvatarsSettings
