@@ -6,7 +6,7 @@
 #                                  forwards ADB, starts Appium here in the session (the session-start hook installs
 #                                  it; the emulator host runs none), takes the device lease, exports
 #                                  E2E_ADB_SERIAL / E2E_APPIUM_URL / E2E_APPIUM_UDID / E2E_ARTIFACTS_DIR
-#   tools/e2e/connect.sh --down -> releases the lease, disconnects, logs out
+#   tools/e2e/connect.sh --down -> releases the lease, logs out of the tailnet, disconnects; prints one line for each
 # Needs the environment's variables: TS_AUTHKEY_CLOUD (Tailscale auth key), E2E_EMULATOR_HOST (the emulator's name on the
 # tailnet) and E2E_APK_CHECKSUM (the sha256 of the clean BaconReader Premium 6.1.4 APK the emulator host serves).
 # Local ports 15555 (ADB, forwarded to the emulator host) and 14723 (the session's Appium): 5555 would make adb's
@@ -36,13 +36,24 @@ if [ "${1:-}" = "--down" ]; then
   adb disconnect "$SERIAL" >/dev/null 2>&1
   adb kill-server >/dev/null 2>&1
   pkill -f "^socat TCP-LISTEN:15555" ; pkill -f "appium/node_modules/.bin/appium --address 127.0.0.1 --port 14723"
-  $TS logout >/dev/null 2>&1; pkill -x tailscaled
+  if $TS logout >/dev/null 2>&1; then echo "logged out of the tailnet"; else echo "not logged in to the tailnet"; fi
+  pkill -x tailscaled
   # wait (max 10 s) until they are gone, so a check right after --down sees nothing left
   for _ in $(seq 1 20); do
     pgrep -f "^socat TCP-LISTEN:15555|appium --address 127.0.0.1 --port 14723" >/dev/null || pgrep -x tailscaled >/dev/null || break
     sleep 0.5
   done
-  echo "disconnected"; return 0 2>/dev/null || exit 0
+  left=$(pgrep -f "^socat TCP-LISTEN:15555|appium --address 127.0.0.1 --port 14723" >/dev/null && echo "socat/appium "; pgrep -x tailscaled >/dev/null && echo "tailscaled")
+  if [ -n "$left" ]; then echo "disconnected, but still running: $left"; else echo "disconnected"; fi
+  return 0 2>/dev/null || exit 0
+fi
+
+# The exports below only reach the caller's shell when this file is sourced in it: not when it is run, nor sourced in
+# a pipe or $( ), which run it in a subshell. Say so on stderr, which a pipe doesn't swallow.
+if [ "${BASH_SOURCE[0]:-$0}" = "$0" ]; then
+  echo "warning: connect.sh was run, not sourced: its E2E_* exports end with it. Use: source tools/e2e/connect.sh" >&2
+elif [ "${BASH_SUBSHELL:-0}" -gt 0 ]; then
+  echo "warning: connect.sh was sourced in a subshell (a pipe or \$( )): its E2E_* exports won't reach your shell. Source it on its own line, without | or \$( )" >&2
 fi
 
 H=${E2E_EMULATOR_HOST:-}
