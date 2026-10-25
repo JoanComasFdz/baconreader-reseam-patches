@@ -80,6 +80,7 @@ cd /home/user/baconreader-morphe-patches && /opt/patch-tools/jdk21/bin/java -jar
 - Run one Gradle build at a time, with `--no-daemon`. If the first build of the session can't fetch a plugin, from any of its repositories (Maven Central, `git.reseam.app`, GitHub Packages), run it again once.
 - Run these calls one after another, not in parallel: parallel Bash calls that `cd` into different repos can run in the wrong folder.
 - The Reseam bundle lists one patch more than the Morphe one: "Patches entry in settings", which Morphe has as its internal `settingsPatch`, without a name (the Morphe repo's `docs/patcher-specific-patches.md`, "Settings").
+- `tools/compare-patch-lists.sh`, the same file in both repos, lists both built bundles with their JDKs and prints each side's count and the patch names only in one of them, with "Patches entry in settings" as expected. It exits 0 when that is the only difference, 1 when there is another, and 2 when a bundle can't be listed.
 - `tools/e2e/connect.sh` is the same file in both repos: source it from either one, in the same call as the commands that use the emulator.
 - A session on one repo alone needs none of this: its hook runs on start.
 
