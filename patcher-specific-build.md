@@ -101,6 +101,7 @@ tools/e2e/connect.sh --down        # at the end: release the lease, disconnect, 
 - **Appium's helper apps** stay installed on the device. After the emulator is recreated, `connect.sh` prints a note and exports `E2E_APPIUM_INSTALL_HELPERS=1`: the first Appium session then runs without the two skip capabilities and with `appium:uiautomator2ServerInstallTimeout` and `appium:adbExecTimeout` well above 20 s.
 - **First launch of BaconReader** shows Android's notification permission and the app's "FINAL RELEASE ANNOUNCEMENT!" dialogs. Install with `adb install -r -g`, or `adb shell pm grant com.onelouder.baconreader.premium android.permission.POST_NOTIFICATIONS`, then tap "GOT IT :(". `pm clear` revokes the permission: grant it again.
 - **After a wake** the device clock is set and error dialogs are suppressed; if one still shows, `adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS`.
+- **Appium** isn't on `PATH`: it is `/opt/appium/node_modules/.bin/appium`, with `APPIUM_HOME=/opt/appium/home`. `connect.sh` starts it from there.
 - **Local ports.** adb on 5555 would show a phantom `emulator-5554`, so the forward uses 15555.
 - **Waiting.** Claude's Bash tool blocks a foreground `sleep`: poll for the expected state, or wait in the background.
 - **Proxy.** The cloud session's proxy refuses plain HTTPS to github.com (403, release downloads included), while git and GitHub's API for attached repositories work. A tool published only on a GitHub release can't be downloaded there.
