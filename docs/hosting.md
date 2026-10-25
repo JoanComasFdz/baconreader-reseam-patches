@@ -109,8 +109,9 @@ session that works the PR records them on the emulator; CI records nothing (it c
 
 ### One-time setup by the owner
 
-1. **Settings → Pages → Build and deployment → Source: "Deploy from a branch", `gh-pages`, `/ (root)`.** Then run
-   "Deploy site" once (Actions → Deploy site → Run workflow), or merge a change under `site/`.
+1. **Run "Deploy site" once** (Actions → Deploy site → Run workflow), or merge a change under `site/`: it creates the
+   `gh-pages` branch. Then **Settings → Pages → Build and deployment → Source: "Deploy from a branch", `gh-pages`,
+   `/ (root)`.**
 2. **Settings → Actions → General → Workflow permissions → "Read and write permissions"**, so the workflow's token
    can create `prs-resources`, upload to it, comment and delete the `e2e-gifs/…` branches.
 
