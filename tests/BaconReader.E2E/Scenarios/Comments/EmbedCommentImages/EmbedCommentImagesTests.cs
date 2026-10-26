@@ -34,7 +34,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I tap the post "Weekly thread"
           Then the comment shows 1 GIF
         """)]
-    public async Task EmbedCommentImagesShowsAGIFInACommentAsAnImage(Screen screen)
+    public async Task EmbedCommentImagesShowsAGifInACommentAsAnImage(Screen screen)
     {
         // Given
         Reddit.HasAPost("Weekly thread", "e2e");

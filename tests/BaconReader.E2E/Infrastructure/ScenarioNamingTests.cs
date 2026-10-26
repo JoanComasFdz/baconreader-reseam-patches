@@ -25,26 +25,30 @@ public sealed class ScenarioNamingTests
             ScenarioNaming.ToGifName("BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage", Screen.Phone));
 
     [Theory]
-    [InlineData("EmbedCommentImagesShowsAGIFInACommentAsAnImage", "embed-comment-images-shows-agif-in-a-comment-as-an-image-phone")]
+    [InlineData("EmbedCommentImagesShowsAGifInACommentAsAnImage", "embed-comment-images-shows-a-gif-in-a-comment-as-an-image-phone")]
     [InlineData("BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage", "bacon-reader-patched-with-spoof-client-opens-on-the-front-page-phone")]
     [InlineData("BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader", "bacon-reader-patched-with-spoof-client-logs-in-to-reddit-as-red-reader-phone")]
     [InlineData("BaconReaderLoggedInShowsThePostsRedditHasInAll", "bacon-reader-logged-in-shows-the-posts-reddit-has-in-all-phone")]
     [InlineData("ReapersTitheGives3StacksForAKillOf3", "reapers-tithe-gives3-stacks-for-a-kill-of3-phone")]
-    public void GifName_OfTheScenariosPostedSoFarStaysAsItIs(string methodName, string gifName) =>
+    public void GifName_OfTheScenariosSoFar(string methodName, string gifName) =>
         Assert.Equal(gifName, ScenarioNaming.ToGifName(methodName, Screen.Phone));
 
     [Theory]
-    [InlineData("E2E", "e2e-phone")]
-    [InlineData("BaconReaderPatchedWithE2EFakeRedditOpensOnTheFrontPage", "bacon-reader-patched-with-e2e-fake-reddit-opens-on-the-front-page-phone")]
-    [InlineData("OpensWithE2E", "opens-with-e2e-phone")]
-    public void GifName_KeepsARunOfCapitalsWithADigitInsideOneWord(string methodName, string gifName) =>
-        Assert.Equal(gifName, ScenarioNaming.ToGifName(methodName, Screen.Phone));
+    [InlineData("Embed comment images shows a GIF in a comment as an image", "EmbedCommentImagesShowsAGifInACommentAsAnImage")]
+    [InlineData("BaconReader patched with E2E fake Reddit opens", "BaconReaderPatchedWithE2eFakeRedditOpens")]
+    [InlineData("Opens with E2E", "OpensWithE2e")]
+    [InlineData("Loads a URL", "LoadsAUrl")]
+    [InlineData("Gives 3 stacks for a kill of 3", "Gives3StacksForAKillOf3")]
+    public void MethodName_KeepsOnlyTheFirstCapitalOfAWordInCapitals(string title, string methodName) =>
+        Assert.Equal(methodName, ScenarioNaming.ToMethodName(title));
 
-    [Fact]
-    public void MethodName_KeepsARunOfCapitalsWithADigitInsideOneWord() =>
-        Assert.Equal(
-            "BaconReaderPatchedWithE2EFakeRedditOpensOnTheFrontPage",
-            ScenarioNaming.ToMethodName("BaconReader patched with E2E fake Reddit opens on the front page"));
+    [Theory]
+    [InlineData("Embed comment images shows a GIF in a comment as an image", "embed-comment-images-shows-a-gif-in-a-comment-as-an-image-phone")]
+    [InlineData("BaconReader patched with E2E fake Reddit opens", "bacon-reader-patched-with-e2e-fake-reddit-opens-phone")]
+    [InlineData("Opens with E2E", "opens-with-e2e-phone")]
+    [InlineData("Loads a URL", "loads-a-url-phone")]
+    public void GifName_OfATitleWithAWordInCapitalsKeepsItsWords(string title, string gifName) =>
+        Assert.Equal(gifName, ScenarioNaming.ToGifName(ScenarioNaming.ToMethodName(title), Screen.Phone));
 
     [Fact]
     public void DomainFolder_IsTheNamespaceUnderScenarios() =>

@@ -14,36 +14,26 @@ public static partial class ScenarioNaming
 
     /// <summary>
     /// "Reaper's Tithe gives 3 stacks for a kill of 3" → "ReapersTitheGives3StacksForAKillOf3": the method's name for a
-    /// Gherkin's title. Each run of letters and digits is a word (an apostrophe joins its word), its first letter upper case.
+    /// Gherkin's title. Each run of letters and digits is a word (an apostrophe joins its word), its first letter upper
+    /// case. A word in capitals keeps only its first one ("a GIF" → "AGif", "E2E" → "E2e"), so the GIF name can still
+    /// tell its words apart: "AGIF" would be one word.
     /// </summary>
     public static string ToMethodName(string title)
     {
         var name = new StringBuilder();
-        var startsWord = true;
-        foreach (var character in title.Replace("'", "").Replace("’", ""))
+        foreach (Match word in Word().Matches(title.Replace("'", "").Replace("’", "")))
         {
-            if (!char.IsAsciiLetterOrDigit(character))
-            {
-                startsWord = true;
-                continue;
-            }
-
-            name.Append(startsWord ? char.ToUpperInvariant(character) : character);
-            startsWord = false;
+            var text = word.Value;
+            var inCapitals = text.Count(char.IsAsciiLetter) > 1 && !text.Any(char.IsAsciiLetterLower);
+            name.Append(char.ToUpperInvariant(text[0])).Append(inCapitals ? text[1..].ToLowerInvariant() : text[1..]);
         }
 
         return name.ToString();
     }
 
-    /// <summary>
-    /// "baconreader-patched-with-spoof-client-opens-phone": a run's GIF name. A run of capitals with a digit inside ("E2E")
-    /// stays one word: Humanizer alone ends a word at the digit's next capital ("e2-e").
-    /// </summary>
-    public static string ToGifName(string methodName, Screen screen)
-    {
-        var words = CapitalsWithDigit().Replace(methodName, run => run.Value[0] + run.Value[1..].ToLowerInvariant());
-        return $"{words.Kebaberize()}-{screen.ToString().ToLowerInvariant()}";
-    }
+    /// <summary>"bacon-reader-patched-with-spoof-client-opens-phone": a run's GIF name, its method's name kebaberized.</summary>
+    public static string ToGifName(string methodName, Screen screen) =>
+        $"{methodName.Kebaberize()}-{screen.ToString().ToLowerInvariant()}";
 
     /// <summary>
     /// "Account", "Comments/ShowTables": a scenario class's domain folder under its project's Scenarios/, its namespace
@@ -57,7 +47,6 @@ public static partial class ScenarioNaming
             ? name[(at + ScenariosNamespace.Length)..].Replace('.', '/')
             : "Unsorted";
 
-    // Ends where the next word starts (a capital and a lower-case letter), at a digit or at the end.
-    [GeneratedRegex("[A-Z][A-Z0-9]*[0-9][A-Z0-9]*[A-Z](?=[A-Z][a-z]|[0-9]|$)")]
-    private static partial Regex CapitalsWithDigit();
+    [GeneratedRegex("[A-Za-z0-9]+")]
+    private static partial Regex Word();
 }
