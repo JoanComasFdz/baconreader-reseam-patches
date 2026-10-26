@@ -70,7 +70,6 @@ The environment needs network access "Full" and these variables, set in the envi
 | `TS_AUTHKEY_CLOUD` | A reusable, ephemeral Tailscale auth key, tagged for cloud sessions |
 | `E2E_EMULATOR_HOST` | The emulator's name on the tailnet |
 | `E2E_APK_CHECKSUM` | The sha256 of the clean BaconReader Premium 6.1.4 APK the emulator host serves |
-| `E2E_REDDIT_USERNAME`, `E2E_REDDIT_PASSWORD` | The e2e tests' Reddit account ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)) |
 
 Never print these variables or the environment (`env`, `env | grep E2E_`, `printenv`): a session's transcript keeps what it prints. To check one, use `[ -n "$NAME" ] && echo set || echo "not set"`.
 

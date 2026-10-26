@@ -18,7 +18,8 @@ patched with only "Spoof client", installed and opened.
 ```gherkin
 @phone
 Scenario: BaconReader patched with Spoof client opens on the front page
-  Given BaconReader is patched with "Spoof client" and installed
+  Given BaconReader is patched with "Spoof client"
+  And BaconReader is installed
   When I open BaconReader
   And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
   Then the toolbar shows the "Front Page" feed
@@ -28,10 +29,10 @@ Scenario: BaconReader patched with Spoof client opens on the front page
 
 1. **Test only what the PR's patch changes.** One Gherkin covers one subject (e.g. "Show tables draws a table").
    Behaviour the patch doesn't touch, even if it shows on the same screen, is left out.
-2. **Patch with the fewest patches.** The patch under test, and only what it needs to get to its subject:
-   "Spoof client" when it needs a login (anything that loads from Reddit: Reddit refuses BaconReader's own client, and
-   answers a logged-out front page with `HTTP 403 Blocked`), "Prompt to open Reddit links" when it is about opening a
-   Reddit link. Each one is quoted in the Given.
+2. **Patch with the fewest patches.** The patch under test, and only what it needs to get to its subject: "Spoof
+   client" when it logs in, "Prompt to open Reddit links" when it is about opening a Reddit link. Loading posts and
+   comments needs none: the fake Reddit answers a logged-out app (its README, "The fake Reddit"). Each one is quoted in
+   the Given, one a line.
 3. **Cover every case that can change the result.** For example:
    - each value its setting offers (on and off, each choice);
    - the content it acts on and content it must leave alone (a post with a table and one without);

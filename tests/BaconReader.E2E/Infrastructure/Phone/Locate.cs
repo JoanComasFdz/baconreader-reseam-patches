@@ -8,7 +8,7 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 
 /// <summary>
 /// The only ways a page object finds a view (E2E-TEST-CODE-RULES.md, rule c): its resource id, its content description or
-/// its exact text. Never XPath or a position.
+/// its exact text, or a web page's HTML id. Never XPath or a position.
 /// </summary>
 public static class Locate
 {
@@ -22,6 +22,26 @@ public static class Locate
     public static By Description(string description) => MobileBy.AccessibilityId(description);
 
     /// <summary>A view showing exactly <paramref name="text"/>.</summary>
-    public static By Text(string text) =>
-        MobileBy.AndroidUIAutomator($"new UiSelector().text(\"{text.Replace("\\", "\\\\").Replace("\"", "\\\"")}\")");
+    public static By Text(string text) => UiSelector($"text({Quote(text)})");
+
+    /// <summary>A view whose text contains <paramref name="text"/>: a sentence of a web page around a name it composes in.</summary>
+    public static By TextContaining(string text) => UiSelector($"textContains({Quote(text)})");
+
+    /// <summary>The view of BaconReader with resource id <paramref name="id"/> that shows exactly <paramref name="text"/>: one entry of a list whose entries share an id.</summary>
+    public static By AppIdWithText(string id, string text) =>
+        UiSelector($"resourceId({Quote($"{E2EDevice.Package}:id/{id}")}).text({Quote(text)})");
+
+    /// <summary>A button showing exactly <paramref name="text"/>, where a title shows the same text (a web page's "Log In").</summary>
+    public static By ButtonWithText(string text) => UiSelector($"className(\"android.widget.Button\").text({Quote(text)})");
+
+    /// <summary>The web page a web view shows, which scrolls (its view has no id once the page loaded).</summary>
+    public static By WebPage() => UiSelector("className(\"android.webkit.WebView\").scrollable(true)");
+
+    /// <summary>The text field inside the web page's view with HTML id <paramref name="id"/> (a form's field and its label).</summary>
+    public static By WebFieldIn(string id) =>
+        UiSelector($"resourceId({Quote(id)}).childSelector(new UiSelector().className(\"android.widget.EditText\"))");
+
+    private static By UiSelector(string selector) => MobileBy.AndroidUIAutomator($"new UiSelector().{selector}");
+
+    private static string Quote(string text) => $"\"{text.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
 }

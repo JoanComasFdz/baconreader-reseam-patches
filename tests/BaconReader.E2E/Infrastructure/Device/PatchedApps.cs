@@ -30,6 +30,14 @@ public static partial class PatchedApps
 
     private static string SigningFolder => Path.Combine(E2EDevice.WorkFolder, "signing");
 
+    /// <summary>
+    /// The patches every scenario's app is patched with, besides those its Given names, which never name these:
+    /// - "E2E fake Reddit": the app talks to the fake Reddit, never to Reddit;
+    /// - "Patches entry in settings": without it, a patch's settings read as off in the app, whatever their default:
+    ///   "Embed comment images" showed no image until it was patched in too.
+    /// </summary>
+    public static IReadOnlyList<Patch> Always { get; } = [Patch.E2EFakeReddit, Patch.PatchesEntryInSettings];
+
     /// <summary>Patches the clean APK with <paramref name="patches"/> (once per bundle) and returns the patched APK.</summary>
     public static async Task<string> PatchAsync(IReadOnlyList<Patch> patches)
     {
@@ -132,14 +140,18 @@ public static partial class PatchedApps
     }
 
     /// <summary>
-    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached) and
-    /// its runtime permissions granted again (clearing its data revokes them, and Android 14 would ask for notifications).
+    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached) and,
+    /// when <paramref name="allowNotifications"/>, its notifications allowed again (clearing its data revokes them, and
+    /// Android 14 would ask for them).
     /// </summary>
-    public static async Task ResetAsync()
+    public static async Task ResetAsync(bool allowNotifications)
     {
         await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
         await Commands.ShellAsync($"pm clear {E2EDevice.Package}");
-        await Commands.ShellAsync($"pm grant {E2EDevice.Package} android.permission.POST_NOTIFICATIONS");
+        if (allowNotifications)
+        {
+            await Commands.ShellAsync($"pm grant {E2EDevice.Package} android.permission.POST_NOTIFICATIONS");
+        }
     }
 
     private static async Task<string?> ReadInstalledShaAsync()

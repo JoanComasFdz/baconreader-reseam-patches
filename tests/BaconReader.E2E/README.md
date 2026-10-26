@@ -28,7 +28,7 @@ the scenarios joins the emulator, starts Appium in the session and exports what 
 | `E2E_BASE_APK` | that APK | the APK to patch, if it's elsewhere |
 | `E2E_BUNDLE` | `build/reseam/baconreader-patches.reseam` | the bundle to patch with (`./gradlew bundle`) |
 | `E2E_TEST_BUNDLE` | `e2e-patches/build/reseam/baconreader-e2e.reseam` | the test-only bundle (`./gradlew -p e2e-patches bundle`) |
-| `E2E_FAKE_REDDIT_URL` | `http://127.0.0.1:5080` | the fake Reddit server, as the phone reaches it, for "E2E fake Reddit" |
+| `E2E_FAKE_REDDIT_URL` | `http://127.0.0.1:5080` | the fake Reddit, as the phone reaches it: "E2E fake Reddit"'s `baseUrl`; the fake listens on its port here |
 | `E2E_RESEAM` | `reseam` | the reseam CLI |
 | `E2E_VIDEO_DIR` | unset | record each run there (`record.sh` sets it) |
 | `E2E_ACTION_GAP` | `1` | least seconds between two recorded steps |
@@ -42,15 +42,20 @@ emulator, so a session starts without reinstalling them; a new emulator needs on
 
 For each scenario, `BaseE2E`:
 
-1. patches the clean APK with both bundles, the released one and the test-only one, enabling only the scenario's
-   `[PatchedWith]` patches (`reseam patch --preset none --enable …`), once per set of patches and bundles
-   (`build/e2e/patched/`);
-2. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
+1. starts the fake Reddit, on the run's first scenario, and empties it, with the test account made again ("The fake
+   Reddit" below);
+2. patches the clean APK with both bundles, the released one and the test-only one, enabling the scenario's
+   `[PatchedWith]` patches and the ones every scenario gets, "E2E fake Reddit" and "Patches entry in settings"
+   (`reseam patch --preset none --enable …`), once per set of patches and bundles (`build/e2e/patched/`);
+3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
-3. clears the app's data, so the scenario starts from a fresh install;
-4. starts recording the screen, when the run records.
+4. points the phone at the fake Reddit (`adb reverse`, no HTTP proxy);
+5. clears the app's data, so the scenario starts from a fresh install, its notifications allowed unless the scenario
+   is `[WithoutNotificationsAllowed]`;
+6. starts recording the screen, when the run records;
+7. after the scenario, fails it if the app made a request the fake Reddit doesn't answer.
 
-The scenario then opens the app itself: `Phone.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
+The scenario's Given then makes its Reddit data (`Reddit.HasAPost("Weekly thread", "e2e")`), and it opens the app itself: `Phone.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
 (`FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
 BaconReader?" → "Not now" or "Set up"), or `Phone.BaconReader.OpenAsync()`, which does all of it. Then it taps and checks what
 its patch changes.
@@ -61,26 +66,43 @@ installed and logged in on the emulator doesn't survive a run.
 Measured on 2026-10-23 from a cloud session (~3–4 Mbit/s to the emulator): patching ~1 s; sending a new APK ~40 s; a
 scenario whose APK is already installed ~35 s, recorded.
 
-## The fake Reddit patch
+## The fake Reddit
 
-"E2E fake Reddit" is a test-only patch, in a bundle of its own that is never released (`./gradlew -p e2e-patches bundle` builds it into `e2e-patches/build/reseam/baconreader-e2e.reseam`;
-[patcher-specific-build.md](../../patcher-specific-build.md), "The e2e bundle"). It points BaconReader at a fake Reddit
-server instead of Reddit: every full URL of a Reddit host in the app and its extensions, in code and in static fields,
-moves to the server, paths kept:
+The scenarios never talk to Reddit (automation detection, throttled logins, content that changes): each makes exactly
+the Reddit data it needs on a fake Reddit, [BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), which runs in
+the test process.
 
-| Prefix | Becomes |
-|---|---|
-| `https://www.reddit.com`, `https://oauth.reddit.com`, `https://api.reddit.com`, `https://ssl.reddit.com`, `https://reddit.com`, `https://m.reddit.com`, `http://www.reddit.com`, `http://reddit.com` | `<baseUrl>` |
-| `https://i.redd.it/`, `https://preview.redd.it/`, `https://v.redd.it/` | `<baseUrl>/_media/i.redd.it/`, `<baseUrl>/_media/preview.redd.it/`, `<baseUrl>/_media/v.redd.it/` |
-| `https://cf-baconreader.onelouder.com/` | `<baseUrl>/_onelouder/` |
+- **The patch.** "E2E fake Reddit" is a test-only patch, in a bundle of its own that is never released
+  (`./gradlew -p e2e-patches bundle` builds it into `e2e-patches/build/reseam/baconreader-e2e.reseam`;
+  [patcher-specific-build.md](../../patcher-specific-build.md), "The e2e bundle"). It points BaconReader at the fake
+  instead of Reddit: every full URL of a Reddit host in the app and its extensions, in code and in static fields, moves
+  to it, paths kept:
 
-Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit links in posts by them.
+  | Prefix | Becomes |
+  |---|---|
+  | `https://www.reddit.com`, `https://oauth.reddit.com`, `https://api.reddit.com`, `https://ssl.reddit.com`, `https://reddit.com`, `https://m.reddit.com`, `http://www.reddit.com`, `http://reddit.com` | `<baseUrl>` |
+  | `https://i.redd.it/`, `https://preview.redd.it/`, `https://v.redd.it/` | `<baseUrl>/_media/i.redd.it/`, `<baseUrl>/_media/preview.redd.it/`, `<baseUrl>/_media/v.redd.it/` |
+  | `https://cf-baconreader.onelouder.com/` | `<baseUrl>/_onelouder/` |
 
-- **Option:** `baseUrl`, required, default `http://127.0.0.1:5080`. The harness passes `E2E_FAKE_REDDIT_URL` (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`)
-  when a scenario names the patch in its Given.
-- The server runs in the test process; the phone reaches it through `adb reverse tcp:5080 tcp:5080`. BaconReader's own
-  network security config already allows cleartext HTTP, to 127.0.0.1 too.
-- Until the server exists, the app's requests fail: its scenario only checks that the patched app installs and opens.
+  Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit links in posts by
+  them. Its option, `baseUrl` (default `http://127.0.0.1:5080`), is `E2E_FAKE_REDDIT_URL`
+  (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
+- **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches, and "Patches entry in
+  settings" too: without it, a patch's settings read as off in the app. A Given and `[PatchedWith]` name neither, only
+  the patches under test (`ScenarioShapeTests` checks it).
+- **The phone reaches it** through `adb reverse tcp:5080 tcp:5080` (the port of `E2E_FAKE_REDDIT_URL`), which BaseE2E
+  sets once the device is reached, and again when it's lost. BaseE2E also clears the phone's global HTTP proxy
+  (`settings put global http_proxy :0`): Android sends every app's requests through it, 127.0.0.1's too, and a proxy
+  set once stays in use after `settings delete`. BaconReader's network security config already allows cleartext HTTP,
+  to 127.0.0.1 too.
+- **A scenario's Reddit.** BaseE2E empties the fake before each scenario and makes the test account, `e2e_user`
+  (`TestAccount`); the scenario's Given makes the rest through `Reddit` (`Infrastructure/Reddit/`), in the Gherkin's
+  words. A subreddit is a default subreddit, so a logged-out Front Page shows its posts.
+- **Unanswered requests fail the scenario.** After each scenario, BaseE2E fails it if the app asked the fake for
+  something it doesn't answer (it says 404 and logs it), listing each request: the fake lacks an endpoint, or the
+  scenario's Given lacks data. `UnhandledRequests.Ignored` lists the few no scenario cares about, each with why.
+- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`) and Snoomoji emotes
+  (`www.redditstatic.com`) stay on Reddit.
 
 ## Run and record
 
@@ -97,14 +119,14 @@ tools/e2e/push-gifs.sh                                     # right after the pus
 `out/<domain folder>/<gif name>.gif` and `.mp4` and `out/scenarios.json`
 ([tools/e2e/README.md](../../tools/e2e/README.md)); `push-gifs.sh` hands them to the "E2E videos" workflow, which posts
 them on the PR ([docs/hosting.md](../../docs/hosting.md)). Without the emulator, `dotnet test` skips every scenario and
-runs only the shape and naming tests (the "E2E CI" workflow does that).
+runs only the shape and naming tests, and the fake Reddit's own tests (the "E2E CI" workflow does that).
 
 By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep the raw videos and their records).
 
 ## Where tests go
 
 `Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
-recording), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), the `Vocabulary`, the assertions, and what a scenario is (its Gherkin,
+recording, the link to the fake Reddit), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), `Reddit/` (the fake Reddit in the Gherkins' words), the `Vocabulary`, the assertions, and what a scenario is (its Gherkin,
 `[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record). `Scenarios/` is organized by the patches'
 areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`, `posts`, and `e2e` for the test-only patches): folder = area, class = one patch
 (`<Patch>Tests.cs`) in a folder of its own, method = one scenario (one Gherkin).
@@ -115,17 +137,12 @@ Scenarios/Account/SpoofClient/SpoofClientTests.cs
 
 ## Logging in
 
-Not built yet. Reddit refuses a logged-out BaconReader even with "Spoof client" (`www.reddit.com/.json` answers
-`HTTP 403 Blocked`), so every scenario that loads posts or comments needs a logged-in account. What it needs:
-
-1. a Reddit account for the tests only, with two-factor authentication off;
-2. its user name and password in the environment, `E2E_REDDIT_USERNAME` and `E2E_REDDIT_PASSWORD`, never in the
-   repository;
-3. `Phone.BaconReader.LogInAsync()`, built with the first scenario that needs it: the drawer's account entry, Reddit's login page
-   in the app's web view (user name, password, "Log in"), "Allow" on Reddit's authorization page for the spoofed app,
-   then back on the main screen, logged in. Its Given: `… is open, logged in`.
+A scenario logs in as BaconReader does, through the fake Reddit's login, made like Reddit's (the same page titles, field
+ids and buttons): "Add account" in the left menu, "Log In" with the test account, then "Accept" on the page asking to
+connect the app ("Spoof client" logs in as RedReader). Its Given doesn't need "Spoof client" unless it is about logging
+in: the fake answers a logged-out app ([SpoofClientTests.cs](Scenarios/Account/SpoofClient/SpoofClientTests.cs)).
 
 ## Isolation
 
-One device, so scenarios run one after another (`xunit.runner.json`). Each starts from the app's data cleared, so
-nothing one does (a login, a setting) reaches another.
+One device, so scenarios run one after another (`xunit.runner.json`). Each starts from the app's data cleared and the
+fake Reddit emptied, so nothing one does (a login, a setting, a post) reaches another.

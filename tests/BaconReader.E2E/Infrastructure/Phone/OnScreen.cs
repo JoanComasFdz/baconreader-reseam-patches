@@ -42,6 +42,31 @@ public static class OnScreen
         NoteStepEnded(driver);
     }
 
+    /// <summary>
+    /// Scrolls <paramref name="scrollable"/> down, a screen at a time, until <paramref name="target"/> is on the screen (a
+    /// button at the end of a web page).
+    /// </summary>
+    public static async Task ScrollToAsync(AndroidDriver driver, By scrollable, By target, string what)
+    {
+        await WaitForActionGapAsync(driver);
+        for (var screens = 0; !await Task.Run(() => IsOnScreen(driver, target)); screens++)
+        {
+            if (screens == 10)
+            {
+                throw new InvalidOperationException($"{what} wasn't on the screen after scrolling 10 screens down.");
+            }
+
+            await Task.Run(() => driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
+            {
+                ["elementId"] = ((OpenQA.Selenium.Appium.AppiumElement)driver.FindElement(scrollable)).Id,
+                ["direction"] = "down",
+                ["percent"] = 0.75,
+            }));
+        }
+
+        NoteStepEnded(driver);
+    }
+
     /// <summary>Reads what the screen shows with <paramref name="read"/>.</summary>
     public static async Task<T> ReadAsync<T>(AndroidDriver driver, Func<T> read)
     {
@@ -58,6 +83,9 @@ public static class OnScreen
             await Task.Delay(E2EDevice.ActionGap - since.Elapsed);
         }
     }
+
+    private static bool IsOnScreen(AndroidDriver driver, By target) =>
+        driver.FindElements(target).Any(element => element.Displayed && element.Size.Height > 0);
 
     private static void NoteStepEnded(AndroidDriver driver) => SinceLastStep.AddOrUpdate(driver, Stopwatch.StartNew());
 }

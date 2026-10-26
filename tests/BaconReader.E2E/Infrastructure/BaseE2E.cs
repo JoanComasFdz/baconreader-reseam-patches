@@ -5,7 +5,9 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using BaconReader.E2E.Infrastructure.Device;
+using BaconReader.E2E.Infrastructure.Reddit;
 using BaconReader.E2E.Infrastructure.Vocabulary;
+using BaconReader.FakeReddit;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Android;
 using Xunit.v3;
@@ -15,11 +17,16 @@ namespace BaconReader.E2E.Infrastructure;
 /// <summary>
 /// Everything around a scenario that isn't the scenario (E2E-TEST-CODE-RULES.md, rule b):
 /// - skips it unless <c>E2E_APPIUM_URL</c> points at the emulator's Appium (README, "The emulator");
+/// - the fake Reddit the app talks to (README, "The fake Reddit"): started once per run, in this process, on
+///   <c>E2E_FAKE_REDDIT_URL</c>'s port, which the phone reaches through <c>adb reverse</c> (<see cref="FakeRedditLink"/>);
+///   emptied before each scenario, with the test account (<see cref="TestAccount"/>) made again; the scenario builds
+///   its Reddit data through <see cref="Reddit"/>; after it, the scenario fails if the app made a request the fake
+///   couldn't answer (<see cref="UnhandledRequests"/>);
 /// - patches the clean BaconReader APK with the scenario's <see cref="PatchedWithAttribute"/> patches, the fewest it
-///   needs, and installs it (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the
-///   one installed already);
-/// - a fresh app per scenario: stopped, its data cleared, its notifications allowed, so scenarios share nothing (no
-///   login, no setting, no cache);
+///   needs, and the ones every scenario needs (<see cref="PatchedApps.Always"/>: "E2E fake Reddit"…), and installs it
+///   (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the one installed already);
+/// - a fresh app per scenario: stopped, its data cleared, its notifications allowed (unless the scenario is
+///   <see cref="WithoutNotificationsAllowedAttribute"/>), so scenarios share nothing (no login, no setting, no cache);
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it;
 /// - when the run records (<c>E2E_VIDEO_DIR</c>): records the screen from before the app opens to the end
@@ -31,6 +38,8 @@ namespace BaconReader.E2E.Infrastructure;
 public abstract class BaseE2E : IAsyncLifetime
 {
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromMinutes(2);
+    private static readonly SemaphoreSlim StartingFakeReddit = new(1, 1);
+    private static FakeRedditServer? fakeReddit;
 
     private AndroidDriver? driver;
     private ScreenRecording? recording;
@@ -42,17 +51,26 @@ public abstract class BaseE2E : IAsyncLifetime
     /// <summary>The phone as the user holds it: Android's screens and BaconReader on it.</summary>
     protected Phone.Phone Phone { get; private set; } = null!;
 
+    /// <summary>The fake Reddit the app talks to: a Given builds the scenario's Reddit data here.</summary>
+    protected Reddit.Reddit Reddit { get; private set; } = null!;
+
     public async ValueTask InitializeAsync()
     {
         Assert.SkipWhen(
             E2EDevice.AppiumUrl is null,
             "E2E_APPIUM_URL isn't set: end-to-end tests need the emulator (README, \"The emulator\").");
 
+        var fake = await StartFakeRedditAsync();
+        fake.World.Reset();
+        fake.World.AddAccount(TestAccount.UserName, TestAccount.Password);
+        Reddit = new Reddit.Reddit(fake.World);
+
         screen = ReadScreen();
         patches = ReadPatches();
-        var apk = await PatchedApps.PatchAsync(patches);
+        var apk = await PatchedApps.PatchAsync([.. patches.Union(PatchedApps.Always)]);
         await PatchedApps.InstallAsync(apk);
-        await PatchedApps.ResetAsync();
+        await FakeRedditLink.EnsureAsync();
+        await PatchedApps.ResetAsync(allowNotifications: ReadMethod()?.GetCustomAttribute<WithoutNotificationsAllowedAttribute>() is null);
         driver = await Task.Run(OpenDriver);
         Phone = new Phone.Phone(driver, patches, NoteAppShown);
 
@@ -74,8 +92,27 @@ public abstract class BaseE2E : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await CloseAsync(TestContext.Current.TestState?.Result == TestResult.Passed);
+        var unhandled = fakeReddit is null ? [] : UnhandledRequests.Of(fakeReddit.World);
+        await CloseAsync(TestContext.Current.TestState?.Result == TestResult.Passed && unhandled.IsEmpty);
         GC.SuppressFinalize(this);
+        if (!unhandled.IsEmpty)
+        {
+            throw new Xunit.Sdk.XunitException(UnhandledRequests.Describe(unhandled));
+        }
+    }
+
+    // The fake Reddit, started by the first scenario of the run, on the port the phone's forward reaches.
+    private static async Task<FakeRedditServer> StartFakeRedditAsync()
+    {
+        await StartingFakeReddit.WaitAsync();
+        try
+        {
+            return fakeReddit ??= await FakeRedditServer.StartAsync(E2EDevice.FakeRedditUrl);
+        }
+        finally
+        {
+            StartingFakeReddit.Release();
+        }
     }
 
     // Ends the recording and the Appium session (once), and saves the video with the scenario's record.

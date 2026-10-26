@@ -13,6 +13,8 @@ public enum Patch
     SpoofClient,
     DisableFinalReleaseAnnouncement,
     PromptToOpenRedditLinks,
+    EmbedCommentImages,
+    PatchesEntryInSettings,
     E2EFakeReddit,
 }
 
@@ -26,6 +28,8 @@ public static class PatchShowing
             Patch.SpoofClient => "Spoof client",
             Patch.DisableFinalReleaseAnnouncement => "Disable final release announcement",
             Patch.PromptToOpenRedditLinks => "Prompt to open Reddit links",
+            Patch.EmbedCommentImages => "Embed comment images",
+            Patch.PatchesEntryInSettings => "Patches entry in settings",
             Patch.E2EFakeReddit => "E2E fake Reddit",
             _ => throw new ArgumentOutOfRangeException(nameof(patch), patch, "A patch with no name in the bundle."),
         };
