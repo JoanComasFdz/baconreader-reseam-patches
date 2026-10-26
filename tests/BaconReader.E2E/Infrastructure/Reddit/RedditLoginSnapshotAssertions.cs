@@ -8,11 +8,6 @@ namespace BaconReader.E2E.Infrastructure.Reddit;
 /// <summary>What a test checks of what Reddit's login saw.</summary>
 public static class RedditLoginSnapshotAssertions
 {
-    // RedReader's identity, which "Spoof client" sends by default.
-    private const string RedReaderClientId = "yH0aTnJEt6qUgGn835B4vg";
-    private const string RedReaderRedirectUri = "redreader://rr_oauth_redir";
-    private const string RedReaderUserAgent = "org.quantumbadger.redreader/1.25.1";
-
     /// <summary>
     /// The app asked for the login page and traded the code as RedReader: its client ID and redirect URI at both steps,
     /// and its User-Agent on the token request (the login pages themselves go through the web view, with the web
@@ -26,14 +21,14 @@ public static class RedditLoginSnapshotAssertions
         Assert.True(authorize is not null, "Reddit never showed its login page, but the app was expected to ask for it.");
         Assert.True(token is not null, "The app never traded the login for a token, but it was expected to.");
         Assert.True(
-            authorize.ClientId == RedReaderClientId && token.ClientId == RedReaderClientId,
-            $"The app logged in with client ID \"{authorize.ClientId}\" and traded the code with \"{token.ClientId}\", but RedReader's, \"{RedReaderClientId}\", was expected.");
+            authorize.ClientId == RedReader.ClientId && token.ClientId == RedReader.ClientId,
+            $"The app logged in with client ID \"{authorize.ClientId}\" and traded the code with \"{token.ClientId}\", but RedReader's, \"{RedReader.ClientId}\", was expected.");
         Assert.True(
-            authorize.RedirectUri == RedReaderRedirectUri && token.RedirectUri == RedReaderRedirectUri,
-            $"The app asked to be sent back to \"{authorize.RedirectUri}\" and traded the code for \"{token.RedirectUri}\", but RedReader's, \"{RedReaderRedirectUri}\", was expected.");
+            authorize.RedirectUri == RedReader.RedirectUri && token.RedirectUri == RedReader.RedirectUri,
+            $"The app asked to be sent back to \"{authorize.RedirectUri}\" and traded the code for \"{token.RedirectUri}\", but RedReader's, \"{RedReader.RedirectUri}\", was expected.");
         Assert.True(
-            token.UserAgent == RedReaderUserAgent,
-            $"The app's User-Agent was \"{token.UserAgent}\", but RedReader's, \"{RedReaderUserAgent}\", was expected.");
+            token.UserAgent == RedReader.UserAgent,
+            $"The app's User-Agent was \"{token.UserAgent}\", but RedReader's, \"{RedReader.UserAgent}\", was expected.");
         return that;
     }
 }

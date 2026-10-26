@@ -25,8 +25,8 @@ namespace BaconReader.E2E.Infrastructure;
 /// - patches the clean BaconReader APK with the scenario's <see cref="PatchedWithAttribute"/> patches, the fewest it
 ///   needs, and the ones every scenario needs (<see cref="PatchedApps.Always"/>: "E2E fake Reddit"…), and installs it
 ///   (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the one installed already);
-/// - a fresh app per scenario: stopped, its data cleared, its notifications allowed (unless the scenario is
-///   <see cref="WithoutNotificationsAllowedAttribute"/>), so scenarios share nothing (no login, no setting, no cache);
+/// - a fresh app per scenario: stopped and its data cleared, as just installed (Android asks for its notifications
+///   when it opens), so scenarios share nothing (no login, no setting, no cache);
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it;
 /// - when the run records (<c>E2E_VIDEO_DIR</c>): records the screen from before the app opens to the end
@@ -70,7 +70,7 @@ public abstract class BaseE2E : IAsyncLifetime
         var apk = await PatchedApps.PatchAsync([.. patches.Union(PatchedApps.Always)]);
         await PatchedApps.InstallAsync(apk);
         await FakeRedditLink.EnsureAsync();
-        await PatchedApps.ResetAsync(allowNotifications: ReadMethod()?.GetCustomAttribute<WithoutNotificationsAllowedAttribute>() is null);
+        await PatchedApps.ResetAsync();
         driver = await Task.Run(OpenDriver);
         Phone = new Phone.Phone(driver, patches, NoteAppShown);
 

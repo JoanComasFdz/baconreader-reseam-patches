@@ -69,8 +69,7 @@ public sealed class SpoofClientTests : BaseE2E
 - `ScenarioShapeTests` (`dotnet test`, no emulator) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't
   its Gherkin's tag, that has no `[PatchedWith]`, whose `[PatchedWith]` isn't exactly the patches its Given quotes, one
-  a line (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds, or whose
-  `[WithoutNotificationsAllowed]` doesn't match its Given.
+  a line (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds.
 - The body is `// Given` once, then a `// When` and a `// Then` for each round of the Gherkin, in its order (rule h).
   It calls only `Phone`, `Reddit` and `Asserting.That`: no Appium API, no locators, no adb, no HTTP, no `Assert.*`, no
   delays.
@@ -93,8 +92,7 @@ public sealed class SpoofClientTests : BaseE2E
   permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one
   test key, and sent to the emulator only when it isn't the one installed (sending one takes ~40 s over the slow link);
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
-  its notifications allowed again (clearing revokes them, and Android 14 would ask), unless the scenario is
-  `[WithoutNotificationsAllowed]`, whose Given says `And BaconReader isn't allowed to send notifications`;
+  as just installed: Android 14 asks for its notifications when it opens, and the scenario answers;
 - **the screen:** one Appium session on the emulator, its UiAutomator2 helpers already installed
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   emulator was recreated), that never launches or resets the app itself: the scenario opens it;
@@ -200,10 +198,10 @@ Line for line, in the Gherkin's order:
 | `And the post "Weekly thread" has a comment with a GIF` | `// Given`: `Reddit.ThePost("Weekly thread").HasACommentWithAGif()` |
 | `And BaconReader is patched with "Spoof client"`, one line a patch | `[PatchedWith(Patch.SpoofClient, …)]`, every patch the Given names |
 | `And BaconReader is installed` | nothing: BaseE2E installed it |
-| `And BaconReader isn't allowed to send notifications` | `[WithoutNotificationsAllowed]` |
 | `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
+| `I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"` | `Phone.NotificationPermission.WaitUntilShownAsync()`, `ClickDontAllowAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
 | A `Then`, and the `And` lines after it | One `// Then` block: one read per part it checks, then one assertion per line, chained |
 | `the toolbar shows the "Front Page" feed` | `Phone.BaconReader.Main.Toolbar.ReadAsync()`, `ShowsFeed(new Feed.FrontPage())` |

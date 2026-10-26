@@ -11,8 +11,7 @@ namespace BaconReader.E2E.Infrastructure;
 /// implements (runs without the emulator): a theory played on at least one screen, its Gherkin in
 /// <see cref="TestDescriptionAttribute"/>, its name the Gherkin's title, its screen tags its attributes, and
 /// patched with exactly the patches its Given names, one a line (<see cref="Vocabulary.PatchedWithAttribute"/>; never one
-/// BaseE2E adds to every scenario), and <see cref="WithoutNotificationsAllowedAttribute"/> exactly when its Given says so.
-/// A screen attribute twice doesn't compile.
+/// BaseE2E adds to every scenario). A screen attribute twice doesn't compile.
 /// </summary>
 public sealed partial class ScenarioShapeTests
 {
@@ -69,21 +68,6 @@ public sealed partial class ScenarioShapeTests
         {
             Assert.Fail($"{scenario} names \"{Vocabulary.PatchShowing.ToShownText(always)}\", which BaseE2E adds to every scenario: leave it out.");
         }
-    }
-
-    [Theory]
-    [MemberData(nameof(Scenarios))]
-    public void Scenario_StartsWithoutNotificationsAllowedExactlyWhenItsGivenSaysSo(string scenario)
-    {
-        var method = Find(scenario);
-        var given = ReadGiven(ReadGherkin(method, scenario));
-        var saysSo = given.Any(line => line.EndsWith(WithoutNotificationsAllowedAttribute.InGiven, StringComparison.Ordinal));
-        var isSo = method.GetCustomAttribute<WithoutNotificationsAllowedAttribute>() is not null;
-        Assert.True(
-            saysSo == isSo,
-            isSo
-                ? $"{scenario} is [WithoutNotificationsAllowed], but no line of its Given says \"{WithoutNotificationsAllowedAttribute.InGiven}\"."
-                : $"{scenario}'s Given says \"{WithoutNotificationsAllowedAttribute.InGiven}\", but it isn't [WithoutNotificationsAllowed].");
     }
 
     // The Given block: its Given line and the And lines after it, up to the first When, each trimmed.

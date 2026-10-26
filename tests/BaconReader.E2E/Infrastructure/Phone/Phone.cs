@@ -18,7 +18,7 @@ public sealed class Phone
     {
         Launcher = new Launcher(driver);
         NotificationPermission = new NotificationPermission(driver);
-        BaconReader = new BaconReaderApp(driver, Launcher, patches, noteAppShown);
+        BaconReader = new BaconReaderApp(driver, Launcher, NotificationPermission, patches, noteAppShown);
     }
 
     /// <summary>Android's launcher: opens an app, as tapping its icon does.</summary>
