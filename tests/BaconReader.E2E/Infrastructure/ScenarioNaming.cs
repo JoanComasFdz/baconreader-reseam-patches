@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System.Text;
+using System.Text.RegularExpressions;
 using Humanizer;
 
 namespace BaconReader.E2E.Infrastructure;
 
 /// <summary>A scenario's names, from its Gherkin's title, its method's name and its class's namespace.</summary>
-public static class ScenarioNaming
+public static partial class ScenarioNaming
 {
     private const string ScenariosNamespace = ".Scenarios.";
 
@@ -34,9 +35,15 @@ public static class ScenarioNaming
         return name.ToString();
     }
 
-    /// <summary>"baconreader-patched-with-spoof-client-opens-phone": a run's GIF name.</summary>
-    public static string ToGifName(string methodName, Screen screen) =>
-        $"{methodName.Kebaberize()}-{screen.ToString().ToLowerInvariant()}";
+    /// <summary>
+    /// "baconreader-patched-with-spoof-client-opens-phone": a run's GIF name. A run of capitals with a digit inside ("E2E")
+    /// stays one word: Humanizer alone ends a word at the digit's next capital ("e2-e").
+    /// </summary>
+    public static string ToGifName(string methodName, Screen screen)
+    {
+        var words = CapitalsWithDigit().Replace(methodName, run => run.Value[0] + run.Value[1..].ToLowerInvariant());
+        return $"{words.Kebaberize()}-{screen.ToString().ToLowerInvariant()}";
+    }
 
     /// <summary>
     /// "Account", "Comments/ShowTables": a scenario class's domain folder under its project's Scenarios/, its namespace
@@ -49,4 +56,8 @@ public static class ScenarioNaming
         (@namespace ?? "") is var name && name.IndexOf(ScenariosNamespace, StringComparison.Ordinal) is var at && at >= 0
             ? name[(at + ScenariosNamespace.Length)..].Replace('.', '/')
             : "Unsorted";
+
+    // Ends where the next word starts (a capital and a lower-case letter), at a digit or at the end.
+    [GeneratedRegex("[A-Z][A-Z0-9]*[0-9][A-Z0-9]*[A-Z](?=[A-Z][a-z]|[0-9]|$)")]
+    private static partial Regex CapitalsWithDigit();
 }
