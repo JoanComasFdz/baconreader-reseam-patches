@@ -63,7 +63,7 @@ list_changed_classes() {
     scenarios="$(dirname "$project")/Scenarios"
     [ -d "$scenarios" ] || continue
     { git diff --name-only --diff-filter=AMR "$base" -- "$scenarios"; git ls-files --others --exclude-standard -- "$scenarios"; } |
-      sort -u | grep 'Tests\.cs$' | xargs -r -n1 basename | sed 's/\.cs$/\tchanged/'
+      sort -u | { grep 'Tests\.cs$' || true; } | xargs -r -n1 basename | sed 's/\.cs$/\tchanged/'
   done
 }
 
