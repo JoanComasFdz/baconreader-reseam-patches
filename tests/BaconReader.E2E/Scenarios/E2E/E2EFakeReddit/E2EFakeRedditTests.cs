@@ -31,6 +31,8 @@ public sealed class E2EFakeRedditTests : BaseE2E
           And I type the test account's password in "Password"
           And I tap "Log In"
           And I tap "Accept"
+          # BaconReader comes back from the login with the left menu open.
+          And I close the left menu
           And I select "All" in the toolbar's feed list
           Then the toolbar shows the "All" feed
           And the feed shows the posts "First fake post" and "Second fake post"
@@ -56,6 +58,9 @@ public sealed class E2EFakeRedditTests : BaseE2E
         await Phone.BaconReader.LogIn.WaitUntilConnectShownAsync();
         await Phone.BaconReader.LogIn.ClickAcceptAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
+        // BaconReader comes back from the login with the left menu open.
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.CloseAsync();
         await Phone.BaconReader.Main.Toolbar.SelectFeedAsync(new Feed.All());
         await Phone.BaconReader.Main.Posts.WaitUntilPostsShownAsync();
 

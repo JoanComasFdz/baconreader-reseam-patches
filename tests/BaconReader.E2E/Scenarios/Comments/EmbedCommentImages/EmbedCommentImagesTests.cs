@@ -29,6 +29,8 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I type the test account's password in "Password"
           And I tap "Log In"
           And I tap "Accept"
+          # BaconReader comes back from the login with the left menu open.
+          And I close the left menu
           And I tap the post "Weekly thread"
           Then the comment shows 1 GIF
         """)]
@@ -53,6 +55,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         await Phone.BaconReader.LogIn.WaitUntilConnectShownAsync();
         await Phone.BaconReader.LogIn.ClickAcceptAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
+        // BaconReader comes back from the login with the left menu open.
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.CloseAsync();
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
         await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
         await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync();

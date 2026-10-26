@@ -61,7 +61,7 @@ public sealed class SpoofClientTests : BaseE2E
           And I tap "Log In"
           Then Reddit asks to connect "RedReader (Release)" with the test account
           When I tap "Accept"
-          And I open the left menu
+          # BaconReader comes back from the login with the left menu open.
           Then the left menu shows the test account's user name
           # Not on the screen: the fake Reddit records what BaconReader sent.
           And Reddit saw RedReader's client ID, redirect URI and User-Agent
@@ -106,7 +106,6 @@ public sealed class SpoofClientTests : BaseE2E
         // When
         await Phone.BaconReader.LogIn.ClickAcceptAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
-        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
         await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
 
         // Then

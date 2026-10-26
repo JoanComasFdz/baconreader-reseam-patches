@@ -51,9 +51,9 @@ public sealed class LogIn(AndroidDriver driver)
     }
 
     // Waits for the field (while the keyboard opens, the web view resizes and briefly hands Android no views), taps it,
-    // waits until it has the focus (the keyboard moves the form when it opens, and the web view hands Android new views
-    // for it), then types key by key, as the keyboard does: Reddit refuses a login whose fields were filled in without
-    // a key pressed.
+    // waits until it has the focus (the web view hands Android new views for it), then sets its text at once: typed key
+    // by key, the keyboard turned "e2e_user"'s "_" into "." and the login page closed. The fake Reddit, unlike Reddit,
+    // takes a login whose fields were filled in without a key pressed.
     private async Task TypeAsync(OpenQA.Selenium.By field, string text)
     {
         await Waiting.UntilShownAsync(driver, field, TimeSpan.FromSeconds(10), "Reddit's login field");
@@ -62,7 +62,7 @@ public sealed class LogIn(AndroidDriver driver)
             () => driver.FindElements(field).Any(element => element.GetAttribute("focused") == "true"),
             TimeSpan.FromSeconds(10),
             "Reddit's login field taking the focus");
-        await OnScreen.DoAsync(driver, () => new OpenQA.Selenium.Interactions.Actions(driver).SendKeys(text).Perform());
+        await OnScreen.ActAsync(driver, field, element => element.SendKeys(text));
     }
 }
 
