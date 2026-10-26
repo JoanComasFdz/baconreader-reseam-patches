@@ -20,13 +20,28 @@ public static class Waiting
         }
     }
 
+    /// <summary>Waits up to <paramref name="timeout"/> until <paramref name="condition"/> holds on the screen.</summary>
+    public static async Task UntilAsync(Func<bool> condition, TimeSpan timeout, string what)
+    {
+        var until = DateTime.UtcNow + timeout;
+        while (!await Task.Run(() => Holds(condition)))
+        {
+            if (DateTime.UtcNow >= until)
+            {
+                throw new TimeoutException($"{what} didn't happen within {timeout.TotalSeconds:0} s.");
+            }
+
+            await Task.Delay(Poll);
+        }
+    }
+
     /// <summary>The first element shown that <paramref name="shown"/> finds within <paramref name="timeout"/>, or null.</summary>
     public static async Task<IWebElement?> FindWithinAsync(AndroidDriver driver, By shown, TimeSpan timeout)
     {
         var until = DateTime.UtcNow + timeout;
         do
         {
-            var found = await Task.Run(() => driver.FindElements(shown).FirstOrDefault(element => element.Displayed));
+            var found = await Task.Run(() => FindShown(driver, shown));
             if (found is not null)
             {
                 return found;
@@ -37,5 +52,31 @@ public static class Waiting
         while (DateTime.UtcNow < until);
 
         return null;
+    }
+
+    // A view that goes stale while it's read (a list or a web page redrawing) isn't shown yet: the next poll finds the new one.
+    private static IWebElement? FindShown(AndroidDriver driver, By shown)
+    {
+        try
+        {
+            return driver.FindElements(shown).FirstOrDefault(element => element.Displayed);
+        }
+        catch (StaleElementReferenceException)
+        {
+            return null;
+        }
+    }
+
+    // A view that goes stale while the condition reads it (a web page redrawing) doesn't hold it yet.
+    private static bool Holds(Func<bool> condition)
+    {
+        try
+        {
+            return condition();
+        }
+        catch (StaleElementReferenceException)
+        {
+            return false;
+        }
     }
 }

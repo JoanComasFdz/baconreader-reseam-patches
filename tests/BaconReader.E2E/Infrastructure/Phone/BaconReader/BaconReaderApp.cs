@@ -25,6 +25,12 @@ public sealed class BaconReaderApp(AndroidDriver driver, Launcher launcher, IRea
     /// <summary>The main screen (MainActivity): a feed of posts under the toolbar.</summary>
     public Main Main { get; } = new(driver, noteAppShown);
 
+    /// <summary>The screen "Add account" opens: Reddit's login in a web view.</summary>
+    public LogIn LogIn { get; } = new(driver);
+
+    /// <summary>The screen a post opens on (DetailActivity): the post and its comments.</summary>
+    public Detail Detail { get; } = new(driver);
+
     /// <summary>
     /// Opens BaconReader on its main screen, as a scenario's "Given BaconReader … is open" says: opens it from the
     /// launcher, taps "GOT IT :(" on the final release announcement and "Not now" on the prompt to open Reddit links

@@ -70,7 +70,6 @@ The environment needs network access "Full" and these variables, set in the envi
 | `TS_AUTHKEY_CLOUD` | A reusable, ephemeral Tailscale auth key, tagged for cloud sessions |
 | `E2E_EMULATOR_HOST` | The emulator's name on the tailnet |
 | `E2E_APK_CHECKSUM` | The sha256 of the clean BaconReader Premium 6.1.4 APK the emulator host serves |
-| `E2E_REDDIT_USERNAME`, `E2E_REDDIT_PASSWORD` | The e2e tests' Reddit account ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)) |
 
 Never print these variables or the environment (`env`, `env | grep E2E_`, `printenv`): a session's transcript keeps what it prints. To check one, use `[ -n "$NAME" ] && echo set || echo "not set"`.
 
@@ -134,6 +133,7 @@ tools/e2e/connect.sh --down        # at the end: release the lease, disconnect, 
 - **Appium's helper apps** stay installed on the device. After the emulator is recreated, `connect.sh` prints a note and exports `E2E_APPIUM_INSTALL_HELPERS=1`: the first Appium session then runs without the two skip capabilities and with `appium:uiautomator2ServerInstallTimeout` and `appium:adbExecTimeout` well above 20 s.
 - **First launch of BaconReader** shows Android's notification permission and the app's "FINAL RELEASE ANNOUNCEMENT!" dialogs. Install with `adb install -r -g`, or `adb shell pm grant com.onelouder.baconreader.premium android.permission.POST_NOTIFICATIONS`, then tap "GOT IT :(". `pm clear` revokes the permission: grant it again.
 - **After a wake** the device clock is set and error dialogs are suppressed; if one still shows, `adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS`.
+- **A hidden HTTP proxy.** The emulator once sent every app's requests through a global proxy at 10.0.2.2:8888, which refused them, 127.0.0.1's too (the e2e tests' fake Reddit), while `toybox nc` from `adb shell` still got through. `settings get global http_proxy` printed `null`, and nothing in `dumpsys connectivity` or the Wi-Fi network named it: a global proxy set once stays in use after `settings delete`. Its signs are `Failed to connect to /10.0.2.2:8888` or `Connection to http://10.0.2.2:8888 refused` in logcat. `adb shell settings put global http_proxy :0` clears it for good; the e2e tests do that before each scenario ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md), "The fake Reddit").
 - **Appium** isn't on `PATH`: it is `/opt/appium/node_modules/.bin/appium`, with `APPIUM_HOME=/opt/appium/home`. `connect.sh` starts it from there.
 - **`--down`** prints one line for each step: what it did with the lease ("lease released", or why not), "logged out of the tailnet", and "disconnected". If something is still running afterwards, the last line says "disconnected, but still running: …".
 - **Local ports.** adb on 5555 would show a phantom `emulator-5554`, so the forward uses 15555.

@@ -18,6 +18,9 @@
     <PackageReference Include="Humanizer.Core" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BaconReader.FakeReddit\BaconReader.FakeReddit.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
     <!-- Gherkin, [TestDescription], Screen and [PlayOnPhone], ScenarioNaming: what every scenario uses. -->
     <Using Include="BaconReader.E2E.Infrastructure" />

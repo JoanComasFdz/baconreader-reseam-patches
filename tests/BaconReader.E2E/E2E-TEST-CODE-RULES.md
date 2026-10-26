@@ -29,7 +29,8 @@ public sealed class SpoofClientTests : BaseE2E
     [TestDescription("""
         @phone
         Scenario: BaconReader patched with Spoof client opens on the front page
-          Given BaconReader is patched with "Spoof client" and installed
+          Given BaconReader is patched with "Spoof client"
+          And BaconReader is installed
           When I open BaconReader
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           Then the toolbar shows the "Front Page" feed
@@ -56,7 +57,8 @@ public sealed class SpoofClientTests : BaseE2E
 - A class is `public sealed class <Topic>Tests : BaseE2E`, in a folder of its own under its domain folder (rule g).
 - **One Gherkin is one scenario:** one method, a `[Theory]` with:
   - `[PlayOnPhone]`: plays it once, on the emulator. It matches the Gherkin's `@phone` tag;
-  - `[PatchedWith(...)]`: the patches its Given quotes, exactly those (rule b);
+  - `[PatchedWith(...)]`: the patches its Given quotes, exactly those (rule b), and none of the ones BaseE2E adds to
+    every scenario;
   - `[TestDescription("""…""")]`: the Gherkin it implements, word for word as agreed with the owner, tags and `#` lines
     included;
   - one parameter, `Screen screen`: the screen its attribute plays it on. BaseE2E reads it; the body never does (the
@@ -66,9 +68,12 @@ public sealed class SpoofClientTests : BaseE2E
   `bacon-reader-patched-with-spoof-client-opens-on-the-front-page-phone`.
 - `ScenarioShapeTests` (`dotnet test`, no emulator) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't
-  its Gherkin's tag, or that has no `[PatchedWith]` or a patch its Given doesn't quote.
+  its Gherkin's tag, that has no `[PatchedWith]`, whose `[PatchedWith]` isn't exactly the patches its Given quotes, one
+  a line (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds, or whose
+  `[WithoutNotificationsAllowed]` doesn't match its Given.
 - The body is `// Given` once, then a `// When` and a `// Then` for each round of the Gherkin, in its order (rule h).
-  It calls only `Phone` and `Asserting.That`: no Appium API, no locators, no adb, no `Assert.*`, no delays.
+  It calls only `Phone`, `Reddit` and `Asserting.That`: no Appium API, no locators, no adb, no HTTP, no `Assert.*`, no
+  delays.
 - Strings appear only for text the app composes around names and numbers (a post's title, a comment line, a toast:
   rule e).
 
@@ -76,12 +81,20 @@ public sealed class SpoofClientTests : BaseE2E
 
 `Infrastructure/BaseE2E.cs` owns everything that isn't the scenario:
 - the skip: a scenario is skipped unless `E2E_APPIUM_URL` is set (the emulator's connection script exports it: README, "The emulator");
-- **the patches:** it patches the clean APK with the scenario's `[PatchedWith]` patches, the fewest it needs, with
+- **the fake Reddit** (README, "The fake Reddit"): started once per run in the test process, on
+  `E2E_FAKE_REDDIT_URL`'s port, which the phone reaches through `adb reverse` (set once the device is reached, again
+  when lost) with the phone's HTTP proxy cleared (`Device/FakeRedditLink`); emptied before each scenario, with the test
+  account made again (`TestAccount`); the scenario's `Reddit`, through which its Given makes its Reddit data; and after
+  the scenario, a failure listing every request the app made that the fake doesn't answer (`Reddit/UnhandledRequests`,
+  whose short ignore list says why for each);
+- **the patches:** it patches the clean APK with the scenario's `[PatchedWith]` patches, the fewest it needs, and the
+  ones every scenario gets, which a Given never names (`PatchedApps.Always`: "E2E fake Reddit"), with
   `reseam patch --preset none --enable …` and the bundle `./gradlew bundle` built, and installs it with its runtime
-  permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one test
-  key, and sent to the emulator only when it isn't the one installed (sending one takes ~40 s over the slow link);
+  permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one
+  test key, and sent to the emulator only when it isn't the one installed (sending one takes ~40 s over the slow link);
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
-  its notifications allowed again (clearing revokes them, and Android 14 would ask);
+  its notifications allowed again (clearing revokes them, and Android 14 would ask), unless the scenario is
+  `[WithoutNotificationsAllowed]`, whose Given says `And BaconReader isn't allowed to send notifications`;
 - **the screen:** one Appium session on the emulator, its UiAutomator2 helpers already installed
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   emulator was recreated), that never launches or resets the app itself: the scenario opens it;
@@ -145,7 +158,8 @@ A scenario never repeats any of that.
   quotes.
 - A Gherkin's quoted **name** of a thing a scenario acts on or checks ("Front Page", "Best", "Spoof client") is a
   vocabulary case in the scenario. A quoted **text the app composes** (a post's title, a comment, a dialog's message)
-  is the quoted string itself, exactly as the Gherkin quotes it.
+  is the quoted string itself, exactly as the Gherkin quotes it; so is the Reddit data a Given makes (a post's title,
+  a subreddit's name), which the scenario passes to `Reddit`.
 - Every union has an `Unlisted(string Shown)` case: what the app shows that no case names yet, so a failing assertion
   names it as the app shows it.
 - A case is added when a scenario needs it; no up-front lists.
@@ -182,8 +196,12 @@ Line for line, in the Gherkin's order:
 | `@phone` | `[Theory, PlayOnPhone]` |
 | The whole Gherkin | `[TestDescription("""…""")]`, word for word |
 | `Scenario: BaconReader patched with Spoof client opens on the front page` | `public async Task BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage(Screen screen)` |
-| `Given BaconReader is patched with "Spoof client" and installed` | `[PatchedWith(Patch.SpoofClient)]`; `// Given` stays empty: BaseE2E installed it |
-| `Given BaconReader patched with "Spoof client" and "Show tables" is open` | `[PatchedWith(Patch.SpoofClient, Patch.ShowTables)]`; `// Given`: `Phone.BaconReader.OpenAsync()` |
+| `Given Reddit has a post "Weekly thread" in r/e2e` | `// Given`: `Reddit.HasAPost("Weekly thread", "e2e")` |
+| `And the post "Weekly thread" has a comment with a GIF` | `// Given`: `Reddit.ThePost("Weekly thread").HasACommentWithAGif()` |
+| `And BaconReader is patched with "Spoof client"`, one line a patch | `[PatchedWith(Patch.SpoofClient, …)]`, every patch the Given names |
+| `And BaconReader is installed` | nothing: BaseE2E installed it |
+| `And BaconReader isn't allowed to send notifications` | `[WithoutNotificationsAllowed]` |
+| `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |

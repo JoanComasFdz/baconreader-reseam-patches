@@ -11,6 +11,8 @@ public partial record Feed
 {
     public partial record FrontPage;
 
+    public partial record All;
+
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
     public partial record Unlisted(string Shown);
 }
@@ -18,12 +20,13 @@ public partial record Feed
 /// <summary>What the app shows for each <see cref="Feed"/>: the only place those strings live.</summary>
 public static class FeedShowing
 {
-    private static readonly Feed[] Listed = [new Feed.FrontPage()];
+    private static readonly Feed[] Listed = [new Feed.FrontPage(), new Feed.All()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this Feed value) =>
         value.Match(
             frontPage => "Front Page",
+            all => "All",
             unlisted => unlisted.Shown);
 
     /// <summary>The case the app's <paramref name="shown"/> text names, or <see cref="Feed.Unlisted"/>.</summary>

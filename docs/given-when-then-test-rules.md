@@ -60,11 +60,18 @@ Scenario: <what it proves, as a statement>
 2. **Title:** the `Scenario:` line, one line, a statement ("Show tables draws a Reddit table as a grid").
    It is also the test's method name (each run of letters and digits a word, an apostrophe joining its word,
    capitalized: `ShowTablesDrawsARedditTableAsAGrid`), so it starts with a letter and reads well run together.
-3. **Given:** the app, **every patch it is patched with, each in quotes** (the fewest the scenario needs: the patch under
-   test, and what it needs to get there, e.g. "Spoof client" to log in), and the state it starts in:
-   - `Given BaconReader is patched with "Spoof client" and installed`: the app is installed, not opened yet;
-   - `Given BaconReader patched with "Spoof client" and "Show tables" is open, logged in`: opened on its main
-     screen, its first-start dialogs answered (section 4.4), logged in to the test account.
+3. **Given:** what Reddit has (section 7), the app, **every patch it is patched with, each in quotes** (the fewest the
+   scenario needs: the patch under test, and what it needs to get there, e.g. "Spoof client" to log in), and the state
+   it starts in. **One fact a line,** each a line any scenario can reuse word for word: the first line `Given`, the
+   next ones `And`.
+   - `Given Reddit has a post "Weekly thread" in r/e2e`, `And the post "Weekly thread" has a comment with a GIF`: the
+     Reddit data the scenario needs, first, since the app shows it once it opens;
+   - `And BaconReader is patched with "Spoof client"`: one line for each patch;
+   - `And BaconReader is installed`: the app is installed, not opened yet;
+   - `And BaconReader isn't allowed to send notifications`: Android asks when the app opens;
+   - `And BaconReader is open`: opened on its main screen, its first-start dialogs answered (section 4.4).
+
+   The test-only patches every scenario's app gets (its README, "The fake Reddit") are never named.
 4. **One Gherkin per Given.** Checks that start from the same patches and the same state are one Gherkin: each becomes
    a round of it. Split only where the Given differs.
 5. **Rounds of When and Then.** A Gherkin is a sequence of rounds. Each round:
@@ -99,8 +106,8 @@ Scenario: <what it proves, as a statement>
 3. **Check only what the patch changes.** The rest of the screen is left out.
 4. **Say what must not be there** when it matters: `no post shows an award`, `"View Sidebar" is greyed out`. The test
    checks it too.
-5. **Explain anything that looks surprising** in a `#` line right above the check it explains: "# Logged out, Reddit
-   refuses the front page: only its title loads." Something that is expected but looks wrong gets a comment, never
+5. **Explain anything that looks surprising** in a `#` line right above the check it explains: "# Not on the screen:
+   the fake Reddit records what BaconReader sent." Something that is expected but looks wrong gets a comment, never
    silence.
 6. **Layout checks** name the views and what holds between them: `the table's columns don't overlap`, `"Search" sits
    at the sort bar's right end`, `the table fits inside the screen`.
@@ -111,10 +118,12 @@ The order of the rounds: [patch scenarios](given-when-then-patch-scenarios.md), 
 
 ## 7. Fixtures
 
-A scenario needs no fixture file: its app is the clean APK patched with the patches its Given names. What it needs
-from Reddit (a post with a table, a comment with an image) is a real, stable post, named in the Gherkin by its title
-and found by search or link, never by position in a feed. A logged-in scenario uses the test account (its app's
-README, "Logging in"); a Gherkin never names its credentials.
+A scenario needs no fixture file: its app is the clean APK patched with the patches its Given names, and it talks to a
+fake Reddit, never to Reddit. What it needs from Reddit (a post with a table, a comment with an image) its Given makes
+there, line by line, in its own words (`Given Reddit has a post "Weekly thread" in r/e2e`), and nothing else is there:
+a scenario sees only the Reddit data it made. A post or a comment is named in the Gherkin by its title or its text,
+never by an id or by position in a feed. A logged-in scenario uses the fake Reddit's test account (its app's README,
+"The fake Reddit"); a Gherkin calls it "the test account" and never names its credentials.
 
 ## 8. In the pull request
 

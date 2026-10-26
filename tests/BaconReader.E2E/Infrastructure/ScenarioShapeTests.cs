@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace BaconReader.E2E.Infrastructure;
 
@@ -9,10 +10,11 @@ namespace BaconReader.E2E.Infrastructure;
 /// Every scenario keeps the shape E2E-TEST-CODE-RULES.md (rule a) gives it, so it stays one to one with the Gherkin it
 /// implements (runs without the emulator): a theory played on at least one screen, its Gherkin in
 /// <see cref="TestDescriptionAttribute"/>, its name the Gherkin's title, its screen tags its attributes, and
-/// patched with exactly the patches its Given names (<see cref="Vocabulary.PatchedWithAttribute"/>). A screen
-/// attribute twice doesn't compile.
+/// patched with exactly the patches its Given names, one a line (<see cref="Vocabulary.PatchedWithAttribute"/>; never one
+/// BaseE2E adds to every scenario), and <see cref="WithoutNotificationsAllowedAttribute"/> exactly when its Given says so.
+/// A screen attribute twice doesn't compile.
 /// </summary>
-public sealed class ScenarioShapeTests
+public sealed partial class ScenarioShapeTests
 {
     public static TheoryData<string> Scenarios() =>
         [.. FindScenarios().Select(method => $"{method.DeclaringType!.Name}.{method.Name}")];
@@ -54,17 +56,46 @@ public sealed class ScenarioShapeTests
     public void Scenario_IsPatchedWithThePatchesItsGivenNames(string scenario)
     {
         var method = Find(scenario);
-        var gherkin = ReadGherkin(method, scenario);
+        var given = ReadGiven(ReadGherkin(method, scenario));
         var patches = method.GetCustomAttribute<Vocabulary.PatchedWithAttribute>()?.Patches
             ?? throw new Xunit.Sdk.XunitException($"{scenario} has no [PatchedWith]: BaseE2E wouldn't know what to patch BaconReader with.");
-        var given = gherkin.Text.Split('\n').FirstOrDefault(line => line.TrimStart().StartsWith("Given ", StringComparison.Ordinal)) ?? "";
-        foreach (var patch in patches)
+        var named = given.Select(line => PatchLine().Match(line)).Where(match => match.Success).Select(match => match.Groups[1].Value).ToArray();
+        var patched = patches.Select(Vocabulary.PatchShowing.ToShownText).ToArray();
+        Assert.True(
+            named.Order().SequenceEqual(patched.Order()),
+            $"{scenario} is patched with [{string.Join(", ", patched)}], but its Given names [{string.Join(", ", named)}], one patch a line: "
+            + "And BaconReader is patched with \"<patch>\".");
+        foreach (var always in Device.PatchedApps.Always.Where(patches.Contains))
         {
-            Assert.True(
-                given.Contains($"\"{Vocabulary.PatchShowing.ToShownText(patch)}\"", StringComparison.Ordinal),
-                $"{scenario} is patched with \"{Vocabulary.PatchShowing.ToShownText(patch)}\", but its Given doesn't name it: {given.Trim()}");
+            Assert.Fail($"{scenario} names \"{Vocabulary.PatchShowing.ToShownText(always)}\", which BaseE2E adds to every scenario: leave it out.");
         }
     }
+
+    [Theory]
+    [MemberData(nameof(Scenarios))]
+    public void Scenario_StartsWithoutNotificationsAllowedExactlyWhenItsGivenSaysSo(string scenario)
+    {
+        var method = Find(scenario);
+        var given = ReadGiven(ReadGherkin(method, scenario));
+        var saysSo = given.Any(line => line.EndsWith(WithoutNotificationsAllowedAttribute.InGiven, StringComparison.Ordinal));
+        var isSo = method.GetCustomAttribute<WithoutNotificationsAllowedAttribute>() is not null;
+        Assert.True(
+            saysSo == isSo,
+            isSo
+                ? $"{scenario} is [WithoutNotificationsAllowed], but no line of its Given says \"{WithoutNotificationsAllowedAttribute.InGiven}\"."
+                : $"{scenario}'s Given says \"{WithoutNotificationsAllowedAttribute.InGiven}\", but it isn't [WithoutNotificationsAllowed].");
+    }
+
+    // The Given block: its Given line and the And lines after it, up to the first When, each trimmed.
+    private static string[] ReadGiven(Gherkin gherkin) =>
+        [.. gherkin.Text.Split('\n')
+            .Select(line => line.Trim())
+            .SkipWhile(line => !line.StartsWith("Given ", StringComparison.Ordinal))
+            .TakeWhile(line => !line.StartsWith("When ", StringComparison.Ordinal) && !line.StartsWith("Then ", StringComparison.Ordinal))
+            .Where(line => line.StartsWith("Given ", StringComparison.Ordinal) || line.StartsWith("And ", StringComparison.Ordinal))];
+
+    [GeneratedRegex("^(?:Given|And) BaconReader is patched with \"([^\"]+)\"$")]
+    private static partial Regex PatchLine();
 
     private static Gherkin ReadGherkin(MethodInfo method, string scenario) =>
         method.GetCustomAttribute<TestDescriptionAttribute>() is { } description
