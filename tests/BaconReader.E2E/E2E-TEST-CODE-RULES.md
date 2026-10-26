@@ -64,7 +64,7 @@ public sealed class SpoofClientTests : BaseE2E
   - one parameter, `Screen screen`: the screen its attribute plays it on. BaseE2E reads it; the body never does (the
     project's `NoWarn` says so to xunit's analyzer).
 - Its **name** is the Gherkin's `Scenario:` title, each run of letters and digits a word (an apostrophe joins its
-  word), capitalized (`ScenarioNaming.ToMethodName`). Its **GIF name** is the method name kebaberized, then its screen:
+  word), capitalized, a word in capitals keeping only its first one ("a GIF" → `AGif`) (`ScenarioNaming.ToMethodName`). Its **GIF name** is the method name kebaberized, then its screen:
   `bacon-reader-patched-with-spoof-client-opens-on-the-front-page-phone`.
 - `ScenarioShapeTests` (`dotnet test`, no emulator) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't

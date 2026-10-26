@@ -59,7 +59,8 @@ Scenario: <what it proves, as a statement>
 1. **Tags:** the screen it is played on, `@phone`, on the line before `Scenario:`. The emulator is the only screen today.
 2. **Title:** the `Scenario:` line, one line, a statement ("Show tables draws a Reddit table as a grid").
    It is also the test's method name (each run of letters and digits a word, an apostrophe joining its word,
-   capitalized: `ShowTablesDrawsARedditTableAsAGrid`), so it starts with a letter and reads well run together.
+   capitalized, a word in capitals keeping only its first one: `ShowTablesDrawsARedditTableAsAGrid`,
+   `EmbedCommentImagesShowsAGifInAComment`), so it starts with a letter and reads well run together.
 3. **Given:** what Reddit has (section 7), the app, **every patch it is patched with, each in quotes** (the fewest the
    scenario needs: the patch under test, and what it needs to get there, e.g. "Spoof client" to log in), and the state
    it starts in. **One fact a line,** each a line any scenario can reuse word for word: the first line `Given`, the
