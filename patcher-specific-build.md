@@ -42,6 +42,23 @@ reseam patch <BaconReader 6.1.4 APK> \
 - Signing the APK: without `--key`/`--cert`, reseam makes a key and leaves it next to the output (`<name>.pk8`, `<name>.der`). Pass them back with `--key`/`--cert` so each build installs over the last.
 - Another BaconReader version: `--ignore-versions`.
 
+## The e2e bundle
+
+Test-only patches, such as "E2E fake Reddit", which the e2e tests use ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)), live in `e2e-patches/`, a workspace of its own: a Reseam workspace builds one bundle, and `release.yml` builds and publishes only the root's. It takes its Reseam version from the root's `settings.gradle.kts`.
+
+```shell
+./gradlew -p e2e-patches bundle --no-daemon   # → e2e-patches/build/reseam/baconreader-e2e.reseam
+reseam bundle list e2e-patches/build/reseam/baconreader-e2e.reseam
+reseam patch <APK> --bundle build/reseam/baconreader-patches.reseam --bundle e2e-patches/build/reseam/baconreader-e2e.reseam \
+  --trust <signer> --preset none --enable "E2E fake Reddit" \
+  --option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=http://127.0.0.1:5080 --output patched.apk
+```
+
+- **Never released.** The "Bundle check" workflow builds both bundles and fails when the released one lists a patch named "E2E …". A test-only patch goes in `e2e-patches/`, and not in the README's or `docs/patches.md`'s tables.
+- `--bundle` is repeatable. Both bundles are signed with the same key, so one `--trust` covers them.
+- "E2E fake Reddit" rewrites strings in `afterDependents`, which Reseam runs once every selected patch of every loaded bundle has executed, so after "Spoof client" and after the extensions those patches merged.
+- reseam refuses `--option` for a patch it doesn't run: pass it only with `--enable "E2E fake Reddit"`.
+
 ## Cloud sessions
 
 In a Claude Code cloud session of the `AndroidDev` environment, `.claude/hooks/session-start.sh` installs what the sections above and the e2e tests need: the .NET 10 SDK, ffmpeg, socat, Tailscale, adb, Appium 3.8 with the UiAutomator2 driver 8.7, JDK 17, the Android SDK, apktool, ktfmt, the `reseam` CLI of the plugin version in `settings.gradle.kts`, and a bundle signing key for the session's builds. It also points Gradle at Google's mirror of Maven Central, which often answers 429 to cloud sessions. It does not touch the emulator, and warns (`session-start:`) about anything that failed or any missing variable. A session on this repository runs it on start; no other repository is needed.

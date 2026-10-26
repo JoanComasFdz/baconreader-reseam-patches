@@ -27,6 +27,8 @@ the scenarios joins the emulator, starts Appium in the session and exports what 
 | `E2E_ARTIFACTS_DIR` | unset | the folder holding `com.onelouder.baconreader.premium-6.1.4-clean-base-*.apk` |
 | `E2E_BASE_APK` | that APK | the APK to patch, if it's elsewhere |
 | `E2E_BUNDLE` | `build/reseam/baconreader-patches.reseam` | the bundle to patch with (`./gradlew bundle`) |
+| `E2E_TEST_BUNDLE` | `e2e-patches/build/reseam/baconreader-e2e.reseam` | the test-only bundle (`./gradlew -p e2e-patches bundle`) |
+| `E2E_FAKE_REDDIT_URL` | `http://127.0.0.1:5080` | the fake Reddit server, as the phone reaches it, for "E2E fake Reddit" |
 | `E2E_RESEAM` | `reseam` | the reseam CLI |
 | `E2E_VIDEO_DIR` | unset | record each run there (`record.sh` sets it) |
 | `E2E_ACTION_GAP` | `1` | least seconds between two recorded steps |
@@ -40,8 +42,9 @@ emulator, so a session starts without reinstalling them; a new emulator needs on
 
 For each scenario, `BaseE2E`:
 
-1. patches the clean APK with the bundle, enabling only the scenario's `[PatchedWith]` patches
-   (`reseam patch --preset none --enable …`), once per set of patches and bundle (`build/e2e/patched/`);
+1. patches the clean APK with both bundles, the released one and the test-only one, enabling only the scenario's
+   `[PatchedWith]` patches (`reseam patch --preset none --enable …`), once per set of patches and bundles
+   (`build/e2e/patched/`);
 2. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 3. clears the app's data, so the scenario starts from a fresh install;
@@ -57,6 +60,27 @@ installed and logged in on the emulator doesn't survive a run.
 
 Measured on 2026-10-23 from a cloud session (~3–4 Mbit/s to the emulator): patching ~1 s; sending a new APK ~40 s; a
 scenario whose APK is already installed ~35 s, recorded.
+
+## The fake Reddit patch
+
+"E2E fake Reddit" is a test-only patch, in a bundle of its own that is never released (`./gradlew -p e2e-patches bundle` builds it into `e2e-patches/build/reseam/baconreader-e2e.reseam`;
+[patcher-specific-build.md](../../patcher-specific-build.md), "The e2e bundle"). It points BaconReader at a fake Reddit
+server instead of Reddit: every full URL of a Reddit host in the app and its extensions, in code and in static fields,
+moves to the server, paths kept:
+
+| Prefix | Becomes |
+|---|---|
+| `https://www.reddit.com`, `https://oauth.reddit.com`, `https://api.reddit.com`, `https://ssl.reddit.com`, `https://reddit.com`, `https://m.reddit.com`, `http://www.reddit.com`, `http://reddit.com` | `<baseUrl>` |
+| `https://i.redd.it/`, `https://preview.redd.it/`, `https://v.redd.it/` | `<baseUrl>/_media/i.redd.it/`, `<baseUrl>/_media/preview.redd.it/`, `<baseUrl>/_media/v.redd.it/` |
+| `https://cf-baconreader.onelouder.com/` | `<baseUrl>/_onelouder/` |
+
+Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit links in posts by them.
+
+- **Option:** `baseUrl`, required, default `http://127.0.0.1:5080`. The harness passes `E2E_FAKE_REDDIT_URL` (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`)
+  when a scenario names the patch in its Given.
+- The server runs in the test process; the phone reaches it through `adb reverse tcp:5080 tcp:5080`. BaconReader's own
+  network security config already allows cleartext HTTP, to 127.0.0.1 too.
+- Until the server exists, the app's requests fail: its scenario only checks that the patched app installs and opens.
 
 ## Run and record
 
@@ -82,7 +106,7 @@ By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep 
 `Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
 recording), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), the `Vocabulary`, the assertions, and what a scenario is (its Gherkin,
 `[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record). `Scenarios/` is organized by the patches'
-areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`, `posts`): folder = area, class = one patch
+areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`, `posts`, and `e2e` for the test-only patches): folder = area, class = one patch
 (`<Patch>Tests.cs`) in a folder of its own, method = one scenario (one Gherkin).
 
 ```

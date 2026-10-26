@@ -1,0 +1,53 @@
+name: Bundle check
+
+# Builds both bundles and fails when the released one, build/reseam/baconreader-patches.reseam, lists a test-only
+# "E2E …" patch. Those live in e2e-patches/, a workspace of its own that release.yml never builds.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      RESEAM_BIN: ${{ github.workspace }}/engine/reseam
+      RESEAM_BUNDLE_KEY: ${{ github.workspace }}/bundle-signing.key
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # A throwaway key: nothing built here is published.
+      - name: Install the Reseam CLI and a signing key
+        run: |
+          mkdir -p engine
+          version=$(sed -n 's/.*id("app.reseam.workspace") version "\(.*\)".*/\1/p' settings.gradle.kts)
+          curl -fsSL -o engine/reseam https://cdn.reseam.app/engine/v$version/reseam-linux-x64
+          chmod +x engine/reseam
+          engine/reseam bundle keygen --out bundle-signing.key
+
+      - name: Build the bundles
+        run: |
+          ./gradlew bundle --no-daemon
+          ./gradlew -p e2e-patches bundle --no-daemon
+
+      - name: Only the e2e bundle has E2E patches
+        run: |
+          engine/reseam bundle list build/reseam/baconreader-patches.reseam > main.txt
+          engine/reseam bundle list e2e-patches/build/reseam/baconreader-e2e.reseam > e2e.txt
+          cat main.txt e2e.txt
+          if grep -E '^ +[0-9]+\. \[(on|off)\] E2E ' main.txt; then
+            echo "The released bundle lists an E2E patch: test-only patches go in e2e-patches/." >&2
+            exit 1
+          fi
+          grep -qE '^ +[0-9]+\. \[(on|off)\] E2E fake Reddit ' e2e.txt

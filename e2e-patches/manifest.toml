@@ -1,0 +1,6 @@
+[bundle]
+name = "baconreader-e2e"
+author = "JoanComasFdz"
+description = "Test only: patches for BaconReader's end-to-end tests, never released"
+license = "GPL-3.0"
+format_version = 1
