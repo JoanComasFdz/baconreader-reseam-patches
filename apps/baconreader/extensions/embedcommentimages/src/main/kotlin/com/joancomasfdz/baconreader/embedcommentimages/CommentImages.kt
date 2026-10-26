@@ -448,6 +448,7 @@ internal object CommentImages {
 
         // The image starts empty (0x0) and grows when Glide sets it.
         val imageView = ImageView(context)
+        imageView.id = viewId(context, image.fullUrl)
         imageView.adjustViewBounds = true
         imageView.scaleType = ImageView.ScaleType.FIT_START
         slot.addView(
@@ -962,6 +963,19 @@ internal object CommentImages {
     }
 
     private fun unescape(url: String): String = url.replace("&amp;", "&")
+
+    /**
+     * The id of an image's view, a GIF's apart from an image's (the patch adds both to the app's
+     * resources): the e2e tests find the images by it.
+     */
+    private fun viewId(context: Context, url: String): Int {
+        val path = url.lowercase(Locale.ROOT).replaceFirst(Regex("[?#].*$"), "")
+        val name =
+            if (path.endsWith(".gif")) "baconreader_patches_comment_gif"
+            else "baconreader_patches_comment_image"
+        val id = context.resources.getIdentifier(name, "id", context.packageName)
+        return if (id == 0) View.NO_ID else id
+    }
 
     /** The width attribute of an <img> tag, or 0. */
     private fun width(tag: String): Int = intAttr(WIDTH_ATTR, tag)
