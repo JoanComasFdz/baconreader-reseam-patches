@@ -18,6 +18,8 @@ apps/baconreader/extensions/<name>/src/stubs/java/
 apps/baconreader/extensions/common/
                                extension code several patches share
 apps/baconreader/settings/     in-app settings and their strings
+e2e-patches/apps/baconreader/patch/src/main/kotlin/com/joancomasfdz/patches/baconreader/e2e/
+                               test-only patches for the e2e tests, a workspace and bundle of their own, never released
 ```
 
 - Patch packages are `com.joancomasfdz.patches.baconreader.<area>`, extension packages `com.joancomasfdz.baconreader.<name>`.
