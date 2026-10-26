@@ -24,9 +24,35 @@ public sealed class ScenarioNamingTests
             "bacon-reader-patched-with-spoof-client-opens-on-the-front-page-phone",
             ScenarioNaming.ToGifName("BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage", Screen.Phone));
 
+    [Theory]
+    [InlineData("EmbedCommentImagesShowsAGIFInACommentAsAnImage", "embed-comment-images-shows-agif-in-a-comment-as-an-image-phone")]
+    [InlineData("BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage", "bacon-reader-patched-with-spoof-client-opens-on-the-front-page-phone")]
+    [InlineData("BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader", "bacon-reader-patched-with-spoof-client-logs-in-to-reddit-as-red-reader-phone")]
+    [InlineData("BaconReaderLoggedInShowsThePostsRedditHasInAll", "bacon-reader-logged-in-shows-the-posts-reddit-has-in-all-phone")]
+    [InlineData("ReapersTitheGives3StacksForAKillOf3", "reapers-tithe-gives3-stacks-for-a-kill-of3-phone")]
+    public void GifName_OfTheScenariosPostedSoFarStaysAsItIs(string methodName, string gifName) =>
+        Assert.Equal(gifName, ScenarioNaming.ToGifName(methodName, Screen.Phone));
+
+    [Theory]
+    [InlineData("E2E", "e2e-phone")]
+    [InlineData("BaconReaderPatchedWithE2EFakeRedditOpensOnTheFrontPage", "bacon-reader-patched-with-e2e-fake-reddit-opens-on-the-front-page-phone")]
+    [InlineData("OpensWithE2E", "opens-with-e2e-phone")]
+    public void GifName_KeepsARunOfCapitalsWithADigitInsideOneWord(string methodName, string gifName) =>
+        Assert.Equal(gifName, ScenarioNaming.ToGifName(methodName, Screen.Phone));
+
+    [Fact]
+    public void MethodName_KeepsARunOfCapitalsWithADigitInsideOneWord() =>
+        Assert.Equal(
+            "BaconReaderPatchedWithE2EFakeRedditOpensOnTheFrontPage",
+            ScenarioNaming.ToMethodName("BaconReader patched with E2E fake Reddit opens on the front page"));
+
     [Fact]
     public void DomainFolder_IsTheNamespaceUnderScenarios() =>
         Assert.Equal("Account", ScenarioNaming.ToDomainFolder(typeof(Scenarios.Account.SpoofClientTests)));
+
+    [Fact]
+    public void DomainFolder_KeepsE2EWhole() =>
+        Assert.Equal("E2E", ScenarioNaming.ToDomainFolder(typeof(Scenarios.E2E.E2EFakeRedditTests)));
 
     [Fact]
     public void DomainFolder_OfANamespaceOutsideScenariosIsUnsorted() =>
