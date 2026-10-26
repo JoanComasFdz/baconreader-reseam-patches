@@ -15,7 +15,7 @@ pluginManagement {
 }
 
 plugins {
-    id("app.reseam.workspace") version "0.30.2"
+    id("app.reseam.workspace") version "0.32.0"
 }
 
 rootProject.name = "baconreader-patches"
