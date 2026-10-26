@@ -111,7 +111,7 @@ public sealed class LoginTests(FakeRedditFixture fixture) : FakeRedditTest(fixtu
 
         Assert.Equal("e2e_user", me.GetProperty("name").GetString());
         Assert.NotEqual(DateTimeOffset.UtcNow.ToString("MM-dd"), DateTimeOffset.FromUnixTimeSeconds((long)me.GetProperty("created_utc").GetDouble()).ToString("MM-dd"));
-        Assert.Equal(HttpStatusCode.Unauthorized, loggedOut.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, loggedOut.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, unknown.StatusCode);
     }
 

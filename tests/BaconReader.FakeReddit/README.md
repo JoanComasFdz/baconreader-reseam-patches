@@ -27,8 +27,8 @@ world.AddPost("pics", "A picture", post => post.WithImage());
 world.LoginPage.ShowCookieBanner = true;
 ```
 
-- `Subreddit(name)` makes a subreddit on first use, a default one (a logged-out Front Page shows its posts) unless
-  `IsDefault` is set to false.
+- `Subreddit(name)` makes a subreddit on first use, a default one (the Front Page of an account without
+  subscriptions shows its posts) unless `IsDefault` is set to false.
 - `PostBuilder`: `By`, `WithText`, `LinkingTo`, `WithImage`, `WithGif`, `WithScore`, `PostedAgo`, `Nsfw`, `Stickied`,
   `WithFlair`. `CommentBuilder`: `By`, `WithGif`, `WithImage`, `WithScore`. Each fills in everything Reddit sends for
   it, with media the fake serves: a GIF uploaded in a comment is `![gif](<id>)` in its body, an entry in its
@@ -42,7 +42,8 @@ world.LoginPage.ShowCookieBanner = true;
 
 Reddit's www, oauth and api hosts all land here. A path works with and without `.json` and a trailing slash, in any
 case (BaconReader asks for `/r/All/.json`). A request with `Authorization: bearer <token>` is that account's; one
-without is logged out.
+without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as Reddit does to BaconReader
+(`BlocksLoggedOut`, on by default): the login, BaconReader's own server and media still answer.
 
 | Endpoint | Answers |
 |---|---|
@@ -51,11 +52,12 @@ without is logged out.
 | `GET /r/{sub}/about`, `/r/{sub}/stylesheet` | `t5`; an empty stylesheet |
 | `GET /reddits/mine`, `/subreddits/mine/{where}`, `/reddits/popular`, `/reddits/default` (and `/subreddits/…`) | `t5` listings |
 | `GET /_onelouder/explore-api/def_subs` | the default subreddits, as BaconReader's own server sent them: `app.top_level_categories[0].subreddits[]` with `name` and `display_name` |
-| `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine`, `/message/{where}` | the account (never on today's day of the year, so no "Happy Cake Day!"), its prefs, empty lists; logged out, 401 |
+| `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine`, `/message/{where}` | the account (never on today's day of the year, so no "Happy Cake Day!"), its prefs, empty lists |
 | `GET /user/{name}/about` | `t2`, for the world's accounts |
-| `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, and others BaconReader sends | what Reddit answers (`{}`, or the comment), applied to the world and recorded in `Actions`; logged out, 401, still recorded |
+| `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, and others BaconReader sends | what Reddit answers (`{}`, or the comment), applied to the world and recorded in `Actions`, logged out too |
 | `GET /api/v1/authorize.compact` (and `/api/v1/authorize`, `/login.compact`, `/login`) | Reddit's login page: "Log In", the fields in elements with Reddit's ids, `login-username` and `login-password`, a "Log In" button; first the cookie banner when the world asks for it |
 | `POST` of the login page | with a known account and its password, "Hey, &lt;user&gt;! &lt;app&gt; would like to connect with your reddit account", the permissions asked, and "Accept"; otherwise the login page with "Incorrect username or password". The app is named by its client ID: RedReader's is "RedReader (Release)" |
+| `GET /favicon.ico` | 204: the web view asks for the login page's icon |
 | `GET /api/v1/authorize/answer` ("Accept" or "Decline") | 302 to `<redirect_uri>?state=<state>&code=<code>`, or `error=access_denied` |
 | `POST /api/v1/access_token` | Basic auth by the client ID; trades a code (once) or a refresh token for `access_token`, `refresh_token`, `token_type`, `expires_in`, `scope` |
 | `GET /_media/{host}/{path}` | the media store's file; `www.reddit.com/video/…` is `v.redd.it/…`, as BaconReader rewrites it |

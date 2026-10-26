@@ -78,13 +78,13 @@ public sealed class ActionTests(FakeRedditFixture fixture) : FakeRedditTest(fixt
     }
 
     [Fact]
-    public async Task An_action_logged_out_answers_401_and_is_still_recorded()
+    public async Task An_action_logged_out_answers_403_and_is_still_recorded()
     {
         var post = World.AddPost("e2e", "Thread");
 
         using var response = await SendAsync(HttpMethod.Post, "/api/vote", form: new Dictionary<string, string> { ["id"] = post.FullName, ["dir"] = "1" });
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var action = Assert.Single(World.Actions);
         Assert.Null(action.Account);
     }

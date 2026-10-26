@@ -45,7 +45,8 @@ internal static class Caller
 
     /// <summary>
     /// The account the request's token belongs to, null logged out. A token the fake didn't issue fails the request
-    /// with 401, as Reddit does: <paramref name="refused"/> is then the answer.
+    /// with 401, as Reddit does, and so does a logged-out request with 403 while the world blocks them
+    /// (<see cref="RedditWorld.BlocksLoggedOut"/>): <paramref name="refused"/> is then the answer.
     /// </summary>
     public static Account? Read(HttpContext context, RedditWorld world, out IResult? refused)
     {
@@ -53,6 +54,11 @@ internal static class Caller
         var authorization = context.Request.Headers.Authorization.ToString();
         if (!authorization.StartsWith("bearer ", StringComparison.OrdinalIgnoreCase))
         {
+            if (world.BlocksLoggedOut)
+            {
+                refused = Answers.Blocked();
+            }
+
             return null;
         }
 
@@ -76,6 +82,12 @@ internal static class Answers
     /// <summary>Reddit's error answer: <c>{"message": "Not Found", "error": 404}</c>.</summary>
     public static IResult Error(int status, string message) =>
         Results.Text(RedditJson.Serialize(new { message, error = status }), "application/json; charset=UTF-8", statusCode: status);
+
+    /// <summary>
+    /// What Reddit answers a logged-out BaconReader, even with "Spoof client": <c>HTTP 403 Blocked</c> (BaconReader then
+    /// shows its "no longer operational" message).
+    /// </summary>
+    public static IResult Blocked() => Results.Text("Blocked", "text/plain; charset=utf-8", statusCode: StatusCodes.Status403Forbidden);
 
     /// <summary>The form fields of a POST, empty when it has none.</summary>
     public static async Task<ImmutableDictionary<string, string>> ReadFormAsync(HttpRequest request)

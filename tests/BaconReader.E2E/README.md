@@ -97,7 +97,10 @@ the test process.
   to 127.0.0.1 too.
 - **A scenario's Reddit.** BaseE2E empties the fake before each scenario and makes the test account, `e2e_user`
   (`TestAccount`); the scenario's Given makes the rest through `Reddit` (`Infrastructure/Reddit/`), in the Gherkin's
-  words. A subreddit is a default subreddit, so a logged-out Front Page shows its posts.
+  words. A subreddit is a default subreddit, so the Front Page of an account without subscriptions shows its posts.
+- **Logged out, Reddit refuses the app.** As Reddit does to BaconReader, even with "Spoof client", the fake answers a
+  logged-out app's API requests with `HTTP 403 Blocked`; BaconReader then shows its "Greetings! … no longer
+  operational" message instead of posts. A scenario that loads posts or comments logs in first ("Logging in").
 - **Unanswered requests fail the scenario.** After each scenario, BaseE2E fails it if the app asked the fake for
   something it doesn't answer (it says 404 and logs it), listing each request: the fake lacks an endpoint, or the
   scenario's Given lacks data. `UnhandledRequests.Ignored` lists the few no scenario cares about, each with why.
@@ -139,8 +142,8 @@ Scenarios/Account/SpoofClient/SpoofClientTests.cs
 
 A scenario logs in as BaconReader does, through the fake Reddit's login, made like Reddit's (the same page titles, field
 ids and buttons): "Add account" in the left menu, "Log In" with the test account, then "Accept" on the page asking to
-connect the app ("Spoof client" logs in as RedReader). Its Given doesn't need "Spoof client" unless it is about logging
-in: the fake answers a logged-out app ([SpoofClientTests.cs](Scenarios/Account/SpoofClient/SpoofClientTests.cs)).
+connect the app ("Spoof client" logs in as RedReader), so its Given names "Spoof client". Every scenario that loads posts
+or comments does it: logged out, Reddit refuses BaconReader ([SpoofClientTests.cs](Scenarios/Account/SpoofClient/SpoofClientTests.cs)).
 
 ## Isolation
 

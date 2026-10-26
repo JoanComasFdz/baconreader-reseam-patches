@@ -101,7 +101,7 @@ public sealed class CommentTests(FakeRedditFixture fixture) : FakeRedditTest(fix
     [Fact]
     public async Task An_unknown_post_answers_404()
     {
-        using var response = await SendAsync(HttpMethod.Get, "/comments/zzzzz/.json");
+        using var response = await SendAsync(HttpMethod.Get, "/comments/zzzzz/.json", await ReaderAsync());
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

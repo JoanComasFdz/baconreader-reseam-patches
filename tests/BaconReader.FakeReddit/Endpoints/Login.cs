@@ -89,6 +89,9 @@ internal static class Login
             });
         }
 
+        // The web view asks for the login page's icon; the fake's pages have none.
+        app.MapGet("/favicon.ico", () => Results.NoContent());
+
         app.MapGet("/api/v1/authorize/answer", (HttpContext context) =>
         {
             var query = context.Request.Query;

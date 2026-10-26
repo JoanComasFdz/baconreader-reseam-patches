@@ -12,16 +12,23 @@ namespace BaconReader.E2E.Scenarios.Comments;
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages)]
+    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
     [TestDescription("""
         @phone
         Scenario: Embed comment images shows a GIF in a comment as an image
           Given Reddit has a post "Weekly thread" in r/e2e
           And the post "Weekly thread" has a comment with a GIF
           And BaconReader is patched with "Embed comment images"
+          And BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
+          And I open the left menu
+          And I tap "Add account"
+          And I type the test account's user name in "Email or username"
+          And I type the test account's password in "Password"
+          And I tap "Log In"
+          And I tap "Accept"
           And I tap the post "Weekly thread"
           Then the comment shows 1 GIF
         """)]
@@ -35,6 +42,16 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         await Phone.Launcher.OpenBaconReaderAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
+        await Phone.BaconReader.Main.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.AddAccount());
+        await Phone.BaconReader.LogIn.WaitUntilShownAsync();
+        await Phone.BaconReader.LogIn.TypeTheTestAccountsUserNameAsync();
+        await Phone.BaconReader.LogIn.TypeTheTestAccountsPasswordAsync();
+        await Phone.BaconReader.LogIn.ClickLogInAsync();
+        await Phone.BaconReader.LogIn.WaitUntilConnectShownAsync();
+        await Phone.BaconReader.LogIn.ClickAcceptAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
         await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();

@@ -19,6 +19,14 @@ public static class PostListSnapshotAssertions
         return that;
     }
 
+    /// <summary>The list shows no post.</summary>
+    public static AssertingThat<PostListSnapshot> ShowsNoPosts(this AssertingThat<PostListSnapshot> that)
+    {
+        var shown = that.InstanceToAssert.Titles;
+        Assert.True(shown.IsEmpty, $"The feed shows {Listed(shown)}, but no post was expected.");
+        return that;
+    }
+
     private static string Listed(IEnumerable<string> titles) =>
         titles.Any() ? string.Join(", ", titles.Select(title => $"\"{title}\"")) : "no post";
 }

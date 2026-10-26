@@ -24,7 +24,7 @@ public sealed class LogTests(FakeRedditFixture fixture) : FakeRedditTest(fixture
     public async Task A_media_file_the_store_doesnt_hold_is_unhandled_and_a_404_reddit_answers_isnt()
     {
         using var missing = await SendAsync(HttpMethod.Get, "/_media/i.redd.it/missing.gif");
-        using var noPost = await SendAsync(HttpMethod.Get, "/comments/zzzzz/.json");
+        using var noPost = await SendAsync(HttpMethod.Get, "/comments/zzzzz/.json", await ReaderAsync());
 
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, noPost.StatusCode);

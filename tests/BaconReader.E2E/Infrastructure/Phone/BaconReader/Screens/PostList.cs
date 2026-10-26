@@ -11,10 +11,18 @@ public sealed class PostList(AndroidDriver driver)
 {
     private static readonly OpenQA.Selenium.By List = Locate.AppId("rv_links");
     private static readonly OpenQA.Selenium.By Title = Locate.AppId("title");
+    private static readonly OpenQA.Selenium.By Message = Locate.AppId("errorText");
 
     /// <summary>Waits until the list shows a post (Reddit takes a moment to answer).</summary>
     public Task WaitUntilPostsShownAsync() =>
         Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(30), "A post in the main screen's list");
+
+    /// <summary>
+    /// Waits until the list shows BaconReader's message instead of posts ("Greetings! … BaconReader is no longer
+    /// operational"), which it shows when Reddit refuses the feed.
+    /// </summary>
+    public Task WaitUntilMessageShownAsync() =>
+        Waiting.UntilShownAsync(driver, Message, TimeSpan.FromSeconds(30), "BaconReader's message instead of the feed's posts");
 
     /// <summary>Taps the post titled <paramref name="title"/>, which opens it with its comments.</summary>
     public async Task ClickPostAsync(string title)
@@ -27,7 +35,7 @@ public sealed class PostList(AndroidDriver driver)
     /// <summary>What the list shows: the titles of the posts on the screen, top to bottom.</summary>
     public Task<PostListSnapshot> ReadAsync() =>
         OnScreen.ReadAsync(driver, () => new PostListSnapshot(
-            [.. driver.FindElement(List).FindElements(Title).Select(title => title.Text.Trim())]));
+            [.. driver.FindElements(List).SelectMany(list => list.FindElements(Title)).Select(title => title.Text.Trim())]));
 }
 
 /// <summary>What the list of posts shows: the titles of the posts on the screen, top to bottom.</summary>

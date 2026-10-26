@@ -43,14 +43,24 @@ public abstract class FakeRedditTest : IClassFixture<FakeRedditFixture>, IDispos
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>GETs <paramref name="path"/>, as <paramref name="token"/>'s account or logged out, and reads its JSON.</summary>
+    /// <summary>
+    /// GETs <paramref name="path"/> as <paramref name="token"/>'s account, or a reader's logged in for it (Reddit refuses a
+    /// logged-out app), and reads its JSON.
+    /// </summary>
     protected async Task<JsonElement> GetJsonAsync(string path, string? token = null)
     {
-        using var response = await SendAsync(HttpMethod.Get, path, token);
+        using var response = await SendAsync(HttpMethod.Get, path, token ?? await ReaderAsync());
         Assert.True(response.IsSuccessStatusCode, $"GET {path} answered {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)}");
         return await ReadJsonAsync(response);
     }
 
+    /// <summary>The token of "e2e_reader", an account with no subscriptions, made and logged in on first use.</summary>
+    protected async Task<string> ReaderAsync() =>
+        readerToken ??= await LogInAsync(World.AddAccount("e2e_reader", "pw"));
+
+    private string? readerToken;
+
+    /// <summary>Sends a request as <paramref name="token"/>'s account, or logged out when it's null.</summary>
     protected async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? token = null, IDictionary<string, string>? form = null)
     {
         using var request = new HttpRequestMessage(method, path);

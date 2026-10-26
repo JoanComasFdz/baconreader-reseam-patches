@@ -45,8 +45,11 @@ internal static class Listings
         });
 
         // BaconReader reads a subreddit's stylesheet for its spoiler styles; the fake's subreddits have none.
-        app.MapGet("/r/{subreddit}/stylesheet", (string subreddit) =>
-            Answers.Json(new { kind = "stylesheet", data = new { images = Array.Empty<object>(), subreddit_id = "", stylesheet = "" } }));
+        app.MapGet("/r/{subreddit}/stylesheet", (HttpContext context) =>
+        {
+            Caller.Read(context, world, out var refused);
+            return refused ?? Answers.Json(new { kind = "stylesheet", data = new { images = Array.Empty<object>(), subreddit_id = "", stylesheet = "" } });
+        });
 
         app.MapGet("/reddits/popular", (HttpContext context) => Subreddits(context, world, things, _ => true));
         app.MapGet("/subreddits/popular", (HttpContext context) => Subreddits(context, world, things, _ => true));

@@ -10,8 +10,36 @@ namespace BaconReader.FakeReddit.Tests;
 /// <summary>The feeds: which posts each shows, in which order, a page at a time, and every post as BaconReader needs it.</summary>
 public sealed class FeedTests(FakeRedditFixture fixture) : FakeRedditTest(fixture)
 {
+    [Theory]
+    [InlineData("/.json?obey_over18=false")]
+    [InlineData("/r/All/.json")]
+    [InlineData("/comments/10000/.json")]
+    [InlineData("/r/e2e/about.json")]
+    [InlineData("/r/e2e/stylesheet.json")]
+    public async Task Reddit_refuses_a_logged_out_app_with_403_Blocked(string path)
+    {
+        World.AddPost("e2e", "Hidden from the logged out");
+
+        using var response = await SendAsync(HttpMethod.Get, path);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("Blocked", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Empty(World.Unhandled);
+    }
+
     [Fact]
-    public async Task The_front_page_logged_out_shows_the_default_subreddits_posts()
+    public async Task A_logged_out_app_gets_the_feeds_when_the_world_lets_it()
+    {
+        World.BlocksLoggedOut = false;
+        World.AddPost("e2e", "Shown");
+
+        using var response = await SendAsync(HttpMethod.Get, "/.json");
+
+        Assert.Equal(["Shown"], Titles(await ReadJsonAsync(response)));
+    }
+
+    [Fact]
+    public async Task The_front_page_of_an_account_without_subscriptions_shows_the_default_subreddits_posts()
     {
         World.AddPost("e2e", "In a default");
         World.Subreddit("hidden_away").IsDefault = false;
@@ -60,7 +88,7 @@ public sealed class FeedTests(FakeRedditFixture fixture) : FakeRedditTest(fixtur
         World.AddPost("other", "There");
 
         var listing = await GetJsonAsync("/r/e2e/.json");
-        using var unknown = await SendAsync(HttpMethod.Get, "/r/nowhere/.json");
+        using var unknown = await SendAsync(HttpMethod.Get, "/r/nowhere/.json", await ReaderAsync());
 
         Assert.Equal(["Here"], Titles(listing));
         Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);

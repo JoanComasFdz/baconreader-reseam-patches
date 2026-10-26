@@ -41,6 +41,12 @@ public sealed class RedditWorld
     /// <summary>How the login page looks.</summary>
     public LoginPageOptions LoginPage { get; private set; } = new();
 
+    /// <summary>
+    /// Refuses Reddit's API to a logged-out app, as Reddit does to BaconReader: <c>403 Blocked</c>, whatever its
+    /// client (on by default). The login, BaconReader's own server and media still answer.
+    /// </summary>
+    public bool BlocksLoggedOut { get; set; } = true;
+
     /// <summary>The accounts, in the order they were made.</summary>
     public ImmutableArray<Account> Accounts => Read(() => accounts.ToImmutableArray());
 
@@ -78,6 +84,7 @@ public sealed class RedditWorld
             actions.Clear();
             logins.Clear();
             LoginPage = new LoginPageOptions();
+            BlocksLoggedOut = true;
             // Reddit's ids are base 36; starting at 36^4 makes them five characters, like an old post's.
             nextId = 36L * 36 * 36 * 36;
             nextOrder = 0;
