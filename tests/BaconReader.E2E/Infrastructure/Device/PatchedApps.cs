@@ -32,11 +32,9 @@ public static partial class PatchedApps
 
     /// <summary>
     /// The patches every scenario's app is patched with, besides those its Given names, which never name these:
-    /// - "E2E fake Reddit": the app talks to the fake Reddit, never to Reddit;
-    /// - "Patches entry in settings": without it, a patch's settings read as off in the app, whatever their default:
-    ///   "Embed comment images" showed no image until it was patched in too.
+    /// "E2E fake Reddit", so the app talks to the fake Reddit, never to Reddit.
     /// </summary>
-    public static IReadOnlyList<Patch> Always { get; } = [Patch.E2EFakeReddit, Patch.PatchesEntryInSettings];
+    public static IReadOnlyList<Patch> Always { get; } = [Patch.E2EFakeReddit];
 
     /// <summary>Patches the clean APK with <paramref name="patches"/> (once per bundle) and returns the patched APK.</summary>
     public static async Task<string> PatchAsync(IReadOnlyList<Patch> patches)

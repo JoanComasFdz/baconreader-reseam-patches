@@ -88,11 +88,10 @@ public sealed class SpoofClientTests : BaseE2E
   the scenario, a failure listing every request the app made that the fake doesn't answer (`Reddit/UnhandledRequests`,
   whose short ignore list says why for each);
 - **the patches:** it patches the clean APK with the scenario's `[PatchedWith]` patches, the fewest it needs, and the
-  ones every scenario gets, which a Given never names (`PatchedApps.Always`: "E2E fake Reddit", and "Patches entry in
-  settings", without which a patch's settings read as off), with `reseam patch --preset none --enable …` and the bundle
-  `./gradlew bundle` built, and installs it with its runtime permissions granted (`Device/PatchedApps`). An APK is
-  patched once per set of patches and bundle, signed with one test key, and sent to the emulator only when it isn't the
-  one installed (sending one takes ~40 s over the slow link);
+  ones every scenario gets, which a Given never names (`PatchedApps.Always`: "E2E fake Reddit"), with
+  `reseam patch --preset none --enable …` and the bundle `./gradlew bundle` built, and installs it with its runtime
+  permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one
+  test key, and sent to the emulator only when it isn't the one installed (sending one takes ~40 s over the slow link);
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
   its notifications allowed again (clearing revokes them, and Android 14 would ask), unless the scenario is
   `[WithoutNotificationsAllowed]`, whose Given says `And BaconReader isn't allowed to send notifications`;

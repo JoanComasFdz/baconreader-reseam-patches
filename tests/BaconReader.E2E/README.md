@@ -45,8 +45,8 @@ For each scenario, `BaseE2E`:
 1. starts the fake Reddit, on the run's first scenario, and empties it, with the test account made again ("The fake
    Reddit" below);
 2. patches the clean APK with both bundles, the released one and the test-only one, enabling the scenario's
-   `[PatchedWith]` patches and the ones every scenario gets, "E2E fake Reddit" and "Patches entry in settings"
-   (`reseam patch --preset none --enable …`), once per set of patches and bundles (`build/e2e/patched/`);
+   `[PatchedWith]` patches and "E2E fake Reddit", which every scenario gets (`reseam patch --preset none --enable …`),
+   once per set of patches and bundles (`build/e2e/patched/`);
 3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 4. points the phone at the fake Reddit (`adb reverse`, no HTTP proxy);
@@ -87,9 +87,8 @@ the test process.
   Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit links in posts by
   them. Its option, `baseUrl` (default `http://127.0.0.1:5080`), is `E2E_FAKE_REDDIT_URL`
   (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
-- **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches, and "Patches entry in
-  settings" too: without it, a patch's settings read as off in the app. A Given and `[PatchedWith]` name neither, only
-  the patches under test (`ScenarioShapeTests` checks it).
+- **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches. A Given and `[PatchedWith]`
+  never name it, only the patches under test (`ScenarioShapeTests` checks it).
 - **The phone reaches it** through `adb reverse tcp:5080 tcp:5080` (the port of `E2E_FAKE_REDDIT_URL`), which BaseE2E
   sets once the device is reached, and again when it's lost. BaseE2E also clears the phone's global HTTP proxy
   (`settings put global http_proxy :0`): Android sends every app's requests through it, 127.0.0.1's too, and a proxy
