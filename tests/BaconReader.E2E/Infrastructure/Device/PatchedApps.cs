@@ -11,6 +11,8 @@ namespace BaconReader.E2E.Infrastructure.Device;
 /// <summary>
 /// Patches the clean BaconReader APK with a scenario's patches and installs it on the emulator, as cheaply as a slow
 /// link to it allows (a cloud session's reaches it at ~3–4 Mbit/s):
+/// - the released bundle and the test-only one (e2e-patches/) are both loaded, and "E2E fake Reddit" gets the fake Reddit
+///   server's URL (<see cref="E2EDevice.FakeRedditUrl"/>) when a scenario names it;
 /// - each set of patches is patched once per bundle (<c>build/e2e/patched/&lt;hash&gt;.apk</c>; reseam takes about a second);
 /// - every APK is signed with one test key (<c>build/e2e/signing/</c>, made by reseam on the first patch), so one installs over
 ///   another; an install signed with another key (the owner's, another session's) is uninstalled first;
@@ -23,6 +25,9 @@ public static partial class PatchedApps
 
     private static string Reseam => Environment.GetEnvironmentVariable("E2E_RESEAM") is { Length: > 0 } reseam ? reseam : "reseam";
 
+    // "E2E fake Reddit"'s option, by its patch ID (its package and property).
+    private const string FakeRedditUrlOption = "com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl";
+
     private static string SigningFolder => Path.Combine(E2EDevice.WorkFolder, "signing");
 
     /// <summary>Patches the clean APK with <paramref name="patches"/> (once per bundle) and returns the patched APK.</summary>
@@ -32,9 +37,11 @@ public static partial class PatchedApps
         try
         {
             CheckExists(E2EDevice.Bundle, "the bundle: build it with ./gradlew bundle (README)");
+            CheckExists(E2EDevice.TestBundle, "the e2e bundle: build it with ./gradlew -p e2e-patches bundle (README)");
             CheckExists(E2EDevice.BaseApk, "the clean BaconReader APK: the emulator's connection script downloads it (README, \"The emulator\")");
             var names = patches.Select(patch => patch.ToShownText()).Order(StringComparer.Ordinal).ToArray();
-            var key = Hash($"{HashFile(E2EDevice.Bundle)}\n{HashFile(E2EDevice.BaseApk)}\n{string.Join('\n', names)}")[..16];
+            var key = Hash(
+                $"{HashFile(E2EDevice.Bundle)}\n{HashFile(E2EDevice.TestBundle)}\n{HashFile(E2EDevice.BaseApk)}\n{E2EDevice.FakeRedditUrl}\n{string.Join('\n', names)}")[..16];
             var patched = Path.Combine(E2EDevice.WorkFolder, "patched", key + ".apk");
             if (File.Exists(patched))
             {
@@ -46,12 +53,23 @@ public static partial class PatchedApps
             {
                 "patch", E2EDevice.BaseApk,
                 "--bundle", E2EDevice.Bundle,
-                "--trust", await ReadSignerAsync(),
-                "--preset", "none",
+                "--bundle", E2EDevice.TestBundle,
             };
+            foreach (var signer in new[] { await ReadSignerAsync(E2EDevice.Bundle), await ReadSignerAsync(E2EDevice.TestBundle) }.Distinct())
+            {
+                arguments.AddRange(["--trust", signer]);
+            }
+
+            arguments.AddRange(["--preset", "none"]);
             foreach (var name in names)
             {
                 arguments.AddRange(["--enable", name]);
+            }
+
+            // reseam refuses an option of a patch it doesn't run.
+            if (patches.Contains(Patch.E2EFakeReddit))
+            {
+                arguments.AddRange(["--option", $"{FakeRedditUrlOption}={E2EDevice.FakeRedditUrl}"]);
             }
 
             var signingKey = Path.Combine(SigningFolder, "e2e.pk8");
@@ -136,10 +154,10 @@ public static partial class PatchedApps
         return sum.Split(' ', 2)[0];
     }
 
-    // The key that signed the bundle, which reseam must be told to trust.
-    private static async Task<string> ReadSignerAsync()
+    // The key that signed a bundle, which reseam must be told to trust.
+    private static async Task<string> ReadSignerAsync(string bundle)
     {
-        var listed = await Commands.RunOrFailAsync(Reseam, "bundle", "list", E2EDevice.Bundle);
+        var listed = await Commands.RunOrFailAsync(Reseam, "bundle", "list", bundle);
         var signer = Signer().Match(listed);
         return signer.Success ? signer.Groups[1].Value : throw new InvalidOperationException($"reseam bundle list names no signer:\n{listed}");
     }

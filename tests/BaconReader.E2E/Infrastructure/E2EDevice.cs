@@ -11,6 +11,10 @@ namespace BaconReader.E2E.Infrastructure;
 ///   is recorded and nothing is paced;
 /// - <c>E2E_ACTION_GAP</c>: the least seconds between two steps of a recorded scenario (default 1);
 /// - <c>E2E_BUNDLE</c>: the Reseam bundle to patch with, by default the one <c>./gradlew bundle</c> builds;
+/// - <c>E2E_TEST_BUNDLE</c>: the bundle of the test-only patches, by default the one <c>./gradlew -p e2e-patches bundle</c>
+///   builds (e2e-patches/, never released);
+/// - <c>E2E_FAKE_REDDIT_URL</c>: the fake Reddit server "E2E fake Reddit" points the app at (default
+///   <c>http://127.0.0.1:5080</c>);
 /// - <c>E2E_BASE_APK</c>: the clean APK to patch, by default BaconReader Premium 6.1.4's in <c>E2E_ARTIFACTS_DIR</c>, the
 ///   folder the connection script downloads it to.
 /// </summary>
@@ -40,6 +44,18 @@ public static class E2EDevice
         Environment.GetEnvironmentVariable("E2E_BUNDLE") is { Length: > 0 } bundle
             ? bundle
             : Path.Combine(RepoRoot, "build", "reseam", "baconreader-patches.reseam");
+
+    public static string TestBundle =>
+        Environment.GetEnvironmentVariable("E2E_TEST_BUNDLE") is { Length: > 0 } bundle
+            ? bundle
+            : Path.Combine(RepoRoot, "e2e-patches", "build", "reseam", "baconreader-e2e.reseam");
+
+    /// <summary>
+    /// The fake Reddit server's URL as the phone reaches it, <c>E2E_FAKE_REDDIT_URL</c>: by default
+    /// <c>http://127.0.0.1:5080</c>, the test process's port that <c>adb reverse tcp:5080 tcp:5080</c> forwards.
+    /// </summary>
+    public static string FakeRedditUrl =>
+        Environment.GetEnvironmentVariable("E2E_FAKE_REDDIT_URL") is { Length: > 0 } url ? url : "http://127.0.0.1:5080";
 
     public static string BaseApk =>
         Environment.GetEnvironmentVariable("E2E_BASE_APK") is { Length: > 0 } apk
