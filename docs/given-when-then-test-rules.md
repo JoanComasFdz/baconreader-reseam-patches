@@ -132,7 +132,7 @@ and the PR's e2e comment shows each one with its GIF, so the PR description does
 under its **Acceptance criteria**, each Gherkin is one checkbox line with its title and its test class.
 
 ```markdown
-- [ ] BaconReader patched with Spoof client opens on the front page (`SpoofClientTests`)
+- [ ] BaconReader patched with Spoof client logs in to Reddit as RedReader (`SpoofClientTests`)
 ```
 
 A patch's scenarios go in the same PR as the patch, and the GIFs are posted on it ([hosting.md](hosting.md)).
