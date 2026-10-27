@@ -98,6 +98,9 @@ public sealed class Post
     /// <summary>The preview images (<c>preview.images[].source.url</c>), URLs.</summary>
     public List<string> PreviewImages { get; } = [];
 
+    /// <summary>The media a text post's text shows (<c>![img](id)</c>), by id: Reddit's <c>media_metadata</c>.</summary>
+    public Dictionary<string, UploadedMedia> Media { get; } = [];
+
     public int Score { get; set; } = 1;
 
     public bool IsNsfw { get; set; }
@@ -168,7 +171,7 @@ public sealed class Comment
     public int Score { get; set; } = 1;
 
     /// <summary>The media the body shows (<c>![gif](id)</c>), by id: Reddit's <c>media_metadata</c>.</summary>
-    public Dictionary<string, CommentMedia> Media { get; } = [];
+    public Dictionary<string, UploadedMedia> Media { get; } = [];
 
     public List<Comment> Replies { get; } = [];
 
@@ -184,13 +187,33 @@ public sealed class Comment
     internal int ReplyCount => Replies.Sum(reply => 1 + reply.ReplyCount);
 }
 
-/// <summary>An image or GIF a comment shows, uploaded to Reddit: one entry of the comment's <c>media_metadata</c>.</summary>
-/// <param name="Id">The id the body names: <c>![gif](&lt;id&gt;)</c>.</param>
-/// <param name="ContentType">Its type, <c>image/gif</c> or <c>image/png</c>…</param>
-/// <param name="Path">Where the media store holds it: <c>i.redd.it/&lt;id&gt;.gif</c>.</param>
-public sealed record CommentMedia(string Id, string ContentType, string Path, int Width, int Height)
+/// <summary>
+/// An image, GIF or video uploaded to Reddit in a comment or a post's text: one entry of its <c>media_metadata</c>.
+/// </summary>
+/// <param name="Id">The id the Markdown names: <c>![gif](&lt;id&gt;)</c>.</param>
+/// <param name="ContentType">Its type, <c>image/gif</c>, <c>image/png</c> or <c>video/mp4</c>…</param>
+/// <param name="Path">
+/// Where the media store holds it: <c>i.redd.it/&lt;id&gt;.gif</c>, <c>preview.redd.it/&lt;id&gt;.png</c>, or a video's
+/// DASH playlist, <c>v.redd.it/&lt;id&gt;/DASHPlaylist.mpd</c>.
+/// </param>
+public sealed record UploadedMedia(string Id, string ContentType, string Path, int Width, int Height)
 {
     public bool IsAnimated => ContentType == "image/gif";
+
+    public bool IsVideo => ContentType.StartsWith("video/", StringComparison.Ordinal);
+
+    /// <summary>
+    /// An image or GIF uploaded to Reddit, in <paramref name="world"/>'s media store: a GIF at
+    /// <c>i.redd.it/&lt;id&gt;.gif</c>, an image at its preview, <c>preview.redd.it/&lt;id&gt;.png</c>.
+    /// </summary>
+    internal static UploadedMedia Upload(RedditWorld world, MediaAsset asset)
+    {
+        var id = world.NewId() + "e2emedia";
+        var host = asset.ContentType == "image/gif" ? "i.redd.it" : "preview.redd.it";
+        var path = $"{host}/{id}.{asset.Extension}";
+        world.AddMedia(path, asset.ContentType, asset.Bytes);
+        return new UploadedMedia(id, asset.ContentType, path, asset.Width, asset.Height);
+    }
 }
 
 /// <summary>A file the fake serves under <c>/_media/</c>.</summary>

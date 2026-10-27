@@ -2,71 +2,442 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using BaconReader.E2E.Infrastructure;
+using BaconReader.E2E.Infrastructure.Phone;
+using BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 using BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
 namespace BaconReader.E2E.Scenarios.Comments;
 
-/// <summary>"Embed comment images": BaconReader shows the images and GIFs in comments as images, under the text.</summary>
+/// <summary>
+/// "Embed comment images": BaconReader shows the images, GIFs and videos of comments and post texts under the text, and
+/// plays the videos in place. A tap switches an image between full width and 200×200, a double tap opens it in full
+/// screen, a long press saves it to Downloads/BaconReader.
+/// </summary>
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
     [Theory, PlayOnPhone]
     [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
     [TestDescription("""
         @phone
-        Scenario: Embed comment images shows a GIF in a comment as an image
+        Scenario: Embed comment images shows the images, GIFs and image links of comments as images
           Given Reddit has a post "Weekly thread" in r/e2e
-          And the post "Weekly thread" has a comment with a GIF
+          And the post "Weekly thread" has a comment "Here is an image" with an image
+          And the post "Weekly thread" has a comment "Here is a GIF" with a GIF
+          And the post "Weekly thread" has a comment "Here is an image link" with a link to an image
+          And the post "Weekly thread" has a comment "Just text"
           And BaconReader is patched with "Embed comment images"
           And BaconReader is patched with "Spoof client"
-          And BaconReader is installed
-          When I open BaconReader
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
-          And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
-          And I open the left menu
-          And I tap "Add account"
-          And I type the test account's user name in "Email or username"
-          And I type the test account's password in "Password"
-          And I tap "Log In"
-          And I tap "Accept"
-          # BaconReader comes back from the login with the left menu open.
-          And I close the left menu
-          And I tap the post "Weekly thread"
-          Then the comment shows 1 GIF
+          And BaconReader is open
+          And the test account is logged in
+          When I tap the post "Weekly thread"
+          Then the comment "Here is an image" shows 1 image
+          When I scroll to the comment "Here is a GIF"
+          Then the comment "Here is a GIF" shows 1 GIF
+          When I scroll to the comment "Here is an image link"
+          # The image takes the bare link's place: the link is dropped from the text.
+          Then the comment "Here is an image link" shows 1 image
+          And the comment "Here is an image link" shows no link
+          When I scroll to the comment "Just text"
+          Then the comment "Just text" shows no image
         """)]
-    public async Task EmbedCommentImagesShowsAGifInACommentAsAnImage(Screen screen)
+    public async Task EmbedCommentImagesShowsTheImagesGIFsAndImageLinksOfCommentsAsImages(Screen screen)
     {
         // Given
         Reddit.HasAPost("Weekly thread", "e2e");
-        Reddit.ThePost("Weekly thread").HasACommentWithAGif();
+        Reddit.ThePost("Weekly thread").HasACommentWithAnImage("Here is an image");
+        Reddit.ThePost("Weekly thread").HasACommentWithAGif("Here is a GIF");
+        Reddit.ThePost("Weekly thread").HasACommentWithALinkToAnImage("Here is an image link");
+        Reddit.ThePost("Weekly thread").HasAComment("Just text");
+        await Phone.BaconReader.OpenAsync();
+        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
-        await Phone.Launcher.OpenBaconReaderAsync();
-        await Phone.NotificationPermission.WaitUntilShownAsync();
-        await Phone.NotificationPermission.ClickDontAllowAsync();
-        await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
-        await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
-        await Phone.BaconReader.Main.WaitUntilShownAsync();
-        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
-        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
-        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.AddAccount());
-        await Phone.BaconReader.LogIn.WaitUntilShownAsync();
-        await Phone.BaconReader.LogIn.TypeTheTestAccountsUserNameAsync();
-        await Phone.BaconReader.LogIn.TypeTheTestAccountsPasswordAsync();
-        await Phone.BaconReader.LogIn.ClickLogInAsync();
-        await Phone.BaconReader.LogIn.WaitUntilConnectShownAsync();
-        await Phone.BaconReader.LogIn.ClickAcceptAsync();
-        await Phone.BaconReader.Main.WaitUntilShownAsync();
-        // BaconReader comes back from the login with the left menu open.
-        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
-        await Phone.BaconReader.Main.LeftMenu.CloseAsync();
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
         await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
-        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
 
         // Then
-        var comments = await Phone.BaconReader.Detail.Comments.ReadAsync();
-        Asserting.That(comments).TheCommentShowsGifs(1);
+        var image = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        Asserting.That(image).ShowsImages(1);
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is a GIF");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is a GIF");
+
+        // Then
+        var gif = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is a GIF");
+        Asserting.That(gif).ShowsGifs(1);
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is an image link");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image link");
+
+        // Then
+        // The image takes the bare link's place: the link is dropped from the text.
+        var imageLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image link");
+        Asserting.That(imageLink).ShowsImages(1).ShowsNoLink();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Just text");
+
+        // Then
+        var justText = await Phone.BaconReader.Detail.Comments.ReadAsync("Just text");
+        Asserting.That(justText).ShowsNoImage();
+    }
+
+    [Theory, PlayOnPhone]
+    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [TestDescription("""
+        @phone
+        Scenario: Embed comment images resizes, opens and saves an image with a tap, a double tap and a long press
+          Given Reddit has a post "Weekly thread" in r/e2e
+          And the post "Weekly thread" has a comment "Here is an image" with an image
+          And BaconReader is patched with "Embed comment images"
+          And BaconReader is patched with "Spoof client"
+          And BaconReader is open
+          And the test account is logged in
+          When I tap the post "Weekly thread"
+          # "Full width by default" is off: an image starts at up to 200×200.
+          Then the image of the comment "Here is an image" fits in 200×200
+          When I tap the image of the comment "Here is an image"
+          Then the image of the comment "Here is an image" fills the comment's width
+          When I tap the image of the comment "Here is an image"
+          Then the image of the comment "Here is an image" fits in 200×200
+          When I double tap the image of the comment "Here is an image"
+          Then the image fills the screen
+          When I tap Back
+          And I long press the image of the comment "Here is an image"
+          # BaconReader shows "Downloading image…" for a moment, but UiAutomator2 doesn't see that toast: the test can't check it.
+          # Not on the screen: the test reads the phone's files.
+          Then Downloads/BaconReader holds the image of the comment "Here is an image"
+        """)]
+    public async Task EmbedCommentImagesResizesOpensAndSavesAnImageWithATapADoubleTapAndALongPress(Screen screen)
+    {
+        // Given
+        Reddit.HasAPost("Weekly thread", "e2e");
+        Reddit.ThePost("Weekly thread").HasACommentWithAnImage("Here is an image");
+        await Phone.BaconReader.OpenAsync();
+        await Phone.BaconReader.LogInWithTheTestAccountAsync();
+
+        // When
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
+
+        // Then
+        // "Full width by default" is off: an image starts at up to 200×200.
+        var small = await Phone.BaconReader.Detail.Comments.ReadLayoutAsync("Here is an image");
+        Asserting.That(small).TheImageFitsIn200By200();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ClickImageAsync("Here is an image");
+        await Phone.BaconReader.Detail.Comments.WaitUntilImageResizedAsync("Here is an image");
+
+        // Then
+        var fullWidth = await Phone.BaconReader.Detail.Comments.ReadLayoutAsync("Here is an image");
+        Asserting.That(fullWidth).TheImageFillsTheCommentsWidth();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ClickImageAsync("Here is an image");
+        await Phone.BaconReader.Detail.Comments.WaitUntilImageResizedAsync("Here is an image");
+
+        // Then
+        var smallAgain = await Phone.BaconReader.Detail.Comments.ReadLayoutAsync("Here is an image");
+        Asserting.That(smallAgain).TheImageFitsIn200By200();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.DoubleClickImageAsync("Here is an image");
+        await Phone.BaconReader.ImageViewer.WaitUntilShownAsync();
+
+        // Then
+        var viewer = await Phone.BaconReader.ImageViewer.ReadLayoutAsync();
+        Asserting.That(viewer).FillsTheScreen();
+
+        // When
+        await Phone.BaconReader.ImageViewer.ClickBackAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
+        await Phone.BaconReader.Detail.Comments.LongClickImageAsync("Here is an image");
+        await Phone.Downloads.WaitUntilImageSavedAsync();
+
+        // Then
+        // BaconReader shows "Downloading image…" for a moment, but UiAutomator2 doesn't see that toast: the test can't check it.
+        // Not on the screen: the test reads the phone's files.
+        var downloads = await Phone.Downloads.ReadAsync();
+        var commentsImage = Reddit.ReadTheImageOfTheComment("Here is an image");
+        Asserting.That(downloads).HoldsTheImage(commentsImage);
+    }
+
+    [Theory, PlayOnPhone]
+    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [TestDescription("""
+        @phone
+        Scenario: Embed comment images shows an image in a post's text
+          Given Reddit has a post "A picture in text" in r/e2e with the text "Look at this" and an image
+          And BaconReader is patched with "Embed comment images"
+          And BaconReader is patched with "Spoof client"
+          And BaconReader is open
+          And the test account is logged in
+          When I tap the post "A picture in text"
+          Then the post's text "Look at this" shows 1 image
+        """)]
+    public async Task EmbedCommentImagesShowsAnImageInAPostsText(Screen screen)
+    {
+        // Given
+        Reddit.HasAPostWithTheTextAndAnImage("A picture in text", "e2e", "Look at this");
+        await Phone.BaconReader.OpenAsync();
+        await Phone.BaconReader.LogInWithTheTestAccountAsync();
+
+        // When
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("A picture in text");
+        await Phone.BaconReader.Detail.PostText.WaitUntilMediaShownAsync();
+
+        // Then
+        var postText = await Phone.BaconReader.Detail.PostText.ReadAsync();
+        Asserting.That(postText).ShowsTheTextWithImages("Look at this", 1);
+    }
+
+    [Theory, PlayOnPhone]
+    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [TestDescription("""
+        @phone
+        Scenario: Embed comment images plays the videos of comments in place
+          Given Reddit has a post "Weekly thread" in r/e2e
+          And the post "Weekly thread" has a comment "Here is a video" with a video
+          And the post "Weekly thread" has a comment "Here is a video link" with a link to a video
+          And BaconReader is patched with "Embed comment images"
+          And BaconReader is patched with "Spoof client"
+          And BaconReader is open
+          And the test account is logged in
+          When I tap the post "Weekly thread"
+          Then the comment "Here is a video" shows a video
+          When I tap the video of the comment "Here is a video"
+          # A video that has ended shows its player's controls, with its position at its length.
+          Then the video of the comment "Here is a video" played to "00:10" of "00:10"
+          When I scroll to the comment "Here is a video link"
+          And I tap the video of the comment "Here is a video link"
+          Then the video of the comment "Here is a video link" played to "00:10" of "00:10"
+        """)]
+    public async Task EmbedCommentImagesPlaysTheVideosOfCommentsInPlace(Screen screen)
+    {
+        // Given
+        Reddit.HasAPost("Weekly thread", "e2e");
+        Reddit.ThePost("Weekly thread").HasACommentWithAVideo("Here is a video");
+        Reddit.ThePost("Weekly thread").HasACommentWithALinkToAVideo("Here is a video link");
+        await Phone.BaconReader.OpenAsync();
+        await Phone.BaconReader.LogInWithTheTestAccountAsync();
+
+        // When
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is a video");
+
+        // Then
+        var video = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is a video");
+        Asserting.That(video).ShowsAVideo();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ClickVideoAsync("Here is a video");
+        await Phone.BaconReader.Detail.Comments.WaitUntilVideoEndedAsync("Here is a video");
+
+        // Then
+        // A video that has ended shows its player's controls, with its position at its length.
+        var played = await Phone.BaconReader.Detail.Comments.ReadVideoAsync("Here is a video");
+        Asserting.That(played).PlayedTo("00:10", "00:10");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is a video link");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is a video link");
+        await Phone.BaconReader.Detail.Comments.ClickVideoAsync("Here is a video link");
+        await Phone.BaconReader.Detail.Comments.WaitUntilVideoEndedAsync("Here is a video link");
+
+        // Then
+        var linkPlayed = await Phone.BaconReader.Detail.Comments.ReadVideoAsync("Here is a video link");
+        Asserting.That(linkPlayed).PlayedTo("00:10", "00:10");
+    }
+
+    [Theory, PlayOnPhone]
+    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient, Patch.PatchesEntryInSettings)]
+    [TestDescription("""
+        @phone
+        Scenario: Embed comment images follows its settings for images, full width, saving and videos
+          Given Reddit has a post "Weekly thread" in r/e2e
+          And the post "Weekly thread" has a comment "Here is an image" with an image
+          And the post "Weekly thread" has a comment "Here is a video" with a video
+          And BaconReader is patched with "Embed comment images"
+          And BaconReader is patched with "Spoof client"
+          And BaconReader is patched with "Patches entry in settings"
+          And BaconReader is open
+          And the test account is logged in
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          When I tap "Images and videos"
+          Then the settings show "Show images", "Full width by default", "Long press to download", "Load images only on Wi-Fi" and "Play videos in comments", in this order
+          When I tap "Show images"
+          And I go back to the posts
+          And I tap the post "Weekly thread"
+          Then the comment "Here is an image" shows no image
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Images and videos"
+          And I tap "Show images"
+          And I go back to the posts
+          And I tap the post "Weekly thread"
+          Then the comment "Here is an image" shows 1 image
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Images and videos"
+          And I tap "Full width by default"
+          And I go back to the posts
+          And I tap the post "Weekly thread"
+          Then the image of the comment "Here is an image" fills the comment's width
+          # "Full width by default" stays on: the next rounds don't depend on an image's size.
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Images and videos"
+          And I tap "Long press to download"
+          And I go back to the posts
+          And I tap the post "Weekly thread"
+          And I long press the image of the comment "Here is an image"
+          # Not on the screen: the test reads the phone's files.
+          Then Downloads/BaconReader holds no image
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Images and videos"
+          And I tap "Play videos in comments"
+          And I go back to the posts
+          And I tap the post "Weekly thread"
+          Then the comment "Here is a video" shows no video
+        """)]
+    public async Task EmbedCommentImagesFollowsItsSettingsForImagesFullWidthSavingAndVideos(Screen screen)
+    {
+        // Given
+        Reddit.HasAPost("Weekly thread", "e2e");
+        Reddit.ThePost("Weekly thread").HasACommentWithAnImage("Here is an image");
+        Reddit.ThePost("Weekly thread").HasACommentWithAVideo("Here is a video");
+        await Phone.BaconReader.OpenAsync();
+        await Phone.BaconReader.LogInWithTheTestAccountAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+
+        // When
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+
+        // Then
+        var settings = await Phone.BaconReader.PatchesSettings.ReadAsync();
+        Asserting.That(settings).ShowsTheSettings(
+            new PatchSetting.ShowImages(),
+            new PatchSetting.FullWidthByDefault(),
+            new PatchSetting.LongPressToDownload(),
+            new PatchSetting.LoadImagesOnlyOnWiFi(),
+            new PatchSetting.PlayVideosInComments());
+
+        // When
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowImages());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+
+        // Then
+        var noImage = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        Asserting.That(noImage).ShowsNoImage();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowImages());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
+
+        // Then
+        var image = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        Asserting.That(image).ShowsImages(1);
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.FullWidthByDefault());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
+
+        // Then
+        var fullWidth = await Phone.BaconReader.Detail.Comments.ReadLayoutAsync("Here is an image");
+        Asserting.That(fullWidth).TheImageFillsTheCommentsWidth();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.LongPressToDownload());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
+        await Phone.BaconReader.Detail.Comments.LongClickImageAsync("Here is an image");
+        await Phone.Downloads.WaitUntilNoImageSavedAsync();
+
+        // Then
+        // Not on the screen: the test reads the phone's files.
+        var downloads = await Phone.Downloads.ReadAsync();
+        Asserting.That(downloads).HoldsNoImage();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.PlayVideosInComments());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is a video");
+
+        // Then
+        var noVideo = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is a video");
+        Asserting.That(noVideo).ShowsNoVideo();
     }
 }

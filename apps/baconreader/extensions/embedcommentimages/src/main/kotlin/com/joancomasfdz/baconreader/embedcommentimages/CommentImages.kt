@@ -751,6 +751,7 @@ internal object CommentImages {
             root.setBackgroundColor(Color.BLACK)
 
             val zoomView = ZoomImageView(context)
+            zoomView.id = resourceId(context, "baconreader_patches_image_viewer")
             root.addView(
                 zoomView,
                 FrameLayout.LayoutParams(
@@ -973,6 +974,13 @@ internal object CommentImages {
         val name =
             if (path.endsWith(".gif")) "baconreader_patches_comment_gif"
             else "baconreader_patches_comment_image"
+        return resourceId(context, name)
+    }
+
+    /**
+     * The id the patch adds to the app's resources as [name], for the e2e tests to find a view by.
+     */
+    fun resourceId(context: Context, name: String): Int {
         val id = context.resources.getIdentifier(name, "id", context.packageName)
         return if (id == 0) View.NO_ID else id
     }

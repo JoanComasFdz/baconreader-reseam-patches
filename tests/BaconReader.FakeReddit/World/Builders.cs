@@ -57,6 +57,18 @@ public sealed class PostBuilder
     /// <summary>A GIF post, uploaded to i.redd.it.</summary>
     public PostBuilder WithGif() => WithImage(MediaAsset.Gif);
 
+    /// <summary>
+    /// A text post whose text is <paramref name="markdown"/> and then an image uploaded in it, as Reddit sends one:
+    /// <c>![img](&lt;id&gt;)</c> in its text, an entry in its <c>media_metadata</c>, and a link to its preview in its
+    /// <c>selftext_html</c> (<see cref="CommentBuilder.WithImage"/>). A PNG unless <paramref name="image"/> says otherwise.
+    /// </summary>
+    public PostBuilder WithTextAndImage(string markdown, MediaAsset? image = null)
+    {
+        var uploaded = UploadedMedia.Upload(world, image ?? MediaAsset.Png);
+        Post.Media[uploaded.Id] = uploaded;
+        return WithText($"{markdown}\n\n![img]({uploaded.Id})");
+    }
+
     /// <summary>Its score: upvotes less downvotes.</summary>
     public PostBuilder WithScore(int score)
     {
@@ -118,12 +130,46 @@ public sealed class CommentBuilder
 
     /// <summary>
     /// A GIF uploaded in the comment, as Reddit sends it: <c>![gif](&lt;id&gt;)</c> in its body, an entry in its
-    /// <c>media_metadata</c>, and the GIF at <c>i.redd.it/&lt;id&gt;.gif</c> in the media store.
+    /// <c>media_metadata</c>, a link to the GIF around a preview in its <c>body_html</c>, and the GIF at
+    /// <c>i.redd.it/&lt;id&gt;.gif</c> in the media store.
     /// </summary>
     public CommentBuilder WithGif(MediaAsset? gif = null) => WithMedia("gif", gif ?? MediaAsset.Gif);
 
-    /// <summary>An image uploaded in the comment: <c>![img](&lt;id&gt;)</c>, a PNG unless <paramref name="image"/> says otherwise.</summary>
+    /// <summary>
+    /// An image uploaded in the comment, as Reddit sends it: <c>![img](&lt;id&gt;)</c> in its body, an entry in its
+    /// <c>media_metadata</c>, a bare link to its preview in its <c>body_html</c>
+    /// (<c>preview.redd.it/&lt;id&gt;.png?width=…</c>), and the image there in the media store. A PNG unless
+    /// <paramref name="image"/> says otherwise.
+    /// </summary>
     public CommentBuilder WithImage(MediaAsset? image = null) => WithMedia("img", image ?? MediaAsset.Png);
+
+    /// <summary>
+    /// A video uploaded in the comment, as Reddit sends it: a link to its player,
+    /// <c>https://reddit.com/link/&lt;post&gt;/video/&lt;id&gt;/player</c>, in its body, an entry (<c>RedditVideo</c>)
+    /// in its <c>media_metadata</c>, and the video in the media store as v.redd.it serves it: its DASH playlist,
+    /// <c>v.redd.it/&lt;id&gt;/DASHPlaylist.mpd</c>, and its one rendition next to it (<see cref="MediaAsset.DashPlaylist"/>).
+    /// </summary>
+    public CommentBuilder WithVideo()
+    {
+        var id = world.NewId() + "e2evideo";
+        var playlist = $"v.redd.it/{id}/DASHPlaylist.mpd";
+        world.AddMedia(playlist, MediaAsset.DashPlaylist.ContentType, MediaAsset.DashPlaylist.Bytes);
+        world.AddMedia($"v.redd.it/{id}/DASH_240.mp4", MediaAsset.DashVideo.ContentType, MediaAsset.DashVideo.Bytes);
+        Comment.Media[id] = new UploadedMedia(id, MediaAsset.DashVideo.ContentType, playlist, MediaAsset.DashVideo.Width, MediaAsset.DashVideo.Height);
+        return Add($"https://reddit.com/link/{Comment.Post.Id}/video/{id}/player");
+    }
+
+    /// <summary>
+    /// A bare link to an image file the fake serves, <c>&lt;baseUrl&gt;/_media/example.com/&lt;id&gt;.jpg</c>, posted on
+    /// its own line: a JPEG unless <paramref name="image"/> says otherwise.
+    /// </summary>
+    public CommentBuilder LinkingToAnImage(MediaAsset? image = null) => LinkingTo(image ?? MediaAsset.Jpeg);
+
+    /// <summary>
+    /// A bare link to a video file the fake serves, <c>&lt;baseUrl&gt;/_media/example.com/&lt;id&gt;.mp4</c>, posted on
+    /// its own line: ten seconds long unless <paramref name="video"/> says otherwise.
+    /// </summary>
+    public CommentBuilder LinkingToAVideo(MediaAsset? video = null) => LinkingTo(video ?? MediaAsset.LongMp4);
 
     /// <summary>Its score.</summary>
     public CommentBuilder WithScore(int score)
@@ -134,12 +180,19 @@ public sealed class CommentBuilder
 
     private CommentBuilder WithMedia(string kind, MediaAsset asset)
     {
-        var id = world.NewId() + "e2emedia";
-        var path = $"i.redd.it/{id}.{asset.Extension}";
-        world.AddMedia(path, asset.ContentType, asset.Bytes);
-        Comment.Media[id] = new CommentMedia(id, asset.ContentType, path, asset.Width, asset.Height);
+        var uploaded = UploadedMedia.Upload(world, asset);
+        Comment.Media[uploaded.Id] = uploaded;
+        return Add($"![{kind}]({uploaded.Id})");
+    }
+
+    private CommentBuilder LinkingTo(MediaAsset asset) =>
+        Add(world.AddMedia($"example.com/{world.NewId()}e2elink.{asset.Extension}", asset.ContentType, asset.Bytes));
+
+    // A paragraph of its own, after what the body says already.
+    private CommentBuilder Add(string markdown)
+    {
         var separator = Comment.Body.Length == 0 ? "" : "\n\n";
-        Comment.Body += $"{separator}![{kind}]({id})";
+        Comment.Body += separator + markdown;
         return this;
     }
 }

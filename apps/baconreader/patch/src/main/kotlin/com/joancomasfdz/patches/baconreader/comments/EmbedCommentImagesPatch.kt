@@ -60,10 +60,12 @@ val embedCommentImages =
         )
 
         execute {
-            // The views the images are shown in are made in code: these ids name them, a GIF's
-            // apart from an image's, so the e2e tests find them.
+            // The views the images and videos are shown in are made in code: these ids name them, a
+            // GIF's apart from an image's, and the full-screen viewer, so the e2e tests find them.
             resources.addId("baconreader_patches_comment_image")
             resources.addId("baconreader_patches_comment_gif")
+            resources.addId("baconreader_patches_comment_video")
+            resources.addId("baconreader_patches_image_viewer")
 
             // The images are shown instead of the "GIF" link the app puts in place of the <img>.
             gate(EmbedCommentImagesSettings.showImages) { handleGifLink.alwaysReturn() }

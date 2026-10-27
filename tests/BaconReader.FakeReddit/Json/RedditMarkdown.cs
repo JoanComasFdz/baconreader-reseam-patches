@@ -11,26 +11,33 @@ namespace BaconReader.FakeReddit.Json;
 /// <summary>
 /// Turns Markdown into the HTML Reddit sends in <c>body_html</c> and <c>selftext_html</c>, only as far as the scenarios
 /// use it: paragraphs, quotes, lists, headings, code, links (also bare URLs and r/ u/ names), bold, italics,
-/// strikethrough, inline code, and media uploaded in comments (<c>![gif](id)</c>). Reddit sends that HTML entity-escaped
-/// (<c>&amp;lt;div class="md"&amp;gt;…</c>), and so does <see cref="ToEscapedHtml"/>.
+/// strikethrough, inline code, and media uploaded in comments and post texts (<c>![gif](id)</c>, <c>![img](id)</c>).
+/// Reddit sends that HTML entity-escaped (<c>&amp;lt;div class="md"&amp;gt;…</c>), and so does <see cref="ToEscapedHtml"/>.
 /// </summary>
 public static partial class RedditMarkdown
 {
     /// <summary>Reddit's <c>body_html</c> for <paramref name="markdown"/>: <c>&lt;div class="md"&gt;…&lt;/div&gt;</c>, entity-escaped.</summary>
-    public static string ToEscapedHtml(string markdown, string baseUrl, IReadOnlyDictionary<string, CommentMedia>? media = null) =>
+    public static string ToEscapedHtml(string markdown, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media = null) =>
         Escape($"<div class=\"md\">{ToHtml(markdown, baseUrl, media)}</div>");
 
     /// <summary>
     /// Reddit's <c>selftext_html</c> for a text post's <paramref name="markdown"/>: the same, inside Reddit's
     /// <c>&lt;!-- SC_OFF --&gt;</c> comments; null for an empty text, as Reddit sends it.
     /// </summary>
-    public static string? ToEscapedSelfTextHtml(string? markdown, string baseUrl) =>
+    public static string? ToEscapedSelfTextHtml(string? markdown, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media = null) =>
         string.IsNullOrEmpty(markdown)
             ? null
-            : Escape($"<!-- SC_OFF --><div class=\"md\">{ToHtml(markdown, baseUrl, null)}</div><!-- SC_ON -->");
+            : Escape($"<!-- SC_OFF --><div class=\"md\">{ToHtml(markdown, baseUrl, media)}</div><!-- SC_ON -->");
+
+    /// <summary>
+    /// The URL Reddit links an uploaded image by, in the HTML and in <c>media_metadata</c>: its preview, at its width
+    /// (<c>preview.redd.it/&lt;id&gt;.png?width=320&amp;format=png&amp;auto=webp&amp;s=…</c>).
+    /// </summary>
+    public static string UploadedImageUrl(string baseUrl, UploadedMedia image) =>
+        $"{baseUrl}/_media/{image.Path}?width={image.Width}&format={image.Path[(image.Path.LastIndexOf('.') + 1)..]}&auto=webp&s=e2e";
 
     /// <summary>The HTML inside Reddit's <c>&lt;div class="md"&gt;</c>, unescaped.</summary>
-    public static string ToHtml(string markdown, string baseUrl, IReadOnlyDictionary<string, CommentMedia>? media)
+    public static string ToHtml(string markdown, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media)
     {
         var html = new StringBuilder();
         foreach (var block in Blocks().Split(markdown.Replace("\r\n", "\n").Trim('\n')).Where(block => block.Trim().Length > 0))
@@ -44,7 +51,7 @@ public static partial class RedditMarkdown
     // Reddit escapes &, < and > in its HTML fields, and leaves quotes alone.
     private static string Escape(string html) => html.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
-    private static string ToBlock(string block, string baseUrl, IReadOnlyDictionary<string, CommentMedia>? media)
+    private static string ToBlock(string block, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media)
     {
         var lines = block.Split('\n');
         string Inline(string text) => ToInline(text, baseUrl, media);
@@ -79,7 +86,7 @@ public static partial class RedditMarkdown
         return $"<p>{Inline(block)}</p>";
     }
 
-    private static string ToInline(string text, string baseUrl, IReadOnlyDictionary<string, CommentMedia>? media)
+    private static string ToInline(string text, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media)
     {
         var html = new StringBuilder();
         var at = 0;
@@ -94,16 +101,27 @@ public static partial class RedditMarkdown
         return html.ToString();
     }
 
-    private static string ToInlineToken(Match match, string baseUrl, IReadOnlyDictionary<string, CommentMedia>? media)
+    private static string ToInlineToken(Match match, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media)
     {
         string Inline(string inner) => ToInline(inner, baseUrl, media);
         var groups = match.Groups;
         if (groups["media"].Success)
         {
-            // Media uploaded in a comment: the link is the file, around a preview of its size.
-            return media is not null && media.TryGetValue(groups["media"].Value, out var found)
-                ? $"<a href=\"{baseUrl}/_media/{found.Path}\" target=\"_blank\"><img src=\"{baseUrl}/_media/{found.Path}\" width=\"{found.Width}\" height=\"{found.Height}\"></a>"
-                : WebUtility.HtmlEncode(match.Value);
+            if (media is null || !media.TryGetValue(groups["media"].Value, out var found))
+            {
+                return WebUtility.HtmlEncode(match.Value);
+            }
+
+            // An uploaded GIF: the link is the file, around a preview of its size. An uploaded image: a bare link to its
+            // preview, at its width.
+            var file = $"{baseUrl}/_media/{found.Path}";
+            if (found.IsAnimated)
+            {
+                return $"<a href=\"{file}\" target=\"_blank\"><img src=\"{file}\" width=\"{found.Width}\" height=\"{found.Height}\"></a>";
+            }
+
+            var preview = WebUtility.HtmlEncode(UploadedImageUrl(baseUrl, found));
+            return $"<a href=\"{preview}\" target=\"_blank\">{preview}</a>";
         }
 
         if (groups["linkText"].Success)

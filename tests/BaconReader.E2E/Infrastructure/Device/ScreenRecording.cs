@@ -198,9 +198,9 @@ public sealed class ScreenRecording
                 timeline.Add((videoAt, deviceAt));
             }
 
-            videoAt += double.Parse(
-                await Commands.RunOrFailAsync("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", Path.Combine(local, part)),
-                CultureInfo.InvariantCulture);
+            // A part with no frames (the screen stood still from the moment it began) has no duration: "N/A".
+            var duration = await Commands.RunOrFailAsync("ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", Path.Combine(local, part));
+            videoAt += double.TryParse(duration, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds) ? seconds : 0;
         }
 
         return timeline;

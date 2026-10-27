@@ -56,6 +56,9 @@ public sealed class RedditWorld
     /// <summary>The posts, in the order they were made.</summary>
     public ImmutableArray<Post> Posts => Read(() => posts.ToImmutableArray());
 
+    /// <summary>The file the media store holds at <paramref name="path"/> (<c>i.redd.it/x.gif</c>), or null.</summary>
+    public MediaFile? Media(string path) => Read(() => FindMedia(path));
+
     /// <summary>Every request the fake received, but those under <c>/_fake/</c>.</summary>
     public ImmutableArray<RecordedRequest> Requests => Read(() => requests.ToImmutableArray());
 
