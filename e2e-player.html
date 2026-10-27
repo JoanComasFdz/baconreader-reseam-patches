@@ -43,7 +43,7 @@
             var repo = "JoanComasFdz/baconreader-reseam-patches";
             var release = "prs-resources";
             var name = /^pr-(\d+)-v(\d+)-([A-Za-z0-9-]+)\.mp4$/;
-            var screens = { phone: "📱 Phone" };
+            var screens = { phone: "📱 Phone", desktop: "🖥️ Desktop" };
 
             var query = new URLSearchParams(location.search);
             var asset = query.get("v") || "";
@@ -70,7 +70,7 @@
             }
 
             var pr = parts[1], version = parts[2], run = parts[3];
-            var screen = run.match(/-(phone)$/);
+            var screen = run.match(/-(phone|desktop)$/);
             var scenario = (screen ? run.slice(0, -screen[0].length) : run).replace(/-/g, " ");
             document.getElementById("title").textContent = scenario.charAt(0).toUpperCase() + scenario.slice(1);
             document.title = "BaconReader patches · " + scenario;
