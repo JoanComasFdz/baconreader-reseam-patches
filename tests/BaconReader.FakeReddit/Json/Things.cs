@@ -34,7 +34,7 @@ internal sealed class Things(RedditWorld world)
             IsSelf = self,
             Created = created,
             Domain = self ? "self." + post.Subreddit.Name : Domain(url),
-            SelftextHtml = RedditMarkdown.ToEscapedSelfTextHtml(post.Text, world.BaseUrl),
+            SelftextHtml = RedditMarkdown.ToEscapedSelfTextHtml(post.Text, world.BaseUrl, post.Media),
             Likes = vote switch { 1 => true, -1 => false, _ => null },
             UrlOverriddenByDest = self ? null : url,
             Over18 = post.IsNsfw,
@@ -54,6 +54,7 @@ internal sealed class Things(RedditWorld world)
             SubredditSubscribers = post.Subreddit.Subscribers,
             CreatedUtc = created,
             IsRedditMediaDomain = url.Contains("/_media/", StringComparison.Ordinal),
+            MediaMetadata = MediaMetadataOf(post.Media),
         });
     }
 
@@ -86,7 +87,7 @@ internal sealed class Things(RedditWorld world)
             SubredditNamePrefixed = "r/" + comment.Post.Subreddit.Name,
             Depth = comment.Depth,
             Ups = comment.Score + vote,
-            MediaMetadata = comment.Media.Count == 0 ? null : comment.Media.Values.ToDictionary(media => media.Id, Metadata),
+            MediaMetadata = MediaMetadataOf(comment.Media),
         });
     }
 
@@ -120,13 +121,28 @@ internal sealed class Things(RedditWorld world)
         return new UserData { Id = account.Id, Name = account.Name, Created = created, CreatedUtc = created };
     }
 
-    private MediaMetadata Metadata(CommentMedia media)
+    private Dictionary<string, MediaMetadata>? MediaMetadataOf(Dictionary<string, UploadedMedia> media) =>
+        media.Count == 0 ? null : media.Values.ToDictionary(found => found.Id, Metadata);
+
+    private MediaMetadata Metadata(UploadedMedia media)
     {
         var url = world.MediaUrl(media.Path);
+        if (media.IsVideo)
+        {
+            return new MediaMetadata("valid", "RedditVideo", media.Id)
+            {
+                X = media.Width,
+                Y = media.Height,
+                DashUrl = url,
+                HlsUrl = url.Replace("DASHPlaylist.mpd", "HLSPlaylist.m3u8", StringComparison.Ordinal),
+                IsGif = false,
+            };
+        }
+
         var full = media.IsAnimated
             ? new MediaSize(media.Height, media.Width) { Gif = url, Mp4 = url }
-            : new MediaSize(media.Height, media.Width) { U = url };
-        return new MediaMetadata("valid", media.IsAnimated ? "AnimatedImage" : "Image", media.ContentType, [], full, media.Id);
+            : new MediaSize(media.Height, media.Width) { U = RedditMarkdown.UploadedImageUrl(world.BaseUrl, media) };
+        return new MediaMetadata("valid", media.IsAnimated ? "AnimatedImage" : "Image", media.Id) { M = media.ContentType, P = [], S = full };
     }
 
     // The fake has no account behind most authors; Reddit's fullname is "t2_" and an id, and a stable one will do.

@@ -153,6 +153,8 @@ public sealed record LinkData
     public object? Media { get; init; }
     public bool IsVideo { get; init; }
     public bool IsGallery { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, MediaMetadata>? MediaMetadata { get; init; }
 }
 
 /// <summary>A post's <c>preview</c>: its images, each with its source and smaller resolutions.</summary>
@@ -241,10 +243,35 @@ public sealed record CommentData
 }
 
 /// <summary>
-/// One entry of a comment's <c>media_metadata</c>: an uploaded image or GIF. <c>s</c> holds its full size, and for a
-/// GIF also its MP4.
+/// One entry of a comment's or a text post's <c>media_metadata</c>: an uploaded image or GIF, whose <c>s</c> holds its
+/// full size (and a GIF's MP4), or a video (<c>RedditVideo</c>), with its playlists and size instead.
 /// </summary>
-public sealed record MediaMetadata(string Status, string E, string M, IReadOnlyList<MediaSize> P, MediaSize S, string Id);
+public sealed record MediaMetadata(string Status, string E, string Id)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? M { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<MediaSize>? P { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public MediaSize? S { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? X { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Y { get; init; }
+
+    [JsonPropertyName("dashUrl"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DashUrl { get; init; }
+
+    [JsonPropertyName("hlsUrl"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? HlsUrl { get; init; }
+
+    [JsonPropertyName("isGif"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IsGif { get; init; }
+}
 
 /// <summary>A size of an uploaded image: its URL (<c>u</c>, or <c>gif</c> and <c>mp4</c> for a GIF), width and height.</summary>
 public sealed record MediaSize(int Y, int X)

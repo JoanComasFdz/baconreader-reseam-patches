@@ -19,6 +19,18 @@ public sealed record MediaAsset(string ContentType, string Extension, int Width,
     /// <summary>An MP4 video with an audio track, 320×240, two seconds.</summary>
     public static MediaAsset Mp4 { get; } = Load("e2e.mp4", "video/mp4", 320, 240);
 
+    /// <summary>An MP4 video with an audio track, 320×240, ten seconds: long enough to watch it play.</summary>
+    public static MediaAsset LongMp4 { get; } = Load("e2e-video.mp4", "video/mp4", 320, 240);
+
+    /// <summary>
+    /// A video as Reddit serves one uploaded to v.redd.it, ten seconds, 320×240, without sound: this DASH playlist, whose
+    /// one rendition is <see cref="DashVideo"/>, at <c>DASH_240.mp4</c> next to it.
+    /// </summary>
+    public static MediaAsset DashPlaylist { get; } = Load("e2e-dash.mpd", "application/dash+xml", 320, 240);
+
+    /// <summary>The rendition <see cref="DashPlaylist"/> names, <c>DASH_240.mp4</c>: a fragmented MP4.</summary>
+    public static MediaAsset DashVideo { get; } = Load("e2e-dash.mp4", "video/mp4", 320, 240);
+
     private static MediaAsset Load(string name, string contentType, int width, int height)
     {
         using var stream = typeof(MediaAsset).Assembly.GetManifestResourceStream("Media/" + name)
