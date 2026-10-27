@@ -162,10 +162,10 @@ public sealed class SpoofClientTests : BaseE2E
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   emulator was recreated), that never launches or resets the app itself: the scenario opens it;
 - **the recording:** when the run records (`E2E_VIDEO_DIR`), Android's `screenrecord` records the screen from before
-  the app opens to the end, 540×960 at 1 Mbit/s, with each touch drawn (`show_touches`), in parts of 3 minutes joined at
-  the end (`Device/ScreenRecording`); it saves the video (record.sh holds its last frame 3 s), also when the scenario
-  fails, with its record next to it (title, Gherkin, screen, patches, GIF name, domain folder, when the main screen
-  first showed, whether it passed);
+  the app opens to the end, 540×960 at 1 Mbit/s, in parts of 3 minutes joined at the end, with a ring drawn onto the
+  video where each tap lands, before it (`Device/ScreenRecording`); it saves the video (record.sh holds its last frame
+  3 s), also when the scenario fails, with its record next to it (title, Gherkin, screen, patches, GIF name, domain
+  folder, when the main screen first showed, whether it passed);
 - the `Phone` property.
 
 A scenario never repeats any of that.
@@ -192,8 +192,9 @@ A scenario never repeats any of that.
 - **Pace the steps.** Every Act and Read goes through `OnScreen` (`PressAsync`, `ActAsync`, `DoAsync`, `ReadAsync`),
   never straight to Appium: while recording, a step starts no sooner than `--action-gap` seconds after the previous one
   ended, so the GIF doesn't tap faster than the eye follows. A view that is off screen is scrolled to first (through
-  `OnScreen`, when a scenario first needs it). Android draws the touches; nothing else is drawn. Waits don't go through
-  it (`Waiting`).
+  `OnScreen`, when a scenario first needs it). `PressAsync` shows where it taps before it taps: the recording draws a
+  ring there from 0.7 s before the tap until just after it (Android draws no touch for Appium's taps). Waits don't go
+  through it (`Waiting`).
 - Snapshots don't retry: a scenario waits for what it expects before it reads.
 - Locators are private to their class and use only `Locate`: a resource id (`Locate.AppId("toolbarTitle")`, Android's
   own `Locate.AndroidId("button1")`), a content description, or the exact text. Never XPath or a position. A view a patch

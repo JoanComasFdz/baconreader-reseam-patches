@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using BaconReader.E2E.Infrastructure.Device;
+using BaconReader.E2E.Infrastructure.Phone;
 using BaconReader.E2E.Infrastructure.Reddit;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using BaconReader.FakeReddit;
@@ -31,7 +32,8 @@ namespace BaconReader.E2E.Infrastructure;
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it;
 /// - when the run records (<c>E2E_VIDEO_DIR</c>): records the screen from before the app opens to the end
-///   (<see cref="ScreenRecording"/>) and saves the video, also when the scenario fails,
+///   (<see cref="ScreenRecording"/>), with a ring drawn where each tap lands, before it (<see cref="OnScreen"/>), and
+///   saves the video, also when the scenario fails,
 ///   with its record next to it (title, Gherkin, screen, patches, GIF name, domain folder, when the main screen first
 ///   showed, whether it passed);
 /// - gives the scenario its <see cref="Phone"/>.
@@ -83,6 +85,7 @@ public abstract class BaseE2E : IAsyncLifetime
             {
                 recording = await ScreenRecording.StartAsync();
                 sinceRecording.Start();
+                OnScreen.DrawTapsOn(driver, recording);
             }
             catch (Exception)
             {
