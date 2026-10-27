@@ -43,23 +43,33 @@ public sealed class LeftMenu(AndroidDriver driver)
 
     /// <summary>
     /// Taps <paramref name="entry"/>, which opens what it names over the menu. BaconReader at times ignores the tap (seen
-    /// by hand too, a second tap works): when the menu still shows the entry 10 s later (the login screen takes up to
-    /// 8 s to show), it taps once more.
+    /// by hand too, another tap works; on the emulator, once two taps in a row): while the menu still shows the entry
+    /// 10 s later (the login screen takes up to 8 s to show), it taps again, up to three taps.
     /// </summary>
     public async Task ClickAsync(MenuEntry entry)
     {
         var target = Locate.AppIdWithText("text", entry.ToShownText());
-        await OnScreen.PressAsync(driver, target);
-        try
-        {
-            await Waiting.UntilAsync(
-                () => !driver.FindElements(target).Any(view => view.Displayed),
-                TimeSpan.FromSeconds(10),
-                $"\"{entry.ToShownText()}\" opening");
-        }
-        catch (TimeoutException)
+        for (var taps = 1; ; taps++)
         {
             await OnScreen.PressAsync(driver, target);
+            if (taps == 3)
+            {
+                // What it opens is the caller's to wait for.
+                return;
+            }
+
+            try
+            {
+                await Waiting.UntilAsync(
+                    () => !driver.FindElements(target).Any(view => view.Displayed),
+                    TimeSpan.FromSeconds(10),
+                    $"\"{entry.ToShownText()}\" opening");
+                return;
+            }
+            catch (TimeoutException)
+            {
+                // Ignored: tap again.
+            }
         }
     }
 
