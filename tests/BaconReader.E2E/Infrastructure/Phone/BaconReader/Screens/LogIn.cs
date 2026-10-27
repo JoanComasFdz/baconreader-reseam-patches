@@ -54,8 +54,8 @@ public sealed class LogIn(AndroidDriver driver)
     // waits until it has the focus (the web view hands Android new views for it), then sets its text at once: typed key
     // by key, the keyboard turned "e2e_user"'s "_" into "." and the login page closed. The fake Reddit, unlike Reddit,
     // takes a login whose fields were filled in without a key pressed. The web view can hand Android new views between
-    // two of those steps, and the field found is gone (seen in 2 of 5 logins on the emulator): it starts again, twice
-    // at most.
+    // two of those steps: the field found is gone, or the one tapped never shows the focus (each seen on the emulator,
+    // in about 1 login of 5). It starts again then, twice at most.
     private async Task TypeAsync(OpenQA.Selenium.By field, string text)
     {
         for (var attempt = 1; ; attempt++)
@@ -71,9 +71,9 @@ public sealed class LogIn(AndroidDriver driver)
                 await OnScreen.ActAsync(driver, field, element => element.SendKeys(text));
                 return;
             }
-            catch (Exception exception) when (attempt < 3 && exception is OpenQA.Selenium.NoSuchElementException or OpenQA.Selenium.StaleElementReferenceException)
+            catch (Exception exception) when (attempt < 3 && exception is OpenQA.Selenium.NoSuchElementException or OpenQA.Selenium.StaleElementReferenceException or TimeoutException)
             {
-                // The field's view was replaced: find it again.
+                // The field's view was replaced: find it and tap it again.
             }
         }
     }
