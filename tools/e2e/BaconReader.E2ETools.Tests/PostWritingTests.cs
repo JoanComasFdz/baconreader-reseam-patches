@@ -57,6 +57,17 @@ public sealed class PostWritingTests
     }
 
     [Fact]
+    public void A_VS_Code_extension_scenario_shows_under_a_Desktop_subtitle()
+    {
+        var run = RunOf("CodeLensTests", "Plays");
+
+        var post = WritePost(run with { Entry = run.Entry with { Screen = Optional.Some("desktop") } });
+
+        Assert.Contains("\n#### 🖥️ Desktop\n", post);
+        Assert.DoesNotContain("📱 Phone", post);
+    }
+
+    [Fact]
     public void No_patches_show_no_line() => Assert.DoesNotContain("Patched with", WritePost(RunOf("LoginTests", "Logs")));
 
     [Fact]

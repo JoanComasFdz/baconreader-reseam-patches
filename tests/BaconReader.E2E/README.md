@@ -128,8 +128,9 @@ By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep 
 ## Where tests go
 
 `Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
-recording, the link to the fake Reddit), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), `Reddit/` (the fake Reddit in the Gherkins' words), the `Vocabulary`, the assertions, and what a scenario is (its Gherkin,
-`[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record). `Scenarios/` is organized by the patches'
+recording, the link to the fake Reddit), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), `Reddit/` (the fake Reddit in the Gherkins' words), the `Vocabulary` and the assertions. What a scenario is (its Gherkin,
+`[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record) is in `tests/BaconReader.E2E.Shared`, shared
+with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](../BaconReader.VsCodeExtension.E2E/README.md)). `Scenarios/` is organized by the patches'
 areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`, `posts`, and `e2e` for the test-only patches): folder = area, class = one patch
 (`<Patch>Tests.cs`) in a folder of its own, method = one scenario (one Gherkin).
 

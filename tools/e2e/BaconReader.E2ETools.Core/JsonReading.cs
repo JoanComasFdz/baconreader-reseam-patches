@@ -54,6 +54,12 @@ public static class JsonReading
                 .ToResult(() => "a run's record lacks its domain, class, method, title, screen, gif or passed."));
 
     /// <summary>The files a <c>scenarios.json</c> lists, each once in the order they come: each entry's GIF, then its MP4.</summary>
+    /// <summary>The VS Code build a package.json pins: its config.vscodeCommit (the VS Code extension's scenarios' runner).</summary>
+    public static Result<string, string> ReadVsCodeCommit(string json) =>
+        ParseNode(json)
+            .Bind(node => node?["config"] is JsonObject config ? ReadText(config, "vscodeCommit") : Optional.None<string>())
+            .ToResult(() => "the package.json has no config.vscodeCommit.");
+
     public static Result<ImmutableArray<string>, string> ReadListedFiles(string json) =>
         ParseArray(json, "scenarios.json").Map(entries => entries
             .OfType<JsonObject>()

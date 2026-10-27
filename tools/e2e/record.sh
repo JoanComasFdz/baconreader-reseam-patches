@@ -1,21 +1,29 @@
 #!/usr/bin/env bash
 # SPDX-FileCopyrightText: 2026 JoanComasFdz
 # SPDX-License-Identifier: GPL-3.0-only
-# Plays the e2e scenarios on the emulator and records each as a GIF and an MP4, for the PR (docs/hosting.md, "E2E
-# videos on pull requests"). The e2e project is tests/BaconReader.E2E; its scenario classes live under its Scenarios/.
+# Plays the e2e scenarios and records each as a GIF and an MP4, for the PR (docs/hosting.md, "E2E videos on pull
+# requests"). Two projects hold scenarios, each under its Scenarios/: tests/BaconReader.E2E (the app, on the emulator)
+# and tests/BaconReader.VsCodeExtension.E2E (the VS Code extension, tools/vscode-extension, in VS Code for the web).
 #   tools/e2e/record.sh [all | <domain folder> | <TestClass> ...] [--changed-since <git ref>] [--action-gap <seconds>]
 #                       [--out <dir>] [--no-bundle] [--no-video]
 # A domain folder is a folder under a project's Scenarios/ (Account, Comments/ShowTables); a class is a scenario class
 # (SpoofClientTests). Nothing named, and no --changed-since: all of them.
 # --changed-since <ref>: the scenario classes added or changed since the branch left <ref> (working tree included):
-# "this PR's scenarios" with origin/main.
+# "this PR's scenarios" with origin/main. A change to the extension (tools/vscode-extension) or to the files its
+# scenarios open (the extension's project's Workspace/) picks every extension scenario, "selected": "fixtures".
 # --action-gap <seconds>: the least time between two steps of a recorded scenario (default 1).
-# It needs the emulator's connection in its environment (E2E_APPIUM_URL, E2E_ADB_SERIAL, E2E_ARTIFACTS_DIR: run it in
-# the shell that sourced the connection script, tests/BaconReader.E2E/README.md, "The emulator"). It builds the bundles
+# The app's scenarios need the emulator's connection in its environment (E2E_APPIUM_URL, E2E_ADB_SERIAL,
+# E2E_ARTIFACTS_DIR: run it in the shell that sourced the connection script, tests/BaconReader.E2E/README.md, "The
+# emulator"). For them it builds the bundles
 # first (./gradlew bundle, and ./gradlew -p e2e-patches bundle for the test-only one; --no-bundle reuses the last ones)
 # and runs the chosen scenarios with E2E_VIDEO_DIR set: each one patches, installs and records itself (BaseE2E). Each
 # run's video becomes <out>/<domain folder>/<gif name>.gif (15 fps, 360 px wide) and .mp4 (H.264 at the recording's
 # 540×960), both holding their last frame 3 s, and <out>/scenarios.json lists them (the e2e tool's write-scenarios).
+# For the extension's scenarios it serves VS Code for the web (@vscode/test-web, pinned with the VS Code build in
+# tests/BaconReader.VsCodeExtension.E2E/vscode-web/package.json; the build is cached in
+# ${E2E_VSCODE_CACHE:-~/.cache/baconreader/vscode-web}) with tools/vscode-extension, opened on that project's Workspace/,
+# and runs them with E2E_VSCODE_URL. Each run's browser video is trimmed from when VS Code's workbench showed (the e2e
+# tool's find-home) and becomes a GIF (20 fps, 800 px wide) and an MP4 (H.264 at its 1280×800).
 # Exits non-zero when a scenario failed (its GIF is still written).
 # --no-video: the same scenarios, unrecorded and unpaced: the fast run while developing. It prints each run's result and
 # time and leaves the last recording in <out> as it is.
@@ -38,7 +46,7 @@ while [ $# -gt 0 ]; do
     --out) out="$2"; shift 2 ;;
     --no-bundle) bundle=0; shift ;;
     --no-video) video=0; shift ;;
-    -h|--help) sed -n '4,23p' "$0"; exit 0 ;;
+    -h|--help) sed -n '4,31p' "$0"; exit 0 ;;
     *) chosen+=("$1"); shift ;;
   esac
 done
@@ -47,6 +55,8 @@ out="$(cd "$out" && pwd)"
 cd "$repo"
 
 mapfile -t projects < <(find tests -mindepth 2 -maxdepth 2 -name '*.E2E.csproj' | sort)
+app_project=tests/BaconReader.E2E/BaconReader.E2E.csproj
+vscode_project=tests/BaconReader.VsCodeExtension.E2E/BaconReader.VsCodeExtension.E2E.csproj
 # The project file whose Scenarios/ holds a scenario class, or nothing.
 find_class_project() {
   local project
@@ -55,15 +65,24 @@ find_class_project() {
   done
 }
 
-# The scenario classes added or changed since a ref, "<class>\tchanged" each (write-scenarios' selection.tsv).
+# The scenario classes added or changed since a ref, "<class>\tchanged" each, and every extension scenario class when the
+# extension or its Workspace/ changed, "<class>\tfixtures\t<the changed file>" (write-scenarios' selection.tsv).
 list_changed_classes() {
-  local base project scenarios
+  local base project scenarios file class
   base="$(git merge-base "$1" HEAD)"
   for project in "${projects[@]}"; do
     scenarios="$(dirname "$project")/Scenarios"
     [ -d "$scenarios" ] || continue
     { git diff --name-only --diff-filter=AMR "$base" -- "$scenarios"; git ls-files --others --exclude-standard -- "$scenarios"; } |
       sort -u | { grep 'Tests\.cs$' || true; } | xargs -r -n1 basename | sed 's/\.cs$/\tchanged/'
+  done
+  local workspace extension
+  workspace="$(dirname "$vscode_project")/Workspace"
+  extension=tools/vscode-extension
+  for file in $( { git diff --name-only "$base" -- "$workspace" "$extension"; git ls-files --others --exclude-standard -- "$workspace" "$extension"; } | sort -u); do
+    for class in $(find "$(dirname "$vscode_project")/Scenarios" -name '*Tests.cs' -exec basename {} .cs \;); do
+      printf '%s\tfixtures\t%s\n' "$class" "$file"
+    done
   done
 }
 
@@ -78,7 +97,7 @@ if [ -n "$changed_since" ]; then
   list_changed_classes "$changed_since" | sort -u > "$selection"
   while IFS=$'\t' read -r class _; do
     for project in $(find_class_project "$class"); do add_filter "$project" "FullyQualifiedName~.$class."; done
-  done < "$selection"
+  done < <(cut -f1 "$selection" | sort -u)
   if [ ${#filters[@]} -eq 0 ] && [ ${#chosen[@]} -eq 0 ]; then
     echo "No scenario changed since $changed_since."
     if [ $video -eq 1 ]; then echo "[]" > "$out/scenarios.json"; fi
@@ -112,20 +131,51 @@ if [ $everything -eq 1 ] || { [ -z "$changed_since" ] && [ ${#chosen[@]} -eq 0 ]
   for project in "${projects[@]}"; do filters[$project]="FullyQualifiedName~$(basename "$project" .csproj).Scenarios."; done
 fi
 
-if [ $bundle -eq 1 ]; then
-  echo "Building the bundles (./gradlew bundle, and the e2e one in e2e-patches/)…"
-  ./gradlew bundle --no-daemon -q || { echo "The bundle didn't build." >&2; exit 1; }
-  ./gradlew -p e2e-patches bundle --no-daemon -q || { echo "The e2e bundle didn't build." >&2; exit 1; }
-fi
+if [ -n "${filters[$app_project]:-}" ]; then
+  if [ $bundle -eq 1 ]; then
+    echo "Building the bundles (./gradlew bundle, and the e2e one in e2e-patches/)…"
+    ./gradlew bundle --no-daemon -q || { echo "The bundle didn't build." >&2; exit 1; }
+    ./gradlew -p e2e-patches bundle --no-daemon -q || { echo "The e2e bundle didn't build." >&2; exit 1; }
+  fi
 
-if [ -z "${E2E_APPIUM_URL:-}" ] || [ -z "${E2E_ADB_SERIAL:-}" ]; then
-  echo "No emulator: E2E_APPIUM_URL and E2E_ADB_SERIAL aren't set. Source the emulator's connection script in this shell" \
-       "first (tests/BaconReader.E2E/README.md, \"The emulator\")." >&2
-  exit 1
+  if [ -z "${E2E_APPIUM_URL:-}" ] || [ -z "${E2E_ADB_SERIAL:-}" ]; then
+    echo "No emulator: E2E_APPIUM_URL and E2E_ADB_SERIAL aren't set. Source the emulator's connection script in this shell" \
+         "first (tests/BaconReader.E2E/README.md, \"The emulator\")." >&2
+    exit 1
+  fi
 fi
 
 dotnet build tools/e2e/BaconReader.E2ETools -c Release --nologo -v q > /dev/null
 e2e_tool() { dotnet "$repo/tools/e2e/BaconReader.E2ETools/bin/Release/net10.0/BaconReader.E2ETools.dll" "$@"; }
+
+# VS Code for the web with the extension under development, opened on the extension's project's Workspace/, for its
+# scenarios (E2E_VSCODE_URL).
+vscode_url=""
+servers=()
+trap 'for pid in "${servers[@]}"; do kill "$pid" 2> /dev/null || true; done' EXIT
+if [ -n "${filters[$vscode_project]:-}" ]; then
+  runner="$(dirname "$vscode_project")/vscode-web"
+  if [ ! -d "$runner/node_modules/@vscode/test-web" ] || [ "$runner/package-lock.json" -nt "$runner/node_modules" ]; then
+    echo "Installing VS Code for the web's runner (npm ci)…"
+    npm ci --prefix "$runner" --silent --no-audit --no-fund
+    touch "$runner/node_modules"
+  fi
+  commit="$(e2e_tool vscode-commit "$runner/package.json")"
+  cache="${E2E_VSCODE_CACHE:-$HOME/.cache/baconreader/vscode-web}"
+  mkdir -p "$cache"
+  port="$(e2e_tool free-port)"
+  echo "Serving VS Code for the web (build ${commit:0:7}) with the extension…"
+  "$runner/node_modules/.bin/vscode-test-web" --browser=none --quality stable --commit "$commit" --port "$port" \
+    --testRunnerDataDir "$cache" --extensionDevelopmentPath="$repo/tools/vscode-extension" \
+    "$(dirname "$vscode_project")/Workspace" > "$out/.vscode-web.log" 2>&1 &
+  servers+=($!)
+  for _ in $(seq 600); do
+    curl -sf "http://localhost:$port/" > /dev/null && break
+    sleep 0.5
+  done
+  curl -sf "http://localhost:$port/" > /dev/null || { echo "VS Code for the web didn't start: see $out/.vscode-web.log" >&2; exit 1; }
+  vscode_url="http://localhost:$port/"
+fi
 
 raw="$out/.raw"
 results="$out/.results"
@@ -134,10 +184,10 @@ failed=0
 for project in "${!filters[@]}"; do
   echo "Playing $(basename "$project" .csproj): ${filters[$project]}"
   if [ $video -eq 1 ]; then
-    E2E_VIDEO_DIR="$raw" E2E_ACTION_GAP="$action_gap" dotnet test "$project" --filter "${filters[$project]}" \
+    E2E_VSCODE_URL="$vscode_url" E2E_VIDEO_DIR="$raw" E2E_ACTION_GAP="$action_gap" dotnet test "$project" --filter "${filters[$project]}" \
       --logger "trx;LogFileName=$(basename "$project" .csproj).trx" --results-directory "$results" || failed=1
   else
-    env -u E2E_VIDEO_DIR dotnet test "$project" --filter "${filters[$project]}" \
+    env -u E2E_VIDEO_DIR E2E_VSCODE_URL="$vscode_url" dotnet test "$project" --filter "${filters[$project]}" \
       --logger "trx;LogFileName=$(basename "$project" .csproj).trx" --results-directory "$results" || failed=1
   fi
 done
@@ -149,22 +199,29 @@ fi
 
 # screenrecord writes a frame only when the screen changes: fps= gives the GIF and the MP4 a steady rate.
 hold_end="tpad=stop_mode=clone:stop_duration=3"
-gif_filter="fps=15,$hold_end,scale=360:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle"
+palette="split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle"
+gif_filter="fps=15,$hold_end,scale=360:-1:flags=lanczos,$palette"
+# A browser run (the extension's scenarios): from when VS Code's workbench showed, 20 fps, 800 px wide.
+browser_gif_filter="$hold_end,fps=20,scale=800:-1:flags=lanczos,$palette"
 records=()
 while IFS= read -r record; do
-  video_file="${record%.json}.mp4"
   domain="$(dirname "${record#"$raw"/}")"
   name="$(basename "$record" .json)"
   mkdir -p "$out/$domain"
-  if [ -f "$video_file" ]; then
-    ffmpeg -nostdin -loglevel error -y -i "$video_file" -vf "$gif_filter" "$out/$domain/$name.gif"
-    ffmpeg -nostdin -loglevel error -y -i "$video_file" -vf "fps=30,$hold_end" -an \
+  if [ -f "${record%.json}.mp4" ]; then
+    ffmpeg -nostdin -loglevel error -y -i "${record%.json}.mp4" -vf "$gif_filter" "$out/$domain/$name.gif"
+    ffmpeg -nostdin -loglevel error -y -i "${record%.json}.mp4" -vf "fps=30,$hold_end" -an \
       -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p -movflags +faststart "$out/$domain/$name.mp4"
+  elif [ -f "${record%.json}.webm" ]; then
+    read -r _ _ _ offset < <(e2e_tool find-home "$record") || offset=0
+    ffmpeg -nostdin -loglevel error -y -ss "${offset:-0}" -i "${record%.json}.webm" -vf "$browser_gif_filter" "$out/$domain/$name.gif"
+    ffmpeg -nostdin -loglevel error -y -ss "${offset:-0}" -i "${record%.json}.webm" -vf "$hold_end" -an \
+      -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -movflags +faststart "$out/$domain/$name.mp4"
   else
     echo "No video for $domain/$name: its post says \"No recording\"."
   fi
   records+=("$record")
-done < <(find "$raw" -name '*.json' 2> /dev/null | sort)
+done < <(find "$raw" -path "$raw/.raw" -prune -o -name '*.json' -print 2> /dev/null | sort)
 
 e2e_tool write-scenarios "$out" "$selection" "${records[@]}"
 if grep -q '"passed": false' "$out/scenarios.json"; then failed=1; fi
