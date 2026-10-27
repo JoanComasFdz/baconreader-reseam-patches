@@ -37,21 +37,33 @@ public static class OnScreen
     /// Taps the one element <paramref name="target"/> finds, at its center, after the recording has shown where for
     /// <see cref="TapShown"/>.
     /// </summary>
-    public static async Task PressAsync(AndroidDriver driver, By target)
+    public static Task PressAsync(AndroidDriver driver, By target) => TouchAsync(driver, () => driver.FindElement(target), element => element.Click());
+
+    /// <summary>
+    /// Taps the element <paramref name="find"/> returns (one that no locator finds alone: an image in a given comment),
+    /// as <see cref="PressAsync(AndroidDriver, By)"/> does.
+    /// </summary>
+    public static Task PressAsync(AndroidDriver driver, Func<IWebElement> find) => TouchAsync(driver, find, element => element.Click());
+
+    /// <summary>
+    /// Touches the element <paramref name="find"/> returns with <paramref name="touch"/> (a double tap, a long press),
+    /// after the recording has shown where for <see cref="TapShown"/>: its ring stays until the touch ends.
+    /// </summary>
+    public static async Task TouchAsync(AndroidDriver driver, Func<IWebElement> find, Action<IWebElement> touch)
     {
         await WaitForActionGapAsync(driver);
-        var element = await Task.Run(() => driver.FindElement(target));
+        var element = await Task.Run(find);
         if (TapsDrawnOn.TryGetValue(driver, out var recording))
         {
-            var (x, y) = Center(await Task.Run(() => element.GetAttribute("bounds")));
+            var (x, y) = Center(await Task.Run(() => element.GetAttribute("bounds") ?? ""));
             var shown = Stopwatch.GetTimestamp();
             await Task.Delay(TapShown);
-            await Task.Run(element.Click);
+            await Task.Run(() => touch(element));
             recording.NoteTap(x, y, shown, Stopwatch.GetTimestamp());
         }
         else
         {
-            await Task.Run(element.Click);
+            await Task.Run(() => touch(element));
         }
 
         NoteStepEnded(driver);

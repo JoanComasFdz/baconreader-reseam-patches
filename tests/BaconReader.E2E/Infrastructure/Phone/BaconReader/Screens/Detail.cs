@@ -147,11 +147,11 @@ public sealed class Comments(AndroidDriver driver)
 
     /// <summary>Taps the image of the comment "<paramref name="text"/>".</summary>
     public Task ClickImageAsync(string text) =>
-        OnScreen.DoAsync(driver, () =>
+        OnScreen.PressAsync(driver, () =>
         {
             var image = ImageOf(text);
             imageBefore[text] = Bounds(image);
-            image.Click();
+            return image;
         });
 
     /// <summary>
@@ -179,10 +179,10 @@ public sealed class Comments(AndroidDriver driver)
     /// tell them from two single taps (W3C actions, as UiAutomator2's own double click was too slow for it).
     /// </summary>
     public Task DoubleClickImageAsync(string text) =>
-        OnScreen.DoAsync(driver, () =>
+        OnScreen.TouchAsync(driver, () => ImageOf(text), image =>
         {
-            var image = Bounds(ImageOf(text));
-            var center = new Point(image.X + (image.Width / 2), image.Y + (image.Height / 2));
+            var bounds = Bounds(image);
+            var center = new Point(bounds.X + (bounds.Width / 2), bounds.Y + (bounds.Height / 2));
             var finger = new PointerInputDevice(PointerKind.Touch, "finger");
             var taps = new ActionSequence(finger, 0);
             taps.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, center.X, center.Y, TimeSpan.Zero));
@@ -198,14 +198,14 @@ public sealed class Comments(AndroidDriver driver)
 
     /// <summary>Long presses the image of the comment "<paramref name="text"/>".</summary>
     public Task LongClickImageAsync(string text) =>
-        OnScreen.DoAsync(driver, () => driver.ExecuteScript("mobile: longClickGesture", new Dictionary<string, object>
+        OnScreen.TouchAsync(driver, () => ImageOf(text), image => driver.ExecuteScript("mobile: longClickGesture", new Dictionary<string, object>
         {
-            ["elementId"] = ((AppiumElement)ImageOf(text)).Id,
+            ["elementId"] = ((AppiumElement)image).Id,
         }));
 
     /// <summary>Taps the video of the comment "<paramref name="text"/>", which plays it.</summary>
     public Task ClickVideoAsync(string text) =>
-        OnScreen.DoAsync(driver, () => FindCommentOrFail(text).FindElement(Media.Video).Click());
+        OnScreen.PressAsync(driver, () => FindCommentOrFail(text).FindElement(Media.Video));
 
     /// <summary>
     /// Waits until the video of the comment "<paramref name="text"/>" has ended: its player shows its

@@ -189,12 +189,12 @@ A scenario never repeats any of that.
   - **Read**: `ReadAsync()` returns an immutable record snapshot of what that part shows, never the raw UI tree:
     vocabulary values (rule e) where it shows one kind of thing, the shown text where it composes a line;
     `ReadLayoutAsync()` returns where its views are on the screen (their bounds, in pixels) for layout checks (rule d).
-- **Pace the steps.** Every Act and Read goes through `OnScreen` (`PressAsync`, `ActAsync`, `DoAsync`, `ReadAsync`),
-  never straight to Appium: while recording, a step starts no sooner than `--action-gap` seconds after the previous one
-  ended, so the GIF doesn't tap faster than the eye follows. A view that is off screen is scrolled to first (through
-  `OnScreen`, when a scenario first needs it). `PressAsync` shows where it taps before it taps: the recording draws a
-  ring there from 0.7 s before the tap until just after it (Android draws no touch for Appium's taps). Waits don't go
-  through it (`Waiting`).
+- **Pace the steps.** Every Act and Read goes through `OnScreen` (`PressAsync`, `TouchAsync`, `ActAsync`, `DoAsync`,
+  `ReadAsync`), never straight to Appium: while recording, a step starts no sooner than `--action-gap` seconds after the
+  previous one ended, so the GIF doesn't tap faster than the eye follows. A view that is off screen is scrolled to first
+  (through `OnScreen`, when a scenario first needs it). `PressAsync` shows where it taps before it taps: the recording
+  draws a ring there from 0.7 s before the tap until just after it (Android draws no touch for Appium's taps);
+  `TouchAsync` does the same for any other touch (a double tap, a long press). Waits don't go through it (`Waiting`).
 - Snapshots don't retry: a scenario waits for what it expects before it reads.
 - Locators are private to their class and use only `Locate`: a resource id (`Locate.AppId("toolbarTitle")`, Android's
   own `Locate.AndroidId("button1")`), a content description, or the exact text. Never XPath or a position. A view a patch
