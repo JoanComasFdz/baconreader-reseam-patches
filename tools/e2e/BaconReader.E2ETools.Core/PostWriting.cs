@@ -9,12 +9,12 @@ namespace BaconReader.E2ETools.Core;
 /// The post of a PR's recorded scenarios. Its heading counts the scenarios and the failed ones, and it starts with what
 /// changed; each scenario shows once, as a closed &lt;details&gt; whose summary is its bold title after ✅ or ❌ (so the
 /// owner opens only the ones to look at), holding its Gherkin, the patches its app was patched with, then a "📱 Phone"
-/// subtitle with that screen's GIF and, below it, "▶ Play MP4": both link to the site's player page, since GitHub shows
+/// subtitle (the app's scenarios; "🖥️ Desktop" for the VS Code extension's) with that screen's GIF and, below it, "▶ Play MP4": both link to the site's player page, since GitHub shows
 /// no player for a video it didn't store itself (a tap on a bare GIF would only download it).
 /// </summary>
 public static class PostWriting
 {
-    private static readonly ImmutableArray<(string Screen, string Label)> Screens = [("phone", "📱 Phone")];
+    private static readonly ImmutableArray<(string Screen, string Label)> Screens = [("phone", "📱 Phone"), ("desktop", "🖥️ Desktop")];
 
     /// <summary>
     /// The post. The scenarios the PR added or changed come first, then those only re-recorded because a fixture file they

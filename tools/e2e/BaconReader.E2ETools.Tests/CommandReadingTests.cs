@@ -27,11 +27,16 @@ public sealed class CommandReadingTests
         Assert.Equal(["a.json", "b.json"], write.Records);
         Assert.Empty(Assert.IsType<ToolCommand.WriteScenarios>(Unwrap(CommandReading.ReadCommand(["write-scenarios", "out", "sel.tsv"], Environment))).Records);
         Assert.Equal(new ToolCommand.ListFiles("out/scenarios.json"), Unwrap(CommandReading.ReadCommand(["list-files", "out/scenarios.json"], Environment)));
+        Assert.IsType<ToolCommand.FindFreePort>(Unwrap(CommandReading.ReadCommand(["free-port"], Environment)));
+        Assert.Equal(new ToolCommand.ReadVsCodeCommit("package.json"), Unwrap(CommandReading.ReadCommand(["vscode-commit", "package.json"], Environment)));
+        Assert.Equal(new ToolCommand.FindHome("a.json"), Unwrap(CommandReading.ReadCommand(["find-home", "a.json"], Environment)));
+        Assert.Equal(new ToolCommand.PackVsix("ext", "LICENSE", "x.vsix"), Unwrap(CommandReading.ReadCommand(["pack-vsix", "ext", "LICENSE", "x.vsix"], Environment)));
     }
 
     [Theory]
     [InlineData(new string[0], "No command.")]
-    [InlineData(new[] { "find-home" }, "Unknown command 'find-home'.")]
+    [InlineData(new[] { "list-flows" }, "Unknown command 'list-flows'.")]
+    [InlineData(new[] { "find-home" }, "'find-home' takes other arguments.")]
     [InlineData(new[] { "report-runs" }, "'report-runs' takes other arguments.")]
     [InlineData(new[] { "write-scenarios", "out" }, "'write-scenarios' takes other arguments.")]
     [InlineData(new[] { "list-files", "a.json", "b.json" }, "'list-files' takes other arguments.")]

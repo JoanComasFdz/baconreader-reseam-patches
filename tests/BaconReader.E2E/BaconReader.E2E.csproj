@@ -15,15 +15,17 @@
     <PackageReference Include="Appium.WebDriver" />
     <PackageReference Include="JoanComasFdz.AssertingThat" />
     <PackageReference Include="Dunet" />
-    <PackageReference Include="Humanizer.Core" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BaconReader.FakeReddit\BaconReader.FakeReddit.csproj" />
+    <ProjectReference Include="..\BaconReader.E2E.Shared\BaconReader.E2E.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
-    <!-- Gherkin, [TestDescription], Screen and [PlayOnPhone], ScenarioNaming: what every scenario uses. -->
+    <!-- Gherkin, [TestDescription], Screen and [PlayOnPhone], ScenarioNaming (tests/BaconReader.E2E.Shared), and
+         BaseE2E: what every scenario uses. -->
     <Using Include="BaconReader.E2E.Infrastructure" />
+    <Using Include="BaconReader.E2E.Shared" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />

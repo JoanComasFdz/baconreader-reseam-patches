@@ -1,0 +1,88 @@
+{
+  "name": "baconreader-reseam-e2e-recordings",
+  "displayName": "BaconReader Reseam e2e recordings",
+  "description": "Shows each e2e scenario's recordings of the BaconReader Reseam patches next to its code: a CodeLens, a play button and a panel that plays the MP4.",
+  "version": "0.1.0",
+  "publisher": "joancomasfdz",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JoanComasFdz/baconreader-reseam-patches"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Testing",
+    "Visualization"
+  ],
+  "main": "./extension.js",
+  "browser": "./extension.js",
+  "activationEvents": [
+    "onLanguage:csharp"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "e2eRecordings": {
+    "prefix": "baconreaderReseam.e2eRecordings"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "baconreaderReseam.e2eRecordings.playHere",
+        "title": "BaconReader Reseam: Play e2e recording of this scenario",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "baconreaderReseam.e2eRecordings.refresh",
+        "title": "BaconReader Reseam: Refresh e2e recordings"
+      },
+      {
+        "command": "baconreaderReseam.e2eRecordings.signIn",
+        "title": "BaconReader Reseam: Sign in to GitHub to read e2e recordings"
+      },
+      {
+        "command": "baconreaderReseam.e2eRecordings.play",
+        "title": "BaconReader Reseam: Play e2e recording"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "baconreaderReseam.e2eRecordings.play",
+          "when": "false"
+        },
+        {
+          "command": "baconreaderReseam.e2eRecordings.playHere",
+          "when": "editorLangId == csharp"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "baconreaderReseam.e2eRecordings.playHere",
+          "when": "resourceLangId == csharp && resource =~ /\\/Scenarios\\/.*Tests\\.cs$/",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "BaconReader Reseam e2e recordings",
+      "properties": {
+        "baconreaderReseam.e2eRecordings.repository": {
+          "type": "string",
+          "default": "JoanComasFdz/baconreader-reseam-patches",
+          "description": "The GitHub repository (owner/name) whose release holds the e2e recordings."
+        },
+        "baconreaderReseam.e2eRecordings.release": {
+          "type": "string",
+          "default": "prs-resources",
+          "description": "The release's tag: the \"E2E videos\" workflow uploads the recordings to it."
+        }
+      }
+    }
+  }
+}

@@ -22,7 +22,11 @@ var done = ((Result<ToolCommand, string>.Ok)command).Value.Match(
         : PrClosing.ClosePr(post.Options, (E2ECommand.ClosePr)post.Options.Command),
     RecordingSteps.ReportRuns,
     RecordingSteps.WriteScenarios,
-    RecordingSteps.ListFiles);   // impure
+    RecordingSteps.ListFiles,
+    _ => RecordingSteps.FindFreePort(),
+    RecordingSteps.ReadVsCodeCommit,
+    RecordingSteps.FindHome,
+    RecordingSteps.PackVsix);   // impure
 if (done is Result<Unit, string>.Error failed)
 {
     E2EFiles.ReportError(failed.Failure);   // impure

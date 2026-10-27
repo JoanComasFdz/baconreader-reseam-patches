@@ -1,7 +1,7 @@
 # E2E tools
 
-The scripts that record the e2e scenarios on the emulator and post them on a PR ([docs/hosting.md](../../docs/hosting.md),
-"E2E videos on pull requests").
+The scripts that record the e2e scenarios (the app's on the emulator, the VS Code extension's in VS Code for the web)
+and post them on a PR ([docs/hosting.md](../../docs/hosting.md), "E2E videos on pull requests").
 
 - `record.sh`: plays and records the scenarios a PR added or changed and writes `out/<domain folder>/<gif name>.gif` and
   `.mp4` and `out/scenarios.json`, with the e2e tool's `write-scenarios` (below).
@@ -68,7 +68,7 @@ edit, hide or delete instead of doing it (it still reads from GitHub).
   class with only `fixtures` lines is `"selected": "fixtures"` with those paths, sorted, each once. Empty lines and any
   other lines are ignored.
 - `<record.json> ...`: zero or more records, one per recorded run, in the order `scenarios.json` should list them.
-  Each is a `ScenarioRecording` (`tests/BaconReader.E2E/Infrastructure/ScenarioRecording.cs`) serialized camelCase:
+  Each is a `ScenarioRecording` (`tests/BaconReader.E2E.Shared/ScenarioRecording.cs`) serialized camelCase:
 
   ```json
   {"domain": "Account", "class": "SpoofClientTests", "method": "OpensTheFrontPage", "title": "Opens the front page",
@@ -145,6 +145,36 @@ Prints the files `scenarios.json` lists, relative to its folder, one per line, e
 `mp4`. Nothing for `[]`. Exit codes: 0 listed, 1 the file can't be read or isn't a JSON array, 2 not exactly one
 argument.
 
+### `free-port`, `vscode-commit`, `find-home` (`record.sh`, the VS Code extension's scenarios)
+
+```bash
+... free-port
+... vscode-commit <package.json>
+... find-home <record.json>
+```
+
+- `free-port` prints a free local TCP port, for VS Code for the web.
+- `vscode-commit` prints the VS Code build a runner's `package.json` pins (`config.vscodeCommit`:
+  `tests/BaconReader.VsCodeExtension.E2E/vscode-web/package.json`).
+- `find-home` prints `<domain> <gif> <screen> <second>` for a browser run's record: the second its video
+  (`<name>.webm`, next to the record) first looks like the screenshot of VS Code's workbench the test took
+  (`<name>.home.png`; ffmpeg's SSIM, `HomeFinding`), or the record's `homeShownSeconds` without a screenshot.
+  `record.sh` trims the video there.
+
+Exit codes: 0 printed, 1 the file can't be read (or ffmpeg can't read the video), 2 a bad command line.
+
+### `pack-vsix` (the dev container)
+
+```bash
+... pack-vsix <extension folder> <license> <.vsix>
+```
+
+Zips `tools/vscode-extension` into a `.vsix` as vsce lays one out (`VsixPacking`): `extension/` with `package.json`,
+`extension.js`, `README.md` and the license as `LICENSE.txt`, then `vsix/extension.vsixmanifest` and
+`vsix/Content_Types.xml` at its root, replacing the `.vsix` there.
+`.devcontainer/6-install-e2e-recordings-extension.sh` runs it. Exit codes: 0 packed, 1 a file can't be read or the
+`.vsix` written, 2 a bad command line.
+
 ## The projects
 
 - `BaconReader.E2ETools`: the e2e tool's host. It reads `scenarios.json`, the recordings and the files the scripts name,
@@ -154,7 +184,8 @@ argument.
   ones (`PostVersioning`: collapsed, hidden, shrunk), the assets' names (`ReleaseNaming`, mirrored by
   `site/e2e-player.html`), what `prs-resources` keeps when a PR closes (`ReleaseCleaning`), what to upload
   (`UploadPlanning`), "What changed" (`CommitDescribing`), the unrecorded runs' table (`RunReporting`),
-  `scenarios.json` (`ScenarioListing`), the JSON it reads and sends (`JsonReading`), the command lines
+  `scenarios.json` (`ScenarioListing`), where a browser video starts (`HomeFinding`), the `.vsix`'s layout
+(`VsixPacking`), the JSON it reads and sends (`JsonReading`), the command lines
   (`CommandReading`, `OptionsReading`) and its own `Optional`/`Result` (`Functional.cs`).
 - `BaconReader.E2ETools.Tests`: their tests (CI runs them). An architecture test keeps Core free of I/O and the host free
   of any other project, so the workflow builds the tool in seconds.

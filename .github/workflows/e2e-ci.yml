@@ -1,15 +1,16 @@
 name: E2E CI
 
-# Builds the end-to-end tests and their tools (.NET) and runs what needs no emulator: the e2e tool's tests, and the
-# e2e project's shape and naming tests (its scenarios skip themselves without an emulator). Recording is the session's
-# job (tests/BaconReader.E2E/README.md). The bundle itself is built by release.yml.
+# Builds the end-to-end tests and their tools (.NET) and runs what needs no emulator and no browser: the e2e tool's
+# tests, the e2e projects' shape and naming tests (their scenarios skip themselves without an emulator or VS Code for the
+# web), and the VS Code extension's unit tests (the runner's own Node). Recording is the session's job (tests/BaconReader.E2E/README.md,
+# tests/BaconReader.VsCodeExtension.E2E/README.md). The bundle itself is built by release.yml.
 
 on:
   push:
     branches: [main]
-    paths: ['tests/**', 'tools/e2e/**', 'BaconReader.E2E.slnx', 'Directory.Build.props', 'Directory.Packages.props', 'global.json', '.github/workflows/e2e-ci.yml']
+    paths: ['tests/**', 'tools/e2e/**', 'tools/vscode-extension/**', 'BaconReader.E2E.slnx', 'Directory.Build.props', 'Directory.Packages.props', 'global.json', '.github/workflows/e2e-ci.yml']
   pull_request:
-    paths: ['tests/**', 'tools/e2e/**', 'BaconReader.E2E.slnx', 'Directory.Build.props', 'Directory.Packages.props', 'global.json', '.github/workflows/e2e-ci.yml']
+    paths: ['tests/**', 'tools/e2e/**', 'tools/vscode-extension/**', 'BaconReader.E2E.slnx', 'Directory.Build.props', 'Directory.Packages.props', 'global.json', '.github/workflows/e2e-ci.yml']
 
 permissions:
   contents: read
@@ -25,3 +26,5 @@ jobs:
       - run: dotnet build BaconReader.E2E.slnx -c Release
       - run: dotnet test tools/e2e/BaconReader.E2ETools.Tests -c Release --no-build
       - run: dotnet test tests/BaconReader.E2E -c Release --no-build
+      - run: dotnet test tests/BaconReader.VsCodeExtension.E2E -c Release --no-build
+      - run: node --test tools/vscode-extension/test/*.test.js

@@ -10,6 +10,8 @@ obj/
 .idea/
 *.iml
 .vscode/
+# ...except the settings of the workspace the VS Code extension's e2e scenarios open
+!/tests/BaconReader.VsCodeExtension.E2E/Workspace/.vscode/
 
 local.properties
 *.key
@@ -22,3 +24,6 @@ Thumbs.db
 # Clean base APK and screenshots fetched by tools/e2e/connect.sh
 .e2e/
 *.apk
+
+# VS Code for the web's runner (tests/BaconReader.VsCodeExtension.E2E/vscode-web: npm ci)
+node_modules/
