@@ -18,6 +18,7 @@ public sealed class Phone
     {
         Launcher = new Launcher(driver);
         NotificationPermission = new NotificationPermission(driver);
+        Downloads = new Downloads(driver);
         BaconReader = new BaconReaderApp(driver, Launcher, NotificationPermission, patches, noteAppShown);
     }
 
@@ -26,6 +27,9 @@ public sealed class Phone
 
     /// <summary>Android's dialog asking whether BaconReader may send notifications.</summary>
     public NotificationPermission NotificationPermission { get; }
+
+    /// <summary>Android's Downloads folder: what BaconReader saved in Downloads/BaconReader.</summary>
+    public Downloads Downloads { get; }
 
     /// <summary>BaconReader, patched with the scenario's patches (<see cref="PatchedWithAttribute"/>).</summary>
     public BaconReaderApp BaconReader { get; }

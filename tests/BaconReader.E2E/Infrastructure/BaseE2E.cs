@@ -26,7 +26,8 @@ namespace BaconReader.E2E.Infrastructure;
 ///   needs, and the ones every scenario needs (<see cref="PatchedApps.Always"/>: "E2E fake Reddit"…), and installs it
 ///   (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the one installed already);
 /// - a fresh app per scenario: stopped and its data cleared, as just installed (Android asks for its notifications
-///   when it opens), so scenarios share nothing (no login, no setting, no cache);
+///   when it opens), and Downloads/BaconReader emptied, so scenarios share nothing (no login, no setting, no cache, no
+///   saved image);
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it;
 /// - when the run records (<c>E2E_VIDEO_DIR</c>): records the screen from before the app opens to the end
@@ -38,6 +39,7 @@ namespace BaconReader.E2E.Infrastructure;
 public abstract class BaseE2E : IAsyncLifetime
 {
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromMinutes(2);
+    private const string DownloadsFolder = Infrastructure.Phone.Downloads.Folder;
     private static readonly SemaphoreSlim StartingFakeReddit = new(1, 1);
     private static FakeRedditServer? fakeReddit;
 
@@ -71,6 +73,7 @@ public abstract class BaseE2E : IAsyncLifetime
         await PatchedApps.InstallAsync(apk);
         await FakeRedditLink.EnsureAsync();
         await PatchedApps.ResetAsync();
+        await Commands.ShellAsync($"rm -rf {DownloadsFolder}");
         driver = await Task.Run(OpenDriver);
         Phone = new Phone.Phone(driver, patches, NoteAppShown);
 

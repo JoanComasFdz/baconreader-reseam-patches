@@ -29,13 +29,23 @@ world.LoginPage.ShowCookieBanner = true;
 
 - `Subreddit(name)` makes a subreddit on first use, a default one (the Front Page of an account without
   subscriptions shows its posts) unless `IsDefault` is set to false.
-- `PostBuilder`: `By`, `WithText`, `LinkingTo`, `WithImage`, `WithGif`, `WithScore`, `PostedAgo`, `Nsfw`, `Stickied`,
-  `WithFlair`. `CommentBuilder`: `By`, `WithGif`, `WithImage`, `WithScore`. Each fills in everything Reddit sends for
-  it, with media the fake serves: a GIF uploaded in a comment is `![gif](<id>)` in its body, an entry in its
-  `media_metadata`, a link to the GIF around a preview in its `body_html`, and the GIF itself at
-  `<baseUrl>/_media/i.redd.it/<id>.gif`.
+- `PostBuilder`: `By`, `WithText`, `WithTextAndImage`, `LinkingTo`, `WithImage`, `WithGif`, `WithScore`, `PostedAgo`,
+  `Nsfw`, `Stickied`, `WithFlair`. `CommentBuilder`: `By`, `WithGif`, `WithImage`, `WithVideo`, `LinkingToAnImage`,
+  `LinkingToAVideo`, `WithScore`; each media one is a paragraph of its own after the comment's text. Each fills in
+  everything Reddit sends for it, with media the fake serves:
+  - a GIF uploaded in a comment is `![gif](<id>)` in its body, an entry in its `media_metadata`, a link to the GIF
+    around a preview in its `body_html`, and the GIF itself at `<baseUrl>/_media/i.redd.it/<id>.gif`;
+  - an image uploaded in a comment or a post's text (`WithTextAndImage`) is `![img](<id>)` in its Markdown, an entry in
+    its `media_metadata`, and a bare link to its preview in its HTML,
+    `<baseUrl>/_media/preview.redd.it/<id>.png?width=320&format=png&auto=webp&s=e2e`, which serves the image;
+  - a video uploaded in a comment is a link to its player in its body, `https://reddit.com/link/<post>/video/<id>/player`
+    (what the patch plays), a `RedditVideo` entry in its `media_metadata`, and the video as v.redd.it serves it: its DASH
+    playlist at `<baseUrl>/_media/v.redd.it/<id>/DASHPlaylist.mpd` and its one rendition, `DASH_240.mp4`, next to it;
+  - a link to an image or a video is a bare link to a file at `<baseUrl>/_media/example.com/<id>e2elink.jpg` (or
+    `.mp4`).
 - `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a JPEG, a
-  PNG, an MP4 with an audio track.
+  PNG, an MP4 with an audio track (two seconds, and `LongMp4`, ten), and a ten-second video as a DASH playlist and its
+  rendition.
 - The E2E project wraps this in the Gherkins' words (`Infrastructure/Reddit/`).
 
 ## What it answers

@@ -136,6 +136,7 @@ internal object CommentVideo {
 
         val box =
             AspectRatioFrameLayout(context, DEFAULT_RATIO, if (fullWidth) maxHeight else boxSize)
+        box.id = CommentImages.resourceId(context, "baconreader_patches_comment_video")
         box.background =
             GradientDrawable().apply {
                 setColor(Color.BLACK)

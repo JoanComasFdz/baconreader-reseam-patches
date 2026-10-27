@@ -51,7 +51,7 @@ For each scenario, `BaseE2E`:
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 4. points the phone at the fake Reddit (`adb reverse`, no HTTP proxy);
 5. clears the app's data, so the scenario starts from a fresh install: Android asks for its notifications when it
-   opens;
+   opens; and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
 6. starts recording the screen, when the run records;
 7. after the scenario, fails it if the app made a request the fake Reddit doesn't answer.
 
@@ -146,5 +146,6 @@ or comments does it: logged out, Reddit refuses BaconReader ([SpoofClientTests.c
 
 ## Isolation
 
-One device, so scenarios run one after another (`xunit.runner.json`). Each starts from the app's data cleared and the
-fake Reddit emptied, so nothing one does (a login, a setting, a post) reaches another.
+One device, so scenarios run one after another (`xunit.runner.json`). Each starts from the app's data cleared,
+Downloads/BaconReader and the fake Reddit emptied, so nothing one does (a login, a setting, a saved image, a post)
+reaches another.
