@@ -13,16 +13,36 @@ scope and the order of its rounds. Adapted from destiny-loopsmith's
 ## Example
 
 [SpoofClientTests.cs](../tests/BaconReader.E2E/Scenarios/Account/SpoofClient/SpoofClientTests.cs): BaconReader
-patched with only "Spoof client", installed and opened.
+patched with only "Spoof client", logging in to the fake Reddit, which has a post for it to show.
 
 ```gherkin
 @phone
-Scenario: BaconReader patched with Spoof client opens on the front page
-  Given BaconReader is patched with "Spoof client"
+Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
+  Given Reddit has a post "Hello from r/e2e" in r/e2e
+  And the test account is subscribed to r/e2e
+  And BaconReader is patched with "Spoof client"
   And BaconReader is installed
   When I open BaconReader
+  And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
   And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
+  # Logged out, Reddit refuses BaconReader: the feed shows "Greetings!", BaconReader's "no longer operational" message.
+  Then the feed shows no posts
+  When I open the left menu
+  And I tap "Add account"
+  And I type the test account's user name in "Email or username"
+  And I type the test account's password in "Password"
+  And I tap "Log In"
+  Then Reddit asks to connect "RedReader (Release)" with the test account
+  When I tap "Accept"
+  # BaconReader comes back from the login with the left menu open.
+  Then the left menu shows the test account's user name
+  # Not on the screen: the fake Reddit records what BaconReader sent.
+  And Reddit saw RedReader's client ID, redirect URI and User-Agent
+  When I close the left menu
   Then the toolbar shows the "Front Page" feed
+  And the feed shows the post "Hello from r/e2e"
+  # Not on the screen: the fake Reddit records what BaconReader sent.
+  And Reddit got the request for the posts with RedReader's User-Agent
 ```
 
 ## Scope

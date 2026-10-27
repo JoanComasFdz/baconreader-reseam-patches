@@ -16,35 +16,6 @@ public sealed class SpoofClientTests : BaseE2E
     [PatchedWith(Patch.SpoofClient)]
     [TestDescription("""
         @phone
-        Scenario: BaconReader patched with Spoof client opens on the front page
-          Given BaconReader is patched with "Spoof client"
-          And BaconReader is installed
-          When I open BaconReader
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
-          And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
-          Then the toolbar shows the "Front Page" feed
-        """)]
-    public async Task BaconReaderPatchedWithSpoofClientOpensOnTheFrontPage(Screen screen)
-    {
-        // Given
-
-        // When
-        await Phone.Launcher.OpenBaconReaderAsync();
-        await Phone.NotificationPermission.WaitUntilShownAsync();
-        await Phone.NotificationPermission.ClickDontAllowAsync();
-        await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
-        await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
-        await Phone.BaconReader.Main.WaitUntilShownAsync();
-
-        // Then
-        var toolbar = await Phone.BaconReader.Main.Toolbar.ReadAsync();
-        Asserting.That(toolbar).ShowsFeed(new Feed.FrontPage());
-    }
-
-    [Theory, PlayOnPhone]
-    [PatchedWith(Patch.SpoofClient)]
-    [TestDescription("""
-        @phone
         Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
           Given Reddit has a post "Hello from r/e2e" in r/e2e
           And the test account is subscribed to r/e2e
