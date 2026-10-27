@@ -41,8 +41,27 @@ public sealed class LeftMenu(AndroidDriver driver)
             "The main screen's left menu sliding in");
     }
 
-    /// <summary>Taps <paramref name="entry"/>.</summary>
-    public Task ClickAsync(MenuEntry entry) => OnScreen.PressAsync(driver, Locate.AppIdWithText("text", entry.ToShownText()));
+    /// <summary>
+    /// Taps <paramref name="entry"/>, which opens what it names over the menu. BaconReader at times ignores the tap (seen
+    /// by hand too, a second tap works): when the menu still shows the entry 10 s later (the login screen takes up to
+    /// 8 s to show), it taps once more.
+    /// </summary>
+    public async Task ClickAsync(MenuEntry entry)
+    {
+        var target = Locate.AppIdWithText("text", entry.ToShownText());
+        await OnScreen.PressAsync(driver, target);
+        try
+        {
+            await Waiting.UntilAsync(
+                () => !driver.FindElements(target).Any(view => view.Displayed),
+                TimeSpan.FromSeconds(10),
+                $"\"{entry.ToShownText()}\" opening");
+        }
+        catch (TimeoutException)
+        {
+            await OnScreen.PressAsync(driver, target);
+        }
+    }
 
     /// <summary>Closes the menu, as Android's Back does.</summary>
     public Task CloseAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));

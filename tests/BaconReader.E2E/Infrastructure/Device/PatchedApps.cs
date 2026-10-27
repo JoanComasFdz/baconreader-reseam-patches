@@ -138,18 +138,13 @@ public static partial class PatchedApps
     }
 
     /// <summary>
-    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached) and,
-    /// when <paramref name="allowNotifications"/>, its notifications allowed again (clearing its data revokes them, and
-    /// Android 14 would ask for them).
+    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached, and
+    /// its notifications allowed: Android 14 asks for them again when it opens).
     /// </summary>
-    public static async Task ResetAsync(bool allowNotifications)
+    public static async Task ResetAsync()
     {
         await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
         await Commands.ShellAsync($"pm clear {E2EDevice.Package}");
-        if (allowNotifications)
-        {
-            await Commands.ShellAsync($"pm grant {E2EDevice.Package} android.permission.POST_NOTIFICATIONS");
-        }
     }
 
     private static async Task<string?> ReadInstalledShaAsync()

@@ -6,8 +6,8 @@ using OpenQA.Selenium.Appium.Android;
 namespace BaconReader.E2E.Infrastructure.Phone;
 
 /// <summary>
-/// Android's dialog "Allow BaconReader Premium to send you notifications?", which Android 14 shows when BaconReader opens
-/// without its notifications allowed (<see cref="WithoutNotificationsAllowedAttribute"/>): "Allow" and "Don’t allow".
+/// Android's dialog "Allow BaconReader Premium to send you notifications?", which Android 14 shows when a fresh install
+/// of BaconReader opens, as every scenario's does: "Allow" and "Don’t allow".
 /// </summary>
 public sealed class NotificationPermission(AndroidDriver driver)
 {

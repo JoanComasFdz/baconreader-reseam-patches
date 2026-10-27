@@ -14,7 +14,12 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader;
 /// (<see cref="PatchedWithAttribute"/>): they decide which dialogs opening it shows. <paramref name="noteAppShown"/> tells
 /// BaseE2E when the main screen first shows (the run's startup time).
 /// </summary>
-public sealed class BaconReaderApp(AndroidDriver driver, Launcher launcher, IReadOnlyList<Patch> patches, Action noteAppShown)
+public sealed class BaconReaderApp(
+    AndroidDriver driver,
+    Launcher launcher,
+    NotificationPermission notificationPermission,
+    IReadOnlyList<Patch> patches,
+    Action noteAppShown)
 {
     /// <summary>The dialog a fresh BaconReader shows first, unless "Disable final release announcement" is patched in.</summary>
     public FinalReleaseAnnouncement FinalReleaseAnnouncement { get; } = new(driver);
@@ -33,12 +38,15 @@ public sealed class BaconReaderApp(AndroidDriver driver, Launcher launcher, IRea
 
     /// <summary>
     /// Opens BaconReader on its main screen, as a scenario's "Given BaconReader … is open" says: opens it from the
-    /// launcher, taps "GOT IT :(" on the final release announcement and "Not now" on the prompt to open Reddit links
-    /// when its patches show them, and waits until the main screen is shown.
+    /// launcher, taps "Don’t allow" on Android's notification prompt, "GOT IT :(" on the final release announcement
+    /// and "Not now" on the prompt to open Reddit links when its patches show them, and waits until the main screen is
+    /// shown.
     /// </summary>
     public async Task OpenAsync()
     {
         await launcher.OpenBaconReaderAsync();
+        await notificationPermission.WaitUntilShownAsync();
+        await notificationPermission.ClickDontAllowAsync();
         if (!patches.Contains(Patch.DisableFinalReleaseAnnouncement))
         {
             await FinalReleaseAnnouncement.WaitUntilShownAsync();

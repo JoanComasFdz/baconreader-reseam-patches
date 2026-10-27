@@ -20,6 +20,7 @@ public sealed class SpoofClientTests : BaseE2E
           Given BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
+          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           Then the toolbar shows the "Front Page" feed
         """)]
@@ -29,6 +30,8 @@ public sealed class SpoofClientTests : BaseE2E
 
         // When
         await Phone.Launcher.OpenBaconReaderAsync();
+        await Phone.NotificationPermission.WaitUntilShownAsync();
+        await Phone.NotificationPermission.ClickDontAllowAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
@@ -40,7 +43,6 @@ public sealed class SpoofClientTests : BaseE2E
 
     [Theory, PlayOnPhone]
     [PatchedWith(Patch.SpoofClient)]
-    [WithoutNotificationsAllowed]
     [TestDescription("""
         @phone
         Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
@@ -48,7 +50,6 @@ public sealed class SpoofClientTests : BaseE2E
           And the test account is subscribed to r/e2e
           And BaconReader is patched with "Spoof client"
           And BaconReader is installed
-          And BaconReader isn't allowed to send notifications
           When I open BaconReader
           And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
@@ -68,6 +69,8 @@ public sealed class SpoofClientTests : BaseE2E
           When I close the left menu
           Then the toolbar shows the "Front Page" feed
           And the feed shows the post "Hello from r/e2e"
+          # Not on the screen: the fake Reddit records what BaconReader sent.
+          And Reddit got the request for the posts with RedReader's User-Agent
         """)]
     public async Task BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader(Screen screen)
     {
@@ -121,7 +124,10 @@ public sealed class SpoofClientTests : BaseE2E
         // Then
         var toolbar = await Phone.BaconReader.Main.Toolbar.ReadAsync();
         var posts = await Phone.BaconReader.Main.Posts.ReadAsync();
+        // Not on the screen: the fake Reddit records what BaconReader sent.
+        var requestsForPosts = Reddit.ReadRequestsForPosts();
         Asserting.That(toolbar).ShowsFeed(new Feed.FrontPage());
         Asserting.That(posts).ShowsThePosts("Hello from r/e2e");
+        Asserting.That(requestsForPosts).CarriedRedReadersUserAgent();
     }
 }
