@@ -74,6 +74,13 @@ public sealed class LeftMenu(AndroidDriver driver)
         }
     }
 
+    /// <summary>Whether the menu shows <paramref name="entry"/>, within 5 s: the screen over it may still be closing.</summary>
+    internal async Task<bool> ShowsAsync(MenuEntry entry)
+    {
+        var target = Locate.AppIdWithText("text", entry.ToShownText());
+        return await Waiting.FindWithinAsync(driver, target, TimeSpan.FromSeconds(5)) is not null;
+    }
+
     /// <summary>Closes the menu, as Android's Back does.</summary>
     public Task CloseAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
 
