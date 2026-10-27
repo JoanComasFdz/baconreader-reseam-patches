@@ -1,13 +1,14 @@
 name: E2E videos
 
-# The session that works a PR records its added or changed end-to-end scenarios on the emulator itself
-# (tools/e2e/record.sh) and pushes their GIFs and MP4s with tools/e2e/push-gifs.sh to a throwaway branch
-# e2e-gifs/pr-<n>-<short sha>: the PR's head commit plus one commit that adds e2e-gifs/scenarios.json, the GIFs and the
-# MP4s (and e2e-gifs/what-changed.md, the post's "What changed", when the session gave one). A session can't upload a
-# file to GitHub, so this workflow does only that part: it checks the push, uploads them as
-# pr-<n>-v<version>-<scenario>-phone.gif and .mp4 to the prs-resources pre-release (created on the first upload), posts
-# them on the PR as a new comment (each scenario a closed <details> under its title; each GIF with a "▶ Play MP4" link to
-# the site's player page; it never touches the PR's description) and deletes the branch. It builds, tests and records
+# The session that works a PR records its added or changed end-to-end scenarios itself, the app's on the emulator and
+# the VS Code extension's in VS Code for the web (tools/e2e/record.sh), and pushes their GIFs and MP4s with
+# tools/e2e/push-gifs.sh to a throwaway branch e2e-gifs/pr-<n>-<short sha>: the PR's head commit plus one commit that
+# adds e2e-gifs/scenarios.json, the GIFs and the MP4s (and e2e-gifs/what-changed.md, the post's "What changed", when the
+# session gave one). A session can't upload a file to GitHub, so this workflow does only that part: it checks the push,
+# uploads them as pr-<n>-v<version>-<scenario>-<screen>.gif and .mp4 (phone, or desktop for the extension's) to the
+# prs-resources pre-release (created on the first upload), posts them on the PR as a new comment (each scenario a closed
+# <details> under its title; each GIF with a "▶ Play MP4" link to the site's player page; it never touches the PR's
+# description) and deletes the branch. It builds, tests and records
 # nothing. A push runs the workflow file inside the pushed commit, so the branch carries the PR's own version of this file.
 # A failing scenario is marked ❌ in the post and never turns this check red; only the workflow's own failures do (a push
 # that isn't a PR's GIFs, an upload or a post that GitHub refused). A new post collapses the PR's earlier posts into a

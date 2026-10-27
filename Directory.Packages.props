@@ -14,5 +14,9 @@
     <!-- End-to-end tests (tests/BaconReader.E2E): Appium's .NET client, for an Appium 3.8 server with UiAutomator2. -->
     <PackageVersion Include="Appium.WebDriver" Version="9.0.0" />
     <PackageVersion Include="JoanComasFdz.AssertingThat" Version="1.0.0" />
+    <!-- End-to-end tests of the VS Code extension (tests/BaconReader.VsCodeExtension.E2E). Playwright drives the Chromium
+         the cloud image ships in /opt/pw-browsers (PLAYWRIGHT_BROWSERS_PATH), build 1243. If the image's Chromium changes,
+         bump this pin to the Playwright release that matches it. -->
+    <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
   </ItemGroup>
 </Project>

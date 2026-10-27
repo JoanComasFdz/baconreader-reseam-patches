@@ -6,7 +6,10 @@ using BaconReader.E2ETools.Core;
 
 namespace BaconReader.E2ETools.Tests;
 
-/// <summary>The files the e2e scripts hand the tool: a run's record (BaconReader.E2E's ScenarioRecording) and scenarios.json's files.</summary>
+/// <summary>
+/// The files the e2e scripts hand the tool: a run's record (BaconReader.E2E.Shared's ScenarioRecording), scenarios.json's
+/// files, the VS Code runner's package.json and the VS Code extension's .vsix.
+/// </summary>
 public sealed class ScriptFilesTests
 {
     /// <summary>A ScenarioRecording as BaseE2E serializes it, camelCase.</summary>
@@ -54,4 +57,24 @@ public sealed class ScriptFilesTests
             Assert.IsType<Result<ImmutableArray<string>, string>.Ok>(JsonReading.ReadListedFiles(json)).Value);
         Assert.Empty(Assert.IsType<Result<ImmutableArray<string>, string>.Ok>(JsonReading.ReadListedFiles("[]")).Value);
     }
+
+    [Fact]
+    public void The_VS_Code_build_is_the_package_json_s_config_vscodeCommit()
+    {
+        Assert.Equal("abc123", Assert.IsType<Result<string, string>.Ok>(JsonReading.ReadVsCodeCommit("""{"config": {"vscodeCommit": "abc123"}}""")).Value);
+        Assert.IsType<Result<string, string>.Error>(JsonReading.ReadVsCodeCommit("""{"config": {}}"""));
+    }
+
+    [Fact]
+    public void The_vsix_lays_the_extension_out_as_vsce_does() =>
+        Assert.Equal(
+            [
+                new VsixEntry("ext/package.json", "extension/package.json"),
+                new VsixEntry("ext/extension.js", "extension/extension.js"),
+                new VsixEntry("ext/README.md", "extension/README.md"),
+                new VsixEntry("LICENSE", "extension/LICENSE.txt"),
+                new VsixEntry("ext/vsix/extension.vsixmanifest", "extension.vsixmanifest"),
+                new VsixEntry("ext/vsix/Content_Types.xml", "[Content_Types].xml"),
+            ],
+            VsixPacking.PlanEntries("ext", "LICENSE"));
 }

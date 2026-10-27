@@ -29,6 +29,17 @@ public sealed class ReleaseNamingTests
         Assert.Equal(name[^12..^4], other[^12..^4]);
     }
 
+    [Fact]
+    public void A_long_name_is_the_one_the_VS_Code_extension_looks_for()
+    {
+        // tools/vscode-extension/test/extension.test.js expects this name for the same GIF.
+        var gif = "Comments/" + string.Concat(Enumerable.Repeat("a-scenario-whose-name-goes-on-and-on-", 5)) + "past-two-hundred-characters-phone.gif";
+
+        Assert.Equal(
+            "pr-112-v3-" + string.Concat(Enumerable.Repeat("a-scenario-whose-name-goes-on-and-on-", 4)) + "a-scenario-whose-name-goes-on-ceafb6b5.gif",
+            ReleaseNaming.NameAsset(112, 3, gif, ".gif"));
+    }
+
     [Theory]
     [InlineData("pr-7-v2-opens-phone.gif", 7, 2)]
     [InlineData("pr-70-v10-x.mp4", 70, 10)]

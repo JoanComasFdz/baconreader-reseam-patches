@@ -78,6 +78,8 @@ Settings live in BaconReader → **Settings → Patches**.
 
 What each patch does: [docs/patches.md](docs/patches.md); its settings and differences from ReVanced: [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md). Build and release: [patcher-specific-build.md](patcher-specific-build.md), [patcher-specific-release.md](patcher-specific-release.md). Code style and checks: [STYLE.md](STYLE.md), [patcher-specific-code.md](patcher-specific-code.md) and [AGENTS.md](AGENTS.md).
 
+End-to-end tests: [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md), each a PR shows as GIFs. A VS Code extension plays their recordings next to their code; the repository's dev container (a Codespace) installs it: [tools/vscode-extension](tools/vscode-extension/README.md).
+
 ## 📜 License
 
 [GPL-3.0](LICENSE). Most patches are ported from [ReVanced Patches](https://gitlab.com/ReVanced/revanced-patches). Not affiliated with Reddit, BaconReader or Reseam.

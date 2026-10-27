@@ -3,14 +3,19 @@
 ## E2E videos on pull requests
 
 Every pull request from a branch of this repository shows the end-to-end scenarios it added or changed
-([tests/BaconReader.E2E](../tests/BaconReader.E2E/README.md)) as GIFs, each with a **▶ Play MP4**
-link to the same run as a sharp video with controls, so a reviewer sees them working without running anything. The
-session that works the PR records them on the emulator; CI records nothing (it can't reach the emulator).
+([tests/BaconReader.E2E](../tests/BaconReader.E2E/README.md), the app's, and
+[tests/BaconReader.VsCodeExtension.E2E](../tests/BaconReader.VsCodeExtension.E2E/README.md), the VS Code e2e recordings
+extension's) as GIFs, each with a **▶ Play MP4** link to the same run as a sharp video with controls, so a reviewer sees
+them working without running anything. The session that works the PR records them, the app's on the emulator and the
+extension's in VS Code for the web; CI records nothing (it can't reach the emulator). The extension
+([tools/vscode-extension](../tools/vscode-extension/README.md)) plays the same recordings in VS Code, next to each
+scenario's code.
 
 - **What is recorded:** each run (a scenario played on the phone, the emulator's only screen) from the app's first
   screen on, its last frame held a moment, as a GIF (shown in the comment) and as an MP4 (H.264, playable, seekable and
   full-screen in the player page below). A cloud session reaches the emulator at ~3–4 Mbit/s, so the screen is recorded
-  small (540×960, ~1 Mbit/s).
+  small (540×960, ~1 Mbit/s). An extension scenario's run is VS Code for the web on the desktop (1280×800, a GIF 800 px
+  wide), from when its workbench showed.
 - **Who records:** the session, once, right before each push that adds or changes scenarios:
   `tools/e2e/record.sh --changed-since origin/main` ([tools/e2e/README.md](../tools/e2e/README.md)), i.e. every
   scenario the branch adds or changes from where it left `main`, not only those the push touched. `out/scenarios.json`
@@ -62,8 +67,8 @@ session that works the PR records them on the emulator; CI records nothing (it c
   - `v<version>`: 1, 2, 3… (no padding), one per `push-gifs.sh`. It is one more than the highest `## Scenarios (V<N>)`
     already in the workflow's comments on the PR (those by github-actions ending with its footer): nothing is stored
     anywhere else, and a reopened PR carries on from its last number;
-  - `<run>`: the run's GIF name (`ScenarioNaming.ToGifName`: the scenario's method name in kebab-case, then `-phone`;
-    only a–z, 0–9 and `-`). Only when the whole name would pass 200 characters does it keep its start and end with
+  - `<run>`: the run's GIF name (`ScenarioNaming.ToGifName`: the scenario's method name in kebab-case, then its screen,
+    `-phone`, or `-desktop` for an extension scenario; only a–z, 0–9 and `-`). Only when the whole name would pass 200 characters does it keep its start and end with
     `-<8 hex>`, the start of the SHA-256 of the GIF's path, so it stays unique and the same on every push.
 - **The posts:** every version, V1 included, is a new comment on the PR, `## ✅ Scenarios (V<N>) · 12 scenarios`, or
   `## ❌ Scenarios (V<N>) · 12 scenarios · 1 failed` when any scenario failed. It starts with **What changed**:
@@ -72,7 +77,8 @@ session that works the PR records them on the emulator; CI records nothing (it c
   `AFTER: …` looks like a trailer in a commit message). Each scenario shows once, as a closed `<details>` whose summary
   is its Gherkin's title in bold after ✅ or ❌. Inside it: its Gherkin in a `gherkin` block; a line
   `Patched with: Spoof client, …` naming the patches the app was patched with (none, no line); then a `#### 📱 Phone`
-  subtitle (❌ before it when that run failed) with the run's GIF, and below it **▶ Play MP4**. The GIF and that line
+  subtitle (`#### 🖥️ Desktop` for an extension scenario; ❌ before it when that run failed) with the run's GIF, and
+  below it **▶ Play MP4**. The GIF and that line
   both link to the player page with that run's MP4 (`https://<owner, lowercase>.github.io/<repo>/e2e-player.html?v=<MP4
   name>`), so a tap on the GIF opens the video instead of downloading the GIF. The scenarios the PR added or changed
   come first; those only re-recorded because a fixture they use changed follow under

@@ -7,9 +7,9 @@ translated from Playwright and a web app to Appium and a patched Android app on 
 The aim: a scenario is one Gherkin, line for line. Every acceptance criterion about a patched app is a Gherkin, written
 by [docs/given-when-then-test-rules.md](../../docs/given-when-then-test-rules.md), and every Gherkin is one scenario
 here, played on the phone. A scenario reads like the Gherkin it implements, in the app's own words, and everything that
-isn't the scenario lives in `Infrastructure/`. What every app's e2e project shares (a Gherkin and its
+isn't the scenario lives in `Infrastructure/`. What the e2e projects share (a Gherkin and its
 `[TestDescription]`, the screen and its attribute, `ScenarioNaming`, the record next to a video) lives in
-`Infrastructure/` too, a global using of every scenario.
+`tests/BaconReader.E2E.Shared`, a global using of every scenario.
 
 ## A full example
 

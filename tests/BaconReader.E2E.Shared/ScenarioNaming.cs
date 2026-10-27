@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Humanizer;
 
-namespace BaconReader.E2E.Infrastructure;
+namespace BaconReader.E2E.Shared;
 
 /// <summary>A scenario's names, from its Gherkin's title, its method's name and its class's namespace.</summary>
 public static partial class ScenarioNaming
