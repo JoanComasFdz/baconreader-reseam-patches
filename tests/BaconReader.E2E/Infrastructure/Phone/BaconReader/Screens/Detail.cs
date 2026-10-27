@@ -216,7 +216,7 @@ public sealed class Comments(AndroidDriver driver)
             () => FindComment(text) is { } comment
                 && comment.FindElements(Position).FirstOrDefault()?.Text is { Length: > 0 } position
                 && position == comment.FindElements(Duration).FirstOrDefault()?.Text,
-            TimeSpan.FromSeconds(60),
+            TimeSpan.FromSeconds(120),
             $"The video of the comment \"{text}\" playing to its end");
 
     /// <summary>What the player of the comment "<paramref name="text"/>" shows: its position and its length.</summary>

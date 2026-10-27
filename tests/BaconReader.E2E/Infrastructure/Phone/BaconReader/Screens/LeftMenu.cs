@@ -52,6 +52,12 @@ public sealed class LeftMenu(AndroidDriver driver)
         var target = Locate.AppIdWithText("text", entry.ToShownText());
         for (var taps = 1; ; taps++)
         {
+            if (taps > 1 && !driver.FindElements(target).Any(view => view.Displayed))
+            {
+                // It opened just as the wait ended.
+                return;
+            }
+
             await OnScreen.PressAsync(driver, target);
             if (taps == 3)
             {
