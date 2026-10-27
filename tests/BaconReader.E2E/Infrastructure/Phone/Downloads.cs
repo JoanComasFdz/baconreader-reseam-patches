@@ -18,11 +18,23 @@ public sealed class Downloads(AndroidDriver driver)
     public const string Folder = "/sdcard/Download/BaconReader";
 
     /// <summary>
-    /// Waits until Downloads/BaconReader holds an image, saved whole: Android's download manager writes it under a
-    /// hidden name and names it once it's done.
+    /// Waits until Downloads/BaconReader holds an image, saved whole: Android's download manager makes the file empty
+    /// first, then writes it, so the wait ends once the file has bytes and the same size twice in a row.
     /// </summary>
-    public Task WaitUntilImageSavedAsync() =>
-        Waiting.UntilAsync(() => ReadFiles().Length > 0, TimeSpan.FromSeconds(30), "An image saved to Downloads/BaconReader");
+    public Task WaitUntilImageSavedAsync()
+    {
+        ImmutableArray<SavedFile>? last = null;
+        return Waiting.UntilAsync(
+            () =>
+            {
+                var now = ReadFiles();
+                var saved = now.Length > 0 && now.All(file => file.Size > 0) && last is { } before && before.SequenceEqual(now);
+                last = now;
+                return saved;
+            },
+            TimeSpan.FromSeconds(30),
+            "An image saved to Downloads/BaconReader");
+    }
 
     /// <summary>
     /// Waits as long as an image takes to be saved (10 s), for one that should never come: it ends sooner when one does,
