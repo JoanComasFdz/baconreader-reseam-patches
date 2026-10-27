@@ -6,10 +6,10 @@ using JoanComasFdz.AssertingThat;
 
 namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 
-/// <summary>What a test checks on a page of the patches' settings.</summary>
+/// <summary>What a test checks on the patches' settings.</summary>
 public static class PatchesSettingsSnapshotAssertions
 {
-    /// <summary>The page shows <paramref name="settings"/>, in this order, and no other setting a case names.</summary>
+    /// <summary>The settings shown are <paramref name="settings"/>, in this order, and no other setting a case names.</summary>
     public static AssertingThat<PatchesSettingsSnapshot> ShowsTheSettings(this AssertingThat<PatchesSettingsSnapshot> that, params PatchSetting[] settings)
     {
         var shown = that.InstanceToAssert.Settings;
