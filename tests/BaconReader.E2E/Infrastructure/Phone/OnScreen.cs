@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using BaconReader.E2E.Infrastructure.Device;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium.Android;
 
@@ -12,19 +13,49 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// Every Act and Read member of a page object goes through here (E2E-TEST-CODE-RULES.md, rule c), so the video shows
 /// what the scenario does, one step at a time: when the run records, a step starts no sooner than
 /// <see cref="E2EDevice.ActionGap"/> after the previous one ended (record.sh <c>--action-gap</c>), so the GIF doesn't tap
-/// faster than the eye follows. Android draws each touch itself while recording (<c>show_touches</c>,
-/// <see cref="Device.ScreenRecording"/>), so no pointer is drawn here. Without a recording it goes on at once. Waits don't
-/// go through it.
+/// faster than the eye follows. A tap is shown before it happens: the recording draws a ring where it lands from
+/// <see cref="TapShown"/> before the tap until just after it (<see cref="ScreenRecording.NoteTap"/>), so the video
+/// shows what is tapped before the screen changes. Without a recording it goes on at once. Waits don't go through it.
 /// </summary>
 public static class OnScreen
 {
+    // How long a tap's ring is on the screen before the tap: the emulator draws ~5 frames a second, the GIF 15.
+    private static readonly TimeSpan TapShown = TimeSpan.FromMilliseconds(700);
+
     // When each driver's last step ended (one driver per scenario, its steps one after another).
     private static readonly ConditionalWeakTable<AndroidDriver, Stopwatch> SinceLastStep = [];
 
+    // The recording that draws each driver's taps (one per recorded scenario).
+    private static readonly ConditionalWeakTable<AndroidDriver, ScreenRecording> TapsDrawnOn = [];
+
     private static bool Recording => E2EDevice.VideoDirectory is not null;
 
-    /// <summary>Taps the one element <paramref name="target"/> finds.</summary>
-    public static Task PressAsync(AndroidDriver driver, By target) => ActAsync(driver, target, element => element.Click());
+    /// <summary>Has <paramref name="recording"/> draw the taps <paramref name="driver"/> makes from now on.</summary>
+    public static void DrawTapsOn(AndroidDriver driver, ScreenRecording recording) => TapsDrawnOn.AddOrUpdate(driver, recording);
+
+    /// <summary>
+    /// Taps the one element <paramref name="target"/> finds, at its center, after the recording has shown where for
+    /// <see cref="TapShown"/>.
+    /// </summary>
+    public static async Task PressAsync(AndroidDriver driver, By target)
+    {
+        await WaitForActionGapAsync(driver);
+        var element = await Task.Run(() => driver.FindElement(target));
+        if (TapsDrawnOn.TryGetValue(driver, out var recording))
+        {
+            var (x, y) = Center(await Task.Run(() => element.GetAttribute("bounds")));
+            var shown = Stopwatch.GetTimestamp();
+            await Task.Delay(TapShown);
+            await Task.Run(element.Click);
+            recording.NoteTap(x, y, shown, Stopwatch.GetTimestamp());
+        }
+        else
+        {
+            await Task.Run(element.Click);
+        }
+
+        NoteStepEnded(driver);
+    }
 
     /// <summary>Does <paramref name="act"/> on the one element <paramref name="target"/> finds.</summary>
     public static async Task ActAsync(AndroidDriver driver, By target, Action<IWebElement> act)
@@ -82,6 +113,15 @@ public static class OnScreen
         {
             await Task.Delay(E2EDevice.ActionGap - since.Elapsed);
         }
+    }
+
+    // UiAutomator2's bounds, "[left,top][right,bottom]" in the screen's pixels: where its click lands.
+    private static (int X, int Y) Center(string bounds)
+    {
+        var edges = bounds.Split(['[', ']', ','], StringSplitOptions.RemoveEmptyEntries)
+            .Select(edge => int.Parse(edge, System.Globalization.CultureInfo.InvariantCulture))
+            .ToArray();
+        return ((edges[0] + edges[2]) / 2, (edges[1] + edges[3]) / 2);
     }
 
     private static bool IsOnScreen(AndroidDriver driver, By target) =>
