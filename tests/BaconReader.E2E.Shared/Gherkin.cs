@@ -3,7 +3,7 @@
 
 using System.Collections.Immutable;
 
-namespace BaconReader.E2E.Infrastructure;
+namespace BaconReader.E2E.Shared;
 
 /// <summary>
 /// A scenario's Gherkin (<see cref="TestDescriptionAttribute"/>), read: the tags before its <c>Scenario:</c> line,

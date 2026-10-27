@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/tests/">
     <Project Path="tests/BaconReader.E2E/BaconReader.E2E.csproj" />
+    <Project Path="tests/BaconReader.E2E.Shared/BaconReader.E2E.Shared.csproj" />
     <Project Path="tests/BaconReader.FakeReddit/BaconReader.FakeReddit.csproj" />
     <Project Path="tests/BaconReader.FakeReddit.Tests/BaconReader.FakeReddit.Tests.csproj" />
   </Folder>

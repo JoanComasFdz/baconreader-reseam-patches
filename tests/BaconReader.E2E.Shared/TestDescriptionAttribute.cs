@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
-namespace BaconReader.E2E.Infrastructure;
+namespace BaconReader.E2E.Shared;
 
 /// <summary>
 /// The Gherkin a scenario implements, word for word as the PR's acceptance criterion writes it (E2E-TEST-CODE-RULES.md,
