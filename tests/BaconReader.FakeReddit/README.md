@@ -39,9 +39,11 @@ world.LoginPage.ShowCookieBanner = true;
     its Markdown, `<baseUrl>/_media/preview.redd.it/<id>.png?width=320&format=png&auto=webp&s=e2e` (`format=pjpg` for a
     JPEG), which serves the image and its HTML makes a bare link, and an entry in its `media_metadata`: as real comments
     in Reddit's API have it (seen in an archive of them, Arctic Shift), unlike a GIF's `![gif](<id>)`;
-  - a video uploaded in a comment is a link to its player in its body, `https://reddit.com/link/<post>/video/<id>/player`
-    (what the patch plays), a `RedditVideo` entry in its `media_metadata`, and the video as v.redd.it serves it: its DASH
-    playlist at `<baseUrl>/_media/v.redd.it/<id>/DASHPlaylist.mpd` and its one rendition, `DASH_240.mp4`, next to it;
+  - a video uploaded in a comment is a link to its player on a line of its own in its body,
+    `https://reddit.com/link/<comment>/video/<id>/player`, named by the comment's own id as in Reddit's API (what the
+    patch plays), a `RedditVideo` entry in its `media_metadata` (unconfirmed: the archive has none for these comments),
+    and the video as v.redd.it serves it: its DASH playlist at `<baseUrl>/_media/v.redd.it/<id>/DASHPlaylist.mpd` and its
+    one rendition, `DASH_240.mp4`, next to it;
   - a link to an image or a video is a bare link to a file at `<baseUrl>/_media/example.com/<id>e2elink.jpg` (or
     `.mp4`).
 - `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a JPEG, a

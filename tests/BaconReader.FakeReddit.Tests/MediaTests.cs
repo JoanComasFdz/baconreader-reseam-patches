@@ -54,7 +54,8 @@ public sealed class MediaTests(FakeRedditFixture fixture) : FakeRedditTest(fixtu
 
         var data = await ReadCommentAsync(post);
 
-        var player = $"https://reddit.com/link/{post.Id}/video/{id}/player";
+        // Named by the comment's own id, as in Reddit's API.
+        var player = $"https://reddit.com/link/{comment.Id}/video/{id}/player";
         Assert.Equal($"Here is a video\n\n{player}", data.GetProperty("body").GetString());
         Assert.Contains($"&lt;a href=\"{player}\"&gt;{player}&lt;/a&gt;", data.GetProperty("body_html").GetString());
         var metadata = data.GetProperty("media_metadata").GetProperty(id);

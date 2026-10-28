@@ -152,10 +152,12 @@ public sealed class CommentBuilder
     }
 
     /// <summary>
-    /// A video uploaded in the comment, as Reddit sends it: a link to its player,
-    /// <c>https://reddit.com/link/&lt;post&gt;/video/&lt;id&gt;/player</c>, in its body, an entry (<c>RedditVideo</c>)
-    /// in its <c>media_metadata</c>, and the video in the media store as v.redd.it serves it: its DASH playlist,
-    /// <c>v.redd.it/&lt;id&gt;/DASHPlaylist.mpd</c>, and its one rendition next to it (<see cref="MediaAsset.DashPlaylist"/>).
+    /// A video uploaded in the comment, as Reddit sends it: a link to its player on a line of its own in its body,
+    /// <c>https://reddit.com/link/&lt;comment&gt;/video/&lt;id&gt;/player</c>, named by the comment's own id (as real
+    /// comments in Reddit's API have it, seen in the Arctic Shift archive), an entry (<c>RedditVideo</c>) in its
+    /// <c>media_metadata</c> (the archive has none for these comments: unconfirmed), and the video in the media store as
+    /// v.redd.it serves it: its DASH playlist, <c>v.redd.it/&lt;id&gt;/DASHPlaylist.mpd</c>, and its one rendition next to
+    /// it (<see cref="MediaAsset.DashPlaylist"/>).
     /// </summary>
     public CommentBuilder WithVideo()
     {
@@ -164,7 +166,7 @@ public sealed class CommentBuilder
         world.AddMedia(playlist, MediaAsset.DashPlaylist.ContentType, MediaAsset.DashPlaylist.Bytes);
         world.AddMedia($"v.redd.it/{id}/DASH_240.mp4", MediaAsset.DashVideo.ContentType, MediaAsset.DashVideo.Bytes);
         Comment.Media[id] = new UploadedMedia(id, MediaAsset.DashVideo.ContentType, playlist, MediaAsset.DashVideo.Width, MediaAsset.DashVideo.Height);
-        return Add($"https://reddit.com/link/{Comment.Post.Id}/video/{id}/player");
+        return Add($"https://reddit.com/link/{Comment.Id}/video/{id}/player");
     }
 
     /// <summary>
