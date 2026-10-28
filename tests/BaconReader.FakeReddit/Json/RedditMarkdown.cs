@@ -11,7 +11,7 @@ namespace BaconReader.FakeReddit.Json;
 /// <summary>
 /// Turns Markdown into the HTML Reddit sends in <c>body_html</c> and <c>selftext_html</c>, only as far as the scenarios
 /// use it: paragraphs, quotes, lists, headings, code, links (also bare URLs and r/ u/ names), bold, italics,
-/// strikethrough, inline code, and media uploaded in comments and post texts (<c>![gif](id)</c>, <c>![img](id)</c>).
+/// strikethrough, inline code, and GIFs uploaded in comments (<c>![gif](id)</c>).
 /// Reddit sends that HTML entity-escaped (<c>&amp;lt;div class="md"&amp;gt;…</c>), and so does <see cref="ToEscapedHtml"/>.
 /// </summary>
 public static partial class RedditMarkdown
@@ -30,11 +30,17 @@ public static partial class RedditMarkdown
             : Escape($"<!-- SC_OFF --><div class=\"md\">{ToHtml(markdown, baseUrl, media)}</div><!-- SC_ON -->");
 
     /// <summary>
-    /// The URL Reddit links an uploaded image by, in the HTML and in <c>media_metadata</c>: its preview, at its width
-    /// (<c>preview.redd.it/&lt;id&gt;.png?width=320&amp;format=png&amp;auto=webp&amp;s=…</c>).
+    /// The URL Reddit gives an uploaded image, in the Markdown (on a line of its own, which Reddit's HTML makes a bare
+    /// link) and in <c>media_metadata</c>: its preview, at its full width
+    /// (<c>preview.redd.it/&lt;id&gt;.png?width=320&amp;format=png&amp;auto=webp&amp;s=…</c>; a JPEG's format is
+    /// <c>pjpg</c>), as real comments in Reddit's API show it.
     /// </summary>
-    public static string UploadedImageUrl(string baseUrl, UploadedMedia image) =>
-        $"{baseUrl}/_media/{image.Path}?width={image.Width}&format={image.Path[(image.Path.LastIndexOf('.') + 1)..]}&auto=webp&s=e2e";
+    public static string UploadedImageUrl(string baseUrl, UploadedMedia image)
+    {
+        var extension = image.Path[(image.Path.LastIndexOf('.') + 1)..];
+        var format = extension is "jpg" or "jpeg" ? "pjpg" : extension;
+        return $"{baseUrl}/_media/{image.Path}?width={image.Width}&format={format}&auto=webp&s=e2e";
+    }
 
     /// <summary>The HTML inside Reddit's <c>&lt;div class="md"&gt;</c>, unescaped.</summary>
     public static string ToHtml(string markdown, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media)
@@ -112,16 +118,10 @@ public static partial class RedditMarkdown
                 return WebUtility.HtmlEncode(match.Value);
             }
 
-            // An uploaded GIF: the link is the file, around a preview of its size. An uploaded image: a bare link to its
-            // preview, at its width.
+            // An uploaded GIF: the link is the file, around a preview of its size. (An uploaded image is its preview's
+            // URL in the Markdown, a bare link.)
             var file = $"{baseUrl}/_media/{found.Path}";
-            if (found.IsAnimated)
-            {
-                return $"<a href=\"{file}\" target=\"_blank\"><img src=\"{file}\" width=\"{found.Width}\" height=\"{found.Height}\"></a>";
-            }
-
-            var preview = WebUtility.HtmlEncode(UploadedImageUrl(baseUrl, found));
-            return $"<a href=\"{preview}\" target=\"_blank\">{preview}</a>";
+            return $"<a href=\"{file}\" target=\"_blank\"><img src=\"{file}\" width=\"{found.Width}\" height=\"{found.Height}\"></a>";
         }
 
         if (groups["linkText"].Success)
@@ -173,7 +173,7 @@ public static partial class RedditMarkdown
     private static partial Regex Numbered();
 
     [GeneratedRegex(
-        @"!\[(?:gif|img)\]\((?<media>[^)|\s]+)\)"
+        @"!\[gif\]\((?<media>[^)|\s]+)\)"
         + @"|\[(?<linkText>[^\]]+)\]\((?<linkUrl>[^)\s]+)\)"
         + @"|(?<![\w/])(?<url>https?://[^\s<>()]+)"
         + @"|\*\*(?<bold>.+?)\*\*"

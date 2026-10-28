@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
+using BaconReader.FakeReddit.Json;
+
 namespace BaconReader.FakeReddit.World;
 
 /// <summary>
@@ -58,15 +60,16 @@ public sealed class PostBuilder
     public PostBuilder WithGif() => WithImage(MediaAsset.Gif);
 
     /// <summary>
-    /// A text post whose text is <paramref name="markdown"/> and then an image uploaded in it, as Reddit sends one:
-    /// <c>![img](&lt;id&gt;)</c> in its text, an entry in its <c>media_metadata</c>, and a link to its preview in its
-    /// <c>selftext_html</c> (<see cref="CommentBuilder.WithImage"/>). A PNG unless <paramref name="image"/> says otherwise.
+    /// A text post whose text is <paramref name="markdown"/> and then an image uploaded in it, as Reddit sends one: its
+    /// preview's URL on a line of its own in its text, which its <c>selftext_html</c> makes a bare link, and an entry in
+    /// its <c>media_metadata</c> (<see cref="CommentBuilder.WithImage"/>). A PNG unless <paramref name="image"/> says
+    /// otherwise.
     /// </summary>
     public PostBuilder WithTextAndImage(string markdown, MediaAsset? image = null)
     {
         var uploaded = UploadedMedia.Upload(world, image ?? MediaAsset.Png);
         Post.Media[uploaded.Id] = uploaded;
-        return WithText($"{markdown}\n\n![img]({uploaded.Id})");
+        return WithText($"{markdown}\n\n{RedditMarkdown.UploadedImageUrl(world.BaseUrl, uploaded)}");
     }
 
     /// <summary>Its score: upvotes less downvotes.</summary>
@@ -136,12 +139,17 @@ public sealed class CommentBuilder
     public CommentBuilder WithGif(MediaAsset? gif = null) => WithMedia("gif", gif ?? MediaAsset.Gif);
 
     /// <summary>
-    /// An image uploaded in the comment, as Reddit sends it: <c>![img](&lt;id&gt;)</c> in its body, an entry in its
-    /// <c>media_metadata</c>, a bare link to its preview in its <c>body_html</c>
-    /// (<c>preview.redd.it/&lt;id&gt;.png?width=…</c>), and the image there in the media store. A PNG unless
-    /// <paramref name="image"/> says otherwise.
+    /// An image uploaded in the comment, as Reddit sends it: its preview's URL on a line of its own in its body
+    /// (<c>preview.redd.it/&lt;id&gt;.png?width=…</c>, unlike a GIF, which is <c>![gif](&lt;id&gt;)</c>), which its
+    /// <c>body_html</c> makes a bare link, an entry in its <c>media_metadata</c>, and the image there in the media store.
+    /// A PNG unless <paramref name="image"/> says otherwise.
     /// </summary>
-    public CommentBuilder WithImage(MediaAsset? image = null) => WithMedia("img", image ?? MediaAsset.Png);
+    public CommentBuilder WithImage(MediaAsset? image = null)
+    {
+        var uploaded = UploadedMedia.Upload(world, image ?? MediaAsset.Png);
+        Comment.Media[uploaded.Id] = uploaded;
+        return Add(RedditMarkdown.UploadedImageUrl(world.BaseUrl, uploaded));
+    }
 
     /// <summary>
     /// A video uploaded in the comment, as Reddit sends it: a link to its player,
