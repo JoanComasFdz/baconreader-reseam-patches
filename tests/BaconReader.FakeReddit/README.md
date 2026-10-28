@@ -35,12 +35,15 @@ world.LoginPage.ShowCookieBanner = true;
   everything Reddit sends for it, with media the fake serves:
   - a GIF uploaded in a comment is `![gif](<id>)` in its body, an entry in its `media_metadata`, a link to the GIF
     around a preview in its `body_html`, and the GIF itself at `<baseUrl>/_media/i.redd.it/<id>.gif`;
-  - an image uploaded in a comment or a post's text (`WithTextAndImage`) is `![img](<id>)` in its Markdown, an entry in
-    its `media_metadata`, and a bare link to its preview in its HTML,
-    `<baseUrl>/_media/preview.redd.it/<id>.png?width=320&format=png&auto=webp&s=e2e`, which serves the image;
-  - a video uploaded in a comment is a link to its player in its body, `https://reddit.com/link/<post>/video/<id>/player`
-    (what the patch plays), a `RedditVideo` entry in its `media_metadata`, and the video as v.redd.it serves it: its DASH
-    playlist at `<baseUrl>/_media/v.redd.it/<id>/DASHPlaylist.mpd` and its one rendition, `DASH_240.mp4`, next to it;
+  - an image uploaded in a comment or a post's text (`WithTextAndImage`) is its preview's URL on a line of its own in
+    its Markdown, `<baseUrl>/_media/preview.redd.it/<id>.png?width=320&format=png&auto=webp&s=e2e` (`format=pjpg` for a
+    JPEG), which serves the image and its HTML makes a bare link, and an entry in its `media_metadata`: as real comments
+    in Reddit's API have it (seen in an archive of them, Arctic Shift), unlike a GIF's `![gif](<id>)`;
+  - a video uploaded in a comment is a link to its player on a line of its own in its body,
+    `https://reddit.com/link/<comment>/video/<id>/player`, named by the comment's own id as in Reddit's API (what the
+    patch plays), a `RedditVideo` entry in its `media_metadata` (unconfirmed: the archive has none for these comments),
+    and the video as v.redd.it serves it: its DASH playlist at `<baseUrl>/_media/v.redd.it/<id>/DASHPlaylist.mpd` and its
+    one rendition, `DASH_240.mp4`, next to it;
   - a link to an image or a video is a bare link to a file at `<baseUrl>/_media/example.com/<id>e2elink.jpg` (or
     `.mp4`).
 - `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a JPEG, a
@@ -87,7 +90,7 @@ Each step of the login records the client ID, redirect URI and User-Agent it saw
 - **Reddit's quirks:** `replies` is `""` when a comment has none (`RepliesConverter`); `edited` is `false`;
   `body_html` and `selftext_html` are entity-escaped HTML (`&lt;div class="md"&gt;…`), from `RedditMarkdown`, which
   covers what the scenarios write: paragraphs, quotes, lists, headings, code, links (bare URLs and r/ and u/ names too),
-  bold, italics, strikethrough, and media uploaded in a comment.
+  bold, italics, strikethrough, and GIFs uploaded in a comment.
 - **Media URLs point at the fake** (`<baseUrl>/_media/…`), never at a host "E2E fake Reddit" doesn't move
   (`external-preview.redd.it`, `*.redditmedia.com`).
 

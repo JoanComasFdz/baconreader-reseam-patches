@@ -13,7 +13,7 @@ namespace BaconReader.FakeReddit.Tests;
 public sealed class MediaTests(FakeRedditFixture fixture) : FakeRedditTest(fixture)
 {
     [Fact]
-    public async Task A_comment_with_an_image_links_its_preview_in_its_html_and_names_it_in_its_body_and_metadata()
+    public async Task A_comment_with_an_image_has_its_previews_url_in_its_body_a_bare_link_in_its_html_and_its_metadata()
     {
         var post = World.AddPost("e2e", "Weekly thread");
         var comment = World.AddComment(post, "Here is an image", build => build.WithImage());
@@ -21,15 +21,28 @@ public sealed class MediaTests(FakeRedditFixture fixture) : FakeRedditTest(fixtu
 
         var data = await ReadCommentAsync(post);
 
-        Assert.Equal($"Here is an image\n\n![img]({id})", data.GetProperty("body").GetString());
+        // As Reddit sends one: the preview's URL on a line of its own, not ![img](id) as for a GIF.
         var preview = $"{Server.Url}/_media/preview.redd.it/{id}.png?width=320&format=png&auto=webp&s=e2e";
+        Assert.Equal($"Here is an image\n\n{preview}", data.GetProperty("body").GetString());
         var metadata = data.GetProperty("media_metadata").GetProperty(id);
         Assert.Equal("Image", metadata.GetProperty("e").GetString());
         Assert.Equal("image/png", metadata.GetProperty("m").GetString());
         Assert.Equal(preview, metadata.GetProperty("s").GetProperty("u").GetString());
         var linked = preview.Replace("&", "&amp;amp;", StringComparison.Ordinal);
-        Assert.Contains($"&lt;a href=\"{linked}\" target=\"_blank\"&gt;{linked}&lt;/a&gt;", data.GetProperty("body_html").GetString());
+        Assert.Contains($"&lt;p&gt;&lt;a href=\"{linked}\"&gt;{linked}&lt;/a&gt;&lt;/p&gt;", data.GetProperty("body_html").GetString());
         await AssertServesAsync(preview, "image/png", MediaAsset.Png.Bytes);
+    }
+
+    [Fact]
+    public async Task A_jpeg_uploaded_in_a_comment_is_a_pjpg_preview_as_Reddit_names_it()
+    {
+        var post = World.AddPost("e2e", "Weekly thread");
+        var comment = World.AddComment(post, "", build => build.WithImage(MediaAsset.Jpeg));
+        var id = Assert.Single(comment.Media.Keys);
+
+        var data = await ReadCommentAsync(post);
+
+        Assert.Equal($"{Server.Url}/_media/preview.redd.it/{id}.jpg?width=320&format=pjpg&auto=webp&s=e2e", data.GetProperty("body").GetString());
     }
 
     [Fact]
@@ -41,7 +54,8 @@ public sealed class MediaTests(FakeRedditFixture fixture) : FakeRedditTest(fixtu
 
         var data = await ReadCommentAsync(post);
 
-        var player = $"https://reddit.com/link/{post.Id}/video/{id}/player";
+        // Named by the comment's own id, as in Reddit's API.
+        var player = $"https://reddit.com/link/{comment.Id}/video/{id}/player";
         Assert.Equal($"Here is a video\n\n{player}", data.GetProperty("body").GetString());
         Assert.Contains($"&lt;a href=\"{player}\"&gt;{player}&lt;/a&gt;", data.GetProperty("body_html").GetString());
         var metadata = data.GetProperty("media_metadata").GetProperty(id);
@@ -79,7 +93,7 @@ public sealed class MediaTests(FakeRedditFixture fixture) : FakeRedditTest(fixtu
     }
 
     [Fact]
-    public async Task A_text_post_with_an_image_links_its_preview_in_its_html_and_names_it_in_its_text_and_metadata()
+    public async Task A_text_post_with_an_image_has_its_previews_url_in_its_text_a_bare_link_in_its_html_and_its_metadata()
     {
         var post = World.AddPost("e2e", "A picture in text", build => build.WithTextAndImage("Look at this"));
         var id = Assert.Single(post.Media.Keys);
@@ -88,11 +102,11 @@ public sealed class MediaTests(FakeRedditFixture fixture) : FakeRedditTest(fixtu
 
         var data = page[0].GetProperty("data").GetProperty("children")[0].GetProperty("data");
         Assert.True(data.GetProperty("is_self").GetBoolean());
-        Assert.Equal($"Look at this\n\n![img]({id})", data.GetProperty("selftext").GetString());
         var preview = $"{Server.Url}/_media/preview.redd.it/{id}.png?width=320&format=png&auto=webp&s=e2e";
+        Assert.Equal($"Look at this\n\n{preview}", data.GetProperty("selftext").GetString());
         Assert.Equal(preview, data.GetProperty("media_metadata").GetProperty(id).GetProperty("s").GetProperty("u").GetString());
         var linked = preview.Replace("&", "&amp;amp;", StringComparison.Ordinal);
-        Assert.Contains($"&lt;p&gt;Look at this&lt;/p&gt;\n&lt;p&gt;&lt;a href=\"{linked}\" target=\"_blank\"&gt;{linked}&lt;/a&gt;&lt;/p&gt;", data.GetProperty("selftext_html").GetString());
+        Assert.Contains($"&lt;p&gt;Look at this&lt;/p&gt;\n&lt;p&gt;&lt;a href=\"{linked}\"&gt;{linked}&lt;/a&gt;&lt;/p&gt;", data.GetProperty("selftext_html").GetString());
         await AssertServesAsync(preview, "image/png", MediaAsset.Png.Bytes);
     }
 
