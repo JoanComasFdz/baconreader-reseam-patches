@@ -162,10 +162,10 @@ public sealed class SpoofClientTests : BaseE2E
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   emulator was recreated), that never launches or resets the app itself: the scenario opens it;
 - **the recording:** when the run records (`E2E_VIDEO_DIR`), Android's `screenrecord` records the screen from before
-  the app opens to the end, 540×960 at 1 Mbit/s, in parts of 3 minutes joined at the end, with a ring drawn onto the
-  video where each tap lands, before it (`Device/ScreenRecording`); it saves the video (record.sh holds its last frame
-  3 s), also when the scenario fails, with its record next to it (title, Gherkin, screen, patches, GIF name, domain
-  folder, when the main screen first showed, whether it passed);
+  the app opens to the end, 576 px wide in the screen's shape at 1 Mbit/s, in parts of 3 minutes joined at the end,
+  with a ring drawn onto the video where each tap lands, before it (`Device/ScreenRecording`); it saves the video
+  (record.sh holds its last frame 3 s), also when the scenario fails, with its record next to it (title, Gherkin,
+  screen, patches, GIF name, domain folder, when the main screen first showed, whether it passed);
 - the `Phone` property.
 
 A scenario never repeats any of that.

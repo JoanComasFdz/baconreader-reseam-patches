@@ -18,7 +18,7 @@
 # first (./gradlew bundle, and ./gradlew -p e2e-patches bundle for the test-only one; --no-bundle reuses the last ones)
 # and runs the chosen scenarios with E2E_VIDEO_DIR set: each one patches, installs and records itself (BaseE2E). Each
 # run's video becomes <out>/<domain folder>/<gif name>.gif (15 fps, 360 px wide) and .mp4 (H.264 at the recording's
-# 540×960), both holding their last frame 3 s, and <out>/scenarios.json lists them (the e2e tool's write-scenarios).
+# size, 576 px wide), both holding their last frame 3 s, and <out>/scenarios.json lists them (the e2e tool's write-scenarios).
 # For the extension's scenarios it serves VS Code for the web (@vscode/test-web, pinned with the VS Code build in
 # tests/BaconReader.VsCodeExtension.E2E/vscode-web/package.json; the build is cached in
 # ${E2E_VSCODE_CACHE:-~/.cache/baconreader/vscode-web}) with tools/vscode-extension, opened on that project's Workspace/,

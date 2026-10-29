@@ -70,6 +70,7 @@ The environment needs network access "Full" and these variables, set in the envi
 | `TS_AUTHKEY_CLOUD` | A reusable, ephemeral Tailscale auth key, tagged for cloud sessions |
 | `E2E_EMULATOR_HOST` | The emulator's name on the tailnet |
 | `E2E_APK_CHECKSUM` | The sha256 of the clean BaconReader Premium 6.1.4 APK the emulator host serves |
+| `E2E_ADB_KEY` | For a real phone: the one adb private key it approved for every cloud session (base64 of an `adbkey` file). `connect.sh` installs it as `~/.android/adbkey`. The emulator takes any key and needs none |
 
 Never print these variables or the environment (`env`, `env | grep E2E_`, `printenv`): a session's transcript keeps what it prints. To check one, use `[ -n "$NAME" ] && echo set || echo "not set"`.
 
@@ -129,7 +130,7 @@ tools/e2e/connect.sh --down        # at the end: release the lease, disconnect, 
 - **Base APK.** It is downloaded to `.e2e/com.onelouder.baconreader.premium-6.1.4-clean-base-<first 8 characters of E2E_APK_CHECKSUM>.apk` and refused unless its sha256 is `E2E_APK_CHECKSUM`. `.e2e/` and `*.apk` are ignored by git.
 - **Emulator.** Android 14 (API 34), a Nexus 5 profile at 1080x1920, with `adb root` and `su`. `connect.sh` wakes it (15 to 60 s, ~100 s if it was just recreated), and the emulator host stops it after 3 hours with no connection and no lease. Installed apps and logins survive a stop.
 - **Lease.** One device is shared: `/data/local/tmp/e2e-lease` holds "<session id> <expiry>" (30 minutes, renewed by sourcing the script again). If `connect.sh` says "device leased by another session", wait; don't break the lease. `--down` removes only this session's lease and says what it did.
-- **The link is slow** (~3 to 4 Mbit/s, ~130 ms per round trip, through a relay; UDP is blocked). Keep transfers small: install only when the APK changed, prefer the UI tree over screenshots, and record screens at 540x960 and ~1 Mbit/s.
+- **The link is slow** (~3 to 4 Mbit/s, ~130 ms per round trip, through a relay; UDP is blocked). Keep transfers small: install only when the APK changed, prefer the UI tree over screenshots, and record screens 576 px wide and at ~1 Mbit/s.
 - **Appium's helper apps** stay installed on the device. After the emulator is recreated, `connect.sh` prints a note and exports `E2E_APPIUM_INSTALL_HELPERS=1`: the first Appium session then runs without the two skip capabilities and with `appium:uiautomator2ServerInstallTimeout` and `appium:adbExecTimeout` well above 20 s.
 - **First launch of BaconReader** shows Android's notification permission and the app's "FINAL RELEASE ANNOUNCEMENT!" dialogs. Install with `adb install -r -g`, or `adb shell pm grant com.onelouder.baconreader.premium android.permission.POST_NOTIFICATIONS`, then tap "GOT IT :(". `pm clear` revokes the permission: grant it again.
 - **After a wake** the device clock is set and error dialogs are suppressed; if one still shows, `adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS`.

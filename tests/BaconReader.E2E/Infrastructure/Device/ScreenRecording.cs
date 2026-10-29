@@ -7,9 +7,9 @@ using System.Globalization;
 namespace BaconReader.E2E.Infrastructure.Device;
 
 /// <summary>
-/// Records the emulator's screen while a scenario plays, with Android's own <c>screenrecord</c>, on the device: 540×960
-/// at 1 Mbit/s (a cloud session reaches the emulator at ~3–4 Mbit/s: a minute is a few MB to pull). <c>screenrecord</c> stops by itself after
-/// 3 minutes, so a loop on the device starts the next part until told to stop; <see cref="StopAsync"/> pulls the parts
+/// Records the device's screen while a scenario plays, with Android's own <c>screenrecord</c>, on the device: 576 px
+/// wide in the screen's shape (<see cref="VideoSize"/>) at 1 Mbit/s (a cloud session reaches the device at ~3–4 Mbit/s:
+/// a minute is a few MB to pull). <c>screenrecord</c> stops by itself after 3 minutes, so a loop on the device starts the next part until told to stop; <see cref="StopAsync"/> pulls the parts
 /// and joins them with ffmpeg.
 /// <para>
 /// Android draws no touch of its own for Appium's taps (<c>show_touches</c> shows only a real touchscreen's, and as a
@@ -26,10 +26,13 @@ public sealed class ScreenRecording
     private const string StopFile = "/data/local/tmp/e2e/recording.stop";
 
     // The ring (RecordingOverlay's TapRingScript in the extension's e2e tests): #ff3d7f, 5 px, with a lighter glow, on a
-    // 64×64 image drawn at the tap's center, on a 540×960 video.
+    // 64×64 image drawn at the tap's center, on a 576 px wide video.
     private const int RingSize = 64;
     private const string Ring =
         "geq=r=255:g=61:b=127:a='if(between(hypot(X-32,Y-32),22,27),255,if(between(hypot(X-32,Y-32),27,31),90,0))'";
+
+    // The video's width, a multiple of 16 as video encoders want.
+    private const int VideoWidth = 576;
 
     // The emulator shows a tap's effect ~0.3 s after it, and a dialog takes a second to go: the ring stays until the
     // screen starts changing.
@@ -55,7 +58,7 @@ public sealed class ScreenRecording
         // Detached from adb (nohup, &), so the loop outlives this shell; each part is a new file, 0.mp4, 1.mp4…, with the
         // device's uptime when its encoder started in 0.start, 1.start…
         await Commands.ShellAsync(
-            $"nohup sh -c 'i=0; while [ ! -f {StopFile} ]; do screenrecord --verbose --size 540x960 --bit-rate 1000000 --time-limit 180 {Folder}/$i.mp4 2>&1"
+            $"nohup sh -c 'i=0; while [ ! -f {StopFile} ]; do screenrecord --verbose --size {VideoSize(width, height)} --bit-rate 1000000 --time-limit 180 {Folder}/$i.mp4 2>&1"
             + $" | while IFS= read -r line; do case \"$line\" in \"Content area\"*) cut -d\" \" -f1 /proc/uptime > {Folder}/$i.start;; esac; done;"
             + " i=$((i+1)); done' > /dev/null 2>&1 &");
         await WaitUntilRecordingAsync();
@@ -157,6 +160,11 @@ public sealed class ScreenRecording
         var size = (await Commands.ShellAsync("wm size")).Split('\n')[^1].Split(':')[1].Trim().Split('x');
         return (int.Parse(size[0], CultureInfo.InvariantCulture), int.Parse(size[1], CultureInfo.InvariantCulture));
     }
+
+    // VideoWidth wide and as tall as the screen's shape, rounded to 16 px: 576x1024 for a 1080×1920 screen (the
+    // emulator), 576x1248 for a 1080×2340 one (the Pixel 6 Pro). A fixed 9:16 size would squash a taller phone's screen.
+    private static string VideoSize(int width, int height) =>
+        FormattableString.Invariant($"{VideoWidth}x{(int)Math.Round(VideoWidth * (double)height / width / 16) * 16}");
 
     // How many seconds the device's uptime is ahead of this machine's clock: from the quickest of a few round trips,
     // taken as read halfway through.

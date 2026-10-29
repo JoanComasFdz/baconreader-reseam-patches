@@ -14,7 +14,7 @@ scenario's code.
 - **What is recorded:** each run (a scenario played on the phone, the emulator's only screen) from the app's first
   screen on, its last frame held a moment, as a GIF (shown in the comment) and as an MP4 (H.264, playable, seekable and
   full-screen in the player page below). A cloud session reaches the emulator at ~3–4 Mbit/s, so the screen is recorded
-  small (540×960, ~1 Mbit/s). An extension scenario's run is VS Code for the web on the desktop (1280×800, a GIF 800 px
+  small (576 px wide, ~1 Mbit/s). An extension scenario's run is VS Code for the web on the desktop (1280×800, a GIF 800 px
   wide), from when its workbench showed.
 - **Who records:** the session, once, right before each push that adds or changes scenarios:
   `tools/e2e/record.sh --changed-since origin/main` ([tools/e2e/README.md](../tools/e2e/README.md)), i.e. every
