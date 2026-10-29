@@ -35,8 +35,7 @@ public sealed class SpoofClientTests : BaseE2E
           And BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
-          # Android 16 on the Pixel doesn't ask: BaconReader targets Android 12, and Android drops the question there.
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?" (optional)
+          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           # Logged out, Reddit refuses BaconReader: the feed shows "Greetings!", BaconReader's "no longer operational" message.
           Then the feed shows no posts
@@ -65,8 +64,8 @@ public sealed class SpoofClientTests : BaseE2E
 
         // When
         await Phone.Launcher.OpenBaconReaderAsync();
-        // Android 16 on the Pixel doesn't ask: BaconReader targets Android 12, and Android drops the question there.
-        await Phone.NotificationPermission.ClickDontAllowIfShownAsync();
+        await Phone.NotificationPermission.WaitUntilShownAsync();
+        await Phone.NotificationPermission.ClickDontAllowAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
@@ -135,8 +134,7 @@ public sealed class SpoofClientTests : BaseE2E
 - `ScenarioShapeTests` (`dotnet test`, no emulator) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't
   its Gherkin's tag, that has no `[PatchedWith]`, whose `[PatchedWith]` isn't exactly the patches its Given quotes, one
-  a line (`And BaconReader is patched with "<patch>"`), that names one BaseE2E adds, or that marks a Given or a Then
-  `(optional)`.
+  a line (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds.
 - The body is `// Given` once, then a `// When` and a `// Then` for each round of the Gherkin, in its order (rule h).
   It calls only `Phone`, `Reddit` and `Asserting.That`: no Appium API, no locators, no adb, no HTTP, no `Assert.*`, no
   delays.
@@ -269,8 +267,7 @@ Line for line, in the Gherkin's order:
 | `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
-| `I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?" (optional)` | `Phone.NotificationPermission.ClickDontAllowIfShownAsync()` |
-| A step ending with `(optional)` (docs/given-when-then-test-rules.md, section 4) | One Act call named `…IfShownAsync`: it waits until the view shows, or until what follows has settled without it (`Waiting.UntilShownOrSettledAsync`), and acts only if the view showed. Its name carries the `(optional)` into the scenario; the Gherkin's `#` line above it becomes a `//` line |
+| `I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"` | `Phone.NotificationPermission.WaitUntilShownAsync()`, `ClickDontAllowAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
 | A `Then`, and the `And` lines after it | One `// Then` block: one read per part it checks, then one assertion per line, chained |
 | `the toolbar shows the "Front Page" feed` | `Phone.BaconReader.Main.Toolbar.ReadAsync()`, `ShowsFeed(new Feed.FrontPage())` |

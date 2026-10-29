@@ -73,20 +73,6 @@ public sealed partial class ScenarioShapeTests
         }
     }
 
-    [Theory]
-    [MemberData(nameof(Scenarios))]
-    public void Scenario_MarksOnlyWhenStepsOptional(string scenario)
-    {
-        var block = "";
-        foreach (var line in ReadGherkin(Find(scenario), scenario).Text.Split('\n').Select(line => line.Trim()))
-        {
-            block = line.Split(' ', 2)[0] is "Given" or "When" or "Then" ? line.Split(' ', 2)[0] : block;
-            Assert.False(
-                line.EndsWith("(optional)", StringComparison.Ordinal) && block != "When",
-                $"{scenario}: \"{line}\" is a {block} marked (optional): only a When can be (docs/given-when-then-test-rules.md, section 4).");
-        }
-    }
-
     // The Given block: its Given line and the And lines after it, up to the first When, each trimmed.
     private static string[] ReadGiven(Gherkin gherkin) =>
         [.. gherkin.Text.Split('\n')

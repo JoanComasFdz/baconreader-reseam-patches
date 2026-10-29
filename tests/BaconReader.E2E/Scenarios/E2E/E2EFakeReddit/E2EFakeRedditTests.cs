@@ -24,8 +24,7 @@ public sealed class E2EFakeRedditTests : BaseE2E
           And BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
-          # Android 16 on the Pixel doesn't ask: BaconReader targets Android 12, and Android drops the question there.
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?" (optional)
+          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           And I open the left menu
           And I tap "Add account"
@@ -47,8 +46,8 @@ public sealed class E2EFakeRedditTests : BaseE2E
 
         // When
         await Phone.Launcher.OpenBaconReaderAsync();
-        // Android 16 on the Pixel doesn't ask: BaconReader targets Android 12, and Android drops the question there.
-        await Phone.NotificationPermission.ClickDontAllowIfShownAsync();
+        await Phone.NotificationPermission.WaitUntilShownAsync();
+        await Phone.NotificationPermission.ClickDontAllowAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
