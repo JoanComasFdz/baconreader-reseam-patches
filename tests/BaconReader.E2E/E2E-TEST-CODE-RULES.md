@@ -35,7 +35,6 @@ public sealed class SpoofClientTests : BaseE2E
           And BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           # Logged out, Reddit refuses BaconReader: the feed shows "Greetings!", BaconReader's "no longer operational" message.
           Then the feed shows no posts
@@ -64,8 +63,6 @@ public sealed class SpoofClientTests : BaseE2E
 
         // When
         await Phone.Launcher.OpenBaconReaderAsync();
-        await Phone.NotificationPermission.WaitUntilShownAsync();
-        await Phone.NotificationPermission.ClickDontAllowAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
@@ -157,7 +154,7 @@ public sealed class SpoofClientTests : BaseE2E
   permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one
   test key, and sent to the emulator only when it isn't the one installed (sending one takes ~40 s over the slow link);
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
-  as just installed: Android 14 asks for its notifications when it opens, and the scenario answers;
+  as just installed, but with its notifications denied (`Device/PatchedApps`): Android doesn't ask, on any device;
 - **the screen:** one Appium session on the emulator, its UiAutomator2 helpers already installed
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   emulator was recreated), that never launches or resets the app itself: the scenario opens it;
@@ -267,7 +264,6 @@ Line for line, in the Gherkin's order:
 | `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
-| `I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"` | `Phone.NotificationPermission.WaitUntilShownAsync()`, `ClickDontAllowAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
 | A `Then`, and the `And` lines after it | One `// Then` block: one read per part it checks, then one assertion per line, chained |
 | `the toolbar shows the "Front Page" feed` | `Phone.BaconReader.Main.Toolbar.ReadAsync()`, `ShowsFeed(new Feed.FrontPage())` |

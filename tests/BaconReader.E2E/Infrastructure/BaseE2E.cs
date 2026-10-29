@@ -26,8 +26,8 @@ namespace BaconReader.E2E.Infrastructure;
 /// - patches the clean BaconReader APK with the scenario's <see cref="PatchedWithAttribute"/> patches, the fewest it
 ///   needs, and the ones every scenario needs (<see cref="PatchedApps.Always"/>: "E2E fake Reddit"…), and installs it
 ///   (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the one installed already);
-/// - a fresh app per scenario: stopped and its data cleared, as just installed (Android asks for its notifications
-///   when it opens), and Downloads/BaconReader emptied, so scenarios share nothing (no login, no setting, no cache, no
+/// - a fresh app per scenario: stopped and its data cleared, as just installed but with its notifications denied (so
+///   Android doesn't ask, on any device), and Downloads/BaconReader emptied, so scenarios share nothing (no login, no setting, no cache, no
 ///   saved image);
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it;

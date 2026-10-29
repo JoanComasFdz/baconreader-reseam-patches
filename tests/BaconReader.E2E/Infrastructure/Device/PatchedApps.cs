@@ -138,13 +138,20 @@ public static partial class PatchedApps
     }
 
     /// <summary>
-    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached, and
-    /// its notifications allowed: Android 14 asks for them again when it opens).
+    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached), with
+    /// its notifications denied, as if the user had answered "Don’t allow". Otherwise Android asks "Allow BaconReader
+    /// Premium to send you notifications?", and when depends on the device: the emulator (Android 14) as BaconReader
+    /// opens, the Pixel 6 Pro (Android 16) only when BaconReader opens its next screen ("Add account"), over it. No
+    /// scenario is about it, so none answers it (docs/given-when-then-test-rules.md, section 4).
     /// </summary>
     public static async Task ResetAsync()
     {
+        const string notifications = "android.permission.POST_NOTIFICATIONS";
         await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
         await Commands.ShellAsync($"pm clear {E2EDevice.Package}");
+        // USER_SET: the user answered, so Android doesn't ask (PermissionPolicyService asks only when it isn't set).
+        await Commands.ShellAsync(
+            $"pm revoke {E2EDevice.Package} {notifications} && pm set-permission-flags {E2EDevice.Package} {notifications} user-set");
     }
 
     private static async Task<string?> ReadInstalledShaAsync()

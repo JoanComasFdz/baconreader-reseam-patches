@@ -50,13 +50,13 @@ For each scenario, `BaseE2E`:
 3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 4. points the phone at the fake Reddit (`adb reverse`, no HTTP proxy);
-5. clears the app's data, so the scenario starts from a fresh install: Android asks for its notifications when it
-   opens; and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
+5. clears the app's data, so the scenario starts from a fresh install, and denies its notifications, so Android doesn't
+   ask ("Allow BaconReader Premium to send you notifications?" shows at a different moment on each device); and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
 6. starts recording the screen, when the run records;
 7. after the scenario, fails it if the app made a request the fake Reddit doesn't answer.
 
 The scenario's Given then makes its Reddit data (`Reddit.HasAPost("Weekly thread", "e2e")`), and it opens the app itself: `Phone.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
-(Android's notification prompt → "Don’t allow", `FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
+(`FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
 BaconReader?" → "Not now" or "Set up"), or `Phone.BaconReader.OpenAsync()`, which does all of it. Then it taps and checks what
 its patch changes.
 
