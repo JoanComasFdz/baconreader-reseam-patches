@@ -35,6 +35,38 @@ public static class Waiting
         }
     }
 
+    /// <summary>
+    /// For a view only some devices show (a Gherkin's "(optional)" step): waits until <paramref name="shown"/> finds an
+    /// element shown on the screen (true), or until <paramref name="otherwise"/> has held for <paramref name="settle"/>
+    /// without it (false). Fails when neither happens within <paramref name="timeout"/>.
+    /// </summary>
+    public static async Task<bool> UntilShownOrSettledAsync(
+        AndroidDriver driver, By shown, Func<bool> otherwise, TimeSpan settle, TimeSpan timeout, string what)
+    {
+        var until = DateTime.UtcNow + timeout;
+        DateTime? holdsSince = null;
+        while (DateTime.UtcNow < until)
+        {
+            if (await Task.Run(() => FindShown(driver, shown)) is not null)
+            {
+                return true;
+            }
+
+            if (!await Task.Run(() => Holds(otherwise)))
+            {
+                holdsSince = null;
+            }
+            else if (DateTime.UtcNow - (holdsSince ??= DateTime.UtcNow) >= settle)
+            {
+                return false;
+            }
+
+            await Task.Delay(Poll);
+        }
+
+        throw new TimeoutException($"{what} wasn't shown within {timeout.TotalSeconds:0} s.");
+    }
+
     /// <summary>The first element shown that <paramref name="shown"/> finds within <paramref name="timeout"/>, or null.</summary>
     public static async Task<IWebElement?> FindWithinAsync(AndroidDriver driver, By shown, TimeSpan timeout)
     {
