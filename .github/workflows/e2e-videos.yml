@@ -1,6 +1,6 @@
 name: E2E videos
 
-# The session that works a PR records its added or changed end-to-end scenarios itself, the app's on the emulator and
+# The session that works a PR records its added or changed end-to-end scenarios itself, the app's on the phone and
 # the VS Code extension's in VS Code for the web (tools/e2e/record.sh), and pushes their GIFs and MP4s with
 # tools/e2e/push-gifs.sh to a throwaway branch e2e-gifs/pr-<n>-<short sha>: the PR's head commit plus one commit that
 # adds e2e-gifs/scenarios.json, the GIFs and the MP4s (and e2e-gifs/what-changed.md, the post's "What changed", when the

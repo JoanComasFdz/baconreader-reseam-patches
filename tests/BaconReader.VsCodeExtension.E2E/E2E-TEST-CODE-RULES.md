@@ -123,7 +123,7 @@ only read. Two scenarios run at a time (`xunit.runner.json`).
 ## h. Adding a test
 
 As the app's rule g, with `Scenarios/<domain folder>/` of this project (today `Recordings`), `Workspace/` for its
-files, and `tools/e2e/record.sh --no-video <its class>` (it serves VS Code for the web; no emulator). A class stays in
+files, and `tools/e2e/record.sh --no-video <its class>` (it serves VS Code for the web; no phone). A class stays in
 its domain folder (`Scenarios/Recordings/CodeLensTests.cs`), not in a folder of its own: there is no patch to name one
 after.
 

@@ -1,6 +1,6 @@
 # E2E tools
 
-The scripts that record the e2e scenarios (the app's on the emulator, the VS Code extension's in VS Code for the web)
+The scripts that record the e2e scenarios (the app's on the phone, the VS Code extension's in VS Code for the web)
 and post them on a PR ([docs/hosting.md](../../docs/hosting.md), "E2E videos on pull requests").
 
 - `record.sh`: plays and records the scenarios a PR added or changed and writes `out/<domain folder>/<gif name>.gif` and

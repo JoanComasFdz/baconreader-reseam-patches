@@ -5,8 +5,8 @@ namespace BaconReader.E2E.Infrastructure;
 
 /// <summary>
 /// Where the scenarios play and what they patch, from the environment (README, "Run and record"):
-/// - <c>E2E_APPIUM_URL</c>, <c>E2E_ADB_SERIAL</c>, <c>E2E_APPIUM_UDID</c>: the emulator, as the emulator's connection script exports them
-///   (README, "The emulator"); without <c>E2E_APPIUM_URL</c> every scenario is skipped;
+/// - <c>E2E_APPIUM_URL</c>, <c>E2E_ADB_SERIAL</c>, <c>E2E_APPIUM_UDID</c>: the phone, as its connection script exports them
+///   (README, "The phone"); without <c>E2E_APPIUM_URL</c> every scenario is skipped;
 /// - <c>E2E_VIDEO_DIR</c>: where a recorded run leaves its video and record (tools/e2e/record.sh sets it); unset, nothing
 ///   is recorded and nothing is paced;
 /// - <c>E2E_ACTION_GAP</c>: the least seconds between two steps of a recorded scenario (default 1);
@@ -25,7 +25,7 @@ public static class E2EDevice
 
     /// <summary>
     /// The device as the Appium server sees it, <c>E2E_APPIUM_UDID</c>: by default <see cref="AdbSerial"/>, as an Appium
-    /// running next to the tests sees it; an Appium running next to the emulator sees it under its own name.
+    /// running next to the tests sees it; an Appium running next to the phone sees it under its own name.
     /// </summary>
     public static string AppiumUdid => Environment.GetEnvironmentVariable("E2E_APPIUM_UDID") is { Length: > 0 } udid ? udid : AdbSerial;
 

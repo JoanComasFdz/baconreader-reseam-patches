@@ -6,14 +6,14 @@ Every pull request from a branch of this repository shows the end-to-end scenari
 ([tests/BaconReader.E2E](../tests/BaconReader.E2E/README.md), the app's, and
 [tests/BaconReader.VsCodeExtension.E2E](../tests/BaconReader.VsCodeExtension.E2E/README.md), the VS Code e2e recordings
 extension's) as GIFs, each with a **▶ Play MP4** link to the same run as a sharp video with controls, so a reviewer sees
-them working without running anything. The session that works the PR records them, the app's on the emulator and the
-extension's in VS Code for the web; CI records nothing (it can't reach the emulator). The extension
+them working without running anything. The session that works the PR records them, the app's on the phone and the
+extension's in VS Code for the web; CI records nothing (it can't reach the phone). The extension
 ([tools/vscode-extension](../tools/vscode-extension/README.md)) plays the same recordings in VS Code, next to each
 scenario's code.
 
-- **What is recorded:** each run (a scenario played on the phone, the emulator's only screen) from the app's first
+- **What is recorded:** each run (a scenario played on the phone, the only phone) from the app's first
   screen on, its last frame held a moment, as a GIF (shown in the comment) and as an MP4 (H.264, playable, seekable and
-  full-screen in the player page below). A cloud session reaches the emulator at ~3–4 Mbit/s, so the screen is recorded
+  full-screen in the player page below). A cloud session reaches the phone at ~1–4 Mbit/s, so the screen is recorded
   small (576 px wide, ~1 Mbit/s). An extension scenario's run is VS Code for the web on the desktop (1280×800, a GIF 800 px
   wide), from when its workbench showed.
 - **Who records:** the session, once, right before each push that adds or changes scenarios:
@@ -41,7 +41,7 @@ scenario's code.
   `ftyp` box first)), then the e2e tool (`dotnet run --project tools/e2e/BaconReader.E2ETools -- post … --out e2e-gifs`)
   uploads the GIFs and MP4s and posts them, and the branch is deleted whatever happened (the run's log says why one
   failed). A push that fails the checks uploads and posts nothing. The runner's own .NET 10 SDK builds the tool (it
-  needs only its Core, so it builds in seconds); no emulator, no ffmpeg.
+  needs only its Core, so it builds in seconds); no phone, no ffmpeg.
 - **Where the GIFs and MP4s go:** assets of one pre-release, **`prs-resources`**, never committed anywhere. The workflow
   creates it on its first upload (as a pre-release titled with its tag; its `GITHUB_TOKEN` can, a session can't), so
   nobody creates it by hand. It never gets in the bundle's way: GitHub's "latest release", which Reseam Manager reads the

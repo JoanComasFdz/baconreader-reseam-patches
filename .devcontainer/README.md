@@ -7,7 +7,7 @@ A GitHub Codespace, or desktop VS Code's **Dev Containers: Reopen in Container**
 same way every time, with the **BaconReader Reseam e2e recordings** extension installed. How to open one and use the
 extension in it: [tools/vscode-extension/README.md](../tools/vscode-extension/README.md), "Install".
 
-It has no Android emulator, no Android SDK and no patcher: building the bundle and playing the app's scenarios
+It has no Android phone, no Android SDK and no patcher: building the bundle and playing the app's scenarios
 (`tests/BaconReader.E2E`) need a cloud session ([patcher-specific-build.md](../patcher-specific-build.md)). The VS Code
 extension's own scenarios (`tests/BaconReader.VsCodeExtension.E2E`) play here: `tools/e2e/record.sh Recordings`.
 

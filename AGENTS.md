@@ -51,10 +51,10 @@ In both repos, [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md):
 
 - **When the user asks to test a patch, first write its Gherkins,** each in a ```` ```gherkin ```` code block, by [docs/given-when-then-test-rules.md](docs/given-when-then-test-rules.md) and [docs/given-when-then-patch-scenarios.md](docs/given-when-then-patch-scenarios.md), and agree them with the user before writing any C#. Copy every quoted text from the screen, never from the patch's code.
 - The tests are C# (.NET 10, xUnit v3) and Appium, one Gherkin per scenario, written by their [E2E-TEST-CODE-RULES.md](tests/BaconReader.E2E/E2E-TEST-CODE-RULES.md) (binding). Each scenario patches the clean APK with only the patches it names.
-- They need an emulator, reached through the environment their README lists ("The emulator"). In an AndroidDev cloud session, `source tools/e2e/connect.sh` provides it ([patcher-specific-build.md](patcher-specific-build.md), "Cloud sessions"), then run the tests in the same shell.
+- They need a phone, reached through the environment their README lists ("The phone"). In an AndroidDev cloud session, `source tools/e2e/connect.sh` provides it ([patcher-specific-build.md](patcher-specific-build.md), "Cloud sessions"), then run the tests in the same shell.
 - A patch's scenarios go in the patch's PR. While working: `tools/e2e/record.sh --no-video <TestClass>`. Right before the push: `tools/e2e/record.sh --changed-since origin/<base branch>`. Right after it: `tools/e2e/push-gifs.sh`; the "E2E videos" workflow posts the GIFs on the PR ([docs/hosting.md](docs/hosting.md)).
-- `dotnet build BaconReader.E2E.slnx` and `dotnet test BaconReader.E2E.slnx` pass with no warnings (without an emulator, the scenarios skip).
-- The VS Code e2e recordings extension ([tools/vscode-extension](tools/vscode-extension/README.md)) shows each scenario's recordings next to its code. Its own scenarios, [tests/BaconReader.VsCodeExtension.E2E](tests/BaconReader.VsCodeExtension.E2E/README.md), play in VS Code for the web, with no emulator: `tools/e2e/record.sh Recordings`. Its unit tests: `node --test tools/vscode-extension/test/*.test.js`.
+- `dotnet build BaconReader.E2E.slnx` and `dotnet test BaconReader.E2E.slnx` pass with no warnings (without a phone, the scenarios skip).
+- The VS Code e2e recordings extension ([tools/vscode-extension](tools/vscode-extension/README.md)) shows each scenario's recordings next to its code. Its own scenarios, [tests/BaconReader.VsCodeExtension.E2E](tests/BaconReader.VsCodeExtension.E2E/README.md), play in VS Code for the web, with no phone: `tools/e2e/record.sh Recordings`. Its unit tests: `node --test tools/vscode-extension/test/*.test.js`.
 
 ## Test APKs
 

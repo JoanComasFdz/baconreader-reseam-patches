@@ -8,7 +8,7 @@ namespace BaconReader.E2E.Infrastructure;
 
 /// <summary>
 /// Every scenario keeps the shape E2E-TEST-CODE-RULES.md (rule a) gives it, so it stays one to one with the Gherkin it
-/// implements (runs without the emulator): a theory played on the phone, its Gherkin in
+/// implements (runs without the phone): a theory played on the phone, its Gherkin in
 /// <see cref="TestDescriptionAttribute"/>, its name the Gherkin's title, its screen tags its attributes, and
 /// patched with exactly the patches its Given names, one a line (<see cref="Vocabulary.PatchedWithAttribute"/>; never one
 /// BaseE2E adds to every scenario). A screen attribute twice doesn't compile.
@@ -27,7 +27,7 @@ public sealed partial class ScenarioShapeTests
         Assert.True(method.GetCustomAttributes<PlayOnAttribute>().Any(), $"{scenario} has no [PlayOnPhone]: it would never be played.");
         Assert.True(
             method.GetCustomAttributes<PlayOnAttribute>().All(play => play.Screen == Screen.Phone),
-            $"{scenario} is played on another screen than the phone: BaconReader runs on the emulator only ([PlayOnDesktop] is the VS Code extension's).");
+            $"{scenario} is played on another screen than the phone: BaconReader runs on the phone only ([PlayOnDesktop] is the VS Code extension's).");
         Assert.True(
             method.GetParameters() is [{ ParameterType: var type }] && type == typeof(Screen),
             $"{scenario} should take one parameter, the Screen its attribute plays it on.");

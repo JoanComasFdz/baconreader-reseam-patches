@@ -19,7 +19,8 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// </summary>
 public static class OnScreen
 {
-    // How long a tap's ring is on the screen before the tap: the emulator draws ~5 frames a second, the GIF 15.
+    // How long a tap's ring is on the screen before the tap: enough for the GIF's 15 frames a second, and for the
+    // emulator's ~5 (the phone draws ~30).
     private static readonly TimeSpan TapShown = TimeSpan.FromMilliseconds(700);
 
     // When each driver's last step ended (one driver per scenario, its steps one after another).

@@ -15,7 +15,7 @@ private val BACONREADER_PREMIUM: CompatiblePackage = "com.onelouder.baconreader.
 private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 
 // Reddit detects automation, rate-limits logins and changes its content, so the e2e tests talk to
-// a fake Reddit server in the test process instead, which the emulator reaches through
+// a fake Reddit server in the test process instead, which the phone reaches through
 // `adb reverse`. Only full URL prefixes move: BaconReader recognizes Reddit links in posts by bare
 // domains (reddit.com, v.redd.it), and those stay.
 val e2eFakeReddit =

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- End-to-end tests of BaconReader patched with this bundle, on an Android emulator, with Appium.
+  <!-- End-to-end tests of BaconReader patched with this bundle, on an Android phone, with Appium.
        Its own code rules: E2E-TEST-CODE-RULES.md. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>

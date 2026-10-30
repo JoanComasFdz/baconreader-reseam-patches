@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- The fake Reddit's tests: they call it over HttpClient, as the phone does, and need no emulator. -->
+  <!-- The fake Reddit's tests: they call it over HttpClient, as the phone does, and need no phone. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>

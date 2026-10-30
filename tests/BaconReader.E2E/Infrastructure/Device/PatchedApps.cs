@@ -9,7 +9,7 @@ using BaconReader.E2E.Infrastructure.Vocabulary;
 namespace BaconReader.E2E.Infrastructure.Device;
 
 /// <summary>
-/// Patches the clean BaconReader APK with a scenario's patches and installs it on the emulator, as cheaply as a slow
+/// Patches the clean BaconReader APK with a scenario's patches and installs it on the phone, as cheaply as a slow
 /// link to it allows (a cloud session's reaches it at ~3–4 Mbit/s):
 /// - the released bundle and the test-only one (e2e-patches/) are both loaded, and "E2E fake Reddit" gets the fake Reddit
 ///   server's URL (<see cref="E2EDevice.FakeRedditUrl"/>) when a scenario names it;
@@ -44,7 +44,7 @@ public static partial class PatchedApps
         {
             CheckExists(E2EDevice.Bundle, "the bundle: build it with ./gradlew bundle (README)");
             CheckExists(E2EDevice.TestBundle, "the e2e bundle: build it with ./gradlew -p e2e-patches bundle (README)");
-            CheckExists(E2EDevice.BaseApk, "the clean BaconReader APK: the emulator's connection script downloads it (README, \"The emulator\")");
+            CheckExists(E2EDevice.BaseApk, "the clean BaconReader APK: the phone's connection script downloads it (README, \"The phone\")");
             var names = patches.Select(patch => patch.ToShownText()).Order(StringComparer.Ordinal).ToArray();
             var key = Hash(
                 $"{HashFile(E2EDevice.Bundle)}\n{HashFile(E2EDevice.TestBundle)}\n{HashFile(E2EDevice.BaseApk)}\n{E2EDevice.FakeRedditUrl}\n{string.Join('\n', names)}")[..16];
@@ -112,7 +112,7 @@ public static partial class PatchedApps
         }
     }
 
-    /// <summary>Installs <paramref name="apk"/> on the emulator, with its runtime permissions granted, unless it's already the one installed.</summary>
+    /// <summary>Installs <paramref name="apk"/> on the phone, with its runtime permissions granted, unless it's already the one installed.</summary>
     public static async Task InstallAsync(string apk)
     {
         var sha = HashFile(apk);

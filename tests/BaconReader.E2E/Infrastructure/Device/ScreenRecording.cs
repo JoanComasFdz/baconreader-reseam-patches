@@ -137,7 +137,7 @@ public sealed class ScreenRecording
         }
     }
 
-    // screenrecord takes a moment, up to a few seconds on a busy emulator, to start encoding: a scenario that starts at
+    // screenrecord takes a moment, up to a few seconds on a busy device, to start encoding: a scenario that starts at
     // once would miss its first frames.
     private static async Task WaitUntilRecordingAsync()
     {
@@ -151,7 +151,7 @@ public sealed class ScreenRecording
             await Task.Delay(200);
         }
 
-        throw new InvalidOperationException("screenrecord didn't start on the emulator.");
+        throw new InvalidOperationException("screenrecord didn't start on the phone.");
     }
 
     private static async Task<(int Width, int Height)> ReadScreenSizeAsync()

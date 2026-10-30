@@ -5,7 +5,7 @@
 
 The e2e scenarios of the VS Code e2e recordings extension ([tools/vscode-extension](../../tools/vscode-extension/README.md)):
 each Gherkin about what it shows in VS Code (its CodeLens, play button and recording panel) is one scenario here, played
-in VS Code for the web in Chromium, on the desktop. No emulator and no patched app: the files it opens are fixtures.
+in VS Code for the web in Chromium, on the desktop. No phone and no patched app: the files it opens are fixtures.
 Their code rules: [E2E-TEST-CODE-RULES.md](E2E-TEST-CODE-RULES.md). A PR that adds or changes them shows them on the PR
 like the app's: their Gherkins and their GIFs and MP4s (under a "🖥️ Desktop" subtitle), posted by the "E2E videos"
 workflow ([docs/hosting.md](../../docs/hosting.md), "E2E videos on pull requests").
@@ -16,7 +16,7 @@ for BaconReader's scenarios: one release, `prs-resources`, and the phone's and t
 
 ## Run and record
 
-`tools/e2e/record.sh` runs them with the app's scenarios (its header says how to choose); they need no emulator:
+`tools/e2e/record.sh` runs them with the app's scenarios (its header says how to choose); they need no phone:
 
 ```bash
 tools/e2e/record.sh --no-video Recordings             # this project's scenarios, unrecorded: the fast run while developing

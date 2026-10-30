@@ -12,7 +12,7 @@ and BaconReader, patched with the test-only "E2E fake Reddit", talks to this ins
   answer. `Reset()` empties it. Ids are base 36, from a counter per world, so a run is deterministic; tests name things
   by title, never by id.
 - **Its tests:** [BaconReader.FakeReddit.Tests](../BaconReader.FakeReddit.Tests) call it over `HttpClient`, as the phone
-  does, with no emulator (`dotnet test BaconReader.E2E.slnx`, and the "E2E CI" workflow).
+  does, with no phone (`dotnet test BaconReader.E2E.slnx`, and the "E2E CI" workflow).
 
 ## Building a test's Reddit
 
