@@ -9,7 +9,8 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// <summary>The page objects' waits: until something the user would see is on the screen.</summary>
 public static class Waiting
 {
-    private static readonly TimeSpan Poll = TimeSpan.FromMilliseconds(250);
+    // Each poll is a round trip to the phone (~0.2–0.4 s from a cloud session) already: a short pause between them.
+    private static readonly TimeSpan Poll = TimeSpan.FromMilliseconds(100);
 
     /// <summary>Waits up to <paramref name="timeout"/> until <paramref name="shown"/> finds an element shown on the screen.</summary>
     public static async Task UntilShownAsync(AndroidDriver driver, By shown, TimeSpan timeout, string what)
