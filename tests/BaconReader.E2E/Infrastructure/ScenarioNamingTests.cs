@@ -3,7 +3,7 @@
 
 namespace BaconReader.E2E.Infrastructure;
 
-/// <summary>The scenario names record.sh and the PR's GIFs rely on (runs without the emulator).</summary>
+/// <summary>The scenario names record.sh and the PR's GIFs rely on (runs without the phone).</summary>
 public sealed class ScenarioNamingTests
 {
     [Fact]

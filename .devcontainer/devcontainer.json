@@ -3,7 +3,7 @@
 // A GitHub Codespace, or desktop VS Code's Dev Containers, on this repository: the e2e tests' .NET and Node, what the
 // VS Code extension's scenarios record with, zsh and tmux, and the BaconReader Reseam e2e recordings extension installed
 // from its source. One numbered script per feature, run by postCreateCommand.sh (README.md here lists them). No Android
-// emulator and no patcher: the app's scenarios and the bundle need a cloud session (patcher-specific-build.md).
+// phone and no patcher: the app's scenarios and the bundle need a cloud session (patcher-specific-build.md).
 // tools/vscode-extension/README.md, "Install", says how to use it.
 {
   "name": "BaconReader Reseam patches",

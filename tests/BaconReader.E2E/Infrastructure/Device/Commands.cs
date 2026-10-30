@@ -45,11 +45,11 @@ public static class Commands
                 $"{file} {string.Join(' ', arguments)} ended with {ran.ExitCode}:\n{ran.Output}\n{ran.Error}".TrimEnd());
     }
 
-    /// <summary>Runs a shell command on the emulator (adb -s <c>E2E_ADB_SERIAL</c> shell) and returns what it printed.</summary>
+    /// <summary>Runs a shell command on the phone (adb -s <c>E2E_ADB_SERIAL</c> shell) and returns what it printed.</summary>
     public static async Task<string> ShellAsync(string command) =>
         (await RunOrFailAsync("adb", "-s", E2EDevice.AdbSerial, "shell", command)).Replace("\r\n", "\n").Trim();
 
-    /// <summary>Runs adb against the emulator (adb -s <c>E2E_ADB_SERIAL</c> …).</summary>
+    /// <summary>Runs adb against the phone (adb -s <c>E2E_ADB_SERIAL</c> …).</summary>
     public static Task<string> AdbAsync(params string[] arguments) =>
         RunOrFailAsync("adb", ["-s", E2EDevice.AdbSerial, .. arguments]);
 }

@@ -19,8 +19,8 @@ worked example) is in [patch scenarios](given-when-then-patch-scenarios.md).
 
 Adapted from destiny-loopsmith's
 [given-when-then-test-rules.md](https://github.com/JoanComasFdz/destiny-loopsmith/blob/main/docs/given-when-then-test-rules.md):
-there a Gherkin plays a web app in a browser, on a desktop and a phone; here it plays a patched Android app on an
-emulator, a phone.
+there a Gherkin plays a web app in a browser, on a desktop and a phone; here it plays a patched Android app on a
+phone.
 
 ## Example
 
@@ -34,7 +34,7 @@ The first worked example is
 2. **Layout is a Gherkin too**, checked from where views are on the screen: two views don't overlap, a button sits at a
    row's end, a text isn't cut off. "Looks right", colours and spacing are never a Gherkin: nothing checks them but an
    eye, the reviewer's, on the scenarios' GIFs in the PR's e2e post.
-3. **Not yet:** what the emulator can't reach (a second device, a real camera). Such a criterion stays a plain line,
+3. **Not yet:** what the phone can't reach (a second device, a real camera). Such a criterion stays a plain line,
    checked by hand on a phone, and says why.
 
 ## 2. Scope
@@ -56,7 +56,7 @@ Scenario: <what it proves, as a statement>
   Then …
 ```
 
-1. **Tags:** the screen it is played on, `@phone`, on the line before `Scenario:`. The emulator is the only screen today.
+1. **Tags:** the screen it is played on, `@phone`, on the line before `Scenario:`. The phone is the only screen today.
 2. **Title:** the `Scenario:` line, one line, a statement ("Show tables draws a Reddit table as a grid").
    It is also the test's method name (each run of letters and digits a word, an apostrophe joining its word,
    capitalized, a word in capitals keeping only its first one: `ShowTablesDrawsARedditTableAsAGrid`,
@@ -92,11 +92,12 @@ Scenario: <what it proves, as a statement>
 2. **Select by the option's exact text,** never by position ("the second post") and never by default. Write
    `I select "Best"` even when it is already selected.
 3. **Keep checking and doing apart.** "The menu offers…" is a Then. Tapping is a When. They are never one line.
-4. **The first-start dialogs.** A fresh install shows dialogs before the main screen: Android's "Allow BaconReader
-   Premium to send you notifications?", BaconReader's "FINAL RELEASE ANNOUNCEMENT!" (unless "Disable final release
-   announcement" is patched in) and, with "Prompt to open Reddit links", "Open Reddit links with BaconReader?". A Gherkin about opening the app taps them in its own When lines; any other
-   folds them into its Given ("is open"), which answers "Don’t allow" to the notifications and "Not now" to the links
-   prompt, unless it says "with Reddit links set up".
+4. **The first-start dialogs.** A fresh install shows dialogs before the main screen: BaconReader's "FINAL RELEASE
+   ANNOUNCEMENT!" (unless "Disable final release announcement" is patched in) and, with "Prompt to open Reddit links", "Open Reddit links with BaconReader?". A Gherkin about opening the app taps them in its own When lines; any other
+   folds them into its Given ("is open"), which answers "Not now" to the links prompt, unless it says "with Reddit links
+   set up". Android's "Allow BaconReader Premium to send you notifications?" never shows: the tests deny BaconReader's
+   notifications before each scenario, since each device asks at a different moment (the emulator as the app opens,
+   the Pixel 6 Pro when it opens its next screen). No Gherkin names it.
 
 ## 5. Then
 
@@ -141,7 +142,7 @@ A patch's scenarios go in the same PR as the patch, and the GIFs are posted on i
 
 1. **Copy every expected text from the screen** (a screenshot, the UI tree), never from memory or from
    the patch's code.
-2. **Its test passes on the emulator:** while you work, `tools/e2e/record.sh --no-video <its class>` plays it fast,
+2. **Its test passes on the phone:** while you work, `tools/e2e/record.sh --no-video <its class>` plays it fast,
    unrecorded; right before the push (never between pushes), `tools/e2e/record.sh --changed-since origin/main` records
    it, and each GIF shows what the Gherkin says; `tools/e2e/push-gifs.sh` posts them on the PR right after the push. A scenario or patch change after the recording and before the push means recording again.
 3. **List anything you saw but didn't expect, and anything the owner has to decide,** in the message that hands the

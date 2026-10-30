@@ -1,6 +1,6 @@
 # BaconReader.E2E: end-to-end tests of the patched BaconReader
 
-Scenarios that patch BaconReader Premium 6.1.4 with this bundle, install it on an Android emulator and drive it with
+Scenarios that patch BaconReader Premium 6.1.4 with this bundle, install it on an Android phone and drive it with
 Appium, each one the Gherkin of an acceptance criterion
 ([docs/given-when-then-test-rules.md](../../docs/given-when-then-test-rules.md)), recorded as a GIF and an MP4 so a PR
 shows its patch working. **How to write one: [E2E-TEST-CODE-RULES.md](E2E-TEST-CODE-RULES.md)** (binding for this
@@ -8,22 +8,23 @@ project).
 
 It is destiny-loopsmith's
 [Loopsmith.Web.E2E](https://github.com/JoanComasFdz/destiny-loopsmith/tree/main/tests/Loopsmith.Web.E2E) for Android:
-Appium (UiAutomator2) instead of Playwright, and an emulator instead of a locally
+Appium (UiAutomator2) instead of Playwright, and a phone instead of a locally
 served site.
 
-## The emulator
+## The phone
 
-The scenarios need an Android 14 emulator reachable over adb, an Appium 3.8 server with the UiAutomator2 driver 8.7
+The scenarios need an Android phone reachable over adb (a Pixel 6 Pro on Android 17, on the device host's USB;
+before it, an Android 14 emulator), an Appium 3.8 server with the UiAutomator2 driver 8.7
 that drives it over adb, and BaconReader Premium 6.1.4's clean APK. In an AndroidDev cloud session, the session-start
 hook (`.claude/hooks/session-start.sh`) installs Appium, and sourcing `tools/e2e/connect.sh` in the shell that then runs
-the scenarios joins the emulator, starts Appium in the session and exports what they read
+the scenarios joins the phone, starts Appium in the session and exports what they read
 ([patcher-specific-build.md](../../patcher-specific-build.md), "Cloud sessions"):
 
 | Variable | Default | |
 |---|---|---|
 | `E2E_APPIUM_URL` | unset | the Appium server; without it, every scenario skips |
-| `E2E_ADB_SERIAL` | `127.0.0.1:15555` | the emulator for adb (installs, data, recording) |
-| `E2E_APPIUM_UDID` | `E2E_ADB_SERIAL` | the emulator as the Appium server sees it (its adb serial, when Appium runs next to the tests) |
+| `E2E_ADB_SERIAL` | `127.0.0.1:15555` | the phone for adb (installs, data, recording) |
+| `E2E_APPIUM_UDID` | `E2E_ADB_SERIAL` | the phone as the Appium server sees it (its adb serial, when Appium runs next to the tests) |
 | `E2E_ARTIFACTS_DIR` | unset | the folder holding `com.onelouder.baconreader.premium-6.1.4-clean-base-*.apk` |
 | `E2E_BASE_APK` | that APK | the APK to patch, if it's elsewhere |
 | `E2E_BUNDLE` | `build/reseam/baconreader-patches.reseam` | the bundle to patch with (`./gradlew bundle`) |
@@ -32,10 +33,10 @@ the scenarios joins the emulator, starts Appium in the session and exports what 
 | `E2E_RESEAM` | `reseam` | the reseam CLI |
 | `E2E_VIDEO_DIR` | unset | record each run there (`record.sh` sets it) |
 | `E2E_ACTION_GAP` | `1` | least seconds between two recorded steps |
-| `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (an emulator just recreated) |
+| `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (a phone reset, or an emulator just recreated) |
 
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the
-emulator, so a session starts without reinstalling them; a new emulator needs one run with
+phone, so a session starts without reinstalling them; a reset phone or a new emulator needs one run with
 `E2E_APPIUM_INSTALL_HELPERS=1` (the connection script sets it when they're missing).
 
 ## What a scenario does
@@ -50,21 +51,23 @@ For each scenario, `BaseE2E`:
 3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 4. points the phone at the fake Reddit (`adb reverse`, no HTTP proxy);
-5. clears the app's data, so the scenario starts from a fresh install: Android asks for its notifications when it
-   opens; and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
+5. clears the app's data, so the scenario starts from a fresh install, and denies its notifications, so Android doesn't
+   ask ("Allow BaconReader Premium to send you notifications?" shows at a different moment on each device); and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
 6. starts recording the screen, when the run records;
 7. after the scenario, fails it if the app made a request the fake Reddit doesn't answer.
 
 The scenario's Given then makes its Reddit data (`Reddit.HasAPost("Weekly thread", "e2e")`), and it opens the app itself: `Phone.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
-(Android's notification prompt → "Don’t allow", `FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
+(`FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
 BaconReader?" → "Not now" or "Set up"), or `Phone.BaconReader.OpenAsync()`, which does all of it. Then it taps and checks what
 its patch changes.
 
 A scenario replaces the installed BaconReader with its own test-signed build and clears its data: whatever was
-installed and logged in on the emulator doesn't survive a run.
+installed and logged in on the phone doesn't survive a run.
 
 Measured on 2026-10-23 from a cloud session (~3–4 Mbit/s to the emulator): patching ~1 s; sending a new APK ~40 s; a
 scenario whose APK is already installed ~35 s, recorded.
+On the phone (2026-10-30, ~1–3 Mbit/s): sending a new APK ~1 minute; BaconReader's first screen ~4 s after it opens
+(~35 s on the emulator); the seven phone scenarios ~22 minutes recorded, at ~30 frames a second (~5 on the emulator).
 
 ## The fake Reddit
 
@@ -108,7 +111,7 @@ the test process.
 
 ## Run and record
 
-In the shell that sourced the emulator's connection script:
+In the shell that sourced the phone's connection script:
 
 ```bash
 tools/e2e/record.sh --no-video SpoofClientTests            # while developing: unrecorded, unpaced
@@ -120,7 +123,7 @@ tools/e2e/push-gifs.sh                                     # right after the pus
 `record.sh` builds the bundle (`--no-bundle` skips it), runs the chosen scenarios and, recording, writes
 `out/<domain folder>/<gif name>.gif` and `.mp4` and `out/scenarios.json`
 ([tools/e2e/README.md](../../tools/e2e/README.md)); `push-gifs.sh` hands them to the "E2E videos" workflow, which posts
-them on the PR ([docs/hosting.md](../../docs/hosting.md)). Without the emulator, `dotnet test` skips every scenario and
+them on the PR ([docs/hosting.md](../../docs/hosting.md)). Without the phone, `dotnet test` skips every scenario and
 runs only the shape and naming tests, and the fake Reddit's own tests (the "E2E CI" workflow does that).
 
 By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep the raw videos and their records).

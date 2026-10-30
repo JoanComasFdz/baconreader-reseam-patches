@@ -22,7 +22,6 @@ public sealed class SpoofClientTests : BaseE2E
           And BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           # Logged out, Reddit refuses BaconReader: the feed shows "Greetings!", BaconReader's "no longer operational" message.
           Then the feed shows no posts
@@ -51,8 +50,6 @@ public sealed class SpoofClientTests : BaseE2E
 
         // When
         await Phone.Launcher.OpenBaconReaderAsync();
-        await Phone.NotificationPermission.WaitUntilShownAsync();
-        await Phone.NotificationPermission.ClickDontAllowAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();

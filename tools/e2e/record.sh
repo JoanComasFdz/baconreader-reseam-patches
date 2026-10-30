@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 JoanComasFdz
 # SPDX-License-Identifier: GPL-3.0-only
 # Plays the e2e scenarios and records each as a GIF and an MP4, for the PR (docs/hosting.md, "E2E videos on pull
-# requests"). Two projects hold scenarios, each under its Scenarios/: tests/BaconReader.E2E (the app, on the emulator)
+# requests"). Two projects hold scenarios, each under its Scenarios/: tests/BaconReader.E2E (the app, on the phone)
 # and tests/BaconReader.VsCodeExtension.E2E (the VS Code extension, tools/vscode-extension, in VS Code for the web).
 #   tools/e2e/record.sh [all | <domain folder> | <TestClass> ...] [--changed-since <git ref>] [--action-gap <seconds>]
 #                       [--out <dir>] [--no-bundle] [--no-video]
@@ -12,13 +12,13 @@
 # "this PR's scenarios" with origin/main. A change to the extension (tools/vscode-extension) or to the files its
 # scenarios open (the extension's project's Workspace/) picks every extension scenario, "selected": "fixtures".
 # --action-gap <seconds>: the least time between two steps of a recorded scenario (default 1).
-# The app's scenarios need the emulator's connection in its environment (E2E_APPIUM_URL, E2E_ADB_SERIAL,
+# The app's scenarios need the phone's connection in its environment (E2E_APPIUM_URL, E2E_ADB_SERIAL,
 # E2E_ARTIFACTS_DIR: run it in the shell that sourced the connection script, tests/BaconReader.E2E/README.md, "The
-# emulator"). For them it builds the bundles
+# phone"). For them it builds the bundles
 # first (./gradlew bundle, and ./gradlew -p e2e-patches bundle for the test-only one; --no-bundle reuses the last ones)
 # and runs the chosen scenarios with E2E_VIDEO_DIR set: each one patches, installs and records itself (BaseE2E). Each
 # run's video becomes <out>/<domain folder>/<gif name>.gif (15 fps, 360 px wide) and .mp4 (H.264 at the recording's
-# 540×960), both holding their last frame 3 s, and <out>/scenarios.json lists them (the e2e tool's write-scenarios).
+# size, 576 px wide), both holding their last frame 3 s, and <out>/scenarios.json lists them (the e2e tool's write-scenarios).
 # For the extension's scenarios it serves VS Code for the web (@vscode/test-web, pinned with the VS Code build in
 # tests/BaconReader.VsCodeExtension.E2E/vscode-web/package.json; the build is cached in
 # ${E2E_VSCODE_CACHE:-~/.cache/baconreader/vscode-web}) with tools/vscode-extension, opened on that project's Workspace/,
@@ -139,8 +139,8 @@ if [ -n "${filters[$app_project]:-}" ]; then
   fi
 
   if [ -z "${E2E_APPIUM_URL:-}" ] || [ -z "${E2E_ADB_SERIAL:-}" ]; then
-    echo "No emulator: E2E_APPIUM_URL and E2E_ADB_SERIAL aren't set. Source the emulator's connection script in this shell" \
-         "first (tests/BaconReader.E2E/README.md, \"The emulator\")." >&2
+    echo "No phone: E2E_APPIUM_URL and E2E_ADB_SERIAL aren't set. Source the phone's connection script in this shell" \
+         "first (tests/BaconReader.E2E/README.md, \"The phone\")." >&2
     exit 1
   fi
 fi

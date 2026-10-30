@@ -13,7 +13,7 @@ namespace BaconReader.E2ETools.Core;
 /// the test noted can't place it. The test also takes a screenshot of the workbench when it notes it
 /// (<c>&lt;name&gt;.home.png</c>): ffmpeg scores how alike each frame of the video and that screenshot are (SSIM, 1 when
 /// the same), and Home starts at the first frame within a hair of the best score. Without a screenshot (a run whose start
-/// failed), at the noted time. The app's own runs (an <c>.mp4</c> from the emulator) start on its first screen: record.sh
+/// failed), at the noted time. The app's own runs (an <c>.mp4</c> from the phone) start on its first screen: record.sh
 /// asks this only for a <c>.webm</c>.
 /// </summary>
 public static partial class HomeFinding

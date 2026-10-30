@@ -61,15 +61,16 @@ reseam patch <APK> --bundle build/reseam/baconreader-patches.reseam --bundle e2e
 
 ## Cloud sessions
 
-In a Claude Code cloud session of the `AndroidDev` environment, `.claude/hooks/session-start.sh` installs what the sections above and the e2e tests need: the .NET 10 SDK, ffmpeg, socat, Tailscale, adb, Appium 3.8 with the UiAutomator2 driver 8.7, JDK 17, the Android SDK, apktool, ktfmt, the `reseam` CLI of the plugin version in `settings.gradle.kts`, and a bundle signing key for the session's builds. It also points Gradle at Google's mirror of Maven Central, which often answers 429 to cloud sessions. It does not touch the emulator, and warns (`session-start:`) about anything that failed or any missing variable. A session on this repository runs it on start; no other repository is needed.
+In a Claude Code cloud session of the `AndroidDev` environment, `.claude/hooks/session-start.sh` installs what the sections above and the e2e tests need: the .NET 10 SDK, ffmpeg, socat, Tailscale, adb, Appium 3.8 with the UiAutomator2 driver 8.7, JDK 17, the Android SDK, apktool, ktfmt, the `reseam` CLI of the plugin version in `settings.gradle.kts`, and a bundle signing key for the session's builds. It also points Gradle at Google's mirror of Maven Central, which often answers 429 to cloud sessions. It does not touch the phone, and warns (`session-start:`) about anything that failed or any missing variable. A session on this repository runs it on start; no other repository is needed.
 
 The environment needs network access "Full" and these variables, set in the environment's settings and never in the repository:
 
 | Variable | What |
 |---|---|
 | `TS_AUTHKEY_CLOUD` | A reusable, ephemeral Tailscale auth key, tagged for cloud sessions |
-| `E2E_EMULATOR_HOST` | The emulator's name on the tailnet |
-| `E2E_APK_CHECKSUM` | The sha256 of the clean BaconReader Premium 6.1.4 APK the emulator host serves |
+| `E2E_EMULATOR_HOST` | The device host's name on the tailnet: the NAS the phone is plugged into (the name is the emulator's, from before) |
+| `E2E_APK_CHECKSUM` | The sha256 of the clean BaconReader Premium 6.1.4 APK the device host serves |
+| `E2E_ADB_KEY` | The one adb private key the phone approved for every cloud session (base64 of an `adbkey` file). `connect.sh` installs it as `~/.android/adbkey`; without it the phone refuses the session (an emulator takes any key) |
 
 Never print these variables or the environment (`env`, `env | grep E2E_`, `printenv`): a session's transcript keeps what it prints. To check one, use `[ -n "$NAME" ] && echo set || echo "not set"`.
 
@@ -97,7 +98,7 @@ cd /home/user/baconreader-morphe-patches && /opt/patch-tools/jdk21/bin/java -jar
 - Run these calls one after another, not in parallel: parallel Bash calls that `cd` into different repos can run in the wrong folder.
 - The Reseam bundle lists one patch more than the Morphe one: "Patches entry in settings", which Morphe has as its internal `settingsPatch`, without a name (the Morphe repo's `docs/patcher-specific-patches.md`, "Settings").
 - `tools/compare-patch-lists.sh`, the same file in both repos, lists both built bundles with their JDKs and prints each side's count and the patch names only in one of them, with "Patches entry in settings" as expected. It exits 0 when that is the only difference, 1 when there is another, and 2 when a bundle can't be listed.
-- `tools/e2e/connect.sh` is the same file in both repos. Source it from the repo whose tests use it, in the same call as the commands that use the emulator: its exports point at that repo's `.e2e/`.
+- `tools/e2e/connect.sh` is the same file in both repos. Source it from the repo whose tests use it, in the same call as the commands that use the phone: its exports point at that repo's `.e2e/`.
 
 #### E2E tests in a two-repo session
 
@@ -110,12 +111,12 @@ cd /home/user/baconreader-morphe-patches && export ANDROID_HOME=/opt/android-sdk
 ```
 
 - Right before each repo's push, the same call with `tools/e2e/record.sh --changed-since origin/main` (Reseam) or `--changed-since origin/dev` (Morphe); right after it, that repo's `tools/e2e/push-gifs.sh`.
-- Run the repos one after the other: they share one emulator and its lease. Sourcing `connect.sh` again renews the lease; `tools/e2e/connect.sh --down` once, at the end of the session.
+- Run the repos one after the other: they share one phone and its lease. Sourcing `connect.sh` again renews the lease; `tools/e2e/connect.sh --down` once, at the end of the session.
 - A whole suite is `dotnet test BaconReader.E2E.slnx` in the same call, with the same exports. It runs two projects, the e2e tool's unit tests and the scenarios, and can take longer than a foreground Bash call allows: run it in the background with its output in a file, and follow the file.
 - The first `dotnet` run on a new machine prints .NET's welcome text and installs a development certificate, once.
 - A session on one repo alone needs none of this: its hook runs on start.
 
-### The emulator
+### The phone
 
 ```bash
 source tools/e2e/connect.sh        # join the tailnet, fetch the base APK, wake Android, forward adb, start Appium, take the lease
@@ -127,12 +128,13 @@ tools/e2e/connect.sh --down        # at the end: release the lease, disconnect, 
 
 - **One shell per call.** Each Bash tool call is a new shell, so the exports exist only in the call that sourced the script. In later calls use the fixed values (`adb -s 127.0.0.1:15555`, `http://127.0.0.1:14723`) or source it again: that takes ~3 s, keeps the tunnel, the forward and Appium, and renews the lease. Run it with a plain `source`: piped (`… | tee`) or in `$( )` it runs in a subshell and the exports are lost. It warns on stderr when that happens, or when it is run instead of sourced.
 - **Base APK.** It is downloaded to `.e2e/com.onelouder.baconreader.premium-6.1.4-clean-base-<first 8 characters of E2E_APK_CHECKSUM>.apk` and refused unless its sha256 is `E2E_APK_CHECKSUM`. `.e2e/` and `*.apk` are ignored by git.
-- **Emulator.** Android 14 (API 34), a Nexus 5 profile at 1080x1920, with `adb root` and `su`. `connect.sh` wakes it (15 to 60 s, ~100 s if it was just recreated), and the emulator host stops it after 3 hours with no connection and no lease. Installed apps and logins survive a stop.
+- **The phone.** A Pixel 6 Pro on Android 17, 1080x2340, plugged into the device host (the NAS) by USB and reached over the tailnet: its adbd listens on TCP 5555, and the host keeps it so after a reboot. No root, no `su`. Set up for the tests: no screen lock, no Google account, Stay awake, Do Not Disturb, automatic system updates off, "Verify apps over USB" and Play Protect's scanning off (Play Protect blocks BaconReader as "built for an older version of Android"), animations off (`window_animation_scale`, `transition_animation_scale` and `animator_duration_scale` at 0), brightness 0, charging limited to 80%. `connect.sh` wakes it (the screen on), and the host turns the screen off after 30 minutes with no lease. Before it, the tests ran on an Android 14 emulator (a Nexus 5 profile at 1080x1920) on the same host, which took ~35 s to start the app against ~4 s.
+- **Heat.** Too warm, Android holds back background jobs: at thermal status 2 (`adb shell dumpsys thermalservice | grep "Thermal Status"`), DownloadManager never saved the image of "Embed comment images"' long press. The phone lies out of its case, on a stand, in the open; check the status before a long run.
 - **Lease.** One device is shared: `/data/local/tmp/e2e-lease` holds "<session id> <expiry>" (30 minutes, renewed by sourcing the script again). If `connect.sh` says "device leased by another session", wait; don't break the lease. `--down` removes only this session's lease and says what it did.
-- **The link is slow** (~3 to 4 Mbit/s, ~130 ms per round trip, through a relay; UDP is blocked). Keep transfers small: install only when the APK changed, prefer the UI tree over screenshots, and record screens at 540x960 and ~1 Mbit/s.
-- **Appium's helper apps** stay installed on the device. After the emulator is recreated, `connect.sh` prints a note and exports `E2E_APPIUM_INSTALL_HELPERS=1`: the first Appium session then runs without the two skip capabilities and with `appium:uiautomator2ServerInstallTimeout` and `appium:adbExecTimeout` well above 20 s.
-- **First launch of BaconReader** shows Android's notification permission and the app's "FINAL RELEASE ANNOUNCEMENT!" dialogs. Install with `adb install -r -g`, or `adb shell pm grant com.onelouder.baconreader.premium android.permission.POST_NOTIFICATIONS`, then tap "GOT IT :(". `pm clear` revokes the permission: grant it again.
-- **After a wake** the device clock is set and error dialogs are suppressed; if one still shows, `adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS`.
+- **The link is slow** (~1 to 4 Mbit/s, a new 15 MB APK ~1 minute, ~130 ms per round trip, through a relay; UDP is blocked). Keep transfers small: install only when the APK changed, prefer the UI tree over screenshots, and record screens 576 px wide and at ~1 Mbit/s.
+- **Appium's helper apps** stay installed on the device. After the phone is reset (or an emulator recreated), `connect.sh` prints a note and exports `E2E_APPIUM_INSTALL_HELPERS=1`: the first Appium session then runs without the two skip capabilities and with `appium:uiautomator2ServerInstallTimeout` and `appium:adbExecTimeout` well above 20 s.
+- **First launch of BaconReader** shows Android's notification permission (on the Pixel 6 Pro, only when BaconReader opens its next screen) and the app's "FINAL RELEASE ANNOUNCEMENT!" dialogs. The e2e tests deny the permission before each scenario, so Android doesn't ask. Install with `adb install -r -g`, or `adb shell pm grant com.onelouder.baconreader.premium android.permission.POST_NOTIFICATIONS`, then tap "GOT IT :(". `pm clear` revokes the permission: grant it again.
+- **An error dialog** that stays on the screen: `adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS`.
 - **A hidden HTTP proxy.** The emulator once sent every app's requests through a global proxy at 10.0.2.2:8888, which refused them, 127.0.0.1's too (the e2e tests' fake Reddit), while `toybox nc` from `adb shell` still got through. `settings get global http_proxy` printed `null`, and nothing in `dumpsys connectivity` or the Wi-Fi network named it: a global proxy set once stays in use after `settings delete`. Its signs are `Failed to connect to /10.0.2.2:8888` or `Connection to http://10.0.2.2:8888 refused` in logcat. `adb shell settings put global http_proxy :0` clears it for good; the e2e tests do that before each scenario ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md), "The fake Reddit").
 - **Appium** isn't on `PATH`: it is `/opt/appium/node_modules/.bin/appium`, with `APPIUM_HOME=/opt/appium/home`. `connect.sh` starts it from there.
 - **`--down`** prints one line for each step: what it did with the lease ("lease released", or why not), "logged out of the tailnet", and "disconnected". If something is still running afterwards, the last line says "disconnected, but still running: …".

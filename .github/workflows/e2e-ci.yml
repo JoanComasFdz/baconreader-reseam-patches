@@ -1,7 +1,7 @@
 name: E2E CI
 
-# Builds the end-to-end tests and their tools (.NET) and runs what needs no emulator and no browser: the e2e tool's
-# tests, the e2e projects' shape and naming tests (their scenarios skip themselves without an emulator or VS Code for the
+# Builds the end-to-end tests and their tools (.NET) and runs what needs no phone and no browser: the e2e tool's
+# tests, the e2e projects' shape and naming tests (their scenarios skip themselves without a phone or VS Code for the
 # web), and the VS Code extension's unit tests (the runner's own Node). Recording is the session's job (tests/BaconReader.E2E/README.md,
 # tests/BaconReader.VsCodeExtension.E2E/README.md). The bundle itself is built by release.yml.
 

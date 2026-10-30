@@ -2,7 +2,7 @@
 
 These rules are binding for `tests/BaconReader.E2E`. They are destiny-loopsmith's
 [E2E-TEST-CODE-RULES.md](https://github.com/JoanComasFdz/destiny-loopsmith/blob/main/tests/Loopsmith.Web.E2E/E2E-TEST-CODE-RULES.md),
-translated from Playwright and a web app to Appium and a patched Android app on an emulator.
+translated from Playwright and a web app to Appium and a patched Android app on a phone.
 
 The aim: a scenario is one Gherkin, line for line. Every acceptance criterion about a patched app is a Gherkin, written
 by [docs/given-when-then-test-rules.md](../../docs/given-when-then-test-rules.md), and every Gherkin is one scenario
@@ -35,7 +35,6 @@ public sealed class SpoofClientTests : BaseE2E
           And BaconReader is patched with "Spoof client"
           And BaconReader is installed
           When I open BaconReader
-          And I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"
           And I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"
           # Logged out, Reddit refuses BaconReader: the feed shows "Greetings!", BaconReader's "no longer operational" message.
           Then the feed shows no posts
@@ -64,8 +63,6 @@ public sealed class SpoofClientTests : BaseE2E
 
         // When
         await Phone.Launcher.OpenBaconReaderAsync();
-        await Phone.NotificationPermission.WaitUntilShownAsync();
-        await Phone.NotificationPermission.ClickDontAllowAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync();
         await Phone.BaconReader.FinalReleaseAnnouncement.ClickGotItAsync();
         await Phone.BaconReader.Main.WaitUntilShownAsync();
@@ -121,7 +118,7 @@ public sealed class SpoofClientTests : BaseE2E
 
 - A class is `public sealed class <Topic>Tests : BaseE2E`, in a folder of its own under its domain folder (rule g).
 - **One Gherkin is one scenario:** one method, a `[Theory]` with:
-  - `[PlayOnPhone]`: plays it once, on the emulator. It matches the Gherkin's `@phone` tag;
+  - `[PlayOnPhone]`: plays it once, on the phone. It matches the Gherkin's `@phone` tag;
   - `[PatchedWith(...)]`: the patches its Given quotes, exactly those (rule b), and none of the ones BaseE2E adds to
     every scenario;
   - `[TestDescription("""…""")]`: the Gherkin it implements, word for word as agreed with the owner, tags and `#` lines
@@ -131,7 +128,7 @@ public sealed class SpoofClientTests : BaseE2E
 - Its **name** is the Gherkin's `Scenario:` title, each run of letters and digits a word (an apostrophe joins its
   word), capitalized, a word in capitals keeping only its first one ("a GIF" → `AGif`) (`ScenarioNaming.ToMethodName`). Its **GIF name** is the method name kebaberized, then its screen:
   `bacon-reader-patched-with-spoof-client-logs-in-to-reddit-as-red-reader-phone`.
-- `ScenarioShapeTests` (`dotnet test`, no emulator) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
+- `ScenarioShapeTests` (`dotnet test`, no phone) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't
   its Gherkin's tag, that has no `[PatchedWith]`, whose `[PatchedWith]` isn't exactly the patches its Given quotes, one
   a line (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds.
@@ -144,7 +141,7 @@ public sealed class SpoofClientTests : BaseE2E
 ## b. BaseE2E
 
 `Infrastructure/BaseE2E.cs` owns everything that isn't the scenario:
-- the skip: a scenario is skipped unless `E2E_APPIUM_URL` is set (the emulator's connection script exports it: README, "The emulator");
+- the skip: a scenario is skipped unless `E2E_APPIUM_URL` is set (the phone's connection script exports it: README, "The phone");
 - **the fake Reddit** (README, "The fake Reddit"): started once per run in the test process, on
   `E2E_FAKE_REDDIT_URL`'s port, which the phone reaches through `adb reverse` (set once the device is reached, again
   when lost) with the phone's HTTP proxy cleared (`Device/FakeRedditLink`); emptied before each scenario, with the test
@@ -155,17 +152,17 @@ public sealed class SpoofClientTests : BaseE2E
   ones every scenario gets, which a Given never names (`PatchedApps.Always`: "E2E fake Reddit"), with
   `reseam patch --preset none --enable …` and the bundle `./gradlew bundle` built, and installs it with its runtime
   permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one
-  test key, and sent to the emulator only when it isn't the one installed (sending one takes ~40 s over the slow link);
+  test key, and sent to the phone only when it isn't the one installed (sending one takes ~40 s over the slow link);
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
-  as just installed: Android 14 asks for its notifications when it opens, and the scenario answers;
-- **the screen:** one Appium session on the emulator, its UiAutomator2 helpers already installed
+  as just installed, but with its notifications denied (`Device/PatchedApps`): Android doesn't ask, on any device;
+- **the screen:** one Appium session on the phone, its UiAutomator2 helpers already installed
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
-  emulator was recreated), that never launches or resets the app itself: the scenario opens it;
+  phone was reset), that never launches or resets the app itself: the scenario opens it;
 - **the recording:** when the run records (`E2E_VIDEO_DIR`), Android's `screenrecord` records the screen from before
-  the app opens to the end, 540×960 at 1 Mbit/s, in parts of 3 minutes joined at the end, with a ring drawn onto the
-  video where each tap lands, before it (`Device/ScreenRecording`); it saves the video (record.sh holds its last frame
-  3 s), also when the scenario fails, with its record next to it (title, Gherkin, screen, patches, GIF name, domain
-  folder, when the main screen first showed, whether it passed);
+  the app opens to the end, 576 px wide in the screen's shape at 1 Mbit/s, in parts of 3 minutes joined at the end,
+  with a ring drawn onto the video where each tap lands, before it (`Device/ScreenRecording`); it saves the video
+  (record.sh holds its last frame 3 s), also when the scenario fails, with its record next to it (title, Gherkin,
+  screen, patches, GIF name, domain folder, when the main screen first showed, whether it passed);
 - the `Phone` property.
 
 A scenario never repeats any of that.
@@ -267,7 +264,6 @@ Line for line, in the Gherkin's order:
 | `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
-| `I tap "Don’t allow" on "Allow BaconReader Premium to send you notifications?"` | `Phone.NotificationPermission.WaitUntilShownAsync()`, `ClickDontAllowAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
 | A `Then`, and the `And` lines after it | One `// Then` block: one read per part it checks, then one assertion per line, chained |
 | `the toolbar shows the "Front Page" feed` | `Phone.BaconReader.Main.Toolbar.ReadAsync()`, `ShowsFeed(new Feed.FrontPage())` |

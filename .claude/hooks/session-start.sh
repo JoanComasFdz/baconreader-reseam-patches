@@ -6,11 +6,11 @@
 #      UiAutomator2 driver (it runs in the session; tools/e2e/connect.sh starts it);
 #   2. install what AGENTS.md needs to build and check the bundle: JDK 17, the Android SDK, apktool, ktfmt, the
 #      reseam CLI of the plugin version in settings.gradle.kts, and a bundle signing key for the session's builds.
-# Idempotent and quiet; does nothing outside cloud sessions. Joining the tailnet, waking the emulator and fetching the
+# Idempotent and quiet; does nothing outside cloud sessions. Joining the tailnet, waking the phone and fetching the
 # base APK happen only when a session needs them (tools/e2e/connect.sh), so a session that only edits code never wakes
-# the emulator.
+# the phone.
 # Environment needs: network access "Full", and the variables TS_AUTHKEY_CLOUD (a reusable, ephemeral Tailscale auth
-# key), E2E_EMULATOR_HOST (the emulator's name on the tailnet) and E2E_APK_CHECKSUM (the clean base APK's sha256).
+# key), E2E_EMULATOR_HOST (the device host's name on the tailnet) and E2E_APK_CHECKSUM (the clean base APK's sha256).
 set -uo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -97,7 +97,7 @@ for tool in apktool ktfmt; do
   fi
 done
 
-# Appium, run in the session by tools/e2e/connect.sh against the emulator over adb (the emulator host runs none).
+# Appium, run in the session by tools/e2e/connect.sh against the phone over adb (the device host runs none).
 # Pinned: the UiAutomator2 driver's helper apps on the device must match it (server 10.6.6, settings 8.0.9).
 # Appium finds adb in $ANDROID_HOME/platform-tools.
 APPIUM=/opt/appium
@@ -183,7 +183,7 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qs "$JDK17" "$CLAUDE_ENV_FILE"; then
 fi
 
 for variable in TS_AUTHKEY_CLOUD E2E_EMULATOR_HOST E2E_APK_CHECKSUM; do
-  [ -n "${!variable:-}" ] || warn "$variable is not set: the emulator won't be reachable (tools/e2e/connect.sh)"
+  [ -n "${!variable:-}" ] || warn "$variable is not set: the phone won't be reachable (tools/e2e/connect.sh)"
 done
 # Quiet by design: say it ran, so a run with nothing left to install doesn't look like no run.
 echo "session-start hook done: tools in /opt/patch-tools, Android SDK in /opt/android-sdk"

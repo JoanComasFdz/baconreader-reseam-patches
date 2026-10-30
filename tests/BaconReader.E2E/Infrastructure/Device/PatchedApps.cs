@@ -9,7 +9,7 @@ using BaconReader.E2E.Infrastructure.Vocabulary;
 namespace BaconReader.E2E.Infrastructure.Device;
 
 /// <summary>
-/// Patches the clean BaconReader APK with a scenario's patches and installs it on the emulator, as cheaply as a slow
+/// Patches the clean BaconReader APK with a scenario's patches and installs it on the phone, as cheaply as a slow
 /// link to it allows (a cloud session's reaches it at ~3–4 Mbit/s):
 /// - the released bundle and the test-only one (e2e-patches/) are both loaded, and "E2E fake Reddit" gets the fake Reddit
 ///   server's URL (<see cref="E2EDevice.FakeRedditUrl"/>) when a scenario names it;
@@ -44,7 +44,7 @@ public static partial class PatchedApps
         {
             CheckExists(E2EDevice.Bundle, "the bundle: build it with ./gradlew bundle (README)");
             CheckExists(E2EDevice.TestBundle, "the e2e bundle: build it with ./gradlew -p e2e-patches bundle (README)");
-            CheckExists(E2EDevice.BaseApk, "the clean BaconReader APK: the emulator's connection script downloads it (README, \"The emulator\")");
+            CheckExists(E2EDevice.BaseApk, "the clean BaconReader APK: the phone's connection script downloads it (README, \"The phone\")");
             var names = patches.Select(patch => patch.ToShownText()).Order(StringComparer.Ordinal).ToArray();
             var key = Hash(
                 $"{HashFile(E2EDevice.Bundle)}\n{HashFile(E2EDevice.TestBundle)}\n{HashFile(E2EDevice.BaseApk)}\n{E2EDevice.FakeRedditUrl}\n{string.Join('\n', names)}")[..16];
@@ -112,7 +112,7 @@ public static partial class PatchedApps
         }
     }
 
-    /// <summary>Installs <paramref name="apk"/> on the emulator, with its runtime permissions granted, unless it's already the one installed.</summary>
+    /// <summary>Installs <paramref name="apk"/> on the phone, with its runtime permissions granted, unless it's already the one installed.</summary>
     public static async Task InstallAsync(string apk)
     {
         var sha = HashFile(apk);
@@ -138,13 +138,20 @@ public static partial class PatchedApps
     }
 
     /// <summary>
-    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached, and
-    /// its notifications allowed: Android 14 asks for them again when it opens).
+    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached), with
+    /// its notifications denied, as if the user had answered "Don’t allow". Otherwise Android asks "Allow BaconReader
+    /// Premium to send you notifications?", and when depends on the device: the emulator (Android 14) as BaconReader
+    /// opens, the Pixel 6 Pro (Android 16) only when BaconReader opens its next screen ("Add account"), over it. No
+    /// scenario is about it, so none answers it (docs/given-when-then-test-rules.md, section 4).
     /// </summary>
     public static async Task ResetAsync()
     {
+        const string notifications = "android.permission.POST_NOTIFICATIONS";
         await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
         await Commands.ShellAsync($"pm clear {E2EDevice.Package}");
+        // USER_SET: the user answered, so Android doesn't ask (PermissionPolicyService asks only when it isn't set).
+        await Commands.ShellAsync(
+            $"pm revoke {E2EDevice.Package} {notifications} && pm set-permission-flags {E2EDevice.Package} {notifications} user-set");
     }
 
     private static async Task<string?> ReadInstalledShaAsync()
