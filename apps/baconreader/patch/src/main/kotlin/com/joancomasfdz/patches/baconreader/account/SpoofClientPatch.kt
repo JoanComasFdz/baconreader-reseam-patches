@@ -8,7 +8,6 @@ import app.reseam.patch.alwaysReturn
 import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
-import app.reseam.patch.replaceAllStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -68,16 +67,16 @@ val spoofClient =
                 }
             log.info("Moved $urls URLs from ssl.reddit.com to www.reddit.com")
 
-            authorizeUrl.replaceAllStrings("client_id=$ORIGINAL_CLIENT_ID", "client_id=$id")
-            tokenRequest.replaceAllStrings(ORIGINAL_CLIENT_ID, id)
+            authorizeUrl.method.replaceAllStrings("client_id=$ORIGINAL_CLIENT_ID", "client_id=$id")
+            tokenRequest.method.replaceAllStrings(ORIGINAL_CLIENT_ID, id)
 
             if (uri != null) {
-                authorizeUrl.replaceAllStrings(
+                authorizeUrl.method.replaceAllStrings(
                     "redirect_uri=$ORIGINAL_REDIRECT_URI",
                     "redirect_uri=$uri",
                 )
-                redirectCheck.replaceAllStrings(ORIGINAL_REDIRECT_URI, uri)
-                codeExchange.replaceAllStrings(ORIGINAL_REDIRECT_URI, uri)
+                redirectCheck.method.replaceAllStrings(ORIGINAL_REDIRECT_URI, uri)
+                codeExchange.method.replaceAllStrings(ORIGINAL_REDIRECT_URI, uri)
             }
 
             if (agent != null) {
