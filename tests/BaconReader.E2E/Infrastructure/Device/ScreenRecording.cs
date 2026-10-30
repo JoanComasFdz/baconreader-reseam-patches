@@ -161,8 +161,8 @@ public sealed class ScreenRecording
         return (int.Parse(size[0], CultureInfo.InvariantCulture), int.Parse(size[1], CultureInfo.InvariantCulture));
     }
 
-    // VideoWidth wide and as tall as the screen's shape, rounded to 16 px: 576x1024 for a 1080×1920 screen (the
-    // emulator), 576x1248 for a 1080×2340 one (the Pixel 6 Pro). A fixed 9:16 size would squash a taller phone's screen.
+    // VideoWidth wide and as tall as the screen's shape, rounded to 16 px: 576x1248 for the Pixel 6 Pro's 1080×2340. A
+    // fixed 9:16 size would squash its taller screen.
     private static string VideoSize(int width, int height) =>
         FormattableString.Invariant($"{VideoWidth}x{(int)Math.Round(VideoWidth * (double)height / width / 16) * 16}");
 

@@ -140,9 +140,9 @@ public static partial class PatchedApps
     /// <summary>
     /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached), with
     /// its notifications denied, as if the user had answered "Don’t allow". Otherwise Android asks "Allow BaconReader
-    /// Premium to send you notifications?", and when depends on the device: the emulator (Android 14) as BaconReader
-    /// opens, the Pixel 6 Pro (Android 16) only when BaconReader opens its next screen ("Add account"), over it. No
-    /// scenario is about it, so none answers it (docs/given-when-then-test-rules.md, section 4).
+    /// Premium to send you notifications?" when BaconReader opens its next screen ("Add account"), over it, not as it
+    /// opens: Android requests the question at launch, but drops it. No scenario is about it, so none answers it
+    /// (docs/given-when-then-test-rules.md, section 4).
     /// </summary>
     public static async Task ResetAsync()
     {

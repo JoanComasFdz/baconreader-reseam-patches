@@ -2,17 +2,17 @@
 # SPDX-FileCopyrightText: 2026 JoanComasFdz
 # SPDX-License-Identifier: GPL-3.0-only
 # Per-session connection to the test device from a Claude Code cloud session (patcher-specific-build.md, "Cloud
-# sessions"): a phone on the device host's USB, or the emulator it ran before.
+# sessions"): a phone on the device host's USB.
 #   source tools/e2e/connect.sh -> joins the tailnet, fetches and verifies the clean base APK into .e2e/, wakes Android,
 #                                  forwards ADB, starts Appium here in the session (the session-start hook installs
 #                                  it; the device host runs none), takes the device lease, exports
 #                                  E2E_ADB_SERIAL / E2E_APPIUM_URL / E2E_APPIUM_UDID / E2E_ARTIFACTS_DIR
 #   tools/e2e/connect.sh --down -> releases the lease, logs out of the tailnet, disconnects; prints one line for each
-# Needs the environment's variables: TS_AUTHKEY_CLOUD (Tailscale auth key), E2E_EMULATOR_HOST (the device host's name on
-# the tailnet) and E2E_APK_CHECKSUM (the sha256 of the clean BaconReader Premium 6.1.4 APK the device host serves).
-# A phone answers only adb keys it approved: E2E_ADB_KEY is the one private key it approved for every cloud session
-# (base64 of the adbkey file), used instead of the session's own. The emulator takes any key and needs none.
-# Local ports 15555 (ADB, forwarded to the emulator host) and 14723 (the session's Appium): 5555 would make adb's
+# Needs the environment's variables: TS_AUTHKEY_CLOUD (Tailscale auth key), E2E_DEVICE_HOST (the device host's name on
+# the tailnet), E2E_APK_CHECKSUM (the sha256 of the clean BaconReader Premium 6.1.4 APK the device host serves) and
+# E2E_ADB_KEY: the phone answers only adb keys it approved, and this is the one private key it approved for every cloud
+# session (base64 of the adbkey file), used instead of the session's own.
+# Local ports 15555 (ADB, forwarded to the device host) and 14723 (the session's Appium): 5555 would make adb's
 # emulator auto-scan show a phantom emulator-5554. Uses the tailnet name, never a 100.x IP: NO_PROXY contains
 # 100.64.0.0/10, so curl would bypass the tailnet. `tailscale nc` exits 0 even when nothing answers: check for bytes
 # instead.
@@ -59,8 +59,9 @@ elif [ "${BASH_SUBSHELL:-0}" -gt 0 ]; then
   echo "warning: connect.sh was sourced in a subshell (a pipe or \$( )): its E2E_* exports won't reach your shell. Source it on its own line, without | or \$( )" >&2
 fi
 
-H=${E2E_EMULATOR_HOST:-}
-[ -n "$H" ] || { echo "E2E_EMULATOR_HOST is not set (the emulator's name on the tailnet): add it to the environment's variables"; return 1 2>/dev/null || exit 1; }
+H=${E2E_DEVICE_HOST:-}
+[ -n "$H" ] || { echo "E2E_DEVICE_HOST is not set (the device host's name on the tailnet): add it to the environment's variables"; return 1 2>/dev/null || exit 1; }
+[ -n "${E2E_ADB_KEY:-}" ] || { echo "E2E_ADB_KEY is not set (the adb key the phone approved): add it to the environment's variables"; return 1 2>/dev/null || exit 1; }
 SUM=${E2E_APK_CHECKSUM:-}
 [ -n "$SUM" ] || { echo "E2E_APK_CHECKSUM is not set (the sha256 of the clean base APK): add it to the environment's variables"; return 1 2>/dev/null || exit 1; }
 [ -n "${TS_AUTHKEY_CLOUD:-}" ] || { echo "TS_AUTHKEY_CLOUD is not set: add it to the environment's variables"; return 1 2>/dev/null || exit 1; }
@@ -97,13 +98,11 @@ pgrep -f "^socat TCP-LISTEN:15555" >/dev/null ||
   setsid -f socat TCP-LISTEN:15555,bind=127.0.0.1,fork,reuseaddr EXEC:"$TS nc $H 5555" </dev/null >/dev/null 2>&1
 sleep 1
 # The cloud sessions' one adb key, before adb's server reads it: a server already running with another key starts again.
-if [ -n "${E2E_ADB_KEY:-}" ]; then
-  mkdir -p ~/.android
-  if ! base64 -d <<< "$E2E_ADB_KEY" | cmp -s - ~/.android/adbkey; then
-    adb kill-server >/dev/null 2>&1
-    base64 -d <<< "$E2E_ADB_KEY" > ~/.android/adbkey && chmod 600 ~/.android/adbkey
-    rm -f ~/.android/adbkey.pub   # the session's own: the phone knows the approved key's already
-  fi
+mkdir -p ~/.android
+if ! base64 -d <<< "$E2E_ADB_KEY" | cmp -s - ~/.android/adbkey; then
+  adb kill-server >/dev/null 2>&1
+  base64 -d <<< "$E2E_ADB_KEY" > ~/.android/adbkey && chmod 600 ~/.android/adbkey
+  rm -f ~/.android/adbkey.pub   # the session's own: the phone knows the approved key's already
 fi
 adb connect "$SERIAL" >/dev/null
 # An unapproved key leaves the device "unauthorized", and wait-for-device would wait for ever.
@@ -140,7 +139,7 @@ if ! curl -fsS --noproxy '*' -m 3 http://127.0.0.1:14723/status >/dev/null 2>&1;
     { echo "Appium didn't start (/tmp/appium.log)"; return 1 2>/dev/null || exit 1; }
 fi
 
-# Appium's helper apps live on the device. They are gone after the emulator is recreated: then the first session
+# Appium's helper apps live on the device. They are gone after the phone is reset: then the first session
 # must install them (~25 s), so the tests open it without the two skip capabilities (E2E_APPIUM_INSTALL_HELPERS).
 unset E2E_APPIUM_INSTALL_HELPERS
 # Each of the three by its exact name: `pm list packages <name>` filters by substring (….server matches ….server.test).
