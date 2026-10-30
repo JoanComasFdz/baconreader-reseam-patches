@@ -9,7 +9,8 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// <summary>The page objects' waits: until something the user would see is on the screen.</summary>
 public static class Waiting
 {
-    private static readonly TimeSpan Poll = TimeSpan.FromMilliseconds(250);
+    // Each poll is a round trip to the phone (~0.2–0.4 s from a cloud session) already: a short pause between them.
+    private static readonly TimeSpan Poll = TimeSpan.FromMilliseconds(100);
 
     /// <summary>Waits up to <paramref name="timeout"/> until <paramref name="shown"/> finds an element shown on the screen.</summary>
     public static async Task UntilShownAsync(AndroidDriver driver, By shown, TimeSpan timeout, string what)
@@ -54,12 +55,14 @@ public static class Waiting
         return null;
     }
 
-    // A view that goes stale while it's read (a list or a web page redrawing) isn't shown yet: the next poll finds the new one.
+    // UiAutomator2 finds only views on the screen (its allowInvisibleElements setting is off), so a view found is shown:
+    // no second round trip to ask. A view that goes stale while it's read (a list or a web page redrawing) isn't shown
+    // yet: the next poll finds the new one.
     private static IWebElement? FindShown(AndroidDriver driver, By shown)
     {
         try
         {
-            return driver.FindElements(shown).FirstOrDefault(element => element.Displayed);
+            return driver.FindElements(shown).FirstOrDefault();
         }
         catch (StaleElementReferenceException)
         {

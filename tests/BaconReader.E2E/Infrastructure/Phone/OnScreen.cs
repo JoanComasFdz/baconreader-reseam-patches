@@ -19,8 +19,8 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// </summary>
 public static class OnScreen
 {
-    // How long a tap's ring is on the screen before the tap: ~10 of the GIF's 15 frames a second.
-    private static readonly TimeSpan TapShown = TimeSpan.FromMilliseconds(700);
+    // How long a tap's ring is on the screen before the tap: ~6 of the GIF's 15 frames a second.
+    private static readonly TimeSpan TapShown = TimeSpan.FromMilliseconds(400);
 
     // When each driver's last step ended (one driver per scenario, its steps one after another).
     private static readonly ConditionalWeakTable<AndroidDriver, Stopwatch> SinceLastStep = [];
@@ -55,9 +55,11 @@ public static class OnScreen
         var element = await Task.Run(find);
         if (TapsDrawnOn.TryGetValue(driver, out var recording))
         {
-            var (x, y) = Center(await Task.Run(() => element.GetAttribute("bounds") ?? ""));
+            // The ring's lead counts while its bounds come over the link: that round trip costs no time of its own.
             var shown = Stopwatch.GetTimestamp();
-            await Task.Delay(TapShown);
+            var bounds = Task.Run(() => element.GetAttribute("bounds") ?? "");
+            await Task.WhenAll(bounds, Task.Delay(TapShown));
+            var (x, y) = Center(await bounds);
             await Task.Run(() => touch(element));
             recording.NoteTap(x, y, shown, Stopwatch.GetTimestamp());
         }
