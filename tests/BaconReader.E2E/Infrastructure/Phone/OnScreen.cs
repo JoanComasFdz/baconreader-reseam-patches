@@ -112,13 +112,27 @@ public static class OnScreen
         NoteStepEnded(driver);
     }
 
-    /// <summary>Reads what the screen shows with <paramref name="read"/>.</summary>
+    /// <summary>
+    /// Reads what the screen shows with <paramref name="read"/>. A view read can be replaced halfway (a feed still
+    /// reloading hands Android a new list): it reads again then, for 10 s at most.
+    /// </summary>
     public static async Task<T> ReadAsync<T>(AndroidDriver driver, Func<T> read)
     {
         await WaitForActionGapAsync(driver);
-        var shown = await Task.Run(read);
-        NoteStepEnded(driver);
-        return shown;
+        var until = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (true)
+        {
+            try
+            {
+                var shown = await Task.Run(read);
+                NoteStepEnded(driver);
+                return shown;
+            }
+            catch (OpenQA.Selenium.StaleElementReferenceException) when (DateTime.UtcNow < until)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            }
+        }
     }
 
     private static async Task WaitForActionGapAsync(AndroidDriver driver)
