@@ -17,10 +17,10 @@ public static class E2EVsCode
     /// <summary>Where videos go, or null when the run records none.</summary>
     public static string? VideoDirectory { get; } = ReadNonEmpty("E2E_VIDEO_DIR") is { } dir ? Path.GetFullPath(dir) : null;
 
-    /// <summary>The least time between the end of one step of a recorded scenario and the start of the next (1 s by default).</summary>
+    /// <summary>The least time between the end of one step of a recorded scenario and the start of the next (0.4 s by default).</summary>
     public static TimeSpan ActionGap { get; } = ReadNonEmpty("E2E_ACTION_GAP") is { } gap
         ? TimeSpan.FromSeconds(double.Parse(gap, System.Globalization.CultureInfo.InvariantCulture))
-        : TimeSpan.FromSeconds(1);
+        : TimeSpan.FromSeconds(0.4);
 
     private static string? ReadNonEmpty(string name) =>
         Environment.GetEnvironmentVariable(name) is { Length: > 0 } value ? value : null;

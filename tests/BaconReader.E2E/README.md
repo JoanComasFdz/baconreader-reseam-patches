@@ -32,7 +32,7 @@ the scenarios joins the phone, starts Appium in the session and exports what the
 | `E2E_FAKE_REDDIT_URL` | `http://127.0.0.1:5080` | the fake Reddit, as the phone reaches it: "E2E fake Reddit"'s `baseUrl`; the fake listens on its port here |
 | `E2E_RESEAM` | `reseam` | the reseam CLI |
 | `E2E_VIDEO_DIR` | unset | record each run there (`record.sh` sets it) |
-| `E2E_ACTION_GAP` | `1` | least seconds between two recorded steps |
+| `E2E_ACTION_GAP` | `0.4` | least seconds between two recorded steps |
 | `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (a phone just reset) |
 
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the

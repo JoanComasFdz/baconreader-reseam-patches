@@ -9,7 +9,7 @@ namespace BaconReader.E2E.Infrastructure;
 ///   (README, "The phone"); without <c>E2E_APPIUM_URL</c> every scenario is skipped;
 /// - <c>E2E_VIDEO_DIR</c>: where a recorded run leaves its video and record (tools/e2e/record.sh sets it); unset, nothing
 ///   is recorded and nothing is paced;
-/// - <c>E2E_ACTION_GAP</c>: the least seconds between two steps of a recorded scenario (default 1);
+/// - <c>E2E_ACTION_GAP</c>: the least seconds between two steps of a recorded scenario (default 0.4);
 /// - <c>E2E_BUNDLE</c>: the Reseam bundle to patch with, by default the one <c>./gradlew bundle</c> builds;
 /// - <c>E2E_TEST_BUNDLE</c>: the bundle of the test-only patches, by default the one <c>./gradlew -p e2e-patches bundle</c>
 ///   builds (e2e-patches/, never released);
@@ -38,7 +38,7 @@ public static class E2EDevice
     public static TimeSpan ActionGap =>
         double.TryParse(Environment.GetEnvironmentVariable("E2E_ACTION_GAP"), System.Globalization.CultureInfo.InvariantCulture, out var seconds)
             ? TimeSpan.FromSeconds(seconds)
-            : TimeSpan.FromSeconds(1);
+            : TimeSpan.FromSeconds(0.4);
 
     public static string Bundle =>
         Environment.GetEnvironmentVariable("E2E_BUNDLE") is { Length: > 0 } bundle
