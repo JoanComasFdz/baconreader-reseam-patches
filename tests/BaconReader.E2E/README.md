@@ -13,8 +13,8 @@ served site.
 
 ## The phone
 
-The scenarios need an Android phone reachable over adb (a Pixel 6 Pro on Android 17, on the device host's USB;
-before it, an Android 14 emulator), an Appium 3.8 server with the UiAutomator2 driver 8.7
+The scenarios need an Android phone reachable over adb (a Pixel 6 Pro on Android 17, on the device host's USB), an
+Appium 3.8 server with the UiAutomator2 driver 8.7
 that drives it over adb, and BaconReader Premium 6.1.4's clean APK. In an AndroidDev cloud session, the session-start
 hook (`.claude/hooks/session-start.sh`) installs Appium, and sourcing `tools/e2e/connect.sh` in the shell that then runs
 the scenarios joins the phone, starts Appium in the session and exports what they read
@@ -33,10 +33,10 @@ the scenarios joins the phone, starts Appium in the session and exports what the
 | `E2E_RESEAM` | `reseam` | the reseam CLI |
 | `E2E_VIDEO_DIR` | unset | record each run there (`record.sh` sets it) |
 | `E2E_ACTION_GAP` | `1` | least seconds between two recorded steps |
-| `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (a phone reset, or an emulator just recreated) |
+| `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (a phone just reset) |
 
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the
-phone, so a session starts without reinstalling them; a reset phone or a new emulator needs one run with
+phone, so a session starts without reinstalling them; a reset phone needs one run with
 `E2E_APPIUM_INSTALL_HELPERS=1` (the connection script sets it when they're missing).
 
 ## What a scenario does
@@ -50,7 +50,7 @@ For each scenario, `BaseE2E`:
    once per set of patches and bundles (`build/e2e/patched/`);
 3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
-4. points the phone at the fake Reddit (`adb reverse`, no HTTP proxy);
+4. points the phone at the fake Reddit (`adb reverse`);
 5. clears the app's data, so the scenario starts from a fresh install, and denies its notifications, so Android doesn't
    ask ("Allow BaconReader Premium to send you notifications?" shows at a different moment on each device); and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
 6. starts recording the screen, when the run records;
@@ -64,10 +64,8 @@ its patch changes.
 A scenario replaces the installed BaconReader with its own test-signed build and clears its data: whatever was
 installed and logged in on the phone doesn't survive a run.
 
-Measured on 2026-10-23 from a cloud session (~3–4 Mbit/s to the emulator): patching ~1 s; sending a new APK ~40 s; a
-scenario whose APK is already installed ~35 s, recorded.
-On the phone (2026-10-30, ~1–3 Mbit/s): sending a new APK ~1 minute; BaconReader's first screen ~4 s after it opens
-(~35 s on the emulator); the seven phone scenarios ~22 minutes recorded, at ~30 frames a second (~5 on the emulator).
+Measured on 2026-10-30 from a cloud session (~1–3 Mbit/s to the phone): sending a new APK ~1 minute; BaconReader's
+first screen ~4 s after it opens; the seven phone scenarios ~22 minutes recorded, at ~30 frames a second.
 
 ## The fake Reddit
 
@@ -93,10 +91,8 @@ the test process.
 - **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches. A Given and `[PatchedWith]`
   never name it, only the patches under test (`ScenarioShapeTests` checks it).
 - **The phone reaches it** through `adb reverse tcp:5080 tcp:5080` (the port of `E2E_FAKE_REDDIT_URL`), which BaseE2E
-  sets once the device is reached, and again when it's lost. BaseE2E also clears the phone's global HTTP proxy
-  (`settings put global http_proxy :0`): Android sends every app's requests through it, 127.0.0.1's too, and a proxy
-  set once stays in use after `settings delete`. BaconReader's network security config already allows cleartext HTTP,
-  to 127.0.0.1 too.
+  sets once the device is reached, and again when it's lost. BaconReader's network security config already allows
+  cleartext HTTP, to 127.0.0.1 too.
 - **A scenario's Reddit.** BaseE2E empties the fake before each scenario and makes the test account, `e2e_user`
   (`TestAccount`); the scenario's Given makes the rest through `Reddit` (`Infrastructure/Reddit/`), in the Gherkin's
   words. A subreddit is a default subreddit, so the Front Page of an account without subscriptions shows its posts.

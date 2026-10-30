@@ -144,7 +144,7 @@ public sealed class SpoofClientTests : BaseE2E
 - the skip: a scenario is skipped unless `E2E_APPIUM_URL` is set (the phone's connection script exports it: README, "The phone");
 - **the fake Reddit** (README, "The fake Reddit"): started once per run in the test process, on
   `E2E_FAKE_REDDIT_URL`'s port, which the phone reaches through `adb reverse` (set once the device is reached, again
-  when lost) with the phone's HTTP proxy cleared (`Device/FakeRedditLink`); emptied before each scenario, with the test
+  when lost, `Device/FakeRedditLink`); emptied before each scenario, with the test
   account made again (`TestAccount`); the scenario's `Reddit`, through which its Given makes its Reddit data; and after
   the scenario, a failure listing every request the app made that the fake doesn't answer (`Reddit/UnhandledRequests`,
   whose short ignore list says why for each);

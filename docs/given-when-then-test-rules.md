@@ -96,8 +96,8 @@ Scenario: <what it proves, as a statement>
    ANNOUNCEMENT!" (unless "Disable final release announcement" is patched in) and, with "Prompt to open Reddit links", "Open Reddit links with BaconReader?". A Gherkin about opening the app taps them in its own When lines; any other
    folds them into its Given ("is open"), which answers "Not now" to the links prompt, unless it says "with Reddit links
    set up". Android's "Allow BaconReader Premium to send you notifications?" never shows: the tests deny BaconReader's
-   notifications before each scenario, since each device asks at a different moment (the emulator as the app opens,
-   the Pixel 6 Pro when it opens its next screen). No Gherkin names it.
+   notifications before each scenario, since the phone asks only when BaconReader opens its next screen, over it. No
+   Gherkin names it.
 
 ## 5. Then
 

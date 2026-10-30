@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Small screenshot of the device for looking at the screen: one JPEG 576 px wide in the screen's shape (~25–65 KB
 # depending on the screen, ~2–3 s), taken from a 1 s screenrecord, instead of a full PNG (~470 KB, ~5 s over the slow
-# link). The size is the recordings' (Device/ScreenRecording): 576x1024 on a 1080x1920 screen, 576x1248 on a 1080x2340 one.
+# link). The size is the recordings' (Device/ScreenRecording): 576x1248 on the phone's 1080x2340.
 # Usage: tools/e2e/screenshot.sh [out.jpg]   (after `source tools/e2e/connect.sh`)
 set -euo pipefail
 out=${1:-.e2e/screen.jpg}

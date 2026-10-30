@@ -16,7 +16,7 @@ namespace BaconReader.E2E.Shared;
 /// </summary>
 public enum Screen
 {
-    /// <summary>The phone: a Pixel 6 Pro, 1080×2340, Android 17 (before it, an emulator: a Nexus 5, 1080×1920, Android 14).</summary>
+    /// <summary>The phone: a Pixel 6 Pro, 1080×2340, Android 17.</summary>
     Phone,
 
     /// <summary>A desktop browser window, 1280×800, with a mouse: VS Code for the web.</summary>
