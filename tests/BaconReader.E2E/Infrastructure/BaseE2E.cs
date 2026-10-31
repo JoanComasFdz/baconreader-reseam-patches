@@ -60,6 +60,19 @@ public abstract class BaseE2E : IAsyncLifetime
     /// <summary>The fake Reddit the app talks to: a Given builds the scenario's Reddit data here.</summary>
     protected Reddit.Reddit Reddit { get; private set; } = null!;
 
+    /// <summary>
+    /// The Appium session itself, for the explorer only (<c>Exploring/</c>), which taps whatever a command names. A
+    /// scenario goes through <see cref="Phone"/> (E2E-TEST-CODE-RULES.md, rule a).
+    /// </summary>
+    private protected AndroidDriver Driver => driver ?? throw new InvalidOperationException("The Appium session isn't open.");
+
+    /// <summary>
+    /// The fake Reddit's world, for the explorer only, which lists what the app sent. A scenario goes through
+    /// <see cref="Reddit"/>.
+    /// </summary>
+    private protected FakeReddit.World.RedditWorld World =>
+        fakeReddit?.World ?? throw new InvalidOperationException("The fake Reddit isn't running.");
+
     public async ValueTask InitializeAsync()
     {
         Assert.SkipWhen(
