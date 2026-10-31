@@ -131,6 +131,7 @@ public static partial class PatchedApps
             return;
         }
 
+        var installing = System.Diagnostics.Stopwatch.StartNew();
         await Commands.ShellAsync("mkdir -p /data/local/tmp/e2e");
         await Commands.AdbAsync("push", apk, DeviceApk);
         var installed = await Commands.ShellAsync($"pm install -r -g {DeviceApk} 2>&1 || true");
@@ -145,6 +146,8 @@ public static partial class PatchedApps
         {
             throw new InvalidOperationException($"Installing {Path.GetFileName(apk)} failed: {installed}");
         }
+
+        RunLog.Installed(Path.GetFileName(apk), installing.Elapsed);
     }
 
     /// <summary>
