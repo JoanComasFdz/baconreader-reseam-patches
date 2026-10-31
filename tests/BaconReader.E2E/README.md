@@ -144,9 +144,86 @@ runs only the shape and naming tests, and the fake Reddit's own tests (the "E2E 
 
 By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep the raw videos and their records).
 
+## Exploring the app before writing a Gherkin
+
+A Gherkin quotes the screen, never the patch's code ([given-when-then-test-rules.md](../../docs/given-when-then-test-rules.md),
+"Before handing it over"). Many texts aren't in the APK as they show (errors built at run time, lines composed from Reddit's
+data), and what UiAutomator sees of a view isn't in its code (a greyed-out menu entry whose title still reads as enabled).
+The explorer, `Exploring/Explorer.cs`, lets you play a Gherkin step by step and read the screen at each one, instead of
+running a whole scenario for each text you copy.
+
+It sets the app up as a LoggedIn scenario does (every patch, the fake Reddit, logged in with the test account), with the
+Reddit data a commands file makes, then runs the commands `tools/e2e/explore.sh` sends it, until `quit`. It isn't a
+scenario: without `E2E_EXPLORE` it is skipped, `record.sh` never picks it (it isn't under `Scenarios/`), and
+`ScenarioShapeTests` leaves it out.
+
+In the shell that sourced the phone's connection script, with the bundles built (`record.sh` builds them):
+
+```bash
+tools/e2e/explore.sh start explore.txt > explore.log 2>&1 &   # sets the app up, then waits for commands
+tools/e2e/explore.sh "tap id: toolbarTitle" "wait: 1" source  # waits until it's ready, then answers
+tools/e2e/explore.sh quit
+```
+
+`start` runs `dotnet test` on the explorer alone, with `E2E_EXPLORE` naming the commands file; in a cloud session run it
+in the background, as `record.sh`. Each other call sends its arguments, one command each, and prints the answers. The
+explorer stops when the app does: source the connection script again before its 30-minute lease ends.
+
+**The commands file** holds one command a line, `name: argument | argument`; blank lines and lines starting with `#` are
+skipped. Its Reddit data runs before the app opens; its other commands once the app is logged in. Without a post, it
+makes "Hello from r/e2e" in r/e2e: logging in waits for the Front Page's posts.
+
+```text
+post: e2e | Vote while loading
+comment: Vote while loading | First comment
+late comments: Vote while loading | 8
+message: First subject | First message
+fail posts: broken | 500 Internal Server Error
+```
+
+**Reddit data**, in the Gherkins' words (`Infrastructure/Reddit/`), from the file or sent later:
+
+| Command | Makes |
+|---|---|
+| `post: <subreddit> \| <title>` | a text post |
+| `post with text and image: <subreddit> \| <title> \| <text>` | a text post with an image under its text |
+| `comment: <post title> \| <text>`, `comment with image`, `comment with gif`, `comment with image link`, `comment with video`, `comment with video link` | a comment on the post, and its media |
+| `subscribe: <subreddit>` | the test account's subscription |
+| `message: <subject> \| <body>` | an unread message in the test account's inbox |
+| `late comments: <post title> \| <seconds>` | the post's comments answered that late, as Reddit held them when asked |
+| `fail posts: <subreddit> \| <status>` | the subreddit's posts answered with that status, such as `500 Internal Server Error` |
+| `refuse posts: <subreddit> \| <status> \| <explanation>` | the same, with Reddit's explanation |
+| `drop posts: <subreddit>` | the subreddit's posts answered by dropping the connection |
+
+**The phone and what Reddit saw:**
+
+| Command | Does |
+|---|---|
+| `tap: <text>` | taps the view showing exactly that text |
+| `tap containing: <text>` | taps the view whose text contains it |
+| `tap id: <id>` | taps the view with that resource id: BaconReader's by its name (`toolbarTitle`), another app's in full (`android:id/button1`) |
+| `tap description: <description>` | taps the view with that content description (`More options`) |
+| `tap at: <x>, <y>` | taps that point of the screen, in pixels |
+| `back` | Android's Back |
+| `wait: <seconds>` | waits, for a late answer or an animation |
+| `source` | saves the page source, the UI tree UiAutomator sees, as `build/e2e/explore/source-<n>.xml` |
+| `screenshot` | saves a screenshot as `build/e2e/explore/screenshot-<n>.png` |
+| `actions` | lists the actions the fake Reddit recorded: votes, `read_message`, `subscribe`… |
+| `requests: <count>` | lists the last requests (30 without a count), with the status the fake answered |
+| `unhandled` | lists the requests the fake couldn't answer: what a scenario's Given would need |
+| `quit` | ends the explorer |
+
+A failing command answers `error: …` and the others still run. After `source`, `explore.sh` also prints each view of that
+page source that shows a text or a description or can be tapped: its class, id, enabled and clickable, bounds, text and
+description. `build/e2e/explore/` is emptied when the explorer starts.
+
+**A page source holds what was typed into the app's fields.** On the phone that is only the fake Reddit's test account,
+but never paste a page source or a screenshot of a login into a PR or a chat.
+
 ## Where tests go
 
-`Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
+`Exploring/` holds the explorer, a tool to look at the app before writing a Gherkin ("Exploring the app before writing a
+Gherkin"). `Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
 recording, the link to the fake Reddit), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), `Reddit/` (the fake Reddit in the Gherkins' words), the `Vocabulary` and the assertions. What a scenario is (its Gherkin,
 `[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record) is in `tests/BaconReader.E2E.Shared`, shared
 with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](../BaconReader.VsCodeExtension.E2E/README.md)). `Scenarios/` holds two groups, each run together so the phone gets each APK once

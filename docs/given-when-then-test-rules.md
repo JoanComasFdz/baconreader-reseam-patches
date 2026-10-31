@@ -147,7 +147,9 @@ A patch's scenarios go in the same PR as the patch, and the GIFs are posted on i
 ## 9. Before handing it over
 
 1. **Copy every expected text from the screen** (a screenshot, the UI tree), never from memory or from
-   the patch's code.
+   the patch's code. The explorer, `tools/e2e/explore.sh`, plays it step by step on the phone and saves the UI tree and
+   a screenshot at each step ([tests/BaconReader.E2E/README.md](../tests/BaconReader.E2E/README.md), "Exploring the app
+   before writing a Gherkin").
 2. **Its test passes on the phone:** while you work, `tools/e2e/record.sh --no-video <its class>` plays it fast,
    unrecorded; right before the push (never between pushes), `tools/e2e/record.sh --changed-since origin/main` records
    it, and each GIF shows what the Gherkin says; `tools/e2e/push-gifs.sh` posts them on the PR right after the push. A scenario or patch change after the recording and before the push means recording again.

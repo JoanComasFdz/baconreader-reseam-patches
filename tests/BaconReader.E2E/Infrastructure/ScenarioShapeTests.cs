@@ -130,7 +130,8 @@ public sealed partial class ScenarioShapeTests
 
     private static IEnumerable<MethodInfo> FindScenarios() =>
         typeof(BaseE2E).Assembly.GetTypes()
-            .Where(type => type.IsSubclassOf(typeof(BaseE2E)) && !type.IsAbstract)
+            // The explorer sets the app up as a scenario does, but is a tool (README, "Exploring the app before writing a Gherkin").
+            .Where(type => type.IsSubclassOf(typeof(BaseE2E)) && !type.IsAbstract && type != typeof(Exploring.Explorer))
             .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             .Where(method => method.GetCustomAttributes<FactAttribute>(inherit: true).Any())
             .OrderBy(method => method.DeclaringType!.Name)
