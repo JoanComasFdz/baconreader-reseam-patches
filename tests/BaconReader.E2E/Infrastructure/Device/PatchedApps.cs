@@ -33,10 +33,11 @@ public static partial class PatchedApps
     private static string SigningFolder => Path.Combine(E2EDevice.WorkFolder, "signing");
 
     /// <summary>
-    /// The patches every scenario's app is patched with, besides those its Given names, which never name these:
-    /// "E2E fake Reddit", so the app talks to the fake Reddit, never to Reddit.
+    /// The patches every scenario's app is patched with, besides those its Given names, which never name these: "E2E
+    /// fake Reddit", so the app talks to the fake Reddit, never to Reddit; "E2E inbox envelope label", so a test sees
+    /// the orange envelope of unread messages in the left-menu button's description.
     /// </summary>
-    public static IReadOnlyList<Patch> Always { get; } = [Patch.E2EFakeReddit];
+    public static IReadOnlyList<Patch> Always { get; } = [Patch.E2EFakeReddit, Patch.E2EInboxEnvelopeLabel];
 
     /// <summary>
     /// Patches the clean APK with <paramref name="patchSet"/> and <see cref="Always"/> (once per bundle) and returns the

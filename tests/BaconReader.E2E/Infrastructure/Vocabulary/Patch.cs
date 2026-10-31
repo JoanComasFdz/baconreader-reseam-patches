@@ -17,6 +17,7 @@ public enum Patch
     PromptToOpenRedditLinks,
     EmbedCommentImages,
     E2EFakeReddit,
+    E2EInboxEnvelopeLabel,
 }
 
 /// <summary>What the bundle names each <see cref="Patch"/>: the only place those strings live.</summary>
@@ -31,6 +32,7 @@ public static class PatchShowing
             Patch.PromptToOpenRedditLinks => "Prompt to open Reddit links",
             Patch.EmbedCommentImages => "Embed comment images",
             Patch.E2EFakeReddit => "E2E fake Reddit",
+            Patch.E2EInboxEnvelopeLabel => "E2E inbox envelope label",
             _ => throw new ArgumentOutOfRangeException(nameof(patch), patch, "A patch with no name in the bundle."),
         };
 }

@@ -44,7 +44,7 @@ reseam patch <BaconReader 6.1.4 APK> \
 
 ## The e2e bundle
 
-Test-only patches, such as "E2E fake Reddit", which the e2e tests use ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)), live in `e2e-patches/`, a workspace of its own: a Reseam workspace builds one bundle, and `release.yml` builds and publishes only the root's. It takes its Reseam version from the root's `settings.gradle.kts`.
+Test-only patches, "E2E fake Reddit" and "E2E inbox envelope label", which the e2e tests use ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)), live in `e2e-patches/`, a workspace of its own: a Reseam workspace builds one bundle, and `release.yml` builds and publishes only the root's. It takes its Reseam version from the root's `settings.gradle.kts`.
 
 ```shell
 ./gradlew -p e2e-patches bundle --no-daemon   # → e2e-patches/build/reseam/baconreader-e2e.reseam
@@ -58,6 +58,7 @@ reseam patch <APK> --bundle build/reseam/baconreader-patches.reseam --bundle e2e
 - `--bundle` is repeatable. Both bundles are signed with the same key, so one `--trust` covers them.
 - "E2E fake Reddit" rewrites strings in `afterDependents`, which Reseam runs once every selected patch of every loaded bundle has executed, so after "Spoof client" and after the extensions those patches merged.
 - reseam refuses `--option` for a patch it doesn't run: pass it only with `--enable "E2E fake Reddit"`.
+- "E2E inbox envelope label" has an extension of its own, `e2e-patches/apps/baconreader/extensions/envelope`, built into the e2e bundle like the released bundle's.
 
 ## Cloud sessions
 

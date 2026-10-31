@@ -24,6 +24,12 @@ public static class Locate
     /// <summary>A view by its content description, which views a patch creates in code get from the patch.</summary>
     public static By Description(string description) => MobileBy.AccessibilityId(description);
 
+    /// <summary>
+    /// A view whose content description starts with <paramref name="description"/>: one a test-only patch adds to
+    /// ("Navigate up, orange envelope").
+    /// </summary>
+    public static By DescriptionStartingWith(string description) => UiSelector($"descriptionStartsWith({Quote(description)})");
+
     /// <summary>A view showing exactly <paramref name="text"/>.</summary>
     public static By Text(string text) => UiSelector($"text({Quote(text)})");
 
@@ -33,6 +39,13 @@ public static class Locate
     /// <summary>The view of BaconReader with resource id <paramref name="id"/> that shows exactly <paramref name="text"/>: one entry of a list whose entries share an id.</summary>
     public static By AppIdWithText(string id, string text) =>
         UiSelector($"resourceId({Quote($"{E2EDevice.Package}:id/{id}")}).text({Quote(text)})");
+
+    /// <summary>
+    /// The view of BaconReader with resource id <paramref name="id"/> that shows exactly <paramref name="text"/>, inside a
+    /// disabled view: a menu entry greyed out, whose row is disabled while its title still reads as enabled.
+    /// </summary>
+    public static By AppIdWithTextInDisabled(string id, string text) =>
+        UiSelector($"enabled(false).childSelector(new UiSelector().resourceId({Quote($"{E2EDevice.Package}:id/{id}")}).text({Quote(text)}))");
 
     /// <summary>A button showing exactly <paramref name="text"/>, where a title shows the same text (a web page's "Log In").</summary>
     public static By ButtonWithText(string text) => UiSelector($"className(\"android.widget.Button\").text({Quote(text)})");

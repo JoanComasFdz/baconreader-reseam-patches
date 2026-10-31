@@ -12,6 +12,9 @@ public partial record MenuEntry
     /// <summary>The menu's first entry while no account is logged in; once one is, its user name takes its place.</summary>
     public partial record AddAccount;
 
+    /// <summary>The account's inbox: its messages.</summary>
+    public partial record Inbox;
+
     /// <summary>The app's settings: BaconReader's sections, then the patches' "Patches".</summary>
     public partial record Settings;
 
@@ -22,12 +25,13 @@ public partial record MenuEntry
 /// <summary>What the app shows for each <see cref="MenuEntry"/>: the only place those strings live.</summary>
 public static class MenuEntryShowing
 {
-    private static readonly MenuEntry[] Listed = [new MenuEntry.AddAccount(), new MenuEntry.Settings()];
+    private static readonly MenuEntry[] Listed = [new MenuEntry.AddAccount(), new MenuEntry.Inbox(), new MenuEntry.Settings()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this MenuEntry value) =>
         value.Match(
             addAccount => "Add account",
+            inbox => "Inbox",
             settings => "Settings",
             unlisted => unlisted.Shown);
 

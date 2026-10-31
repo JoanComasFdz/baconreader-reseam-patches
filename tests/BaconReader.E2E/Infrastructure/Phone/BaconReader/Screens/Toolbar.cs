@@ -13,9 +13,13 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 public sealed class Toolbar(AndroidDriver driver)
 {
     private static readonly OpenQA.Selenium.By Title = Locate.AppId("toolbarTitle");
+    private static readonly OpenQA.Selenium.By MoreOptionsButton = Locate.Description("More options");
 
-    // Each feed in the list the feed's name opens.
-    private static OpenQA.Selenium.By FeedInList(Feed feed) => Locate.AppIdWithText("text", feed.ToShownText());
+    /// <summary>The list of feeds the feed's name opens.</summary>
+    public FeedList FeedList { get; } = new(driver);
+
+    /// <summary>The menu "More options" opens.</summary>
+    public OverflowMenu MoreOptions { get; } = new(driver);
 
     /// <summary>Waits until the toolbar shows a feed's name.</summary>
     public Task WaitUntilShownAsync() =>
@@ -24,10 +28,20 @@ public sealed class Toolbar(AndroidDriver driver)
     /// <summary>Selects <paramref name="feed"/>: taps the feed's name, then <paramref name="feed"/> in the list it opens.</summary>
     public async Task SelectFeedAsync(Feed feed)
     {
-        await OnScreen.PressAsync(driver, Title);
-        await Waiting.UntilShownAsync(driver, FeedInList(feed), TimeSpan.FromSeconds(10), $"\"{feed.ToShownText()}\" in the toolbar's list of feeds");
-        await OnScreen.PressAsync(driver, FeedInList(feed));
+        await ClickFeedNameAsync();
+        await FeedList.WaitUntilShownAsync();
+        await FeedList.ClickAsync(feed);
     }
+
+    /// <summary>Taps the feed's name, which opens the list of feeds.</summary>
+    public Task ClickFeedNameAsync() => OnScreen.PressAsync(driver, Title);
+
+    /// <summary>Taps "More options", which opens its menu.</summary>
+    public Task ClickMoreOptionsAsync() => OnScreen.PressAsync(driver, MoreOptionsButton);
+
+    /// <summary>Waits until the toolbar names <paramref name="feed"/>.</summary>
+    public Task WaitUntilFeedShownAsync(Feed feed) =>
+        Waiting.UntilShownAsync(driver, Locate.AppIdWithText("toolbarTitle", feed.ToShownText()), TimeSpan.FromSeconds(10), $"The toolbar naming the \"{feed.ToShownText()}\" feed");
 
     /// <summary>What the toolbar shows: the feed it names.</summary>
     public Task<ToolbarSnapshot> ReadAsync() =>

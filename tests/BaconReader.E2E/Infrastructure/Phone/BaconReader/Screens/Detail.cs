@@ -12,11 +12,38 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 /// <summary>The screen a post opens on (DetailActivity): the post, then its comments.</summary>
 public sealed class Detail(AndroidDriver driver)
 {
+    private static readonly By Loading = Locate.Text("Loading...");
+    private static readonly By Upvote = Locate.AppId("upvote_left");
+    private static readonly By Downvote = Locate.AppId("downvote_left");
+    private static readonly By CommentHeader = Locate.AppId("commentSubText");
+
     /// <summary>A text post's text, under its title.</summary>
     public PostText PostText { get; } = new(driver);
 
     /// <summary>The post's comments, under the post and the sort bar.</summary>
     public Comments Comments { get; } = new(driver);
+
+    /// <summary>
+    /// Taps the up arrow of the bar at the bottom while the comments still load ("Loading..."), which upvotes the post,
+    /// or takes its upvote back. Fails when the comments loaded before the tap: the vote wasn't made while they load.
+    /// </summary>
+    public Task UpvoteWhileTheCommentsLoadAsync() => VoteWhileTheCommentsLoadAsync(Upvote, "upvote");
+
+    /// <summary>
+    /// Taps the down arrow of the bar at the bottom while the comments still load ("Loading..."), which downvotes the
+    /// post. Fails when the comments loaded before the tap.
+    /// </summary>
+    public Task DownvoteWhileTheCommentsLoadAsync() => VoteWhileTheCommentsLoadAsync(Downvote, "downvote");
+
+    private async Task VoteWhileTheCommentsLoadAsync(By arrow, string vote)
+    {
+        await Waiting.UntilShownAsync(driver, Loading, TimeSpan.FromSeconds(10), "\"Loading...\" while the post's comments load");
+        await OnScreen.PressAsync(driver, arrow);
+        if (driver.FindElements(CommentHeader).Count > 0)
+        {
+            throw new InvalidOperationException($"The comments loaded before the {vote}: Reddit answered them too soon for the vote to be made while they load.");
+        }
+    }
 }
 
 /// <summary>
@@ -94,6 +121,10 @@ public sealed class Comments(AndroidDriver driver)
     /// </summary>
     public Task WaitUntilShownAsync() =>
         Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(10), "A comment of the post");
+
+    /// <summary>Waits until the comment "<paramref name="text"/>" shows: Reddit's answer can come late.</summary>
+    public Task WaitUntilCommentShownAsync(string text) =>
+        Waiting.UntilShownAsync(driver, Locate.AppIdWithText("commentBody", text), TimeSpan.FromSeconds(30), $"The comment \"{text}\"");
 
     /// <summary>
     /// Scrolls the comments until the comment "<paramref name="text"/>" shows whole, between the sort bar and
