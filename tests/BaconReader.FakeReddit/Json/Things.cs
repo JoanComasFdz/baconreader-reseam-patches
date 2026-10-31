@@ -118,7 +118,35 @@ internal sealed class Things(RedditWorld world)
     public static UserData User(Account account)
     {
         var created = Seconds(account.Created);
-        return new UserData { Id = account.Id, Name = account.Name, Created = created, CreatedUtc = created };
+        return new UserData
+        {
+            Id = account.Id,
+            Name = account.Name,
+            Created = created,
+            CreatedUtc = created,
+            HasMail = account.HasMail,
+            InboxCount = account.Inbox.Count(message => message.IsNew),
+        };
+    }
+
+    /// <summary>A private message (t4), as Reddit's inbox sends it.</summary>
+    public Thing Message(Message message)
+    {
+        var created = Seconds(message.Created);
+        return new Thing("t4", new MessageData
+        {
+            AuthorFullname = AuthorFullName(message.Author),
+            Id = message.Id,
+            Subject = message.Subject,
+            Author = message.Author,
+            New = message.IsNew,
+            Body = message.Body,
+            Dest = message.To.Name,
+            BodyHtml = RedditMarkdown.ToEscapedHtml(message.Body, world.BaseUrl),
+            Name = message.FullName,
+            Created = created,
+            CreatedUtc = created,
+        });
     }
 
     private Dictionary<string, MediaMetadata>? MediaMetadataOf(Dictionary<string, UploadedMedia> media) =>

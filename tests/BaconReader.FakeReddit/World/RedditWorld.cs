@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 
 namespace BaconReader.FakeReddit.World;
 
@@ -23,6 +24,7 @@ public sealed class RedditWorld
     private readonly List<RecordedRequest> unhandled = [];
     private readonly List<RecordedAction> actions = [];
     private readonly List<LoginSeen> logins = [];
+    private readonly List<RequestTrouble> troubles = [];
     private long nextId;
     private long nextOrder;
 
@@ -86,6 +88,7 @@ public sealed class RedditWorld
             unhandled.Clear();
             actions.Clear();
             logins.Clear();
+            troubles.Clear();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
             // Reddit's ids are base 36; starting at 36^4 makes them five characters, like an old post's.
@@ -181,6 +184,54 @@ public sealed class RedditWorld
             return reply;
         }
     }
+
+    /// <summary>
+    /// Sends <paramref name="to"/> a private message from <paramref name="author"/>, now, unread: the newest of its inbox.
+    /// </summary>
+    public Message AddMessage(Account to, string subject, string body, string author = "e2e_sender")
+    {
+        lock (Sync)
+        {
+            var message = new Message(NewId(), to, author, subject, body, DateTimeOffset.UtcNow);
+            to.Inbox.Insert(0, message);
+            return message;
+        }
+    }
+
+    /// <summary>
+    /// Makes the requests <paramref name="trouble"/> matches wait, or fail, until the world is reset: the first trouble
+    /// added that matches a request is the one it gets.
+    /// </summary>
+    public void AddTrouble(RequestTrouble trouble)
+    {
+        lock (Sync)
+        {
+            troubles.Add(trouble);
+        }
+    }
+
+    /// <summary>
+    /// The requests for <paramref name="post"/>'s comments, as BaconReader asks for them:
+    /// <c>/r/&lt;sub&gt;/comments/&lt;id&gt;/…</c> or <c>/comments/&lt;id&gt;</c>.
+    /// </summary>
+    public static Func<string, string, bool> CommentsOf(Post post) =>
+        (method, path) => method == "GET" && (path.StartsWith($"/comments/{post.Id}", StringComparison.OrdinalIgnoreCase) || path.StartsWith($"/r/{post.Subreddit.Name}/comments/{post.Id}", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The requests for r/<paramref name="subreddit"/>'s posts, in any sort.</summary>
+    public static Func<string, string, bool> PostsOf(string subreddit) =>
+        (method, path) => method == "GET" && Regex.IsMatch(
+            path, $"^/r/{Regex.Escape(BareSubreddit(subreddit))}(/(best|hot|new|top|rising|controversial))?$", RegexOptions.IgnoreCase);
+
+    internal RequestTrouble? TroubleOf(string method, string path)
+    {
+        lock (Sync)
+        {
+            return troubles.FirstOrDefault(trouble => trouble.Matches(method, path));
+        }
+    }
+
+    internal Message? FindMessage(string id) =>
+        accounts.SelectMany(account => account.Inbox).FirstOrDefault(message => string.Equals(message.Id, id, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Serves <paramref name="bytes"/> at <c>/_media/&lt;path&gt;</c> (<c>i.redd.it/x.gif</c>) and returns its URL, as the

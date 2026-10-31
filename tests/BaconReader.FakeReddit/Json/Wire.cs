@@ -242,6 +242,37 @@ public sealed record CommentData
     public Dictionary<string, MediaMetadata>? MediaMetadata { get; init; }
 }
 
+/// <summary>A private message (t4), as Reddit's inbox sends it.</summary>
+public sealed record MessageData
+{
+    public object? FirstMessage { get; init; }
+    public object? FirstMessageName { get; init; }
+    public object? Subreddit { get; init; }
+    public object? Likes { get; init; }
+    [JsonConverter(typeof(RepliesConverter))]
+    public Thing? Replies { get; init; }
+    public string AuthorFullname { get; init; } = "";
+    public string Id { get; init; } = "";
+    public string Subject { get; init; } = "";
+    public object? AssociatedAwardingId { get; init; }
+    public int Score { get; init; }
+    public string Author { get; init; } = "";
+    public object? NumComments { get; init; }
+    public object? ParentId { get; init; }
+    public object? SubredditNamePrefixed { get; init; }
+    public bool New { get; init; }
+    public string Type { get; init; } = "unknown";
+    public string Body { get; init; } = "";
+    public string Dest { get; init; } = "";
+    public bool WasComment { get; init; }
+    public string BodyHtml { get; init; } = "";
+    public string Name { get; init; } = "";
+    public double Created { get; init; }
+    public double CreatedUtc { get; init; }
+    public string Context { get; init; } = "";
+    public object? Distinguished { get; init; }
+}
+
 /// <summary>
 /// One entry of a comment's or a text post's <c>media_metadata</c>: an uploaded image or GIF, whose <c>s</c> holds its
 /// full size (and a GIF's MP4), or a video (<c>RedditVideo</c>), with its playlists and size instead.

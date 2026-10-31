@@ -8,6 +8,7 @@ using BaconReader.FakeReddit.World;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -84,6 +85,20 @@ public sealed class FakeRedditServer : IAsyncDisposable
         await app.DisposeAsync();
     }
 
+    // Waits a trouble's delay; false when the app gave up waiting first.
+    private static async Task<bool> WaitAsync(TimeSpan delay, HttpContext context)
+    {
+        try
+        {
+            await Task.Delay(delay, context.RequestAborted);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+    }
+
     private static int FreePort()
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -112,6 +127,47 @@ public sealed class FakeRedditServer : IAsyncDisposable
                         context.Response.StatusCode),
                     handled: !context.Items.ContainsKey(Unhandled));
             }
+        });
+
+        // The requests a test picked are held back, dropped or failed (RequestTrouble): after the logging above, so it
+        // records what they got.
+        app.Use(async (context, next) =>
+        {
+            if (world.TroubleOf(context.Request.Method, context.Request.Path.Value ?? "/") is not { } trouble)
+            {
+                await next(context);
+                return;
+            }
+
+            if (trouble.Status is null && !trouble.Drops)
+            {
+                // Held back: the answer is what the world held when the request came, sent after the delay.
+                var body = context.Response.Body;
+                using var answer = new MemoryStream();
+                context.Response.Body = answer;
+                await next(context);
+                context.Response.Body = body;
+                if (await WaitAsync(trouble.Delay, context))
+                {
+                    answer.Position = 0;
+                    await answer.CopyToAsync(body, context.RequestAborted);
+                }
+
+                return;
+            }
+
+            if (!await WaitAsync(trouble.Delay, context))
+            {
+                return;
+            }
+
+            if (trouble.Drops)
+            {
+                context.Abort();
+                return;
+            }
+
+            await Answers.Error(trouble.Status!.Value, ReasonPhrases.GetReasonPhrase(trouble.Status.Value), trouble.Explanation).ExecuteAsync(context);
         });
 
         // Routing matches the normalized path: it runs after the middleware above.

@@ -30,6 +30,12 @@ public sealed class Account
     /// <summary>What <c>/api/v1/me/prefs</c> answers, <c>{}</c> unless a test sets some.</summary>
     public Dictionary<string, object?> Prefs { get; } = [];
 
+    /// <summary>The private messages sent to it, newest first: its inbox.</summary>
+    public List<Message> Inbox { get; } = [];
+
+    /// <summary>Whether a message of its inbox is unread: <c>has_mail</c> in <c>/api/v1/me</c>.</summary>
+    public bool HasMail => Inbox.Any(message => message.IsNew);
+
     public string FullName => "t2_" + Id;
 }
 
@@ -185,6 +191,39 @@ public sealed class Comment
     public int Depth => Parent is null ? 0 : Parent.Depth + 1;
 
     internal int ReplyCount => Replies.Sum(reply => 1 + reply.ReplyCount);
+}
+
+/// <summary>A private message (Reddit's t4) in an account's inbox.</summary>
+public sealed class Message
+{
+    internal Message(string id, Account to, string author, string subject, string body, DateTimeOffset created)
+    {
+        Id = id;
+        To = to;
+        Author = author;
+        Subject = subject;
+        Body = body;
+        Created = created;
+    }
+
+    public string Id { get; }
+
+    /// <summary>The account it was sent to: whose inbox holds it.</summary>
+    public Account To { get; }
+
+    public string Author { get; }
+
+    public string Subject { get; }
+
+    /// <summary>The Markdown, as Reddit's <c>body</c> holds it.</summary>
+    public string Body { get; }
+
+    public DateTimeOffset Created { get; }
+
+    /// <summary>Unread: Reddit's <c>new</c>. <c>api/read_message</c> and <c>api/read_all_messages</c> clear it.</summary>
+    public bool IsNew { get; set; } = true;
+
+    public string FullName => "t4_" + Id;
 }
 
 /// <summary>
