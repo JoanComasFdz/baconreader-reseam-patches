@@ -181,6 +181,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the test account is logged in
           When I tap the post "A picture in text"
           Then the post's text "Look at this" shows 1 image
+          And the image starts where the post's text starts
         """)]
     public async Task EmbedCommentImagesShowsAnImageInAPostsText(Screen screen)
     {
@@ -195,7 +196,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
 
         // Then
         var postText = await Phone.BaconReader.Detail.PostText.ReadAsync();
+        var postTextLayout = await Phone.BaconReader.Detail.PostText.ReadLayoutAsync();
         Asserting.That(postText).ShowsTheTextWithImages("Look at this", 1);
+        Asserting.That(postTextLayout).TheImageStartsWhereTheTextStarts();
     }
 
     [Theory, PlayOnPhone]

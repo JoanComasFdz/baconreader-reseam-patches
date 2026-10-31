@@ -17,7 +17,6 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.joancomasfdz.baconreader.common.DownloadProgress
 import com.joancomasfdz.baconreader.common.ErrorDialog
@@ -79,11 +78,7 @@ internal object ImgurAlbum {
         val context = textView.context
         val slot = AlbumLayout(textView, url)
         slot.layoutParams =
-            LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-                .apply { topMargin = dp(context, 4) }
+            CommentImages.slotLayoutParams(textView, ViewGroup.LayoutParams.WRAP_CONTENT)
         layouts[slot] = slot
 
         val known = albums.get(url)
@@ -264,8 +259,12 @@ internal object ImgurAlbum {
             discardPage()
             page = view
             addView(view, 0)
-            // The album slot has the margin of an image slot already.
-            (view.layoutParams as? MarginLayoutParams)?.topMargin = 0
+            // The album slot has the margins of an image slot already.
+            (view.layoutParams as? MarginLayoutParams)?.apply {
+                topMargin = 0
+                leftMargin = 0
+                rightMargin = 0
+            }
         }
 
         fun discardPage() {

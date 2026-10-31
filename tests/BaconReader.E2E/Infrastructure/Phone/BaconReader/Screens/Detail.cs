@@ -40,6 +40,16 @@ public sealed class PostText(AndroidDriver driver)
             driver.FindElement(Text).Text.Trim(),
             Media.Images(PostImages(driver)).Count));
 
+    /// <summary>Where the post's text and its first image are on the screen, in pixels.</summary>
+    public Task<PostTextLayoutSnapshot> ReadLayoutAsync() =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var image = Media.Images(PostImages(driver)).FirstOrDefault();
+            return new PostTextLayoutSnapshot(Bounds(driver.FindElement(Text)), image is null ? null : Bounds(image));
+        });
+
+    private static Rectangle Bounds(IWebElement element) => new(element.Location, element.Size);
+
     // The images that aren't under a comment.
     private static IReadOnlyCollection<IWebElement> PostImages(AndroidDriver driver)
     {
@@ -52,6 +62,9 @@ public sealed class PostText(AndroidDriver driver)
 
 /// <summary>What a post's text shows: its text, and how many images under it.</summary>
 public sealed record PostTextSnapshot(string Text, int Images);
+
+/// <summary>Where a post's text and its first image (null without one) are on the screen, in pixels.</summary>
+public sealed record PostTextLayoutSnapshot(Rectangle Text, Rectangle? Image);
 
 /// <summary>
 /// The comments of the post shown, each named by its text (what it says before its media, which shows under it), and with "Embed comment images" the GIFs, images and videos

@@ -22,7 +22,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -127,11 +126,10 @@ internal object CommentVideo {
                 }
             }
         slot.layoutParams =
-            LinearLayout.LayoutParams(
-                    if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else boxSize,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-                .apply { topMargin = dp(context, 4) }
+            CommentImages.slotLayoutParams(
+                textView,
+                if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else boxSize,
+            )
         slot.tag = CommentVideo::class.java
 
         val box =

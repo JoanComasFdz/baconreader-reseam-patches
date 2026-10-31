@@ -439,12 +439,7 @@ internal object CommentImages {
         val lineBoxHeight = Math.max(textView.lineHeight * PLACEHOLDER_LINES, dp(context, 32))
 
         val slot = FrameLayout(context)
-        slot.layoutParams =
-            LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-                .apply { topMargin = dp(context, 4) }
+        slot.layoutParams = slotLayoutParams(textView, ViewGroup.LayoutParams.WRAP_CONTENT)
 
         // The image starts empty (0x0) and grows when Glide sets it.
         val imageView = ImageView(context)
@@ -1021,6 +1016,22 @@ internal object CommentImages {
             c == '\uFEFF'
 
     fun withAlpha(color: Int, alpha: Int): Int = (color and 0x00FFFFFF) or (alpha shl 24)
+
+    /**
+     * A slot under [textView], [width] wide, sits in the text's column. A comment's text is inset
+     * by its container's padding, which the slot shares; a post's text by its own margins (24 dp),
+     * which the slot copies, or it runs from the screen's edge to the other. A comment's image
+     * fills the comment's width, so it leaves out the right margin its text keeps (16 dp).
+     */
+    fun slotLayoutParams(textView: TextView, width: Int): LinearLayout.LayoutParams {
+        val text = textView.layoutParams as? ViewGroup.MarginLayoutParams
+        val comment = textView.id == resourceId(textView.context, "commentBody")
+        return LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = dp(textView.context, 4)
+            leftMargin = text?.leftMargin ?: 0
+            rightMargin = if (comment) 0 else text?.rightMargin ?: 0
+        }
+    }
 
     fun dp(context: Context, value: Int): Int =
         Math.round(
