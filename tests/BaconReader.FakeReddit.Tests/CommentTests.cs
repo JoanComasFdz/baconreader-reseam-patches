@@ -105,4 +105,85 @@ public sealed class CommentTests(FakeRedditFixture fixture) : FakeRedditTest(fix
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Without_a_limit_a_post_shows_200_comments_and_the_rest_behind_one_load_more()
+    {
+        var post = World.AddPost("e2e", "Long thread");
+        var comments = Enumerable.Range(1, 203).Select(n => World.AddComment(post, $"Comment {n}")).ToList();
+
+        var page = await GetJsonAsync($"/comments/{post.Id}/.json");
+
+        var children = page[1].GetProperty("data").GetProperty("children").EnumerateArray().ToList();
+        Assert.Equal(201, children.Count);
+        Assert.All(children[..200], child => Assert.Equal("t1", child.GetProperty("kind").GetString()));
+        var more = children[200];
+        Assert.Equal("more", more.GetProperty("kind").GetString());
+        var data = more.GetProperty("data");
+        Assert.Equal(3, data.GetProperty("count").GetInt32());
+        Assert.Equal(post.FullName, data.GetProperty("parent_id").GetString());
+        Assert.Equal(0, data.GetProperty("depth").GetInt32());
+        Assert.Equal(comments[200].Id, data.GetProperty("id").GetString());
+        Assert.Equal(comments[200].FullName, data.GetProperty("name").GetString());
+        Assert.Equal(comments[200..].Select(comment => comment.Id), data.GetProperty("children").EnumerateArray().Select(id => id.GetString()));
+    }
+
+    [Theory]
+    [InlineData(3, 3)]
+    [InlineData(600, 500)]
+    public async Task A_limit_shows_that_many_comments_a_level_at_a_time_up_to_500(int limit, int shown)
+    {
+        var post = World.AddPost("e2e", "Long thread");
+        var first = World.AddComment(post, "First");
+        for (var n = 0; n < 2; n++)
+        {
+            World.AddReply(first, $"Reply {n}");
+        }
+
+        for (var n = 0; n < 600; n++)
+        {
+            World.AddComment(post, $"Comment {n}");
+        }
+
+        var page = await GetJsonAsync($"/comments/{post.Id}/.json?limit={limit}");
+
+        var children = page[1].GetProperty("data").GetProperty("children").EnumerateArray().ToList();
+        Assert.Equal(shown, children.Count(child => child.GetProperty("kind").GetString() == "t1"));
+        Assert.Equal("more", children[^1].GetProperty("kind").GetString());
+        Assert.Equal(601 - shown, children[^1].GetProperty("data").GetProperty("count").GetInt32());
+        // The top-level comments come first: the replies of "First" are behind a "load more comments" of their own.
+        var replies = children[0].GetProperty("data").GetProperty("replies").GetProperty("data").GetProperty("children");
+        var more = Assert.Single(replies.EnumerateArray());
+        Assert.Equal("more", more.GetProperty("kind").GetString());
+        Assert.Equal(2, more.GetProperty("data").GetProperty("count").GetInt32());
+        Assert.Equal(first.FullName, more.GetProperty("data").GetProperty("parent_id").GetString());
+        Assert.Equal(1, more.GetProperty("data").GetProperty("depth").GetInt32());
+    }
+
+    [Fact]
+    public async Task Morechildren_answers_the_comments_asked_for_with_their_replies_flat()
+    {
+        var post = World.AddPost("e2e", "Thread");
+        var first = World.AddComment(post, "First");
+        var reply = World.AddReply(first, "Reply");
+        World.AddReply(reply, "Reply to the reply");
+        var second = World.AddComment(post, "Second");
+        World.AddComment(post, "Not asked for");
+        var token = await LogInAsync(World.AddAccount("e2e_user", "pw"));
+
+        var answer = await ReadJsonAsync(await SendAsync(HttpMethod.Post, "/api/morechildren", token, new Dictionary<string, string>
+        {
+            ["link_id"] = post.FullName,
+            ["api_type"] = "json",
+            ["sort"] = "confidence",
+            ["children"] = $"{first.Id},{second.Id}",
+        }));
+
+        var things = answer.GetProperty("json").GetProperty("data").GetProperty("things").EnumerateArray().ToList();
+        Assert.Equal(["First", "Reply", "Reply to the reply", "Second"], things.Select(thing => thing.GetProperty("data").GetProperty("body").GetString()));
+        Assert.All(things, thing => Assert.Equal("", thing.GetProperty("data").GetProperty("replies").GetString()));
+        Assert.Equal(first.FullName, things[1].GetProperty("data").GetProperty("parent_id").GetString());
+        Assert.Equal(2, things[2].GetProperty("data").GetProperty("depth").GetInt32());
+        Assert.Contains(World.Actions, action => action.Name == "morechildren");
+    }
 }

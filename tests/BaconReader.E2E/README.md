@@ -181,13 +181,20 @@ message: First subject | First message
 fail posts: broken | 500 Internal Server Error
 ```
 
+A text written on one line of the commands takes `\n` for a line break and `¦` for a `|`, which separates the
+arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n¦ Ann ¦ 12 ¦`.
+
 **Reddit data**, in the Gherkins' words (`Infrastructure/Reddit/`), from the file or sent later:
 
 | Command | Makes |
 |---|---|
 | `post: <subreddit> \| <title>` | a text post |
 | `post with text and image: <subreddit> \| <title> \| <text>` | a text post with an image under its text |
+| `post with text: <subreddit> \| <title> \| <text>` | a text post whose text is that Markdown |
 | `comment: <post title> \| <text>`, `comment with image`, `comment with gif`, `comment with image link`, `comment with video`, `comment with video link` | a comment on the post, and its media |
+| `comment by: <post title> \| <author> \| <text>` | a comment by that user |
+| `comments: <post title> \| <count>` | that many comments, "Comment 1" to "Comment &lt;count&gt;" |
+| `reply: <post title> \| <comment text> \| <text>` | a reply to that comment |
 | `subscribe: <subreddit>` | the test account's subscription |
 | `message: <subject> \| <body>` | an unread message in the test account's inbox |
 | `late comments: <post title> \| <seconds>` | the post's comments answered that late, as Reddit held them when asked |
@@ -204,6 +211,7 @@ fail posts: broken | 500 Internal Server Error
 | `tap id: <id>` | taps the view with that resource id: BaconReader's by its name (`toolbarTitle`), another app's in full (`android:id/button1`) |
 | `tap description: <description>` | taps the view with that content description (`More options`) |
 | `tap at: <x>, <y>` | taps that point of the screen, in pixels |
+| `type: <text>` | types into the field that has the focus |
 | `back` | Android's Back |
 | `wait: <seconds>` | waits, for a late answer or an animation |
 | `source` | saves the page source, the UI tree UiAutomator sees, as `build/e2e/explore/source-<n>.xml` |

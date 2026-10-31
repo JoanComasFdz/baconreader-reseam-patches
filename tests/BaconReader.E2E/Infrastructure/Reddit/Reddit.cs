@@ -24,6 +24,13 @@ public sealed partial class Reddit(RedditWorld world)
     public void HasAPostWithTheTextAndAnImage(string title, string subreddit, string text) =>
         world.AddPost(subreddit, title, post => post.WithTextAndImage(text));
 
+    /// <summary>
+    /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;"": a text post whose text is
+    /// the Markdown <paramref name="markdown"/>.
+    /// </summary>
+    public void HasAPostWithTheText(string title, string subreddit, string markdown) =>
+        world.AddPost(subreddit, title, post => post.WithText(markdown));
+
     /// <summary>"the post "&lt;title&gt;" …": a post this scenario's Given made.</summary>
     public RedditPost ThePost(string title) => new(world, PostTitled(title));
 
@@ -131,6 +138,26 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// <summary>"… has a comment "&lt;text&gt;"": a comment that says only <paramref name="text"/>.</summary>
     public void HasAComment(string text) => world.AddComment(post, text);
 
+    /// <summary>"… has a comment "&lt;text&gt;" by u/&lt;author&gt;".</summary>
+    public void HasACommentBy(string text, string author) => world.AddComment(post, text, comment => comment.By(author));
+
+    /// <summary>"… has &lt;count&gt; comments, "Comment 1" to "Comment &lt;count&gt;"": that many comments, oldest first.</summary>
+    public void HasComments(int count)
+    {
+        for (var number = 1; number <= count; number++)
+        {
+            world.AddComment(post, $"Comment {number}");
+        }
+    }
+
+    /// <summary>"… the comment "&lt;text&gt;" …": a comment of this post a Given line made.</summary>
+    public RedditComment TheComment(string text) =>
+        new(world, Flatten(post.Comments).SingleOrDefault(comment => comment.Body == text)
+            ?? throw new InvalidOperationException($"The post \"{post.Title}\" has no comment \"{text}\": a Given line makes it first."));
+
+    private static IEnumerable<Comment> Flatten(IEnumerable<Comment> comments) =>
+        comments.SelectMany(comment => Flatten(comment.Replies).Prepend(comment));
+
     /// <summary>"… has a comment "&lt;text&gt;" with an image": <paramref name="text"/>, then an image uploaded in it.</summary>
     public void HasACommentWithAnImage(string text) => world.AddComment(post, text, comment => comment.WithImage());
 
@@ -148,6 +175,13 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// seconds long.
     /// </summary>
     public void HasACommentWithALinkToAVideo(string text) => world.AddComment(post, text, comment => comment.LinkingToAVideo());
+}
+
+/// <summary>A comment of the scenario's Reddit, which a Given line adds replies to.</summary>
+public sealed class RedditComment(RedditWorld world, Comment comment)
+{
+    /// <summary>"… has a reply "&lt;text&gt;"".</summary>
+    public void HasAReply(string text) => world.AddReply(comment, text);
 }
 
 /// <summary>An image uploaded to Reddit, as Reddit serves it: the file name its URL ends with, and its size in bytes.</summary>
