@@ -79,9 +79,17 @@ internal static class Answers
 {
     public static IResult Json<T>(T value) => Results.Text(RedditJson.Serialize(value), "application/json; charset=UTF-8");
 
-    /// <summary>Reddit's error answer: <c>{"message": "Not Found", "error": 404}</c>.</summary>
-    public static IResult Error(int status, string message) =>
-        Results.Text(RedditJson.Serialize(new { message, error = status }), "application/json; charset=UTF-8", statusCode: status);
+    /// <summary>
+    /// Reddit's error answer: <c>{"message": "Not Found", "error": 404}</c>, and with <paramref name="explanation"/>,
+    /// <c>{"explanation": …, "message": …, "error": …}</c>, as Reddit explains a refused request.
+    /// </summary>
+    public static IResult Error(int status, string message, string? explanation = null) =>
+        Results.Text(
+            explanation is null
+                ? RedditJson.Serialize(new { message, error = status })
+                : RedditJson.Serialize(new { explanation, message, error = status }),
+            "application/json; charset=UTF-8",
+            statusCode: status);
 
     /// <summary>
     /// What Reddit answers a logged-out BaconReader, even with "Spoof client": <c>HTTP 403 Blocked</c> (BaconReader then

@@ -27,6 +27,26 @@ public static class PostListSnapshotAssertions
         return that;
     }
 
+    /// <summary>The list shows, instead of posts, the error "<paramref name="error"/>".</summary>
+    public static AssertingThat<PostListSnapshot> ShowsTheError(this AssertingThat<PostListSnapshot> that, string error)
+    {
+        var shown = that.InstanceToAssert.Message;
+        Assert.True(
+            shown == error,
+            shown is null ? $"The feed shows no error, but \"{error}\" was expected." : $"The feed shows the error \"{shown}\", but \"{error}\" was expected.");
+        return that;
+    }
+
+    /// <summary>The post shows <paramref name="points"/> points.</summary>
+    public static AssertingThat<PostSnapshot> ShowsPoints(this AssertingThat<PostSnapshot> that, int points)
+    {
+        var post = that.InstanceToAssert;
+        Assert.True(
+            post.Points == points.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            $"The post \"{post.Title}\" shows {post.Points} points, but {points} was expected.");
+        return that;
+    }
+
     private static string Listed(IEnumerable<string> titles) =>
         titles.Any() ? string.Join(", ", titles.Select(title => $"\"{title}\"")) : "no post";
 }

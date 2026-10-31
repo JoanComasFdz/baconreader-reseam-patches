@@ -46,6 +46,12 @@ world.LoginPage.ShowCookieBanner = true;
     one rendition, `DASH_240.mp4`, next to it;
   - a link to an image or a video is a bare link to a file at `<baseUrl>/_media/example.com/<id>e2elink.jpg` (or
     `.mp4`).
+- `AddMessage(account, subject, body)` sends the account an unread private message: the newest of its inbox.
+- `AddTrouble(new RequestTrouble(matches, delay, status, explanation, drops))` makes the requests it matches
+  (`RedditWorld.CommentsOf(post)`, `RedditWorld.PostsOf(subreddit)`) misbehave until the world is reset: after `delay`,
+  they fail with `status` (Reddit's error JSON, with its `explanation` when set), or lose their connection (`drops`), or
+  get the answer the world gave when they came, late: a vote made meanwhile isn't in it. BaconReader's Reddit requests
+  have no timeout, so a delay alone never fails one.
 - `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a JPEG, a
   PNG, an MP4 with an audio track (two seconds, and `LongMp4`, ten), and a ten-second video as a DASH playlist and its
   rendition.
@@ -65,9 +71,10 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /r/{sub}/about`, `/r/{sub}/stylesheet` | `t5`; an empty stylesheet |
 | `GET /reddits/mine`, `/subreddits/mine/{where}`, `/reddits/popular`, `/reddits/default` (and `/subreddits/…`) | `t5` listings |
 | `GET /_onelouder/explore-api/def_subs` | the default subreddits, as BaconReader's own server sent them: `app.top_level_categories[0].subreddits[]` with `name` and `display_name` |
-| `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine`, `/message/{where}` | the account (never on today's day of the year, so no "Happy Cake Day!"), its prefs, empty lists |
+| `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine` | the account (never on today's day of the year, so no "Happy Cake Day!"), with `has_mail` and `inbox_count` from its unread messages; its prefs, empty lists |
+| `GET /message/{where}` | the account's private messages (t4), newest first: all of them for `inbox` and `messages`, the unread ones for `unread`, none for the other tabs |
 | `GET /user/{name}/about` | `t2`, for the world's accounts |
-| `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, and others BaconReader sends | what Reddit answers (`{}`, or the comment), applied to the world and recorded in `Actions`, logged out too |
+| `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, `read_message`, `read_all_messages`, and others BaconReader sends | what Reddit answers (`{}`, or the comment), applied to the world and recorded in `Actions`, logged out too |
 | `GET /api/v1/authorize.compact` (and `/api/v1/authorize`, `/login.compact`, `/login`) | Reddit's login page: "Log In", the fields in elements with Reddit's ids, `login-username` and `login-password`, a "Log In" button; first the cookie banner when the world asks for it |
 | `POST` of the login page | with a known account and its password, "Hey, &lt;user&gt;! &lt;app&gt; would like to connect with your reddit account", the permissions asked, and "Accept"; otherwise the login page with "Incorrect username or password". The app is named by its client ID: RedReader's is "RedReader (Release)" |
 | `GET /favicon.ico` | 204: the web view asks for the login page's icon |

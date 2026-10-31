@@ -25,9 +25,55 @@ public sealed partial class Reddit(RedditWorld world)
         world.AddPost(subreddit, title, post => post.WithTextAndImage(text));
 
     /// <summary>"the post "&lt;title&gt;" …": a post this scenario's Given made.</summary>
-    public RedditPost ThePost(string title) =>
-        new(world, world.Posts.SingleOrDefault(post => post.Title == title)
-            ?? throw new InvalidOperationException($"The scenario's Reddit has no post \"{title}\": a Given line makes it first."));
+    public RedditPost ThePost(string title) => new(world, PostTitled(title));
+
+    /// <summary>
+    /// "the test account has an unread message "&lt;subject&gt;" saying "&lt;body&gt;"": a private message, the newest
+    /// of its inbox.
+    /// </summary>
+    public void TheTestAccountHasAnUnreadMessage(string subject, string body) =>
+        world.AddMessage(TestAccountOf(world), subject, body);
+
+    /// <summary>
+    /// "Reddit answers the comments of the post "&lt;title&gt;" &lt;seconds&gt; seconds late": with the post as it was
+    /// when the app asked, so a vote made meanwhile isn't in it.
+    /// </summary>
+    public void AnswersTheCommentsOfThePostLate(string title, int seconds) =>
+        world.AddTrouble(new RequestTrouble(RedditWorld.CommentsOf(PostTitled(title)), TimeSpan.FromSeconds(seconds)));
+
+    /// <summary>
+    /// "Reddit answers the posts of r/&lt;subreddit&gt; with "&lt;status&gt;"" (<c>"500 Internal Server Error"</c>): an
+    /// error, with Reddit's error JSON.
+    /// </summary>
+    public void AnswersThePostsWith(string subreddit, string status) =>
+        world.AddTrouble(new RequestTrouble(RedditWorld.PostsOf(subreddit), TimeSpan.Zero, StatusCode(status)));
+
+    /// <summary>
+    /// "Reddit refuses the posts of r/&lt;subreddit&gt; with "&lt;status&gt;", explaining "&lt;explanation&gt;"": an
+    /// error whose JSON explains it, as Reddit explains a refused request.
+    /// </summary>
+    public void RefusesThePostsWith(string subreddit, string status, string explanation) =>
+        world.AddTrouble(new RequestTrouble(RedditWorld.PostsOf(subreddit), TimeSpan.Zero, StatusCode(status), explanation));
+
+    /// <summary>"Reddit drops the connection when asked for the posts of r/&lt;subreddit&gt;": no answer at all.</summary>
+    public void DropsTheConnectionForThePosts(string subreddit) =>
+        world.AddTrouble(new RequestTrouble(RedditWorld.PostsOf(subreddit), TimeSpan.Zero, Drops: true));
+
+    /// <summary>The votes Reddit got, oldest first: on which post, by its title, and which way.</summary>
+    public RedditVotesSnapshot ReadVotes() =>
+        new([.. world.Actions.Where(action => action.Name == "vote").Select(action => new RedditVote(
+            world.Posts.FirstOrDefault(post => post.FullName == action.Form.GetValueOrDefault("id"))?.Title ?? action.Form.GetValueOrDefault("id") ?? "",
+            int.TryParse(action.Form.GetValueOrDefault("dir"), out var direction) ? direction : 0))]);
+
+    /// <summary>The messages Reddit got marked as read (<c>api/read_message</c>), oldest first, by their subjects.</summary>
+    public RedditReadMessagesSnapshot ReadMessagesMarkedAsRead()
+    {
+        var messages = TestAccountOf(world).Inbox;
+        return new([.. world.Actions
+            .Where(action => action.Name == "read_message")
+            .SelectMany(action => (action.Form.GetValueOrDefault("id") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+            .Select(id => messages.FirstOrDefault(message => message.FullName == id)?.Subject ?? id)]);
+    }
 
     /// <summary>"the test account is subscribed to r/&lt;subreddit&gt;".</summary>
     public void TheTestAccountIsSubscribedTo(string subreddit) =>
@@ -59,6 +105,20 @@ public sealed partial class Reddit(RedditWorld world)
         new([.. world.Requests.Where(request => request is { Method: "GET", Account: not null } && IsFeed(request.Path))]);
 
     private static bool IsFeed(string path) => FeedPath().IsMatch(path);
+
+    private static Account TestAccountOf(RedditWorld world) => world.Accounts.Single(account => account.Name == TestAccount.UserName);
+
+    private Post PostTitled(string title) =>
+        world.Posts.SingleOrDefault(post => post.Title == title)
+            ?? throw new InvalidOperationException($"The scenario's Reddit has no post \"{title}\": a Given line makes it first.");
+
+    // "500 Internal Server Error": the status, checked against its reason phrase, so the Gherkin's text is what the app gets.
+    private static int StatusCode(string status)
+    {
+        var code = int.Parse(status.Split(' ', 2)[0], System.Globalization.CultureInfo.InvariantCulture);
+        var expected = $"{code} {Microsoft.AspNetCore.WebUtilities.ReasonPhrases.GetReasonPhrase(code)}";
+        return status == expected ? code : throw new ArgumentException($"\"{status}\" isn't a status Reddit answers: \"{expected}\" is.", nameof(status));
+    }
 
     // "/", "/.json", "/hot.json", "/r/e2e/new/": a feed, as the app asks for it.
     [GeneratedRegex("^/(r/[^/]+/?)?(best|hot|new|top|rising|controversial)?(\\.json)?/?$")]
@@ -95,6 +155,15 @@ public sealed record RedditImageSnapshot(string FileName, long Size);
 
 /// <summary>What Reddit's login saw of the app, step by step (the login page, logging in, Accept, the token).</summary>
 public sealed record RedditLoginSnapshot(ImmutableArray<LoginSeen> Steps);
+
+/// <summary>A vote Reddit got: on the post titled <paramref name="Post"/>, 1 up, -1 down, 0 taken back.</summary>
+public sealed record RedditVote(string Post, int Direction);
+
+/// <summary>The votes Reddit got, oldest first.</summary>
+public sealed record RedditVotesSnapshot(ImmutableArray<RedditVote> Votes);
+
+/// <summary>The messages Reddit got marked as read, oldest first, by their subjects.</summary>
+public sealed record RedditReadMessagesSnapshot(ImmutableArray<string> Subjects);
 
 /// <summary>The requests Reddit got for posts while logged in, oldest first.</summary>
 public sealed record RedditPostsRequestsSnapshot(ImmutableArray<RecordedRequest> Requests);

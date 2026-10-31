@@ -20,7 +20,7 @@ internal static class Actions
     // Reddit's actions BaconReader sends that change nothing the fake shows: recorded, answered {}.
     private static readonly string[] Recorded =
     [
-        "report", "read_message", "unread_message", "read_all_messages", "store_visits", "sendreplies", "marknsfw",
+        "report", "unread_message", "store_visits", "sendreplies", "marknsfw",
         "unmarknsfw", "lock", "unlock", "approve", "remove", "distinguish", "set_subreddit_sticky", "ignore_reports",
         "unignore_reports", "block", "block_user", "unfriend", "selectflair",
     ];
@@ -37,6 +37,8 @@ internal static class Actions
         Act(app, world, "comment", (account, form) => Comment(world, things, account, form));
         Act(app, world, "editusertext", (account, form) => Edit(world, things, account, form));
         Act(app, world, "del", (account, form) => Delete(world, form));
+        Act(app, world, "read_message", (_, form) => Read(world, form));
+        Act(app, world, "read_all_messages", (account, _) => ReadAll(account));
         Act(app, world, "morechildren", (_, _) => Answers.Json(new { json = new { errors = Array.Empty<object>(), data = new { things = Array.Empty<Thing>() } } }));
         foreach (var name in Recorded)
         {
@@ -115,6 +117,30 @@ internal static class Actions
                     post.HiddenBy.Remove(account.Name);
                 }
             }
+        }
+
+        return Answers.Json(new { });
+    }
+
+    // id: the messages' fullnames, comma-separated.
+    private static IResult Read(RedditWorld world, ImmutableDictionary<string, string> form)
+    {
+        foreach (var id in (form.GetValueOrDefault("id") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (id.StartsWith("t4_", StringComparison.OrdinalIgnoreCase) && world.FindMessage(id[3..]) is { } message)
+            {
+                message.IsNew = false;
+            }
+        }
+
+        return Answers.Json(new { });
+    }
+
+    private static IResult ReadAll(Account account)
+    {
+        foreach (var message in account.Inbox)
+        {
+            message.IsNew = false;
         }
 
         return Answers.Json(new { });

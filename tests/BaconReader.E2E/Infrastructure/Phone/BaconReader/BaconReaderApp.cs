@@ -36,6 +36,12 @@ public sealed class BaconReaderApp(
     /// <summary>The screen a post opens on (DetailActivity): the post and its comments.</summary>
     public Detail Detail { get; } = new(driver);
 
+    /// <summary>The inbox, which the left menu's "Inbox" opens.</summary>
+    public Inbox Inbox { get; } = new(driver);
+
+    /// <summary>The menu a message of the inbox opens when tapped.</summary>
+    public MessageMenu MessageMenu { get; } = new(driver);
+
     /// <summary>The full-screen viewer a double tap on an image opens ("Embed comment images").</summary>
     public ImageViewer ImageViewer { get; } = new(driver);
 

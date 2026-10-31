@@ -157,8 +157,9 @@ public sealed class SpoofClientTests : BaseE2E
 - **the patches:** it patches the clean APK with the bundle `./gradlew bundle` built, and installs it with its runtime
   permissions granted (`Device/PatchedApps`):
   - a Startup scenario's app with its `[PatchedWith]` patches, the fewest it needs, and the ones every scenario gets,
-    which a Given never names (`PatchedApps.Always`: "E2E fake Reddit"): `reseam patch --preset none --enable …`;
-  - a LoggedIn scenario's app with every patch of both bundles, "E2E fake Reddit" among them: `reseam patch --preset all`.
+    which a Given never names (`PatchedApps.Always`: "E2E fake Reddit", "E2E inbox envelope label"): `reseam patch
+    --preset none --enable …`;
+  - a LoggedIn scenario's app with every patch of both bundles, the test-only ones among them: `reseam patch --preset all`.
 
   An APK is patched once per set of patches and bundle, signed with one test key, and sent to the phone only when it
   isn't the one installed (sending one takes 1–3 minutes over the slow link): the LoggedIn scenarios share one;

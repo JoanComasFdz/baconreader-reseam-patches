@@ -10,7 +10,7 @@ namespace BaconReader.FakeReddit.Endpoints;
 
 /// <summary>
 /// The logged-in account: who it is, its prefs, its subscriptions, its friends and blocked users, its multireddits and
-/// its inbox (the fake's inboxes are empty), and other users' about.
+/// its inbox, and other users' about.
 /// </summary>
 internal static class Accounts
 {
@@ -25,7 +25,8 @@ internal static class Accounts
         app.MapGet("/api/v1/me/friends", (HttpContext context) => Mine(context, world, _ => Answers.Json(UserList())));
         app.MapGet("/prefs/blocked", (HttpContext context) => Mine(context, world, _ => Answers.Json(UserList())));
         app.MapGet("/api/multi/mine", (HttpContext context) => Mine(context, world, _ => Answers.Json(Array.Empty<object>())));
-        app.MapGet("/message/{where}", (HttpContext context) => Mine(context, world, _ => Answers.Json(ListingData.Listing([]))));
+        app.MapGet("/message/{where}", (HttpContext context, string where) => Mine(context, world, account =>
+            Answers.Json(Listings.Page(Inbox(account, where), context.Request.Query, message => message.FullName, things.Message))));
 
         app.MapGet("/reddits/mine", (HttpContext context) => Subscriptions(context, world, things));
         app.MapGet("/subreddits/mine/{where}", (HttpContext context) => Subscriptions(context, world, things));
@@ -59,6 +60,16 @@ internal static class Accounts
             var subscribed = account.Subscriptions.Select(name => world.FindSubreddit(name)).OfType<Subreddit>().ToList();
             return Answers.Json(Listings.Page(subscribed, context.Request.Query, subreddit => subreddit.FullName, subreddit => things.Subreddit(subreddit, account)));
         });
+
+    // The messages of an inbox tab: inbox and messages hold every private message, unread the unread ones; the fake
+    // sends none of the others (sent, comments, selfreply, mentions, moderator).
+    private static List<Message> Inbox(Account account, string where) =>
+        where.ToLowerInvariant() switch
+        {
+            "inbox" or "messages" => [.. account.Inbox],
+            "unread" => [.. account.Inbox.Where(message => message.IsNew)],
+            _ => [],
+        };
 
     private static object UserList() => new { kind = "UserList", data = new { children = Array.Empty<object>() } };
 }

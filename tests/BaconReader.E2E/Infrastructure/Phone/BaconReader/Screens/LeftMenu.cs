@@ -14,7 +14,10 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 /// </summary>
 public sealed class LeftMenu(AndroidDriver driver)
 {
-    private static readonly OpenQA.Selenium.By MenuButton = Locate.Description("Navigate up");
+    // "Navigate up", and while it shows the orange envelope of unread messages, "Navigate up, orange envelope" (from
+    // the test-only "E2E inbox envelope label").
+    private static readonly OpenQA.Selenium.By MenuButton = Locate.DescriptionStartingWith("Navigate up");
+    private const string EnvelopeLabel = ", orange envelope";
     private static readonly OpenQA.Selenium.By Menu = Locate.AppId("drawerView");
     private static readonly OpenQA.Selenium.By Entry = Locate.AppId("text");
 
@@ -51,11 +54,23 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// <summary>Closes the menu, as Android's Back does.</summary>
     public Task CloseAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
 
+    /// <summary>
+    /// What the button that opens the menu shows: the orange envelope while there are unread messages, otherwise the menu
+    /// icon. UiAutomator can't tell the two images apart; the test-only "E2E inbox envelope label" names the envelope in
+    /// the button's description.
+    /// </summary>
+    public Task<LeftMenuButtonSnapshot> ReadButtonAsync() =>
+        OnScreen.ReadAsync(driver, () => new LeftMenuButtonSnapshot(
+            driver.FindElement(MenuButton).GetAttribute("content-desc")?.EndsWith(EnvelopeLabel, StringComparison.Ordinal) == true));
+
     /// <summary>What the menu shows: its entries, top to bottom.</summary>
     public Task<LeftMenuSnapshot> ReadAsync() =>
         OnScreen.ReadAsync(driver, () => new LeftMenuSnapshot(
             [.. driver.FindElement(Menu).FindElements(Entry).Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
 }
+
+/// <summary>What the toolbar's button that opens the left menu shows: the orange envelope of unread messages, or the menu icon.</summary>
+public sealed record LeftMenuButtonSnapshot(bool ShowsTheOrangeEnvelope);
 
 /// <summary>What the left menu shows: its entries, top to bottom.</summary>
 public sealed record LeftMenuSnapshot(ImmutableArray<MenuEntry> Entries);

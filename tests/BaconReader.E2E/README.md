@@ -46,8 +46,8 @@ For each scenario, `BaseE2E`:
 1. starts the fake Reddit, on the run's first scenario, and empties it, with the test account made again ("The fake
    Reddit" below);
 2. patches the clean APK with both bundles, the released one and the test-only one, once per set of patches and
-   bundles (`build/e2e/patched/`): a Startup scenario's app with its `[PatchedWith]` patches and "E2E fake Reddit", which
-   every scenario gets (`reseam patch --preset none --enable …`), a LoggedIn scenario's with every patch of both
+   bundles (`build/e2e/patched/`): a Startup scenario's app with its `[PatchedWith]` patches and the test-only patches,
+   which every scenario gets (`reseam patch --preset none --enable …`), a LoggedIn scenario's with every patch of both
    bundles (`[PatchedWithEveryPatch]`, `reseam patch --preset all`), one APK for all of them ("Where tests go");
 3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
@@ -106,6 +106,10 @@ the test process.
   (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
 - **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches. A Given and `[PatchedWith]`
   never name it, only the patches under test (`ScenarioShapeTests` checks it).
+- **The bundle's other patch.** "E2E inbox envelope label", which every scenario gets too: with unread messages, the
+  main screen's left-menu button shows an orange envelope instead of the menu icon, two images UiAutomator can't tell
+  apart, both "Navigate up". While the envelope shows, the patch makes the button's description "Navigate up, orange
+  envelope" (`LeftMenu.ReadButtonAsync`).
 - **The phone reaches it** through `adb reverse tcp:5080 tcp:5080` (the port of `E2E_FAKE_REDDIT_URL`), which BaseE2E
   adds afresh before each scenario: one still listed can forward nothing after adb reconnects. BaconReader's network security config already allows
   cleartext HTTP, to 127.0.0.1 too.

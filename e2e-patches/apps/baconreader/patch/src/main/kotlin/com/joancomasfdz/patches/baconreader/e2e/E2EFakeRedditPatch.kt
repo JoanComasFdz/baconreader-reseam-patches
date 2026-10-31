@@ -9,8 +9,8 @@ import app.reseam.patch.patch
 import app.reseam.patch.types.EncodedVal
 
 // The main bundle's core/BaconReader.kt: this bundle is built apart from it.
-private val BACONREADER: CompatiblePackage = "com.onelouder.baconreader"("6.1.4")
-private val BACONREADER_PREMIUM: CompatiblePackage = "com.onelouder.baconreader.premium"("6.1.4")
+internal val BACONREADER: CompatiblePackage = "com.onelouder.baconreader"("6.1.4")
+internal val BACONREADER_PREMIUM: CompatiblePackage = "com.onelouder.baconreader.premium"("6.1.4")
 
 private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 
