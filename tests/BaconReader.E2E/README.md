@@ -76,6 +76,10 @@ the emulator needed, only `Waiting`'s read again of a view gone stale fired (onc
 each wait's time to the scenario's output in the .trx (`out/.results/`), and each retry that fires to its console too
 (`RunLog`), so the next measurement needs no code.
 
+Measured on 2026-10-31 on the Pixel 6 Pro, in the Reseam repo, one unrecorded run of the seven phone scenarios before
+and after the Startup and LoggedIn groups ("Where tests go"): 14 m 53 s with 4 APKs sent to the phone, then 12 m 07 s
+with 2 (~1 minute each). A run writes each install to its console (`RunLog`, "installed: …").
+
 ## The fake Reddit
 
 The scenarios never talk to Reddit (automation detection, throttled logins, content that changes): each makes exactly
