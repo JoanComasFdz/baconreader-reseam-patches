@@ -21,35 +21,42 @@ public sealed class Downloads(AndroidDriver driver)
     /// Waits until Downloads/BaconReader holds an image, saved whole: Android's download manager makes the file empty
     /// first, then writes it, so the wait ends once the file has bytes and the same size twice in a row.
     /// </summary>
-    public Task WaitUntilImageSavedAsync()
+    public Task WaitUntilImageSavedAsync() => WaitUntilNewImageSavedAsync(new HashSet<string>());
+
+    /// <summary>
+    /// Waits as long as an image takes to be saved (10 s), for one that should never come: it ends sooner when one does,
+    /// for the check to say so. An image saved before the wait, by an earlier round, doesn't end it.
+    /// </summary>
+    public async Task WaitUntilNoImageSavedAsync()
+    {
+        var before = ReadFiles().Select(file => file.Name).ToHashSet();
+        try
+        {
+            await WaitUntilNewImageSavedAsync(before);
+        }
+        catch (TimeoutException)
+        {
+            // Nothing saved, as expected.
+        }
+    }
+
+    // Until a file not named in before is there, and every file has bytes and the same size twice in a row.
+    private Task WaitUntilNewImageSavedAsync(IReadOnlySet<string> before)
     {
         ImmutableArray<SavedFile>? last = null;
         return Waiting.UntilAsync(
             () =>
             {
                 var now = ReadFiles();
-                var saved = now.Length > 0 && now.All(file => file.Size > 0) && last is { } before && before.SequenceEqual(now);
+                var saved = now.Any(file => !before.Contains(file.Name))
+                    && now.All(file => file.Size > 0)
+                    && last is { } previous
+                    && previous.SequenceEqual(now);
                 last = now;
                 return saved;
             },
             TimeSpan.FromSeconds(10),
             "An image saved to Downloads/BaconReader");
-    }
-
-    /// <summary>
-    /// Waits as long as an image takes to be saved (10 s), for one that should never come: it ends sooner when one does,
-    /// for the check to say so.
-    /// </summary>
-    public async Task WaitUntilNoImageSavedAsync()
-    {
-        try
-        {
-            await WaitUntilImageSavedAsync();
-        }
-        catch (TimeoutException)
-        {
-            // Nothing saved, as expected.
-        }
     }
 
     /// <summary>What Downloads/BaconReader holds: each file's name and size.</summary>

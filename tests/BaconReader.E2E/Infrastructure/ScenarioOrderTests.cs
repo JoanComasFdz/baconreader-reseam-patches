@@ -54,11 +54,10 @@ public sealed class ScenarioOrderTests
     {
         var methods = new[]
         {
-            Method<EmbedCommentImagesTests>(nameof(EmbedCommentImagesTests.EmbedCommentImagesShowsAnImageInAPostsText)),
+            Method<EmbedCommentImagesTests>(nameof(EmbedCommentImagesTests.EmbedCommentImagesShowsTheMediaOfCommentsAndPostTextsAndFollowsItsSettings)),
             Method<SpoofClientTests>(nameof(SpoofClientTests.BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader)),
             Method<E2EFakeRedditTests>(nameof(E2EFakeRedditTests.BaconReaderLoggedInShowsThePostsRedditHasInAll)),
             Method<ScenarioOrderTests>(nameof(Group_IsTheFirstFolderUnderScenarios)),
-            Method<EmbedCommentImagesTests>(nameof(EmbedCommentImagesTests.EmbedCommentImagesPlaysTheVideosOfCommentsInPlace)),
         };
 
         var ordered = methods.OrderBy(ScenarioOrder.KeyOf, ScenarioOrder.KeyComparer).Select(method => method.Name);
@@ -67,8 +66,7 @@ public sealed class ScenarioOrderTests
             [
                 nameof(Group_IsTheFirstFolderUnderScenarios),
                 nameof(SpoofClientTests.BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader),
-                nameof(EmbedCommentImagesTests.EmbedCommentImagesPlaysTheVideosOfCommentsInPlace),
-                nameof(EmbedCommentImagesTests.EmbedCommentImagesShowsAnImageInAPostsText),
+                nameof(EmbedCommentImagesTests.EmbedCommentImagesShowsTheMediaOfCommentsAndPostTextsAndFollowsItsSettings),
                 nameof(E2EFakeRedditTests.BaconReaderLoggedInShowsThePostsRedditHasInAll),
             ],
             ordered);
