@@ -53,7 +53,10 @@ For each scenario, `BaseE2E`:
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 4. points the phone at the fake Reddit (`adb reverse`);
 5. clears the app's data, so the scenario starts from a fresh install, and denies its notifications, so Android doesn't
-   ask ("Allow BaconReader Premium to send you notifications?" shows at a different moment on each device); and empties Downloads/BaconReader, where a long press saves an image ("Embed comment images");
+   ask ("Allow BaconReader Premium to send you notifications?" shows at a different moment on each device); unselects
+   every link on Android's "Open by default" screen, which clearing the data keeps ("Prompt to open Reddit links" asks
+   only while no Reddit link is selected); and empties Downloads/BaconReader, where a long press saves an image ("Embed
+   comment images");
 6. starts recording the screen, when the run records;
 7. after the scenario, fails it if the app made a request the fake Reddit doesn't answer.
 
@@ -154,12 +157,19 @@ with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](
 
 Inside a group, folders follow the patches' areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`,
 `posts`, and `e2e` for the test-only patches): folder = area, class = one patch (`<Patch>Tests.cs`) in a folder of its
-own, method = one scenario (one Gherkin). A recording's folder is its namespace under `Scenarios`: `Startup/Account`.
+own, method = one scenario (one Gherkin), one per patch: its cases are rounds of it, with no storage cleared or app
+restarted between them unless the patch is about the next start (docs/given-when-then-test-rules.md, section 3). A
+recording's folder is its namespace under `Scenarios`: `Startup/Account`.
 
 ```
 Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs
 Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs
 ```
+
+## Patches without scenarios
+
+- **"Disable feedback popup".** BaconReader's own time tracking shows "Please take a few moments to provide feedback"
+  only after about an hour of use, and regular use of the patched app on the owner's phone already covers it.
 
 ## Logging in
 

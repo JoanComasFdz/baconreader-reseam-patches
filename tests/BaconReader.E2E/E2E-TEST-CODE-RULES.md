@@ -117,7 +117,8 @@ public sealed class SpoofClientTests : BaseE2E
 ## a. Test shape
 
 - A class is `public sealed class <Topic>Tests : BaseE2E`, in a folder of its own under its domain folder (rule g).
-- **One Gherkin is one scenario:** one method, a `[Theory]` with:
+- **One Gherkin is one scenario, and one per patch** (docs/given-when-then-test-rules.md, section 3): one method, a
+  `[Theory]` with:
   - `[PlayOnPhone]`: plays it once, on the phone. It matches the Gherkin's `@phone` tag;
   - what its app is patched with (rule b), by its group (rule g):
     - a Startup scenario: `[PatchedWith(...)]`, the patches its Given quotes, exactly those, and none of the ones BaseE2E
@@ -178,7 +179,7 @@ A scenario never repeats any of that.
 ## c. Phone
 
 `Infrastructure/Phone/` models the phone as the user holds it: Android, and the apps on it.
-- **`Phone`**: Android's own screens, one class each (`Phone.Launcher`; later a permission dialog, "Open by default").
+- **`Phone`**: Android's own screens, one class each (`Phone.Launcher`, `Phone.AppInfo`, `Phone.OpenByDefault`).
 - **`Phone.BaconReader`** (`Phone/BaconReader/BaconReaderApp.cs`): the app. One class per screen (an activity:
   `MainActivity` → `Phone.BaconReader.Main`) in `Screens/` and per dialog in `Dialogs/`, named and nested as the app
   does: `Phone.BaconReader.Main.Toolbar`. A part the user sees as its own (a toolbar, a post's row) gets its own class.
