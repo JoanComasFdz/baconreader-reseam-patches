@@ -157,7 +157,9 @@ with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](
 
 Inside a group, folders follow the patches' areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`,
 `posts`, and `e2e` for the test-only patches): folder = area, class = one patch (`<Patch>Tests.cs`) in a folder of its
-own, method = one scenario (one Gherkin). A recording's folder is its namespace under `Scenarios`: `Startup/Account`.
+own, method = one scenario (one Gherkin), one per patch: its cases are rounds of it, with no storage cleared or app
+restarted between them unless the patch is about the next start (docs/given-when-then-test-rules.md, section 3). A
+recording's folder is its namespace under `Scenarios`: `Startup/Account`.
 
 ```
 Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs

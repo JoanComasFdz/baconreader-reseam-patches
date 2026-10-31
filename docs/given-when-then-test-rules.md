@@ -76,8 +76,10 @@ Scenario: <what it proves, as a statement>
      posts. A LoggedIn scenario's Given ends with "is open" and this line.
 
    The test-only patches every scenario's app gets (its README, "The fake Reddit") are never named.
-4. **One Gherkin per Given.** Checks that start from the same patches and the same state are one Gherkin: each becomes
-   a round of it. Split only where the Given differs.
+4. **One Gherkin per patch.** Everything a patch does is one Gherkin, and one test: each case is a round of it, in
+   one app, opened once. A round never clears the app's storage, stops it or installs it again to start afresh: it goes
+   back to where it started instead ([patch scenarios](given-when-then-patch-scenarios.md), "Order"). Only a case about
+   the next start (a prompt that asks once) stops the app and opens it again, its data kept.
 5. **Rounds of When and Then.** A Gherkin is a sequence of rounds. Each round:
    - **When** is the actions that lead to one thing to look at: the first line `When`, the next ones `And`;
    - **Then** is what to look at, right after those actions: the first line `Then`, the next ones `And`.

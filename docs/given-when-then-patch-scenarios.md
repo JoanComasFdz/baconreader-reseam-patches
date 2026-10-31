@@ -46,7 +46,7 @@ Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
 
 ## Scope
 
-1. **Test only what the PR's patch changes.** One Gherkin covers one subject (e.g. "Show tables draws a table").
+1. **Test only what the PR's patch changes.** One Gherkin covers one patch, everything it does (e.g. "Show tables draws a table").
    Behaviour the patch doesn't touch, even if it shows on the same screen, is left out.
 2. **Its group decides what it is patched with:**
    - **Startup** (`Scenarios/Startup/`): a patch that changes how the app starts, before the main screen ("Spoof
@@ -61,9 +61,10 @@ Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
 3. **Cover every case that can change the result.** For example:
    - each value its setting offers (on and off, each choice);
    - the content it acts on and content it must leave alone (a post with a table and one without);
-   - the boundary that matters (the 500th comment and the 501st);
-   - the app without the patch, when the difference is the point (a fix): a second Gherkin whose Given leaves the patch
-     out, showing the broken behaviour.
+   - the boundary that matters (the 500th comment and the 501st).
+
+   Each is a round of the patch's one Gherkin. The app without the patch is BaconReader's own behaviour: it gets no
+   Gherkin.
 
 ## Order
 
@@ -72,4 +73,7 @@ Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
    unless the next round needs what it left. Each round then starts from the same screen as the first, and what it shows
    comes from its own actions only. Keep a state only when the next round is about it, and say so in a `#` line in that
    round ("# keeping the search open: the next round clears it").
+   Never clear the app's storage or restart it to isolate a round: it costs a start of the app, and a case that only
+   shows again from a fresh app (a prompt answered once) is one round, not one per answer. Stop and open the app again
+   only when the round is about the next start, and say so in a `#` line.
 3. **Put the offering round first** (what a menu or a setting offers), then the rounds that use each offer.

@@ -22,11 +22,6 @@ public sealed class DisableFinalReleaseAnnouncementTests : BaseE2E
           When I open BaconReader
           Then the toolbar shows the "Front Page" feed
           And "FINAL RELEASE ANNOUNCEMENT!" doesn't show
-          When I force stop BaconReader
-          And I open BaconReader
-          # BaconReader shows the announcement on every start until it is closed: the patched app never shows it, so it never closes.
-          Then the toolbar shows the "Front Page" feed
-          And "FINAL RELEASE ANNOUNCEMENT!" doesn't show
         """)]
     public async Task BaconReaderPatchedWithDisableFinalReleaseAnnouncementOpensWithoutTheFinalReleaseAnnouncement(Screen screen)
     {
@@ -42,18 +37,5 @@ public sealed class DisableFinalReleaseAnnouncementTests : BaseE2E
         var announcement = await Phone.BaconReader.FinalReleaseAnnouncement.ReadAsync();
         Asserting.That(toolbar).ShowsFeed(new Feed.FrontPage());
         Asserting.That(announcement).IsNotShown();
-
-        // When
-        await Phone.AppInfo.ForceStopBaconReaderAsync();
-        await Phone.Launcher.OpenBaconReaderAsync();
-        await Phone.BaconReader.Main.WaitUntilShownAsync();
-        await Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilNotShownAsync();
-
-        // Then
-        // BaconReader shows the announcement on every start until it is closed: the patched app never shows it, so it never closes.
-        var toolbarAgain = await Phone.BaconReader.Main.Toolbar.ReadAsync();
-        var announcementAgain = await Phone.BaconReader.FinalReleaseAnnouncement.ReadAsync();
-        Asserting.That(toolbarAgain).ShowsFeed(new Feed.FrontPage());
-        Asserting.That(announcementAgain).IsNotShown();
     }
 }

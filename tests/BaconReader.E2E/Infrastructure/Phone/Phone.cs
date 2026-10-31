@@ -33,7 +33,7 @@ public sealed class Phone
     /// <summary>Android's Downloads folder: what BaconReader saved in Downloads/BaconReader.</summary>
     public Downloads Downloads { get; }
 
-    /// <summary>Android's App info for BaconReader: "Force stop" and "Clear storage".</summary>
+    /// <summary>Android's App info for BaconReader: "Force stop".</summary>
     public AppInfo AppInfo { get; }
 
     /// <summary>Android's "Open by default" screen for BaconReader: which of its links open in it.</summary>
