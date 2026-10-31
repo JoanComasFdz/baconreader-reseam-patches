@@ -72,37 +72,20 @@ public sealed class BaconReaderApp(
     /// <summary>
     /// Logs the test account in from the main screen, as a scenario's "Given the test account is logged in" says: "Add
     /// account" in the left menu, Reddit's "Log In" with the test account, "Accept", then closes the left menu BaconReader
-    /// comes back with, and waits until the feed shows its posts. The login screen at times closes by itself while its
-    /// fields are filled in (seen on the emulator, more often while recording), back to the left menu: then it starts
-    /// again from "Add account", three times at most.
+    /// comes back with, and waits until the feed shows its posts. On the emulator the login screen at times closed by
+    /// itself while its fields were filled in, and it started again from "Add account"; on the Pixel 6 Pro it never did
+    /// in 4 runs of every scenario (2026-10-31), so it logs in once.
     /// </summary>
     public async Task LogInWithTheTestAccountAsync()
     {
         await Main.LeftMenu.OpenAsync();
         await Main.LeftMenu.WaitUntilShownAsync();
-        for (var attempt = 1; ; attempt++)
-        {
-            try
-            {
-                await Main.LeftMenu.ClickAsync(new MenuEntry.AddAccount());
-                await LogIn.WaitUntilShownAsync();
-                await LogIn.TypeTheTestAccountsUserNameAsync();
-                await LogIn.TypeTheTestAccountsPasswordAsync();
-                await LogIn.ClickLogInAsync();
-                await LogIn.WaitUntilConnectShownAsync();
-                break;
-            }
-            catch (Exception exception) when (attempt < 3
-                && exception is TimeoutException or OpenQA.Selenium.NoSuchElementException or OpenQA.Selenium.StaleElementReferenceException)
-            {
-                // The login screen closed when BaconReader is back on the left menu, logged out; otherwise it's another failure.
-                if (!await Main.LeftMenu.ShowsAsync(new MenuEntry.AddAccount()))
-                {
-                    throw;
-                }
-            }
-        }
-
+        await Main.LeftMenu.ClickAsync(new MenuEntry.AddAccount());
+        await LogIn.WaitUntilShownAsync();
+        await LogIn.TypeTheTestAccountsUserNameAsync();
+        await LogIn.TypeTheTestAccountsPasswordAsync();
+        await LogIn.ClickLogInAsync();
+        await LogIn.WaitUntilConnectShownAsync();
         await LogIn.ClickAcceptAsync();
         await Main.WaitUntilShownAsync();
         await Main.LeftMenu.WaitUntilShownAsync();

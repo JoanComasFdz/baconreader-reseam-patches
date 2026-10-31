@@ -21,7 +21,7 @@ public sealed class LogIn(AndroidDriver driver)
 
     /// <summary>Waits until Reddit's "Log In" shows, its user name field ready.</summary>
     public Task WaitUntilShownAsync() =>
-        Waiting.UntilShownAsync(driver, UserName, TimeSpan.FromSeconds(30), "Reddit's \"Log In\"");
+        Waiting.UntilShownAsync(driver, UserName, TimeSpan.FromSeconds(10), "Reddit's \"Log In\"");
 
     /// <summary>Types the test account's user name (<see cref="TestAccount"/>) in "Email or username".</summary>
     public Task TypeTheTestAccountsUserNameAsync() => TypeAsync(UserName, TestAccount.UserName);
@@ -34,7 +34,7 @@ public sealed class LogIn(AndroidDriver driver)
 
     /// <summary>Waits until Reddit asks to connect the app with the account.</summary>
     public Task WaitUntilConnectShownAsync() =>
-        Waiting.UntilShownAsync(driver, Connect, TimeSpan.FromSeconds(60), "Reddit's \"… would like to connect with your reddit account\"");
+        Waiting.UntilShownAsync(driver, Connect, TimeSpan.FromSeconds(10), "Reddit's \"… would like to connect with your reddit account\"");
 
     /// <summary>What Reddit's page asking to connect shows: its request, "Hey, &lt;user&gt;! &lt;app&gt; would like to connect with your reddit account".</summary>
     public Task<ConnectSnapshot> ReadConnectAsync() =>
@@ -53,29 +53,18 @@ public sealed class LogIn(AndroidDriver driver)
     // Waits for the field (while the keyboard opens, the web view resizes and briefly hands Android no views), taps it,
     // waits until it has the focus (the web view hands Android new views for it), then sets its text at once: typed key
     // by key, the keyboard turned "e2e_user"'s "_" into "." and the login page closed. The fake Reddit, unlike Reddit,
-    // takes a login whose fields were filled in without a key pressed. The web view can hand Android new views between
-    // two of those steps: the field found is gone, or the one tapped never shows the focus (each seen on the emulator,
-    // in about 1 login of 5). It starts again then, twice at most.
+    // takes a login whose fields were filled in without a key pressed. On the emulator the web view at times handed
+    // Android new views between two of those steps, and it started again; on the Pixel 6 Pro it never did in 4 runs of
+    // every scenario (2026-10-31).
     private async Task TypeAsync(OpenQA.Selenium.By field, string text)
     {
-        for (var attempt = 1; ; attempt++)
-        {
-            try
-            {
-                await Waiting.UntilShownAsync(driver, field, TimeSpan.FromSeconds(10), "Reddit's login field");
-                await OnScreen.PressAsync(driver, field);
-                await Waiting.UntilAsync(
-                    () => driver.FindElements(field).Any(element => element.GetAttribute("focused") == "true"),
-                    TimeSpan.FromSeconds(10),
-                    "Reddit's login field taking the focus");
-                await OnScreen.ActAsync(driver, field, element => element.SendKeys(text));
-                return;
-            }
-            catch (Exception exception) when (attempt < 3 && exception is OpenQA.Selenium.NoSuchElementException or OpenQA.Selenium.StaleElementReferenceException or TimeoutException)
-            {
-                // The field's view was replaced: find it and tap it again.
-            }
-        }
+        await Waiting.UntilShownAsync(driver, field, TimeSpan.FromSeconds(10), "Reddit's login field");
+        await OnScreen.PressAsync(driver, field);
+        await Waiting.UntilAsync(
+            () => driver.FindElements(field).Any(element => element.GetAttribute("focused") == "true"),
+            TimeSpan.FromSeconds(10),
+            "Reddit's login field taking the focus");
+        await OnScreen.ActAsync(driver, field, element => element.SendKeys(text));
     }
 }
 

@@ -15,20 +15,20 @@ public sealed class PostList(AndroidDriver driver)
 
     /// <summary>Waits until the list shows a post (Reddit takes a moment to answer).</summary>
     public Task WaitUntilPostsShownAsync() =>
-        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(30), "A post in the main screen's list");
+        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(10), "A post in the main screen's list");
 
     /// <summary>
     /// Waits until the list shows BaconReader's message instead of posts ("Greetings! … BaconReader is no longer
     /// operational"), which it shows when Reddit refuses the feed.
     /// </summary>
     public Task WaitUntilMessageShownAsync() =>
-        Waiting.UntilShownAsync(driver, Message, TimeSpan.FromSeconds(30), "BaconReader's message instead of the feed's posts");
+        Waiting.UntilShownAsync(driver, Message, TimeSpan.FromSeconds(10), "BaconReader's message instead of the feed's posts");
 
     /// <summary>Taps the post titled <paramref name="title"/>, which opens it with its comments.</summary>
     public async Task ClickPostAsync(string title)
     {
         var post = Locate.AppIdWithText("title", title);
-        await Waiting.UntilShownAsync(driver, post, TimeSpan.FromSeconds(30), $"The post \"{title}\" in the main screen's list");
+        await Waiting.UntilShownAsync(driver, post, TimeSpan.FromSeconds(10), $"The post \"{title}\" in the main screen's list");
         await OnScreen.PressAsync(driver, post);
     }
 

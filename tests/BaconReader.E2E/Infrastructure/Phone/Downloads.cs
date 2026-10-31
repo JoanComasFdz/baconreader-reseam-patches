@@ -32,7 +32,7 @@ public sealed class Downloads(AndroidDriver driver)
                 last = now;
                 return saved;
             },
-            TimeSpan.FromSeconds(30),
+            TimeSpan.FromSeconds(10),
             "An image saved to Downloads/BaconReader");
     }
 

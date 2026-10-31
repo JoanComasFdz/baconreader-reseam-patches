@@ -31,7 +31,7 @@ public sealed class PostText(AndroidDriver driver)
     public Task WaitUntilMediaShownAsync() =>
         Waiting.UntilAsync(
             () => driver.FindElements(Text).Any(text => text.Displayed) && Media.Images(PostImages(driver)).Count > 0,
-            TimeSpan.FromSeconds(30),
+            TimeSpan.FromSeconds(10),
             "An image under the post's text loading");
 
     /// <summary>What the post's text shows: its text, and how many images under it.</summary>
@@ -39,6 +39,16 @@ public sealed class PostText(AndroidDriver driver)
         OnScreen.ReadAsync(driver, () => new PostTextSnapshot(
             driver.FindElement(Text).Text.Trim(),
             Media.Images(PostImages(driver)).Count));
+
+    /// <summary>Where the post's text and its first image are on the screen, in pixels.</summary>
+    public Task<PostTextLayoutSnapshot> ReadLayoutAsync() =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var image = Media.Images(PostImages(driver)).FirstOrDefault();
+            return new PostTextLayoutSnapshot(Bounds(driver.FindElement(Text)), image is null ? null : Bounds(image));
+        });
+
+    private static Rectangle Bounds(IWebElement element) => new(element.Location, element.Size);
 
     // The images that aren't under a comment.
     private static IReadOnlyCollection<IWebElement> PostImages(AndroidDriver driver)
@@ -52,6 +62,9 @@ public sealed class PostText(AndroidDriver driver)
 
 /// <summary>What a post's text shows: its text, and how many images under it.</summary>
 public sealed record PostTextSnapshot(string Text, int Images);
+
+/// <summary>Where a post's text and its first image (null without one) are on the screen, in pixels.</summary>
+public sealed record PostTextLayoutSnapshot(Rectangle Text, Rectangle? Image);
 
 /// <summary>
 /// The comments of the post shown, each named by its text (what it says before its media, which shows under it), and with "Embed comment images" the GIFs, images and videos
@@ -80,7 +93,7 @@ public sealed class Comments(AndroidDriver driver)
     /// comment shows.
     /// </summary>
     public Task WaitUntilShownAsync() =>
-        Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(30), "A comment of the post");
+        Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(10), "A comment of the post");
 
     /// <summary>
     /// Scrolls the comments until the comment "<paramref name="text"/>" shows whole, between the sort bar and
@@ -216,7 +229,7 @@ public sealed class Comments(AndroidDriver driver)
             () => FindComment(text) is { } comment
                 && comment.FindElements(Position).FirstOrDefault()?.Text is { Length: > 0 } position
                 && position == comment.FindElements(Duration).FirstOrDefault()?.Text,
-            TimeSpan.FromSeconds(120),
+            TimeSpan.FromSeconds(30),
             $"The video of the comment \"{text}\" playing to its end");
 
     /// <summary>What the player of the comment "<paramref name="text"/>" shows: its position and its length.</summary>

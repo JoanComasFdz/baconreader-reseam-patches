@@ -67,6 +67,13 @@ installed and logged in on the phone doesn't survive a run.
 Measured on 2026-10-30 from a cloud session (~1–3 Mbit/s to the phone): sending a new APK ~1 minute; BaconReader's
 first screen ~4 s after it opens; the seven phone scenarios ~22 minutes recorded, at ~30 frames a second.
 
+Measured on 2026-10-31 on the Pixel 6 Pro, 4 runs of every scenario (3 unrecorded, 13–15 minutes each, and 1 recorded,
+21 minutes): the longest wait was 15.9 s (an image under a comment loading), then 13.4 s (a 10 s video playing to its
+end); every other wait took 4.2 s or less. Each wait is about twice the longest seen, and at least 10 s. Of the retries
+the emulator needed, only `Waiting`'s read again of a view gone stale fired (once); the others are gone. A run writes
+each wait's time to the scenario's output in the .trx (`out/.results/`), and each retry that fires to its console too
+(`RunLog`), so the next measurement needs no code.
+
 ## The fake Reddit
 
 The scenarios never talk to Reddit (automation detection, throttled logins, content that changes): each makes exactly
