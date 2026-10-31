@@ -18,7 +18,8 @@ private const val IO_EXCEPTION = "java.io.IOException"
 
 // Every Reddit request catches its IOException and throws a new one with the message saying that
 // BaconReader stopped working in July 2023. The app's own errors are useful ("reddit: 404 Not
-// Found", timeouts, parse errors), so the handler throws the caught error again instead.
+// Found", Reddit's explanation, a dropped connection, parse errors; Reddit requests have no
+// timeout), so the handler throws the caught error again instead.
 val showRequestErrors =
     patch("Show request errors") {
         description(
