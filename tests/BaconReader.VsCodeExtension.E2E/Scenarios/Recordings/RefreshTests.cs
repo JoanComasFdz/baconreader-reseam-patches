@@ -17,7 +17,7 @@ public sealed class RefreshTests : BaseE2E
         Scenario: Refreshing finds a recording posted after the file was opened
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds no recording of "EmbedCommentImagesTests.cs"
-          And "Scenarios/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs" is open, its CodeLens reading "No recording yet"
+          And "Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs" is open, its CodeLens reading "No recording yet"
           When the release gets the recordings of "EmbedCommentImagesTests.cs" from PR #44 · V1
           And I run "BaconReader Reseam: Refresh e2e recordings" from the Command Palette
           Then the CodeLens above its method reads "Play phone recording" and "PR #44 · V1"

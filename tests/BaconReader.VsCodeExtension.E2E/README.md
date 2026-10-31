@@ -51,7 +51,7 @@ To update VS Code: set `config.vscodeCommit` and `config.vscodeVersion` in `vsco
 `Scenarios/<domain folder>/<Topic>Tests.cs`, by what the developer does with the extension: `Recordings/` (seeing a
 scenario's recordings: `CodeLensTests`, `PlayHereTests`, `RecordingPanelTests`, `RefreshTests`). The domain folder is the
 namespace after `.Scenarios.`, and the folder their GIFs go in under `out/`: a new one must not take an app domain
-folder's name (`Account`, `Comments`, …).
+folder's name (`Startup`, `LoggedIn`).
 
 ## The fake GitHub and the workspace
 

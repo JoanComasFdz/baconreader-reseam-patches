@@ -8,7 +8,7 @@ using BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Scenarios.Comments;
+namespace BaconReader.E2E.Scenarios.LoggedIn.Comments;
 
 /// <summary>
 /// "Embed comment images": BaconReader shows the images, GIFs and videos of comments and post texts under the text, and
@@ -18,7 +18,7 @@ namespace BaconReader.E2E.Scenarios.Comments;
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [PatchedWithEveryPatch]
     [TestDescription("""
         @phone
         Scenario: Embed comment images shows the images, GIFs and image links of comments as images
@@ -27,8 +27,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Weekly thread" has a comment "Here is a GIF" with a GIF
           And the post "Weekly thread" has a comment "Here is an image link" with a link to an image
           And the post "Weekly thread" has a comment "Just text"
-          And BaconReader is patched with "Embed comment images"
-          And BaconReader is patched with "Spoof client"
+          And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
           When I tap the post "Weekly thread"
@@ -88,14 +87,13 @@ public sealed class EmbedCommentImagesTests : BaseE2E
     }
 
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [PatchedWithEveryPatch]
     [TestDescription("""
         @phone
         Scenario: Embed comment images resizes, opens and saves an image with a tap, a double tap and a long press
           Given Reddit has a post "Weekly thread" in r/e2e
           And the post "Weekly thread" has a comment "Here is an image" with an image
-          And BaconReader is patched with "Embed comment images"
-          And BaconReader is patched with "Spoof client"
+          And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
           When I tap the post "Weekly thread"
@@ -170,13 +168,12 @@ public sealed class EmbedCommentImagesTests : BaseE2E
     }
 
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [PatchedWithEveryPatch]
     [TestDescription("""
         @phone
         Scenario: Embed comment images shows an image in a post's text
           Given Reddit has a post "A picture in text" in r/e2e with the text "Look at this" and an image
-          And BaconReader is patched with "Embed comment images"
-          And BaconReader is patched with "Spoof client"
+          And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
           When I tap the post "A picture in text"
@@ -202,15 +199,14 @@ public sealed class EmbedCommentImagesTests : BaseE2E
     }
 
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [PatchedWithEveryPatch]
     [TestDescription("""
         @phone
         Scenario: Embed comment images plays the videos of comments in place
           Given Reddit has a post "Weekly thread" in r/e2e
           And the post "Weekly thread" has a comment "Here is a video" with a video
           And the post "Weekly thread" has a comment "Here is a video link" with a link to a video
-          And BaconReader is patched with "Embed comment images"
-          And BaconReader is patched with "Spoof client"
+          And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
           When I tap the post "Weekly thread"
@@ -261,16 +257,14 @@ public sealed class EmbedCommentImagesTests : BaseE2E
     }
 
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient, Patch.PatchesEntryInSettings)]
+    [PatchedWithEveryPatch]
     [TestDescription("""
         @phone
         Scenario: Embed comment images follows its settings for images, full width, saving and videos
           Given Reddit has a post "Weekly thread" in r/e2e
           And the post "Weekly thread" has a comment "Here is an image" with an image
           And the post "Weekly thread" has a comment "Here is a video" with a video
-          And BaconReader is patched with "Embed comment images"
-          And BaconReader is patched with "Spoof client"
-          And BaconReader is patched with "Patches entry in settings"
+          And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
           And I open the left menu

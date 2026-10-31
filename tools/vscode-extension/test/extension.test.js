@@ -13,7 +13,7 @@ const extension = require('../extension.js');
 const SPOOF_CLIENT = `using BaconReader.E2E.Infrastructure;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Scenarios.Account;
+namespace BaconReader.E2E.Scenarios.Startup.Account;
 
 /// <summary>"Spoof client": BaconReader talks to Reddit as another app.</summary>
 public sealed class SpoofClientTests : BaseE2E
@@ -101,7 +101,7 @@ test('reads a scenario file: its scenarios, their titles, screens, class, domain
     method: 'BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader',
     title: 'BaconReader patched with Spoof client logs in to Reddit as RedReader',
     className: 'SpoofClientTests',
-    domain: 'Account',
+    domain: 'Startup/Account',
     screens: ['phone'],
     attributesLine: 8,
     nameLine: 17,
@@ -122,7 +122,7 @@ test('finds the scenario the cursor is in: the last one starting on or above its
 
 test('a file outside Scenarios has the domain folder "Unsorted", and a file with no scenario has none', () => {
   assert.equal(extension.toDomainFolder('BaconReader.E2E.Infrastructure'), 'Unsorted');
-  assert.equal(extension.toDomainFolder('BaconReader.E2E.Scenarios.Comments.ShowTables'), 'Comments/ShowTables');
+  assert.equal(extension.toDomainFolder('BaconReader.E2E.Scenarios.LoggedIn.Comments.ShowTables'), 'LoggedIn/Comments/ShowTables');
   assert.deepEqual(extension.findScenarios('namespace X;\npublic sealed class A { public void B() { } }\n'), []);
 });
 
@@ -200,7 +200,7 @@ test('the panel holds every version and opens on the one and the screen chosen',
   assert.deepEqual(data.versions.map((v) => v.label), ['PR #30 · V1', 'PR #12 · V2', 'PR #12 · V1', 'PR #7 · V1']);
   assert.equal(data.version, 1);
   assert.equal(data.screen, 'phone');
-  assert.equal(data.about, 'SpoofClientTests · Account');
+  assert.equal(data.about, 'SpoofClientTests · Startup/Account');
   assert.deepEqual(data.versions[0].screens.map((s) => s.label), ['Phone']);
   assert.match(page, /script-src 'nonce-abc'/);
 });

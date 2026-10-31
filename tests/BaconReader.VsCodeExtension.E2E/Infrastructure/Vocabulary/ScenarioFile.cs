@@ -13,16 +13,16 @@ namespace BaconReader.VsCodeExtension.E2E.Infrastructure.Vocabulary;
 [Union]
 public partial record ScenarioFile
 {
-    /// <summary>Scenarios/Account/SpoofClient/SpoofClientTests.cs: an app scenario played on the phone, and a helper method.</summary>
+    /// <summary>Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs: an app scenario played on the phone, and a helper method.</summary>
     public partial record SpoofClient;
 
     /// <summary>
-    /// Scenarios/Account/SpoofClient/SpoofClientDraft.cs: no scenario file (its name doesn't end in "Tests"), though it
+    /// Scenarios/Startup/Account/SpoofClient/SpoofClientDraft.cs: no scenario file (its name doesn't end in "Tests"), though it
     /// holds SpoofClient's method and [TestDescription].
     /// </summary>
     public partial record SpoofClientDraft;
 
-    /// <summary>Scenarios/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs: an app scenario played on the phone.</summary>
+    /// <summary>Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs: an app scenario played on the phone.</summary>
     public partial record EmbedCommentImages;
 
     /// <summary>Scenarios/Recordings/LongNameTests.cs: a desktop scenario whose asset names pass 200 characters.</summary>
@@ -32,12 +32,12 @@ public partial record ScenarioFile
 /// <summary>Each <see cref="ScenarioFile"/>'s path, its scenario's method, domain folder and screens: the only place they live.</summary>
 public static class ScenarioFileShowing
 {
-    /// <summary>"Scenarios/Account/SpoofClient/SpoofClientTests.cs": its path in the workspace, as the explorer nests it.</summary>
+    /// <summary>"Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs": its path in the workspace, as the explorer nests it.</summary>
     public static string ToPath(this ScenarioFile file) =>
         file.Match(
-            spoofClient => "Scenarios/Account/SpoofClient/SpoofClientTests.cs",
-            spoofClientDraft => "Scenarios/Account/SpoofClient/SpoofClientDraft.cs",
-            embedCommentImages => "Scenarios/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs",
+            spoofClient => "Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs",
+            spoofClientDraft => "Scenarios/Startup/Account/SpoofClient/SpoofClientDraft.cs",
+            embedCommentImages => "Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs",
             longName => "Scenarios/Recordings/LongNameTests.cs");
 
     /// <summary>"SpoofClientTests.cs": its name, as its editor tab shows it.</summary>

@@ -9,9 +9,11 @@ namespace BaconReader.E2E.Infrastructure;
 /// <summary>
 /// Every scenario keeps the shape E2E-TEST-CODE-RULES.md (rule a) gives it, so it stays one to one with the Gherkin it
 /// implements (runs without the phone): a theory played on the phone, its Gherkin in
-/// <see cref="TestDescriptionAttribute"/>, its name the Gherkin's title, its screen tags its attributes, and
-/// patched with exactly the patches its Given names, one a line (<see cref="Vocabulary.PatchedWithAttribute"/>; never one
-/// BaseE2E adds to every scenario). A screen attribute twice doesn't compile.
+/// <see cref="TestDescriptionAttribute"/>, its name the Gherkin's title, its screen tags its attributes, in the Startup or
+/// the LoggedIn group (<see cref="ScenarioGroup"/>), and patched as its Given says: a Startup scenario with exactly the
+/// patches its Given names, one a line (<see cref="Vocabulary.PatchedWithAttribute"/>; never one BaseE2E adds to every
+/// scenario), a LoggedIn one with every patch (<see cref="Vocabulary.PatchedWithEveryPatchAttribute"/>). A screen
+/// attribute twice doesn't compile.
 /// </summary>
 public sealed partial class ScenarioShapeTests
 {
@@ -55,21 +57,52 @@ public sealed partial class ScenarioShapeTests
 
     [Theory]
     [MemberData(nameof(Scenarios))]
+    public void Scenario_IsInTheStartupOrTheLoggedInGroup(string scenario)
+    {
+        var method = Find(scenario);
+        Assert.True(
+            ScenarioGroups.Of(method.DeclaringType!) is not null,
+            $"{scenario} is in Scenarios/{ScenarioNaming.ToDomainFolder(method.DeclaringType!)}: a scenario goes under Scenarios/Startup/ "
+            + "(how the app starts: patched with only the patches its Given names) or Scenarios/LoggedIn/ (patched with every patch).");
+    }
+
+    [Theory]
+    [MemberData(nameof(Scenarios))]
     public void Scenario_IsPatchedWithThePatchesItsGivenNames(string scenario)
     {
         var method = Find(scenario);
         var given = ReadGiven(ReadGherkin(method, scenario));
-        var patches = method.GetCustomAttribute<Vocabulary.PatchedWithAttribute>()?.Patches
-            ?? throw new Xunit.Sdk.XunitException($"{scenario} has no [PatchedWith]: BaseE2E wouldn't know what to patch BaconReader with.");
         var named = given.Select(line => PatchLine().Match(line)).Where(match => match.Success).Select(match => match.Groups[1].Value).ToArray();
-        var patched = patches.Select(Vocabulary.PatchShowing.ToShownText).ToArray();
-        Assert.True(
-            named.Order().SequenceEqual(patched.Order()),
-            $"{scenario} is patched with [{string.Join(", ", patched)}], but its Given names [{string.Join(", ", named)}], one patch a line: "
-            + "And BaconReader is patched with \"<patch>\".");
-        foreach (var always in Device.PatchedApps.Always.Where(patches.Contains))
+        var saysEveryPatch = given.Any(line => EveryPatchLine().IsMatch(line));
+        switch (ScenarioGroups.Of(method.DeclaringType!), Vocabulary.PatchSet.Of(method))
         {
-            Assert.Fail($"{scenario} names \"{Vocabulary.PatchShowing.ToShownText(always)}\", which BaseE2E adds to every scenario: leave it out.");
+            case (_, null):
+                Assert.Fail($"{scenario} needs one of [PatchedWith(…)] (Startup) or [PatchedWithEveryPatch] (LoggedIn): BaseE2E wouldn't know what to patch BaconReader with.");
+                break;
+            case (ScenarioGroup.LoggedIn, Vocabulary.PatchSet.Every):
+                Assert.True(
+                    saysEveryPatch && named.Length == 0,
+                    $"{scenario} is patched with every patch, so its Given says so in one line, and names no patch: "
+                    + "And BaconReader is patched with every patch.");
+                break;
+            case (ScenarioGroup.LoggedIn, Vocabulary.PatchSet.Only):
+                Assert.Fail($"{scenario} is a LoggedIn scenario: it's patched with every patch, [PatchedWithEveryPatch]. A scenario patched with only some is a Startup one.");
+                break;
+            case (_, Vocabulary.PatchSet.Every):
+                Assert.Fail($"{scenario} isn't a LoggedIn scenario, so it's patched with only the patches its Given names, [PatchedWith(…)], not every patch.");
+                break;
+            case (_, Vocabulary.PatchSet.Only only):
+                var patched = only.Patches.Select(Vocabulary.PatchShowing.ToShownText).ToArray();
+                Assert.True(
+                    !saysEveryPatch && named.Order().SequenceEqual(patched.Order()),
+                    $"{scenario} is patched with [{string.Join(", ", patched)}], but its Given names [{string.Join(", ", named)}], one patch a line: "
+                    + "And BaconReader is patched with \"<patch>\".");
+                foreach (var always in Device.PatchedApps.Always.Where(only.Patches.Contains))
+                {
+                    Assert.Fail($"{scenario} names \"{Vocabulary.PatchShowing.ToShownText(always)}\", which BaseE2E adds to every scenario: leave it out.");
+                }
+
+                break;
         }
     }
 
@@ -83,6 +116,9 @@ public sealed partial class ScenarioShapeTests
 
     [GeneratedRegex("^(?:Given|And) BaconReader is patched with \"([^\"]+)\"$")]
     private static partial Regex PatchLine();
+
+    [GeneratedRegex("^(?:Given|And) BaconReader is patched with every patch$")]
+    private static partial Regex EveryPatchLine();
 
     private static Gherkin ReadGherkin(MethodInfo method, string scenario) =>
         method.GetCustomAttribute<TestDescriptionAttribute>() is { } description

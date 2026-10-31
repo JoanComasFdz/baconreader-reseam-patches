@@ -14,7 +14,7 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// </summary>
 public sealed class Phone
 {
-    public Phone(AndroidDriver driver, IReadOnlyList<Patch> patches, Action noteAppShown)
+    public Phone(AndroidDriver driver, PatchSet patches, Action noteAppShown)
     {
         Launcher = new Launcher(driver);
         Downloads = new Downloads(driver);
@@ -27,6 +27,6 @@ public sealed class Phone
     /// <summary>Android's Downloads folder: what BaconReader saved in Downloads/BaconReader.</summary>
     public Downloads Downloads { get; }
 
-    /// <summary>BaconReader, patched with the scenario's patches (<see cref="PatchedWithAttribute"/>).</summary>
+    /// <summary>BaconReader, patched with the scenario's patches (<see cref="PatchSet"/>).</summary>
     public BaconReaderApp BaconReader { get; }
 }

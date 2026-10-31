@@ -17,7 +17,7 @@ public sealed class CodeLensTests : BaseE2E
         Scenario: The CodeLens plays the newest recording
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds the recordings of "SpoofClientTests.cs" from PR #36 · V1 and PR #41 · V1
-          When I open "Scenarios/Account/SpoofClient/SpoofClientTests.cs" in the explorer
+          When I open "Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs" in the explorer
           Then the CodeLens above its method reads "Play phone recording" and "PR #41 · V1"
           And no other line has a CodeLens
         """)]
@@ -43,9 +43,9 @@ public sealed class CodeLensTests : BaseE2E
         Scenario: A file that isn't a scenario file has no CodeLens
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds the recordings of "SpoofClientTests.cs" from PR #41 · V1
-          And "Scenarios/Account/SpoofClient/SpoofClientTests.cs" is open, its CodeLens reading "PR #41 · V1"
+          And "Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs" is open, its CodeLens reading "PR #41 · V1"
           # Its name doesn't end in "Tests", so it holds no scenario, though it has the same method and [TestDescription].
-          When I open "Scenarios/Account/SpoofClient/SpoofClientDraft.cs" in the explorer
+          When I open "Scenarios/Startup/Account/SpoofClient/SpoofClientDraft.cs" in the explorer
           Then no line has a CodeLens
         """)]
     public async Task AFileThatIsntAScenarioFileHasNoCodeLens(Screen screen)
@@ -70,7 +70,7 @@ public sealed class CodeLensTests : BaseE2E
         Scenario: A scenario with no recording says so
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds no recording of "EmbedCommentImagesTests.cs"
-          When I open "Scenarios/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs" in the explorer
+          When I open "Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs" in the explorer
           Then the CodeLens above its method reads "No recording yet"
         """)]
     public async Task AScenarioWithNoRecordingSaysSo(Screen screen)

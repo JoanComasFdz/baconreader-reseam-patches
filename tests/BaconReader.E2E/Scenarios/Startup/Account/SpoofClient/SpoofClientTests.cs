@@ -7,7 +7,7 @@ using BaconReader.E2E.Infrastructure.Reddit;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Scenarios.Account;
+namespace BaconReader.E2E.Scenarios.Startup.Account;
 
 /// <summary>"Spoof client": BaconReader talks to Reddit as another app (RedReader by default), so logging in works again.</summary>
 public sealed class SpoofClientTests : BaseE2E

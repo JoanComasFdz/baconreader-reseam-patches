@@ -50,13 +50,13 @@ function toGifName(method, screen) {
   return `${toKebabCase(method)}-${screen}`;
 }
 
-/** "Account", "Comments/ShowTables": the namespace after its ".Scenarios."; "Unsorted" outside it (ScenarioNaming.ToDomainFolder). */
+/** "Startup/Account", "LoggedIn/Comments/ShowTables": the namespace after its ".Scenarios."; "Unsorted" outside it (ScenarioNaming.ToDomainFolder). */
 function toDomainFolder(namespace) {
   const scenarios = namespace.indexOf('.Scenarios.');
   return scenarios < 0 ? 'Unsorted' : namespace.slice(scenarios + '.Scenarios.'.length).replace(/\./g, '/');
 }
 
-/** "Account/bacon-reader-…-phone.gif": what the workflow hashes for a name past 200 characters. */
+/** "Startup/Account/bacon-reader-…-phone.gif": what the workflow hashes for a name past 200 characters. */
 function toGifPath(domain, gifName) {
   return `${domain}/${gifName}.gif`;
 }

@@ -6,7 +6,7 @@
 # and tests/BaconReader.VsCodeExtension.E2E (the VS Code extension, tools/vscode-extension, in VS Code for the web).
 #   tools/e2e/record.sh [all | <domain folder> | <TestClass> ...] [--changed-since <git ref>] [--action-gap <seconds>]
 #                       [--out <dir>] [--no-bundle] [--no-video]
-# A domain folder is a folder under a project's Scenarios/ (Account, Comments/ShowTables); a class is a scenario class
+# A domain folder is a folder under a project's Scenarios/ (Startup, LoggedIn/Comments); a class is a scenario class
 # (SpoofClientTests). Nothing named, and no --changed-since: all of them.
 # --changed-since <ref>: the scenario classes added or changed since the branch left <ref> (working tree included):
 # "this PR's scenarios" with origin/main. A change to the extension (tools/vscode-extension) or to the files its

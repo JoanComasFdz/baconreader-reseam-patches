@@ -52,11 +52,11 @@ public sealed class ScenarioNamingTests
 
     [Fact]
     public void DomainFolder_IsTheNamespaceUnderScenarios() =>
-        Assert.Equal("Account", ScenarioNaming.ToDomainFolder(typeof(Scenarios.Account.SpoofClientTests)));
+        Assert.Equal("Startup/Account", ScenarioNaming.ToDomainFolder(typeof(Scenarios.Startup.Account.SpoofClientTests)));
 
     [Fact]
     public void DomainFolder_KeepsE2EWhole() =>
-        Assert.Equal("E2E", ScenarioNaming.ToDomainFolder(typeof(Scenarios.E2E.E2EFakeRedditTests)));
+        Assert.Equal("LoggedIn/E2E", ScenarioNaming.ToDomainFolder(typeof(Scenarios.LoggedIn.E2E.E2EFakeRedditTests)));
 
     [Fact]
     public void DomainFolder_OfANamespaceOutsideScenariosIsUnsorted() =>

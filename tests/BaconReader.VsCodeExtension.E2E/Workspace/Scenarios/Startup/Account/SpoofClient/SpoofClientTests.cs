@@ -4,10 +4,10 @@
 using BaconReader.E2E.Infrastructure;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Scenarios.Account;
+namespace BaconReader.E2E.Scenarios.Startup.Account;
 
-/// <summary>A fixture of the VS Code extension's e2e scenarios: not a scenario file (its name doesn't end in "Tests").</summary>
-public sealed class SpoofClientDraft : BaseE2E
+/// <summary>A fixture of the VS Code extension's e2e scenarios: an app scenario, as the extension reads it.</summary>
+public sealed class SpoofClientTests : BaseE2E
 {
     [Theory, PlayOnPhone]
     [PatchedWith(Patch.SpoofClient)]

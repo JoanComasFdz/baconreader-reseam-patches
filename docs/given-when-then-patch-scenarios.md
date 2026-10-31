@@ -1,9 +1,9 @@
 # Patch scenarios
 
 A **patch scenario** tests what one patch does to the app: the subject a pull request changes (a fix that makes
-something work again, a feature it adds, a cleanup it makes). It lives in its app's e2e project under `Scenarios/`, by
-the patch's area, as this bundle groups them (`account`, `comments`, `media`, `posts`…): its
-[README](../tests/BaconReader.E2E/README.md), "Where tests go".
+something work again, a feature it adds, a cleanup it makes). It lives in its app's e2e project under `Scenarios/`, in
+one of two groups ("Scope"), then by the patch's area, as this bundle groups them (`account`, `comments`, `media`,
+`posts`…): its [README](../tests/BaconReader.E2E/README.md), "Where tests go".
 
 This document is a child of [How to write a Gherkin](given-when-then-test-rules.md), which holds what every Gherkin
 shares (its shape, When, Then, the PR, the checks before handing it over). It adds what a patch scenario does: its
@@ -12,7 +12,7 @@ scope and the order of its rounds. Adapted from destiny-loopsmith's
 
 ## Example
 
-[SpoofClientTests.cs](../tests/BaconReader.E2E/Scenarios/Account/SpoofClient/SpoofClientTests.cs): BaconReader
+[SpoofClientTests.cs](../tests/BaconReader.E2E/Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs): BaconReader
 patched with only "Spoof client", logging in to the fake Reddit, which has a post for it to show.
 
 ```gherkin
@@ -48,10 +48,16 @@ Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
 
 1. **Test only what the PR's patch changes.** One Gherkin covers one subject (e.g. "Show tables draws a table").
    Behaviour the patch doesn't touch, even if it shows on the same screen, is left out.
-2. **Patch with the fewest patches.** The patch under test, and only what it needs to get to its subject: "Spoof
-   client" when it needs a login (anything that loads posts or comments: Reddit, and so the fake Reddit, refuses a
-   logged-out BaconReader with `HTTP 403 Blocked`), "Prompt to open Reddit links" when it is about opening a Reddit
-   link. Each one is quoted in the Given, one a line.
+2. **Its group decides what it is patched with:**
+   - **Startup** (`Scenarios/Startup/`): a patch that changes how the app starts, before the main screen ("Spoof
+     client", the login; "Disable final release announcement"; "Prompt to open Reddit links"; "Disable feedback
+     popup"). **Patch with the fewest patches:** the patch under test, and only what it needs to get to its subject:
+     "Spoof client" when it needs a login (anything that loads posts or comments: Reddit, and so the fake Reddit,
+     refuses a logged-out BaconReader with `HTTP 403 Blocked`). Each one is quoted in the Given, one a line.
+   - **LoggedIn** (`Scenarios/LoggedIn/`): every other patch. **Patch with every patch**, as the user installs them,
+     one APK for every LoggedIn scenario: `And BaconReader is patched with every patch`, then `And BaconReader is open`
+     and `And the test account is logged in`. It still tests only its own patch (point 1). When another patch changes
+     what it sees, say so in a `#` line above the check; when that is a bug of the two together, tell the owner.
 3. **Cover every case that can change the result.** For example:
    - each value its setting offers (on and off, each choice);
    - the content it acts on and content it must leave alone (a post with a table and one without);

@@ -20,7 +20,7 @@ public sealed class PlayHereTests : BaseE2E
         Scenario: The editor's play button plays the scenario the cursor is in
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds the recordings of "SpoofClientTests.cs" from PR #36 · V1 and PR #41 · V1
-          And "Scenarios/Account/SpoofClient/SpoofClientTests.cs" is open
+          And "Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs" is open
           When I tap the line "When I open BaconReader"
           And I tap "BaconReader Reseam: Play e2e recording of this scenario" in the editor's title bar
           Then the panel "Recording · BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader" shows beside the code
@@ -55,7 +55,7 @@ public sealed class PlayHereTests : BaseE2E
         Scenario: The Command Palette plays the scenario below the cursor when the cursor is above every scenario
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds the recordings of "SpoofClientTests.cs" from PR #36 · V1 and PR #41 · V1
-          And "Scenarios/Account/SpoofClient/SpoofClientTests.cs" is open
+          And "Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs" is open
           When I tap the line "public sealed class SpoofClientTests : BaseE2E"
           And I run "BaconReader Reseam: Play e2e recording of this scenario" from the Command Palette
           Then the panel "Recording · BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader" shows beside the code

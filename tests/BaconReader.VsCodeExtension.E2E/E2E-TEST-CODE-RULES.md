@@ -31,7 +31,7 @@ public sealed class CodeLensTests : BaseE2E
         Scenario: A scenario with no recording says so
           # Desktop only: the extension runs in VS Code on a desktop.
           Given the release holds no recording of "EmbedCommentImagesTests.cs"
-          When I open "Scenarios/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs" in the explorer
+          When I open "Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs" in the explorer
           Then the CodeLens above its method reads "No recording yet"
         """)]
     public async Task AScenarioWithNoRecordingSaysSo(Screen screen)
@@ -135,7 +135,7 @@ after.
 | `Given the release holds the recordings of "SpoofClientTests.cs" from PR #36 · V1 and PR #41 · V1` | `GitHub.Release.AddRecordingsOf(new ScenarioFile.SpoofClient(), new Recording(36, 1), new Recording(41, 1))` |
 | `… from PR #31 · V2, as GIFs only` | `new Recording(31, 2, HasMp4s: false)` |
 | `Given the release holds no recording of "EmbedCommentImagesTests.cs"` | `GitHub.Release.HasNoRecordingOf(new ScenarioFile.EmbedCommentImages())` |
-| `"Scenarios/Account/SpoofClient/SpoofClientTests.cs" is open` / `I open … in the explorer` | `Explorer.OpenAsync(new ScenarioFile.SpoofClient())`, `Editor.WaitUntilRecordingsShownAsync()` |
+| `"Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs" is open` / `I open … in the explorer` | `Explorer.OpenAsync(new ScenarioFile.SpoofClient())`, `Editor.WaitUntilRecordingsShownAsync()` |
 | `I tap "Play phone recording" in its CodeLens` | `Editor.ClickCodeLensAsync("Play phone recording")`, `RecordingPanel.WaitUntilPlayingAsync()` |
 | `I tap "PR #36 · V1" in "Recorded in"` | `RecordingPanel.ClickVersionAsync("PR #36 · V1")`, `RecordingPanel.WaitUntilPlayingAsync()` |
 | `"…" is open, its CodeLens reading "PR #41 · V1"` | `Explorer.OpenAsync(…)`, `Editor.WaitUntilCodeLensShowsAsync("PR #41 · V1")` |

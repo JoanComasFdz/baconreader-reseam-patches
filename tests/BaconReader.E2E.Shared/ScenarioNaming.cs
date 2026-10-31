@@ -36,8 +36,9 @@ public static partial class ScenarioNaming
         $"{methodName.Kebaberize()}-{screen.ToString().ToLowerInvariant()}";
 
     /// <summary>
-    /// "Account", "Comments/ShowTables": a scenario class's domain folder under its project's Scenarios/, its namespace
-    /// after ".Scenarios."; "Unsorted" outside it. The recordings' folder (tools/e2e/record.sh) is named by it.
+    /// "Startup/Account", "LoggedIn/Comments/ShowTables": a scenario class's domain folder under its project's Scenarios/,
+    /// its namespace after ".Scenarios."; "Unsorted" outside it. The recordings' folder (tools/e2e/record.sh) is named by
+    /// it.
     /// </summary>
     public static string ToDomainFolder(Type testClass) => ToDomainFolder(testClass.Namespace);
 

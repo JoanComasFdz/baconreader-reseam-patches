@@ -20,7 +20,7 @@ using BaconReader.E2E.Infrastructure.Reddit;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Scenarios.Account;
+namespace BaconReader.E2E.Scenarios.Startup.Account;
 
 /// <summary>"Spoof client": BaconReader talks to Reddit as another app (RedReader by default), so logging in works again.</summary>
 public sealed class SpoofClientTests : BaseE2E
@@ -119,8 +119,11 @@ public sealed class SpoofClientTests : BaseE2E
 - A class is `public sealed class <Topic>Tests : BaseE2E`, in a folder of its own under its domain folder (rule g).
 - **One Gherkin is one scenario:** one method, a `[Theory]` with:
   - `[PlayOnPhone]`: plays it once, on the phone. It matches the Gherkin's `@phone` tag;
-  - `[PatchedWith(...)]`: the patches its Given quotes, exactly those (rule b), and none of the ones BaseE2E adds to
-    every scenario;
+  - what its app is patched with (rule b), by its group (rule g):
+    - a Startup scenario: `[PatchedWith(...)]`, the patches its Given quotes, exactly those, and none of the ones BaseE2E
+      adds to every scenario;
+    - a LoggedIn scenario: `[PatchedWithEveryPatch]`, and its Given says `And BaconReader is patched with every patch`
+      and names no patch;
   - `[TestDescription("""…""")]`: the Gherkin it implements, word for word as agreed with the owner, tags and `#` lines
     included;
   - one parameter, `Screen screen`: the screen its attribute plays it on. BaseE2E reads it; the body never does (the
@@ -130,8 +133,10 @@ public sealed class SpoofClientTests : BaseE2E
   `bacon-reader-patched-with-spoof-client-logs-in-to-reddit-as-red-reader-phone`.
 - `ScenarioShapeTests` (`dotnet test`, no phone) fails a scenario that isn't a `[Theory]` with `[PlayOnPhone]` and
   its `Screen` parameter, has no `[TestDescription]`, isn't named after its Gherkin's title, whose screen attribute isn't
-  its Gherkin's tag, that has no `[PatchedWith]`, whose `[PatchedWith]` isn't exactly the patches its Given quotes, one
-  a line (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds.
+  its Gherkin's tag, that is in neither `Scenarios/Startup/` nor `Scenarios/LoggedIn/`, a Startup scenario without
+  `[PatchedWith]` or whose `[PatchedWith]` isn't exactly the patches its Given quotes, one a line
+  (`And BaconReader is patched with "<patch>"`), or names one BaseE2E adds, and a LoggedIn scenario without
+  `[PatchedWithEveryPatch]` or whose Given doesn't say `And BaconReader is patched with every patch`, or names a patch.
 - The body is `// Given` once, then a `// When` and a `// Then` for each round of the Gherkin, in its order (rule h).
   It calls only `Phone`, `Reddit` and `Asserting.That`: no Appium API, no locators, no adb, no HTTP, no `Assert.*`, no
   delays.
@@ -148,11 +153,14 @@ public sealed class SpoofClientTests : BaseE2E
   account made again (`TestAccount`); the scenario's `Reddit`, through which its Given makes its Reddit data; and after
   the scenario, a failure listing every request the app made that the fake doesn't answer (`Reddit/UnhandledRequests`,
   whose short ignore list says why for each);
-- **the patches:** it patches the clean APK with the scenario's `[PatchedWith]` patches, the fewest it needs, and the
-  ones every scenario gets, which a Given never names (`PatchedApps.Always`: "E2E fake Reddit"), with
-  `reseam patch --preset none --enable …` and the bundle `./gradlew bundle` built, and installs it with its runtime
-  permissions granted (`Device/PatchedApps`). An APK is patched once per set of patches and bundle, signed with one
-  test key, and sent to the phone only when it isn't the one installed (sending one takes ~40 s over the slow link);
+- **the patches:** it patches the clean APK with the bundle `./gradlew bundle` built, and installs it with its runtime
+  permissions granted (`Device/PatchedApps`):
+  - a Startup scenario's app with its `[PatchedWith]` patches, the fewest it needs, and the ones every scenario gets,
+    which a Given never names (`PatchedApps.Always`: "E2E fake Reddit"): `reseam patch --preset none --enable …`;
+  - a LoggedIn scenario's app with every patch of both bundles, "E2E fake Reddit" among them: `reseam patch --preset all`.
+
+  An APK is patched once per set of patches and bundle, signed with one test key, and sent to the phone only when it
+  isn't the one installed (sending one takes 1–3 minutes over the slow link): the LoggedIn scenarios share one;
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
   as just installed, but with its notifications denied (`Device/PatchedApps`): Android doesn't ask, on any device;
 - **the screen:** one Appium session on the phone, its UiAutomator2 helpers already installed
@@ -229,23 +237,33 @@ A scenario never repeats any of that.
 
 A scenario never depends on another scenario or on what ran before it: everything it needs comes from BaseE2E (its
 patched app, freshly cleared) and its own steps. Its rounds are isolated inside it the way its Gherkin says. There is
-one device, so scenarios run one after another (`xunit.runner.json`), in any order.
+one device, so scenarios run one after another (`xunit.runner.json`), in an order that sends each APK to the phone
+once (`ScenarioOrder`, tested by `ScenarioOrderTests`): the tests without the phone first, then the Startup scenarios,
+those with the same patches together, then the LoggedIn ones, each group by class and method. Each class is a test
+collection of its own, named by its place in that order (`ScenarioCollections`), and the collections run by name. A
+scenario never relies on that order: it only keeps the phone from switching APKs.
 
 ## g. Adding a test
 
 1. Write the **Gherkin** first (docs/given-when-then-test-rules.md) in a ```` ```gherkin ```` block and agree it with
    the owner: it is the PR's acceptance criterion.
-2. Find its **domain folder** under `Scenarios/`: the patch's area, as this bundle groups its patches
-   (`account`, `comments`, `media`, `posts`… → `Scenarios/Account/`, `Scenarios/Comments/`…).
-3. Its **class** is the patch's, `<Patch>Tests.cs` (`SpoofClientTests.cs`), in a folder of its own named for the class
-   without `Tests` (`Scenarios/Account/SpoofClient/SpoofClientTests.cs`). Its namespace stays the domain folder's
-   (`BaconReader.E2E.Scenarios.Account`): the recordings' folder is named by it.
-4. Write the scenario (rules a–f, and rule h for the translation).
-5. Grow `Infrastructure/` only by what this scenario needs: the page-object members, vocabulary cases and assertions it
+2. Find its **group**, the first folder under `Scenarios/`:
+   - `Scenarios/Startup/`: a patch that changes how the app starts, before the main screen (the login, the first-start
+     dialogs: "Spoof client", "Disable final release announcement", "Prompt to open Reddit links", "Disable feedback
+     popup"). Its app is patched with only the patches its Given names, since it tests exactly those dialogs and steps;
+   - `Scenarios/LoggedIn/`: every other patch. Its app is patched with every patch, one APK for every LoggedIn
+     scenario, and its Given opens the app and logs in.
+3. Find its **domain folder** under the group's: the patch's area, as this bundle groups its patches
+   (`account`, `comments`, `media`, `posts`… → `Scenarios/Startup/Account/`, `Scenarios/LoggedIn/Comments/`…).
+4. Its **class** is the patch's, `<Patch>Tests.cs` (`SpoofClientTests.cs`), in a folder of its own named for the class
+   without `Tests` (`Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs`). Its namespace stays the domain
+   folder's (`BaconReader.E2E.Scenarios.Startup.Account`): the recordings' folder is named by it (`Startup/Account`).
+5. Write the scenario (rules a–f, and rule h for the translation).
+6. Grow `Infrastructure/` only by what this scenario needs: the page-object members, vocabulary cases and assertions it
    calls. A missing content description goes into the patch, in the same PR.
-6. Run it unrecorded while you work: `tools/e2e/record.sh --no-video <its class>` (`--no-bundle` when the patches
+7. Run it unrecorded while you work: `tools/e2e/record.sh --no-video <its class>` (`--no-bundle` when the patches
    didn't change).
-7. Record it once, right before the push, never between pushes: `tools/e2e/record.sh --changed-since origin/main`. Each
+8. Record it once, right before the push, never between pushes: `tools/e2e/record.sh --changed-since origin/main`. Each
    GIF shows what the Gherkin says. Right after the push, `tools/e2e/push-gifs.sh` posts the GIFs on the PR.
 
 ## h. From a Gherkin to a scenario
@@ -259,9 +277,11 @@ Line for line, in the Gherkin's order:
 | `Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader` | `public async Task BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader(Screen screen)` |
 | `Given Reddit has a post "Weekly thread" in r/e2e` | `// Given`: `Reddit.HasAPost("Weekly thread", "e2e")` |
 | `And the post "Weekly thread" has a comment with a GIF` | `// Given`: `Reddit.ThePost("Weekly thread").HasACommentWithAGif()` |
-| `And BaconReader is patched with "Spoof client"`, one line a patch | `[PatchedWith(Patch.SpoofClient, …)]`, every patch the Given names |
+| `And BaconReader is patched with "Spoof client"`, one line a patch (Startup) | `[PatchedWith(Patch.SpoofClient, …)]`, every patch the Given names |
+| `And BaconReader is patched with every patch` (LoggedIn) | `[PatchedWithEveryPatch]` |
 | `And BaconReader is installed` | nothing: BaseE2E installed it |
 | `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
+| `And the test account is logged in` | `// Given`: `Phone.BaconReader.LogInWithTheTestAccountAsync()`, after it opens |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |
