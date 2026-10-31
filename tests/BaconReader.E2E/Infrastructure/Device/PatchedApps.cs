@@ -151,13 +151,26 @@ public static partial class PatchedApps
     }
 
     /// <summary>
-    /// Leaves the installed app as if just installed: stopped, its data cleared (logins, settings, what it cached), with
-    /// its notifications denied, as if the user had answered "Don’t allow". Otherwise Android asks "Allow BaconReader
+    /// Leaves the installed app as if just installed: its data cleared (<see cref="ClearDataAsync"/>), and no link it
+    /// declares selected on Android's "Open by default" screen, which clearing its data keeps ("Prompt to open Reddit
+    /// links" asks only while none of its Reddit links is).
+    /// </summary>
+    public static async Task ResetAsync()
+    {
+        await ClearDataAsync();
+        await Commands.ShellAsync(
+            $"pm set-app-links-user-selection --user 0 --package {E2EDevice.Package} false all"
+            + $" && pm set-app-links-allowed --user 0 --package {E2EDevice.Package} true");
+    }
+
+    /// <summary>
+    /// Stops the app and clears its data (logins, settings, what it cached), as App info's "Clear storage" does, with its
+    /// notifications denied, as if the user had answered "Don’t allow". Otherwise Android asks "Allow BaconReader
     /// Premium to send you notifications?" when BaconReader opens its next screen ("Add account"), over it, not as it
     /// opens: Android requests the question at launch, but drops it. No scenario is about it, so none answers it
     /// (docs/given-when-then-test-rules.md, section 4).
     /// </summary>
-    public static async Task ResetAsync()
+    public static async Task ClearDataAsync()
     {
         const string notifications = "android.permission.POST_NOTIFICATIONS";
         await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");

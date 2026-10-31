@@ -178,7 +178,7 @@ A scenario never repeats any of that.
 ## c. Phone
 
 `Infrastructure/Phone/` models the phone as the user holds it: Android, and the apps on it.
-- **`Phone`**: Android's own screens, one class each (`Phone.Launcher`; later a permission dialog, "Open by default").
+- **`Phone`**: Android's own screens, one class each (`Phone.Launcher`, `Phone.AppInfo`, `Phone.OpenByDefault`).
 - **`Phone.BaconReader`** (`Phone/BaconReader/BaconReaderApp.cs`): the app. One class per screen (an activity:
   `MainActivity` → `Phone.BaconReader.Main`) in `Screens/` and per dialog in `Dialogs/`, named and nested as the app
   does: `Phone.BaconReader.Main.Toolbar`. A part the user sees as its own (a toolbar, a post's row) gets its own class.
