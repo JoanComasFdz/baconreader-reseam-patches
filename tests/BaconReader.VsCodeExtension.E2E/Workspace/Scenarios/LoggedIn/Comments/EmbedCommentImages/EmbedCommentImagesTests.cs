@@ -4,18 +4,17 @@
 using BaconReader.E2E.Infrastructure;
 using JoanComasFdz.AssertingThat;
 
-namespace BaconReader.E2E.Scenarios.Comments;
+namespace BaconReader.E2E.Scenarios.LoggedIn.Comments;
 
 /// <summary>A fixture of the VS Code extension's e2e scenarios: an app scenario with no recording yet.</summary>
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
     [Theory, PlayOnPhone]
-    [PatchedWith(Patch.EmbedCommentImages, Patch.SpoofClient)]
+    [PatchedWithEveryPatch]
     [TestDescription("""
         @phone
         Scenario: Embed comment images shows a GIF in a comment as an image
-          Given BaconReader is patched with "Embed comment images"
-          And BaconReader is patched with "Spoof client"
+          Given BaconReader is patched with every patch
           When I open the post's comments
           Then the comment shows the GIF as an image
         """)]

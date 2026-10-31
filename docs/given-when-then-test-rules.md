@@ -25,7 +25,7 @@ phone.
 ## Example
 
 The first worked example is
-[SpoofClientTests.cs](../tests/BaconReader.E2E/Scenarios/Account/SpoofClient/SpoofClientTests.cs).
+[SpoofClientTests.cs](../tests/BaconReader.E2E/Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs).
 
 ## 1. What is a Gherkin
 
@@ -61,15 +61,19 @@ Scenario: <what it proves, as a statement>
    It is also the test's method name (each run of letters and digits a word, an apostrophe joining its word,
    capitalized, a word in capitals keeping only its first one: `ShowTablesDrawsARedditTableAsAGrid`,
    `EmbedCommentImagesShowsAGifInAComment`), so it starts with a letter and reads well run together.
-3. **Given:** what Reddit has (section 7), the app, **every patch it is patched with, each in quotes** (the fewest the
-   scenario needs: the patch under test, and what it needs to get there, e.g. "Spoof client" to log in), and the state
-   it starts in. **One fact a line,** each a line any scenario can reuse word for word: the first line `Given`, the
-   next ones `And`.
+3. **Given:** what Reddit has (section 7), the app, what it is patched with, and the state it starts in. **One fact a
+   line,** each a line any scenario can reuse word for word: the first line `Given`, the next ones `And`.
    - `Given Reddit has a post "Weekly thread" in r/e2e`, `And the post "Weekly thread" has a comment with a GIF`: the
      Reddit data the scenario needs, first, since the app shows it once it opens;
-   - `And BaconReader is patched with "Spoof client"`: one line for each patch;
+   - what the app is patched with, by the scenario's group ([patch scenarios](given-when-then-patch-scenarios.md),
+     "Scope"):
+     - a **Startup** scenario (how the app starts: the login, the first-start dialogs): **every patch it is patched
+       with, each in quotes,** the fewest it needs, one line each: `And BaconReader is patched with "Spoof client"`;
+     - a **LoggedIn** scenario (everything else): `And BaconReader is patched with every patch`, one line;
    - `And BaconReader is installed`: the app is installed, not opened yet;
-   - `And BaconReader is open`: opened on its main screen, its first-start dialogs answered (section 4.4).
+   - `And BaconReader is open`: opened on its main screen, its first-start dialogs answered (section 4.4);
+   - `And the test account is logged in`: logged in with the test account (section 7), back on the main screen's
+     posts. A LoggedIn scenario's Given ends with "is open" and this line.
 
    The test-only patches every scenario's app gets (its README, "The fake Reddit") are never named.
 4. **One Gherkin per Given.** Checks that start from the same patches and the same state are one Gherkin: each becomes
@@ -93,7 +97,7 @@ Scenario: <what it proves, as a statement>
    `I select "Best"` even when it is already selected.
 3. **Keep checking and doing apart.** "The menu offers…" is a Then. Tapping is a When. They are never one line.
 4. **The first-start dialogs.** A fresh install shows dialogs before the main screen: BaconReader's "FINAL RELEASE
-   ANNOUNCEMENT!" (unless "Disable final release announcement" is patched in) and, with "Prompt to open Reddit links", "Open Reddit links with BaconReader?". A Gherkin about opening the app taps them in its own When lines; any other
+   ANNOUNCEMENT!" (unless "Disable final release announcement" is patched in) and, with "Prompt to open Reddit links", "Open Reddit links with BaconReader?". With every patch, only "Open Reddit links with BaconReader?" shows. A Gherkin about opening the app (a Startup one) taps them in its own When lines; any other
    folds them into its Given ("is open"), which answers "Not now" to the links prompt, unless it says "with Reddit links
    set up". Android's "Allow BaconReader Premium to send you notifications?" never shows: the tests deny BaconReader's
    notifications before each scenario, since the phone asks only when BaconReader opens its next screen, over it. No
@@ -119,8 +123,8 @@ The order of the rounds: [patch scenarios](given-when-then-patch-scenarios.md), 
 
 ## 7. Fixtures
 
-A scenario needs no fixture file: its app is the clean APK patched with the patches its Given names, and it talks to a
-fake Reddit, never to Reddit. What it needs from Reddit (a post with a table, a comment with an image) its Given makes
+A scenario needs no fixture file: its app is the clean APK patched with the patches its Given names (a Startup
+scenario) or with every patch (a LoggedIn one), and it talks to a fake Reddit, never to Reddit. What it needs from Reddit (a post with a table, a comment with an image) its Given makes
 there, line by line, in its own words (`Given Reddit has a post "Weekly thread" in r/e2e`), and nothing else is there:
 a scenario sees only the Reddit data it made. A post or a comment is named in the Gherkin by its title or its text,
 never by an id or by position in a feed. A logged-in scenario uses the fake Reddit's test account (its app's README,

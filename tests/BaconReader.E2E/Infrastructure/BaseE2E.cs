@@ -23,9 +23,11 @@ namespace BaconReader.E2E.Infrastructure;
 ///   emptied before each scenario, with the test account (<see cref="TestAccount"/>) made again; the scenario builds
 ///   its Reddit data through <see cref="Reddit"/>; after it, the scenario fails if the app made a request the fake
 ///   couldn't answer (<see cref="UnhandledRequests"/>);
-/// - patches the clean BaconReader APK with the scenario's <see cref="PatchedWithAttribute"/> patches, the fewest it
-///   needs, and the ones every scenario needs (<see cref="PatchedApps.Always"/>: "E2E fake Reddit"…), and installs it
-///   (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the one installed already);
+/// - patches the clean BaconReader APK with the scenario's patches, a Startup scenario's <see cref="PatchedWithAttribute"/>
+///   patches, the fewest it needs, or a LoggedIn scenario's every patch (<see cref="PatchedWithEveryPatchAttribute"/>),
+///   and the ones every scenario needs (<see cref="PatchedApps.Always"/>: "E2E fake Reddit"…), and installs it
+///   (<see cref="PatchedApps"/>: once per set of patches and bundle, and only when it isn't the one installed already;
+///   <see cref="ScenarioOrder"/> runs the scenarios of one set together);
 /// - a fresh app per scenario: stopped and its data cleared, as just installed but with its notifications denied (so
 ///   Android doesn't ask, on any device), and Downloads/BaconReader emptied, so scenarios share nothing (no login, no setting, no cache, no
 ///   saved image);
@@ -47,7 +49,7 @@ public abstract class BaseE2E : IAsyncLifetime
 
     private AndroidDriver? driver;
     private ScreenRecording? recording;
-    private IReadOnlyList<Patch> patches = [];
+    private PatchSet patches = new PatchSet.Only([]);
     private Screen screen;
     private readonly Stopwatch sinceRecording = new();
     private double? appShownAt;
@@ -71,7 +73,7 @@ public abstract class BaseE2E : IAsyncLifetime
 
         screen = ReadScreen();
         patches = ReadPatches();
-        var apk = await PatchedApps.PatchAsync([.. patches.Union(PatchedApps.Always)]);
+        var apk = await PatchedApps.PatchAsync(patches);
         await PatchedApps.InstallAsync(apk);
         await FakeRedditLink.EnsureAsync();
         await PatchedApps.ResetAsync();
@@ -135,11 +137,10 @@ public abstract class BaseE2E : IAsyncLifetime
 
         if (closing is not null)
         {
-            await Task.Run(() =>
-            {
-                closing.TerminateApp(E2EDevice.Package);
-                closing.Quit();
-            });
+            // Stopped over adb, not with Appium's TerminateApp: after a recording of minutes, the "dumpsys activity
+            // processes" it runs first timed out at Appium's 20 s over the slow link, and failed a scenario that passed.
+            await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
+            await Task.Run(closing.Quit);
         }
     }
 
@@ -188,8 +189,8 @@ public abstract class BaseE2E : IAsyncLifetime
     private static Screen ReadScreen() =>
         TestContext.Current.Test is IXunitTest { TestMethodArguments: [Screen played] } ? played : Screen.Phone;
 
-    private IReadOnlyList<Patch> ReadPatches() =>
-        ReadMethod()?.GetCustomAttribute<PatchedWithAttribute>()?.Patches ?? [];
+    private PatchSet ReadPatches() =>
+        (ReadMethod() is { } method ? PatchSet.Of(method) : null) ?? new PatchSet.Only([]);
 
     private MethodInfo? ReadMethod() =>
         TestContext.Current.TestMethod?.MethodName is { } name ? GetType().GetMethod(name) : null;
@@ -211,7 +212,7 @@ public abstract class BaseE2E : IAsyncLifetime
             gherkin.Text,
             screen.ToString().ToLowerInvariant(),
             gifName,
-            [.. patches.Select(patch => patch.ToShownText())],
+            patches.ToShownText(),
             appShownAt,
             passed);
         await File.WriteAllTextAsync(Path.Combine(folder, gifName + ".json"), JsonSerializer.Serialize(record, RecordingJson));

@@ -12,7 +12,9 @@ namespace BaconReader.E2E.Infrastructure.Device;
 /// Patches the clean BaconReader APK with a scenario's patches and installs it on the phone, as cheaply as a slow
 /// link to it allows (a cloud session's reaches it at ~3–4 Mbit/s):
 /// - the released bundle and the test-only one (e2e-patches/) are both loaded, and "E2E fake Reddit" gets the fake Reddit
-///   server's URL (<see cref="E2EDevice.FakeRedditUrl"/>) when a scenario names it;
+///   server's URL (<see cref="E2EDevice.FakeRedditUrl"/>), in every scenario's app (<see cref="Always"/>);
+/// - a Startup scenario's set of patches gets <c>--preset none</c> and an <c>--enable</c> for each; a LoggedIn scenario's,
+///   every patch, <c>--preset all</c>: every patch of both bundles, "E2E fake Reddit" included;
 /// - each set of patches is patched once per bundle (<c>build/e2e/patched/&lt;hash&gt;.apk</c>; reseam takes about a second);
 /// - every APK is signed with one test key (<c>build/e2e/signing/</c>, made by reseam on the first patch), so one installs over
 ///   another; an install signed with another key (the owner's, another session's) is uninstalled first;
@@ -36,8 +38,11 @@ public static partial class PatchedApps
     /// </summary>
     public static IReadOnlyList<Patch> Always { get; } = [Patch.E2EFakeReddit];
 
-    /// <summary>Patches the clean APK with <paramref name="patches"/> (once per bundle) and returns the patched APK.</summary>
-    public static async Task<string> PatchAsync(IReadOnlyList<Patch> patches)
+    /// <summary>
+    /// Patches the clean APK with <paramref name="patchSet"/> and <see cref="Always"/> (once per bundle) and returns the
+    /// patched APK.
+    /// </summary>
+    public static async Task<string> PatchAsync(PatchSet patchSet)
     {
         await OneAtATime.WaitAsync();
         try
@@ -45,7 +50,8 @@ public static partial class PatchedApps
             CheckExists(E2EDevice.Bundle, "the bundle: build it with ./gradlew bundle (README)");
             CheckExists(E2EDevice.TestBundle, "the e2e bundle: build it with ./gradlew -p e2e-patches bundle (README)");
             CheckExists(E2EDevice.BaseApk, "the clean BaconReader APK: the phone's connection script downloads it (README, \"The phone\")");
-            var names = patches.Select(patch => patch.ToShownText()).Order(StringComparer.Ordinal).ToArray();
+            // Every patch is every patch of both bundles, Always's among them.
+            var names = patchSet is PatchSet.Only only ? new PatchSet.Only([.. only.Patches.Union(Always)]).ToShownText() : patchSet.ToShownText();
             var key = Hash(
                 $"{HashFile(E2EDevice.Bundle)}\n{HashFile(E2EDevice.TestBundle)}\n{HashFile(E2EDevice.BaseApk)}\n{E2EDevice.FakeRedditUrl}\n{string.Join('\n', names)}")[..16];
             var patched = Path.Combine(E2EDevice.WorkFolder, "patched", key + ".apk");
@@ -66,17 +72,21 @@ public static partial class PatchedApps
                 arguments.AddRange(["--trust", signer]);
             }
 
-            arguments.AddRange(["--preset", "none"]);
-            foreach (var name in names)
+            if (patchSet is PatchSet.Every)
             {
-                arguments.AddRange(["--enable", name]);
+                arguments.AddRange(["--preset", "all"]);
+            }
+            else
+            {
+                arguments.AddRange(["--preset", "none"]);
+                foreach (var name in names)
+                {
+                    arguments.AddRange(["--enable", name]);
+                }
             }
 
-            // reseam refuses an option of a patch it doesn't run.
-            if (patches.Contains(Patch.E2EFakeReddit))
-            {
-                arguments.AddRange(["--option", $"{FakeRedditUrlOption}={E2EDevice.FakeRedditUrl}"]);
-            }
+            // Every set has "E2E fake Reddit" (Always): reseam refuses an option of a patch it doesn't run.
+            arguments.AddRange(["--option", $"{FakeRedditUrlOption}={E2EDevice.FakeRedditUrl}"]);
 
             var signingKey = Path.Combine(SigningFolder, "e2e.pk8");
             var signingCert = Path.Combine(SigningFolder, "e2e.der");
@@ -121,6 +131,7 @@ public static partial class PatchedApps
             return;
         }
 
+        var installing = System.Diagnostics.Stopwatch.StartNew();
         await Commands.ShellAsync("mkdir -p /data/local/tmp/e2e");
         await Commands.AdbAsync("push", apk, DeviceApk);
         var installed = await Commands.ShellAsync($"pm install -r -g {DeviceApk} 2>&1 || true");
@@ -135,6 +146,8 @@ public static partial class PatchedApps
         {
             throw new InvalidOperationException($"Installing {Path.GetFileName(apk)} failed: {installed}");
         }
+
+        RunLog.Installed(Path.GetFileName(apk), installing.Elapsed);
     }
 
     /// <summary>

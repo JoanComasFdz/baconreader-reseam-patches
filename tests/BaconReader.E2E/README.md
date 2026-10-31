@@ -45,9 +45,10 @@ For each scenario, `BaseE2E`:
 
 1. starts the fake Reddit, on the run's first scenario, and empties it, with the test account made again ("The fake
    Reddit" below);
-2. patches the clean APK with both bundles, the released one and the test-only one, enabling the scenario's
-   `[PatchedWith]` patches and "E2E fake Reddit", which every scenario gets (`reseam patch --preset none --enable …`),
-   once per set of patches and bundles (`build/e2e/patched/`);
+2. patches the clean APK with both bundles, the released one and the test-only one, once per set of patches and
+   bundles (`build/e2e/patched/`): a Startup scenario's app with its `[PatchedWith]` patches and "E2E fake Reddit", which
+   every scenario gets (`reseam patch --preset none --enable …`), a LoggedIn scenario's with every patch of both
+   bundles (`[PatchedWithEveryPatch]`, `reseam patch --preset all`), one APK for all of them ("Where tests go");
 3. installs it, unless it is the APK already installed, with its permissions granted; every APK is signed with one test
    key (`build/e2e/signing/`, made on the first patch), and an app signed with another key is uninstalled first;
 4. points the phone at the fake Reddit (`adb reverse`);
@@ -57,9 +58,10 @@ For each scenario, `BaseE2E`:
 7. after the scenario, fails it if the app made a request the fake Reddit doesn't answer.
 
 The scenario's Given then makes its Reddit data (`Reddit.HasAPost("Weekly thread", "e2e")`), and it opens the app itself: `Phone.Launcher.OpenBaconReaderAsync()` and the first-start dialogs
-(`FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", and with "Prompt to open Reddit links", "Open Reddit links with
-BaconReader?" → "Not now" or "Set up"), or `Phone.BaconReader.OpenAsync()`, which does all of it. Then it taps and checks what
-its patch changes.
+(`FINAL RELEASE ANNOUNCEMENT!` → "GOT IT :(", unless "Disable final release announcement" is patched in, and with
+"Prompt to open Reddit links", "Open Reddit links with BaconReader?" → "Not now" or "Set up"), or
+`Phone.BaconReader.OpenAsync()`, which does all of it: with every patch, only the links prompt shows. Then it taps and
+checks what its patch changes.
 
 A scenario replaces the installed BaconReader with its own test-signed build and clears its data: whatever was
 installed and logged in on the phone doesn't survive a run.
@@ -73,6 +75,10 @@ end); every other wait took 4.2 s or less. Each wait is about twice the longest 
 the emulator needed, only `Waiting`'s read again of a view gone stale fired (once); the others are gone. A run writes
 each wait's time to the scenario's output in the .trx (`out/.results/`), and each retry that fires to its console too
 (`RunLog`), so the next measurement needs no code.
+
+Measured on 2026-10-31 on the Pixel 6 Pro, in the Reseam repo, one unrecorded run of the seven phone scenarios before
+and after the Startup and LoggedIn groups ("Where tests go"): 14 m 53 s with 4 APKs sent to the phone, then 12 m 07 s
+with 2 (~1 minute each). A run writes each install to its console (`RunLog`, "installed: …").
 
 ## The fake Reddit
 
@@ -118,7 +124,7 @@ In the shell that sourced the phone's connection script:
 
 ```bash
 tools/e2e/record.sh --no-video SpoofClientTests            # while developing: unrecorded, unpaced
-tools/e2e/record.sh --no-video --no-bundle Account         # a domain folder, reusing the last bundle
+tools/e2e/record.sh --no-video --no-bundle LoggedIn        # a group or a domain folder (Startup/Account), reusing the last bundle
 tools/e2e/record.sh --changed-since origin/main            # right before the push: this branch's scenarios, recorded
 tools/e2e/push-gifs.sh                                     # right after the push: posted on the branch's PR
 ```
@@ -136,23 +142,37 @@ By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep 
 `Infrastructure/` holds everything that isn't a scenario: `BaseE2E`, `Device/` (adb, patching and installing,
 recording, the link to the fake Reddit), the `Phone` page objects (Android's screens on `Phone`, the app's on `Phone.BaconReader`), `Reddit/` (the fake Reddit in the Gherkins' words), the `Vocabulary` and the assertions. What a scenario is (its Gherkin,
 `[TestDescription]`, `[PlayOnPhone]`, its names, its recording's record) is in `tests/BaconReader.E2E.Shared`, shared
-with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](../BaconReader.VsCodeExtension.E2E/README.md)). `Scenarios/` is organized by the patches'
-areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`, `posts`, and `e2e` for the test-only patches): folder = area, class = one patch
-(`<Patch>Tests.cs`) in a folder of its own, method = one scenario (one Gherkin).
+with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](../BaconReader.VsCodeExtension.E2E/README.md)). `Scenarios/` holds two groups, each run together so the phone gets each APK once
+(E2E-TEST-CODE-RULES.md, rules f and g):
+
+- **`Scenarios/Startup/`: patches that change how the app starts,** before the main screen: "Spoof client" (the login),
+  "Disable final release announcement", "Prompt to open Reddit links" and "Disable feedback popup". Each scenario is
+  patched with only the patches its Given names, since it tests exactly those dialogs and steps.
+- **`Scenarios/LoggedIn/`: everything else.** Every scenario is patched with every patch, one APK for all of them, and
+  its Given opens the app and logs in: `And BaconReader is patched with every patch`, `And BaconReader is open`,
+  `And the test account is logged in`.
+
+Inside a group, folders follow the patches' areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`,
+`posts`, and `e2e` for the test-only patches): folder = area, class = one patch (`<Patch>Tests.cs`) in a folder of its
+own, method = one scenario (one Gherkin). A recording's folder is its namespace under `Scenarios`: `Startup/Account`.
 
 ```
-Scenarios/Account/SpoofClient/SpoofClientTests.cs
+Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs
+Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs
 ```
 
 ## Logging in
 
 A scenario logs in as BaconReader does, through the fake Reddit's login, made like Reddit's (the same page titles, field
 ids and buttons): "Add account" in the left menu, "Log In" with the test account, then "Accept" on the page asking to
-connect the app ("Spoof client" logs in as RedReader), so its Given names "Spoof client". Every scenario that loads posts
-or comments does it: logged out, Reddit refuses BaconReader ([SpoofClientTests.cs](Scenarios/Account/SpoofClient/SpoofClientTests.cs)).
+connect the app ("Spoof client" logs in as RedReader). Every scenario that loads posts or comments does it: logged out,
+Reddit refuses BaconReader ([SpoofClientTests.cs](Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs)). A
+LoggedIn scenario's Given says `And the test account is logged in` (`Phone.BaconReader.LogInWithTheTestAccountAsync()`);
+a Startup one that logs in names "Spoof client".
 
 ## Isolation
 
-One device, so scenarios run one after another (`xunit.runner.json`). Each starts from the app's data cleared,
+One device, so scenarios run one after another (`xunit.runner.json`), Startup first, then LoggedIn (`ScenarioOrder`):
+the order only saves installs, no scenario relies on it. Each starts from the app's data cleared,
 Downloads/BaconReader and the fake Reddit emptied, so nothing one does (a login, a setting, a saved image, a post)
 reaches another.
