@@ -137,11 +137,10 @@ public abstract class BaseE2E : IAsyncLifetime
 
         if (closing is not null)
         {
-            await Task.Run(() =>
-            {
-                closing.TerminateApp(E2EDevice.Package);
-                closing.Quit();
-            });
+            // Stopped over adb, not with Appium's TerminateApp: after a recording of minutes, the "dumpsys activity
+            // processes" it runs first timed out at Appium's 20 s over the slow link, and failed a scenario that passed.
+            await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
+            await Task.Run(closing.Quit);
         }
     }
 
