@@ -55,7 +55,13 @@ public sealed class LeftMenu(AndroidDriver driver)
             if (taps > 1 && !driver.FindElements(target).Any(view => view.Displayed))
             {
                 // It opened just as the wait ended.
+                RunLog.RetryFired("LeftMenu.ClickAsync", taps, $"\"{entry.ToShownText()}\" opened just after 20 s, no tap again");
                 return;
+            }
+
+            if (taps > 1)
+            {
+                RunLog.RetryFired("LeftMenu.ClickAsync", taps, $"\"{entry.ToShownText()}\" didn't open within 20 s, tapping again");
             }
 
             await OnScreen.PressAsync(driver, target);
@@ -84,7 +90,7 @@ public sealed class LeftMenu(AndroidDriver driver)
     internal async Task<bool> ShowsAsync(MenuEntry entry)
     {
         var target = Locate.AppIdWithText("text", entry.ToShownText());
-        return await Waiting.FindWithinAsync(driver, target, TimeSpan.FromSeconds(5)) is not null;
+        return await Waiting.FindWithinAsync(driver, target, TimeSpan.FromSeconds(5), $"\"{entry.ToShownText()}\" in the left menu") is not null;
     }
 
     /// <summary>Closes the menu, as Android's Back does.</summary>

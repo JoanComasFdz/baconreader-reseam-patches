@@ -74,6 +74,7 @@ public sealed class LogIn(AndroidDriver driver)
             catch (Exception exception) when (attempt < 3 && exception is OpenQA.Selenium.NoSuchElementException or OpenQA.Selenium.StaleElementReferenceException or TimeoutException)
             {
                 // The field's view was replaced: find it and tap it again.
+                RunLog.RetryFired("LogIn.TypeAsync", attempt + 1, $"{exception.GetType().Name}: {exception.Message}");
             }
         }
     }

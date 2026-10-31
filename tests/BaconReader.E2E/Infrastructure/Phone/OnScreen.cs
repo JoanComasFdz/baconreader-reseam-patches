@@ -120,7 +120,7 @@ public static class OnScreen
     {
         await WaitForActionGapAsync(driver);
         var until = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (true)
+        for (var attempt = 1; ; attempt++)
         {
             try
             {
@@ -130,6 +130,7 @@ public static class OnScreen
             }
             catch (OpenQA.Selenium.StaleElementReferenceException) when (DateTime.UtcNow < until)
             {
+                RunLog.RetryFired("OnScreen.ReadAsync", attempt + 1, "a view went stale while read, reading again");
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
             }
         }

@@ -100,6 +100,8 @@ public sealed class BaconReaderApp(
                 {
                     throw;
                 }
+
+                RunLog.RetryFired("BaconReaderApp.LogInWithTheTestAccountAsync", attempt + 1, $"the login screen closed ({exception.GetType().Name}: {exception.Message}), from \"Add account\" again");
             }
         }
 
