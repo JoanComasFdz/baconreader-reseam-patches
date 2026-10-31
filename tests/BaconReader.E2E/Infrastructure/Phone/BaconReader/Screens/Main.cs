@@ -44,7 +44,7 @@ public sealed class Main(AndroidDriver driver, Action noteShown)
     public async Task WaitUntilShownAsync()
     {
         await Toolbar.WaitUntilShownAsync();
-        await Waiting.UntilShownAsync(driver, PostsList, TimeSpan.FromSeconds(60), "The main screen's list of posts");
+        await Waiting.UntilShownAsync(driver, PostsList, TimeSpan.FromSeconds(10), "The main screen's list of posts");
         noteShown();
     }
 }

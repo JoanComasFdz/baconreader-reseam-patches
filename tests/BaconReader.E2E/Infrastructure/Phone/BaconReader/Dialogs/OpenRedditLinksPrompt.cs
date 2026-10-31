@@ -17,7 +17,7 @@ public sealed class OpenRedditLinksPrompt(AndroidDriver driver)
 
     /// <summary>Waits until the dialog is shown.</summary>
     public Task WaitUntilShownAsync() =>
-        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(30), "The \"Open Reddit links with BaconReader?\" dialog");
+        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(10), "The \"Open Reddit links with BaconReader?\" dialog");
 
     /// <summary>Taps "Set up": Android's "Open by default" settings for BaconReader open.</summary>
     public Task ClickSetUpAsync() => OnScreen.PressAsync(driver, SetUp);

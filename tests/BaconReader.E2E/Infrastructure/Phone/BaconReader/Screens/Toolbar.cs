@@ -19,7 +19,7 @@ public sealed class Toolbar(AndroidDriver driver)
 
     /// <summary>Waits until the toolbar shows a feed's name.</summary>
     public Task WaitUntilShownAsync() =>
-        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(60), "The main screen's toolbar");
+        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(10), "The main screen's toolbar");
 
     /// <summary>Selects <paramref name="feed"/>: taps the feed's name, then <paramref name="feed"/> in the list it opens.</summary>
     public async Task SelectFeedAsync(Feed feed)

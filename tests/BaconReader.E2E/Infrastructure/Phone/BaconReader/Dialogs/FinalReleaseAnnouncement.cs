@@ -13,7 +13,7 @@ public sealed class FinalReleaseAnnouncement(AndroidDriver driver)
 
     /// <summary>Waits until the dialog is shown (BaconReader shows it a moment after it opens).</summary>
     public Task WaitUntilShownAsync() =>
-        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(30), "The \"FINAL RELEASE ANNOUNCEMENT!\" dialog");
+        Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(10), "The \"FINAL RELEASE ANNOUNCEMENT!\" dialog");
 
     /// <summary>Taps "GOT IT :(", which closes the dialog.</summary>
     public Task ClickGotItAsync() => OnScreen.PressAsync(driver, GotIt);

@@ -31,7 +31,7 @@ public sealed class PostText(AndroidDriver driver)
     public Task WaitUntilMediaShownAsync() =>
         Waiting.UntilAsync(
             () => driver.FindElements(Text).Any(text => text.Displayed) && Media.Images(PostImages(driver)).Count > 0,
-            TimeSpan.FromSeconds(30),
+            TimeSpan.FromSeconds(10),
             "An image under the post's text loading");
 
     /// <summary>What the post's text shows: its text, and how many images under it.</summary>
@@ -93,7 +93,7 @@ public sealed class Comments(AndroidDriver driver)
     /// comment shows.
     /// </summary>
     public Task WaitUntilShownAsync() =>
-        Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(30), "A comment of the post");
+        Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(10), "A comment of the post");
 
     /// <summary>
     /// Scrolls the comments until the comment "<paramref name="text"/>" shows whole, between the sort bar and
@@ -229,7 +229,7 @@ public sealed class Comments(AndroidDriver driver)
             () => FindComment(text) is { } comment
                 && comment.FindElements(Position).FirstOrDefault()?.Text is { Length: > 0 } position
                 && position == comment.FindElements(Duration).FirstOrDefault()?.Text,
-            TimeSpan.FromSeconds(120),
+            TimeSpan.FromSeconds(30),
             $"The video of the comment \"{text}\" playing to its end");
 
     /// <summary>What the player of the comment "<paramref name="text"/>" shows: its position and its length.</summary>

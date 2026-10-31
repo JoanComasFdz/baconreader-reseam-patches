@@ -68,7 +68,8 @@ public static class Waiting
 
     // UiAutomator2 finds only views on the screen (its allowInvisibleElements setting is off), so a view found is shown:
     // no second round trip to ask. A view that goes stale while it's read (a list or a web page redrawing) isn't shown
-    // yet: the next poll finds the new one.
+    // yet: the next poll finds the new one. On the Pixel 6 Pro a view went stale in 1 wait of 4 runs of every scenario
+    // (2026-10-31: an image under a comment loading).
     private static IWebElement? FindShown(AndroidDriver driver, By shown, ref int stale)
     {
         try

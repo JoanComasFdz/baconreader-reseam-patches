@@ -113,27 +113,16 @@ public static class OnScreen
     }
 
     /// <summary>
-    /// Reads what the screen shows with <paramref name="read"/>. A view read can be replaced halfway (a feed still
-    /// reloading hands Android a new list): it reads again then, for 10 s at most.
+    /// Reads what the screen shows with <paramref name="read"/>. On the emulator a view read was at times replaced halfway
+    /// (a feed still reloading), and it read again; on the Pixel 6 Pro no read went stale in 4 runs of every scenario
+    /// (2026-10-31), the scenarios' waits having let the screen settle, so it reads once.
     /// </summary>
     public static async Task<T> ReadAsync<T>(AndroidDriver driver, Func<T> read)
     {
         await WaitForActionGapAsync(driver);
-        var until = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        for (var attempt = 1; ; attempt++)
-        {
-            try
-            {
-                var shown = await Task.Run(read);
-                NoteStepEnded(driver);
-                return shown;
-            }
-            catch (OpenQA.Selenium.StaleElementReferenceException) when (DateTime.UtcNow < until)
-            {
-                RunLog.RetryFired("OnScreen.ReadAsync", attempt + 1, "a view went stale while read, reading again");
-                await Task.Delay(TimeSpan.FromMilliseconds(100));
-            }
-        }
+        var shown = await Task.Run(read);
+        NoteStepEnded(driver);
+        return shown;
     }
 
     private static async Task WaitForActionGapAsync(AndroidDriver driver)
