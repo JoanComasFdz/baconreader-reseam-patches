@@ -190,7 +190,7 @@ A scenario never repeats any of that.
   `ReadAsync`), never straight to Appium: while recording, a step starts no sooner than `--action-gap` seconds after the
   previous one ended, so the GIF doesn't tap faster than the eye follows. A view that is off screen is scrolled to first
   (through `OnScreen`, when a scenario first needs it). `PressAsync` shows where it taps before it taps: the recording
-  draws a ring there from 0.7 s before the tap until just after it (Android draws no touch for Appium's taps);
+  draws a ring there from 0.4 s before the tap until just after it (Android draws no touch for Appium's taps);
   `TouchAsync` does the same for any other touch (a double tap, a long press). Waits don't go through it (`Waiting`).
 - Snapshots don't retry: a scenario waits for what it expects before it reads.
 - Locators are private to their class and use only `Locate`: a resource id (`Locate.AppId("toolbarTitle")`, Android's

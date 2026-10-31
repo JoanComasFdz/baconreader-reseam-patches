@@ -32,7 +32,7 @@ the scenarios joins the phone, starts Appium in the session and exports what the
 | `E2E_FAKE_REDDIT_URL` | `http://127.0.0.1:5080` | the fake Reddit, as the phone reaches it: "E2E fake Reddit"'s `baseUrl`; the fake listens on its port here |
 | `E2E_RESEAM` | `reseam` | the reseam CLI |
 | `E2E_VIDEO_DIR` | unset | record each run there (`record.sh` sets it) |
-| `E2E_ACTION_GAP` | `1` | least seconds between two recorded steps |
+| `E2E_ACTION_GAP` | `0.4` | least seconds between two recorded steps |
 | `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (a phone just reset) |
 
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the
@@ -91,7 +91,7 @@ the test process.
 - **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches. A Given and `[PatchedWith]`
   never name it, only the patches under test (`ScenarioShapeTests` checks it).
 - **The phone reaches it** through `adb reverse tcp:5080 tcp:5080` (the port of `E2E_FAKE_REDDIT_URL`), which BaseE2E
-  sets once the device is reached, and again when it's lost. BaconReader's network security config already allows
+  adds afresh before each scenario: one still listed can forward nothing after adb reconnects. BaconReader's network security config already allows
   cleartext HTTP, to 127.0.0.1 too.
 - **A scenario's Reddit.** BaseE2E empties the fake before each scenario and makes the test account, `e2e_user`
   (`TestAccount`); the scenario's Given makes the rest through `Reddit` (`Infrastructure/Reddit/`), in the Gherkin's

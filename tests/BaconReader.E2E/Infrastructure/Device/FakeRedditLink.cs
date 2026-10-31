@@ -10,16 +10,14 @@ namespace BaconReader.E2E.Infrastructure.Device;
 public static class FakeRedditLink
 {
     /// <summary>
-    /// Forwards the phone's port of <see cref="E2EDevice.FakeRedditUrl"/> to the same port here, unless it already is
-    /// (a forward is lost when adb loses the device).
+    /// Forwards the phone's port of <see cref="E2EDevice.FakeRedditUrl"/> to the same port here, afresh each time: a
+    /// forward is lost when adb loses the device, and one still listed can forward nothing after adb reconnects (seen
+    /// on the phone: the app's requests hung until the forward was added again).
     /// </summary>
     public static async Task EnsureAsync()
     {
         var port = new Uri(E2EDevice.FakeRedditUrl).Port;
-        var forwards = await Commands.AdbAsync("reverse", "--list");
-        if (!forwards.Contains($"tcp:{port} tcp:{port}", StringComparison.Ordinal))
-        {
-            await Commands.AdbAsync("reverse", $"tcp:{port}", $"tcp:{port}");
-        }
+        await Commands.AdbAsync("reverse", "--remove-all");
+        await Commands.AdbAsync("reverse", $"tcp:{port}", $"tcp:{port}");
     }
 }

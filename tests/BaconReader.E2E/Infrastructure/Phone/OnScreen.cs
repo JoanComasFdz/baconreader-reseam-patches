@@ -19,8 +19,8 @@ namespace BaconReader.E2E.Infrastructure.Phone;
 /// </summary>
 public static class OnScreen
 {
-    // How long a tap's ring is on the screen before the tap: ~10 of the GIF's 15 frames a second.
-    private static readonly TimeSpan TapShown = TimeSpan.FromMilliseconds(700);
+    // How long a tap's ring is on the screen before the tap: ~6 of the GIF's 15 frames a second.
+    private static readonly TimeSpan TapShown = TimeSpan.FromMilliseconds(400);
 
     // When each driver's last step ended (one driver per scenario, its steps one after another).
     private static readonly ConditionalWeakTable<AndroidDriver, Stopwatch> SinceLastStep = [];
@@ -55,9 +55,11 @@ public static class OnScreen
         var element = await Task.Run(find);
         if (TapsDrawnOn.TryGetValue(driver, out var recording))
         {
-            var (x, y) = Center(await Task.Run(() => element.GetAttribute("bounds") ?? ""));
+            // The ring's lead counts while its bounds come over the link: that round trip costs no time of its own.
             var shown = Stopwatch.GetTimestamp();
-            await Task.Delay(TapShown);
+            var bounds = Task.Run(() => element.GetAttribute("bounds") ?? "");
+            await Task.WhenAll(bounds, Task.Delay(TapShown));
+            var (x, y) = Center(await bounds);
             await Task.Run(() => touch(element));
             recording.NoteTap(x, y, shown, Stopwatch.GetTimestamp());
         }
@@ -110,13 +112,27 @@ public static class OnScreen
         NoteStepEnded(driver);
     }
 
-    /// <summary>Reads what the screen shows with <paramref name="read"/>.</summary>
+    /// <summary>
+    /// Reads what the screen shows with <paramref name="read"/>. A view read can be replaced halfway (a feed still
+    /// reloading hands Android a new list): it reads again then, for 10 s at most.
+    /// </summary>
     public static async Task<T> ReadAsync<T>(AndroidDriver driver, Func<T> read)
     {
         await WaitForActionGapAsync(driver);
-        var shown = await Task.Run(read);
-        NoteStepEnded(driver);
-        return shown;
+        var until = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (true)
+        {
+            try
+            {
+                var shown = await Task.Run(read);
+                NoteStepEnded(driver);
+                return shown;
+            }
+            catch (OpenQA.Selenium.StaleElementReferenceException) when (DateTime.UtcNow < until)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100));
+            }
+        }
     }
 
     private static async Task WaitForActionGapAsync(AndroidDriver driver)

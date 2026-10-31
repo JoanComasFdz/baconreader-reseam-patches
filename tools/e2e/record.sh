@@ -11,7 +11,7 @@
 # --changed-since <ref>: the scenario classes added or changed since the branch left <ref> (working tree included):
 # "this PR's scenarios" with origin/main. A change to the extension (tools/vscode-extension) or to the files its
 # scenarios open (the extension's project's Workspace/) picks every extension scenario, "selected": "fixtures".
-# --action-gap <seconds>: the least time between two steps of a recorded scenario (default 1).
+# --action-gap <seconds>: the least time between two steps of a recorded scenario (default 0.4).
 # The app's scenarios need the phone's connection in its environment (E2E_APPIUM_URL, E2E_ADB_SERIAL,
 # E2E_ARTIFACTS_DIR: run it in the shell that sourced the connection script, tests/BaconReader.E2E/README.md, "The
 # phone"). For them it builds the bundles
@@ -34,7 +34,7 @@ set -euo pipefail
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
 out="$repo/out"
 changed_since=""
-action_gap=1
+action_gap=0.4
 bundle=1
 video=1
 chosen=()
