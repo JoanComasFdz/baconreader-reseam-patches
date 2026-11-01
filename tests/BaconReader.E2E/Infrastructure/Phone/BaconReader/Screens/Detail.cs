@@ -136,6 +136,7 @@ public sealed class Comments(AndroidDriver driver)
 
     // A "load more comments" row, whose id the main screen's lists use too.
     private static readonly By LoadMore = Locate.AppId("text");
+    private static readonly By Loading = Locate.Text("Loading...");
 
     // Where the image of each comment was before a tap, to see it change.
     private readonly Dictionary<string, Rectangle> imageBefore = [];
@@ -315,19 +316,29 @@ public sealed class Comments(AndroidDriver driver)
 
     /// <summary>
     /// Scrolls the comments to their end, a fling at a time, until they move no more: the list loads the comments it
-    /// hasn't yet as it gets there.
+    /// hasn't yet as it gets there, showing "Loading..." at its end meanwhile, which takes seconds when they come
+    /// from their threads.
     /// </summary>
     public Task ScrollToTheEndAsync() =>
         OnScreen.DoAsync(driver, () =>
         {
-            for (var flings = 0; FlingDown(); flings++)
+            var flings = 0;
+            do
             {
-                if (flings == 200)
+                while (FlingDown())
                 {
-                    throw new InvalidOperationException("The comments didn't reach their end after 200 flings.");
+                    if (++flings == 200)
+                    {
+                        throw new InvalidOperationException("The comments didn't reach their end after 200 flings.");
+                    }
                 }
             }
+            while (LoadedItsEnd());
         });
+
+    /// <summary>Taps "<paramref name="loadMore"/>", which loads the comments it hides.</summary>
+    public Task ClickLoadMoreAsync(string loadMore) =>
+        OnScreen.PressAsync(driver, () => driver.FindElement(Locate.AppIdWithText("text", loadMore)));
 
     /// <summary>Waits until the comment "<paramref name="text"/>" shows "<paramref name="loadMore"/>" under it.</summary>
     public Task WaitUntilLoadMoreShownAsync(string loadMore) =>
@@ -442,6 +453,31 @@ public sealed class Comments(AndroidDriver driver)
         FindCommentOrFail(text).FindElements(Text).FirstOrDefault() ?? throw new InvalidOperationException($"The comment \"{text}\" shows no text.");
 
     // Whether the list scrolled: false at its end.
+    // How long the end of the list may take to load its next comments: 50 threads, one at a time.
+    private static readonly TimeSpan EndLoad = TimeSpan.FromSeconds(60);
+
+    // Whether the list was loading comments at its end ("Loading..."): then it waits until they are in.
+    private bool LoadedItsEnd()
+    {
+        if (driver.FindElements(Loading).Count == 0)
+        {
+            return false;
+        }
+
+        var until = DateTimeOffset.UtcNow + EndLoad;
+        while (driver.FindElements(Loading).Count > 0)
+        {
+            if (DateTimeOffset.UtcNow > until)
+            {
+                throw new InvalidOperationException($"The comments kept loading at their end for {EndLoad.TotalSeconds} s.");
+            }
+
+            Thread.Sleep(500);
+        }
+
+        return true;
+    }
+
     private bool FlingDown() =>
         driver.ExecuteScript("mobile: flingGesture", new Dictionary<string, object>
         {

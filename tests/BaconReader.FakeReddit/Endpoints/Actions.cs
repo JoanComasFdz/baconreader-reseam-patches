@@ -59,9 +59,14 @@ internal static class Actions
         });
 
     // The comments behind a "load more comments" (children, their ids), each with all its replies, flat and in the
-    // request's sort, each naming its parent: the app puts them in its tree.
+    // request's sort, each naming its parent: the app puts them in its tree. Refused while the world blocks it.
     private static IResult MoreChildren(RedditWorld world, Things things, Account account, ImmutableDictionary<string, string> form)
     {
+        if (world.BlocksMoreChildren)
+        {
+            return Answers.BlockedByNetworkSecurity();
+        }
+
         var post = world.FindPost((form.GetValueOrDefault("link_id") ?? "").Replace("t3_", "", StringComparison.Ordinal));
         var sort = form.GetValueOrDefault("sort") ?? "";
         IEnumerable<Comment> Thread(Comment comment) =>

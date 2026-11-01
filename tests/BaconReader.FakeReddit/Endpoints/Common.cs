@@ -97,6 +97,12 @@ internal static class Answers
     /// </summary>
     public static IResult Blocked() => Results.Text("Blocked", "text/plain; charset=utf-8", statusCode: StatusCodes.Status403Forbidden);
 
+    /// <summary>
+    /// What Reddit answers an app's <c>api/morechildren</c> since October 2026: <c>HTTP 403 Blocked</c> and an HTML page
+    /// that starts "You've been blocked by network security.", whatever the app's client, token or User-Agent.
+    /// </summary>
+    public static IResult BlockedByNetworkSecurity() => new BlockedPage();
+
     /// <summary>The form fields of a POST, empty when it has none.</summary>
     public static async Task<ImmutableDictionary<string, string>> ReadFormAsync(HttpRequest request)
     {
@@ -107,5 +113,26 @@ internal static class Answers
 
         var form = await request.ReadFormAsync();
         return form.ToImmutableDictionary(field => field.Key, field => field.Value.ToString());
+    }
+}
+
+/// <summary>Reddit's network security page, with its reason phrase: <c>403 Blocked</c>.</summary>
+internal sealed class BlockedPage : IResult
+{
+    private const string Html = """
+        <!DOCTYPE html>
+        <html lang="en"><head><meta charset="utf-8"><title>Blocked</title></head>
+        <body><h1>whoa there, pardner!</h1>
+        <p>You've been blocked by network security.</p>
+        <p>To continue, log in to your Reddit account or use your developer token.</p>
+        </body></html>
+        """;
+
+    public async Task ExecuteAsync(HttpContext context)
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseFeature>()!.ReasonPhrase = "Blocked";
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.WriteAsync(Html);
     }
 }

@@ -49,6 +49,13 @@ public sealed class RedditWorld
     /// </summary>
     public bool BlocksLoggedOut { get; set; } = true;
 
+    /// <summary>
+    /// Refuses "load more comments" (<c>api/morechildren</c>), as Reddit does to apps since October 2026: <c>403
+    /// Blocked</c>, with its "You've been blocked by network security." page (off by default). A post's and a comment's
+    /// threads still answer.
+    /// </summary>
+    public bool BlocksMoreChildren { get; set; }
+
     /// <summary>The accounts, in the order they were made.</summary>
     public ImmutableArray<Account> Accounts => Read(() => accounts.ToImmutableArray());
 
@@ -91,6 +98,7 @@ public sealed class RedditWorld
             troubles.Clear();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
+            BlocksMoreChildren = false;
             // Reddit's ids are base 36; starting at 36^4 makes them five characters, like an old post's.
             nextId = 36L * 36 * 36 * 36;
             nextOrder = 0;

@@ -186,4 +186,29 @@ public sealed class CommentTests(FakeRedditFixture fixture) : FakeRedditTest(fix
         Assert.Equal(2, things[2].GetProperty("data").GetProperty("depth").GetInt32());
         Assert.Contains(World.Actions, action => action.Name == "morechildren");
     }
+
+    [Fact]
+    public async Task Morechildren_answers_403_Blocked_while_the_world_blocks_it_and_threads_still_answer()
+    {
+        var post = World.AddPost("e2e", "Thread");
+        var first = World.AddComment(post, "First");
+        World.AddReply(first, "Reply");
+        World.BlocksMoreChildren = true;
+        var token = await LogInAsync(World.AddAccount("e2e_user", "pw"));
+
+        using var refused = await SendAsync(HttpMethod.Post, "/api/morechildren", token, new Dictionary<string, string>
+        {
+            ["link_id"] = post.FullName,
+            ["api_type"] = "json",
+            ["children"] = first.Id,
+        });
+        var thread = await ReadJsonAsync(await SendAsync(HttpMethod.Get, $"/comments/{post.Id}/-/{first.Id}.json?limit=500", token));
+
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        Assert.Equal("Blocked", refused.ReasonPhrase);
+        Assert.Contains("You've been blocked by network security.", await refused.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        var focus = thread[1].GetProperty("data").GetProperty("children")[0].GetProperty("data");
+        Assert.Equal("First", focus.GetProperty("body").GetString());
+        Assert.Equal("Reply", focus.GetProperty("replies").GetProperty("data").GetProperty("children")[0].GetProperty("data").GetProperty("body").GetString());
+    }
 }
