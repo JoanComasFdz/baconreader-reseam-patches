@@ -38,6 +38,24 @@ public sealed partial class Reddit(RedditWorld world)
     public void HasAPostWithTheTextAndTheTable(string title, string subreddit, string text, string[][] rows) =>
         world.AddPost(subreddit, title, post => post.WithText($"{text}\n\n{RedditTable.ToMarkdown(rows)}"));
 
+    /// <summary>"Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the flair "&lt;flair&gt;"": a text post with that flair.</summary>
+    public void HasAPostWithTheFlair(string title, string subreddit, string flair) =>
+        world.AddPost(subreddit, title, post => post.WithFlair(flair));
+
+    /// <summary>
+    /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with &lt;count&gt; Silver awards": a text post given
+    /// Reddit's Silver that many times, which Reddit's API reported until 2023.
+    /// </summary>
+    public void HasAPostWithSilverAwards(string title, string subreddit, int count) =>
+        world.AddPost(subreddit, title, post => post.WithSilver(count));
+
+    /// <summary>
+    /// "r/&lt;subreddit&gt; lets users choose the flairs "&lt;first&gt;", "&lt;second&gt;"…": the flairs Reddit lists for
+    /// it, in that order. A subreddit without this line keeps its flairs private: Reddit refuses the list.
+    /// </summary>
+    public void TheSubredditLetsUsersChooseTheFlairs(string subreddit, params string[] flairs) =>
+        world.Subreddit(subreddit).LinkFlairs = [.. flairs];
+
     /// <summary>
     /// The requests Reddit got for the comments of the post "<paramref name="title"/>", oldest first: the <c>limit</c>
     /// each asked for, null without one.
@@ -171,6 +189,9 @@ public sealed class RedditPost(RedditWorld world, Post post)
 {
     /// <summary>"… has a comment "&lt;text&gt;"": a comment that says only <paramref name="text"/>.</summary>
     public void HasAComment(string text) => world.AddComment(post, text);
+
+    /// <summary>"… has a comment "&lt;text&gt;" with &lt;count&gt; Silver awards": a comment given Reddit's Silver that many times.</summary>
+    public void HasACommentWithSilverAwards(string text, int count) => world.AddComment(post, text, comment => comment.WithSilver(count));
 
     /// <summary>"… has a comment "&lt;text&gt;" by u/&lt;author&gt;".</summary>
     public void HasACommentBy(string text, string author) => world.AddComment(post, text, comment => comment.By(author));
