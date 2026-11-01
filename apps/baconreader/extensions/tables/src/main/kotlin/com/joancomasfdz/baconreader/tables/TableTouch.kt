@@ -8,6 +8,7 @@ import android.text.Spanned
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.accessibility.AccessibilityEvent
 import android.widget.TextView
 import kotlin.math.abs
 
@@ -50,7 +51,11 @@ private constructor(view: View, private val delegate: View.OnTouchListener?) :
                     view.parent?.requestDisallowInterceptTouchEvent(true)
                 }
                 if (dragging) {
-                    if (span.scrollBy(lastX - event.x)) view.invalidate()
+                    if (span.scrollBy(lastX - event.x)) {
+                        view.invalidate()
+                        // The cells moved: accessibility reads where they are again.
+                        view.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+                    }
                     lastX = event.x
                 }
                 return true
