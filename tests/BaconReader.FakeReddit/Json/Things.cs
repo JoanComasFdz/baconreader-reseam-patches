@@ -54,6 +54,10 @@ internal sealed class Things(RedditWorld world)
             SubredditSubscribers = post.Subreddit.Subscribers,
             CreatedUtc = created,
             IsRedditMediaDomain = url.Contains("/_media/", StringComparison.Ordinal),
+            IsGallery = post.IsGallery,
+            GalleryData = post.IsGallery
+                ? new GalleryData([.. post.Media.Values.Select((media, index) => new GalleryItem(media.Id, index + 1))])
+                : null,
             MediaMetadata = MediaMetadataOf(post.Media),
         });
     }

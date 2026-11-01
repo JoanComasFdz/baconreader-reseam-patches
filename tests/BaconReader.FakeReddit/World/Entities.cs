@@ -107,6 +107,9 @@ public sealed class Post
     /// <summary>The media a text post's text shows (<c>![img](id)</c>), by id: Reddit's <c>media_metadata</c>.</summary>
     public Dictionary<string, UploadedMedia> Media { get; } = [];
 
+    /// <summary>A gallery post: its <see cref="Media"/> are the gallery's images, in order (<c>gallery_data</c>).</summary>
+    public bool IsGallery { get; set; }
+
     public int Score { get; set; } = 1;
 
     public bool IsNsfw { get; set; }

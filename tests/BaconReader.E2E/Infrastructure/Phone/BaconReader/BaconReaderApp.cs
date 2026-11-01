@@ -36,6 +36,9 @@ public sealed class BaconReaderApp(
     /// <summary>The screen a post opens on (DetailActivity): the post and its comments.</summary>
     public Detail Detail { get; } = new(driver);
 
+    /// <summary>A user's profile (ProfileActivity), which a link to the user opens.</summary>
+    public Profile Profile { get; } = new(driver);
+
     /// <summary>The inbox, which the left menu's "Inbox" opens.</summary>
     public Inbox Inbox { get; } = new(driver);
 

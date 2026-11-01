@@ -154,8 +154,15 @@ public sealed record LinkData
     public bool IsVideo { get; init; }
     public bool IsGallery { get; init; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GalleryData? GalleryData { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, MediaMetadata>? MediaMetadata { get; init; }
 }
+
+/// <summary>A gallery post's <c>gallery_data</c>: its images, in order, by their ids in <c>media_metadata</c>.</summary>
+public sealed record GalleryData(IReadOnlyList<GalleryItem> Items);
+
+public sealed record GalleryItem(string MediaId, long Id);
 
 /// <summary>A post's <c>preview</c>: its images, each with its source and smaller resolutions.</summary>
 public sealed record Preview(IReadOnlyList<PreviewImage> Images, bool Enabled = true);

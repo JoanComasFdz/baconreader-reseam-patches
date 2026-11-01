@@ -18,6 +18,7 @@ public sealed class Detail(AndroidDriver driver)
     private static readonly By Upvote = Locate.AppId("upvote_left");
     private static readonly By Downvote = Locate.AppId("downvote_left");
     private static readonly By CommentHeader = Locate.AppId("commentSubText");
+    private static readonly By PostTitle = Locate.AppId("title");
 
     /// <summary>A text post's text, under its title.</summary>
     public PostText PostText { get; } = new(driver);
@@ -43,6 +44,17 @@ public sealed class Detail(AndroidDriver driver)
     /// </summary>
     public Task DownvoteWhileTheCommentsLoadAsync() => VoteWhileTheCommentsLoadAsync(Downvote, "downvote");
 
+    /// <summary>Waits until the screen shows the post "<paramref name="title"/>": a link opens it a moment after the tap.</summary>
+    public Task WaitUntilPostShownAsync(string title) =>
+        Waiting.UntilShownAsync(driver, Locate.AppIdWithText("title", title), TimeSpan.FromSeconds(30), $"The post \"{title}\"");
+
+    /// <summary>The post the screen shows: its title.</summary>
+    public Task<DetailPostSnapshot> ReadPostAsync() =>
+        OnScreen.ReadAsync(driver, () => new DetailPostSnapshot(driver.FindElement(PostTitle).Text));
+
+    /// <summary>Taps Android's Back, which closes the post and goes back to where it was opened from.</summary>
+    public Task ClickBackAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));
+
     private async Task VoteWhileTheCommentsLoadAsync(By arrow, string vote)
     {
         await Waiting.UntilShownAsync(driver, Loading, TimeSpan.FromSeconds(10), "\"Loading...\" while the post's comments load");
@@ -53,6 +65,9 @@ public sealed class Detail(AndroidDriver driver)
         }
     }
 }
+
+/// <summary>The post the detail screen shows: its title.</summary>
+public sealed record DetailPostSnapshot(string Title);
 
 /// <summary>
 /// A text post's text, under its title, and with "Embed comment images" the images under it (views the patch makes and
@@ -403,6 +418,9 @@ public sealed class Comments(AndroidDriver driver)
     public Task ClickTableLinkAsync(string text, string link) =>
         OnScreen.PressAsync(driver, () => Tables.FindCell(TextOf(text), link)
             ?? throw new InvalidOperationException($"The table of the comment \"{text}\" has no cell \"{link}\"."));
+
+    /// <summary>Taps the link "<paramref name="link"/>", a comment whose whole text is that link, at its start.</summary>
+    public Task ClickLinkAsync(string link) => ClickTextAsync(link);
 
     /// <summary>Taps the text of the comment "<paramref name="text"/>", at its start: a spoiler there shows, or hides.</summary>
     public Task ClickTextAsync(string text) =>
