@@ -76,6 +76,8 @@
     <string name="meme_template_error">Could not load the full template</string>
     <!-- Flair filter -->
     <string name="flair_filter_button">Flair</string>
+    <string name="flair_filter_content_description">Flair filter</string>
+    <string name="flair_filter_content_description_chosen">Flair filter: <xliff:g id="flairs">%1$s</xliff:g></string>
     <string name="flair_filter_title">Show posts with flair</string>
     <string name="flair_filter_apply">Apply</string>
     <string name="flair_filter_clear">Clear</string>
