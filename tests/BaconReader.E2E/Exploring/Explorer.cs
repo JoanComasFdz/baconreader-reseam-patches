@@ -132,6 +132,9 @@ public sealed class Explorer : BaseE2E
                         ["y"] = int.Parse(point[1], CultureInfo.InvariantCulture),
                     });
                     return $"tapped at {point[0]},{point[1]}";
+                case "type":
+                    Driver.SwitchTo().ActiveElement().SendKeys(command.Argument(0));
+                    return $"typed \"{command.Argument(0)}\"";
                 case "back":
                     Driver.PressKeyCode(AndroidKeyCode.Back);
                     return "back";
@@ -172,7 +175,13 @@ public sealed class Explorer : BaseE2E
             {
                 case "post": Reddit.HasAPost(command.Argument(1), command.Argument(0)); break;
                 case "post with text and image": Reddit.HasAPostWithTheTextAndAnImage(command.Argument(1), command.Argument(0), command.Argument(2)); break;
-                case "comment": Reddit.ThePost(command.Argument(0)).HasAComment(command.Argument(1)); break;
+                case "post with text": Reddit.HasAPostWithTheText(command.Argument(1), command.Argument(0), Lines(command.Argument(2))); break;
+                case "comment": Reddit.ThePost(command.Argument(0)).HasAComment(Lines(command.Argument(1))); break;
+                case "comment by": Reddit.ThePost(command.Argument(0)).HasACommentBy(Lines(command.Argument(2)), command.Argument(1)); break;
+                case "comment with table link": Reddit.ThePost(command.Argument(0)).HasACommentWithATableWhoseCellLinksToAnImage(command.Argument(1), command.Argument(2)); break;
+                case "comment with spoiler link": Reddit.ThePost(command.Argument(0)).HasACommentThatIsASpoilerLinkingToAnImage(command.Argument(1)); break;
+                case "comments": Reddit.ThePost(command.Argument(0)).HasComments(int.Parse(command.Argument(1), CultureInfo.InvariantCulture)); break;
+                case "reply": Reddit.ThePost(command.Argument(0)).TheComment(Lines(command.Argument(1))).HasAReply(Lines(command.Argument(2))); break;
                 case "comment with image": Reddit.ThePost(command.Argument(0)).HasACommentWithAnImage(command.Argument(1)); break;
                 case "comment with gif": Reddit.ThePost(command.Argument(0)).HasACommentWithAGif(command.Argument(1)); break;
                 case "comment with image link": Reddit.ThePost(command.Argument(0)).HasACommentWithALinkToAnImage(command.Argument(1)); break;
@@ -199,6 +208,10 @@ public sealed class Explorer : BaseE2E
     private static string Error(ExplorerCommand command, Exception exception) =>
         $"error: {command.Name}: {exception.Message.Split('\n')[0].Split("; For documentation", 2)[0]}";
 
+    // A text on one line of the commands: "\n" is a line break and "¦" a "|", which separates the arguments, as a
+    // Markdown table needs.
+    private static string Lines(string text) => text.Replace("\\n", "\n", StringComparison.Ordinal).Replace('¦', '|');
+
     private static string Lines(IEnumerable<string> lines, string none) =>
         lines.ToList() is { Count: > 0 } found ? string.Join('\n', found) : none;
 
@@ -215,7 +228,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
 {
     private static readonly string[] RedditData =
     [
-        "post", "post with text and image", "comment", "comment with image", "comment with gif", "comment with image link",
+        "post", "post with text", "post with text and image", "comment", "comment by", "comment with table link", "comment with spoiler link", "comments", "reply", "comment with image", "comment with gif", "comment with image link",
         "comment with video", "comment with video link", "subscribe", "message", "late comments", "fail posts",
         "refuse posts", "drop posts",
     ];

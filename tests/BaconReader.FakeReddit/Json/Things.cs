@@ -59,11 +59,17 @@ internal sealed class Things(RedditWorld world)
     }
 
     /// <summary>A comment and, recursively, its replies.</summary>
-    public Thing Comment(Comment comment, Account? viewer)
+    public Thing Comment(Comment comment, Account? viewer) => Comment(comment, viewer, CommentTree.Whole);
+
+    /// <summary>
+    /// A comment and, recursively, the replies <paramref name="tree"/> shows, the rest behind a "load more comments"
+    /// (<see cref="More"/>); with <see cref="CommentTree.Flat"/>, none, as <c>api/morechildren</c> sends comments.
+    /// </summary>
+    public Thing Comment(Comment comment, Account? viewer, CommentTree tree)
     {
         var vote = viewer is not null && comment.Votes.TryGetValue(viewer.Name, out var direction) ? direction : 0;
         var created = Seconds(comment.Created);
-        var replies = comment.Replies.Select(reply => Comment(reply, viewer)).ToList();
+        var replies = Children(comment.Replies, comment.FullName, comment.Depth + 1, viewer, tree);
         return new Thing("t1", new CommentData
         {
             SubredditId = comment.Post.Subreddit.FullName,
@@ -90,6 +96,38 @@ internal sealed class Things(RedditWorld world)
             MediaMetadata = MediaMetadataOf(comment.Media),
         });
     }
+
+    /// <summary>
+    /// The things of <paramref name="comments"/>, the children of <paramref name="parent"/> (a post's or a comment's
+    /// fullname), that <paramref name="tree"/> shows, then one <c>more</c> for those it leaves out, as Reddit sends them.
+    /// </summary>
+    public List<Thing> Children(IEnumerable<Comment> comments, string parent, int depth, Account? viewer, CommentTree tree)
+    {
+        if (tree.IsFlat)
+        {
+            return [];
+        }
+
+        var all = tree.InOrder(comments).ToList();
+        var things = all.Where(tree.Shows).Select(comment => Comment(comment, viewer, tree)).ToList();
+        var left = all.Where(comment => !tree.Shows(comment)).ToList();
+        if (left.Count > 0)
+        {
+            things.Add(More(left, parent, depth));
+        }
+
+        return things;
+    }
+
+    /// <summary>A "load more comments" for <paramref name="left"/>, children of <paramref name="parent"/>.</summary>
+    public static Thing More(IReadOnlyList<Comment> left, string parent, int depth) =>
+        new("more", new MoreData(
+            left.Sum(comment => 1 + comment.ReplyCount),
+            left[0].FullName,
+            left[0].Id,
+            parent,
+            depth,
+            [.. left.Select(comment => comment.Id)]));
 
     public Thing Subreddit(Subreddit subreddit, Account? viewer)
     {

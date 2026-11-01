@@ -45,6 +45,9 @@ public sealed class BaconReaderApp(
     /// <summary>The full-screen viewer a double tap on an image opens ("Embed comment images").</summary>
     public ImageViewer ImageViewer { get; } = new(driver);
 
+    /// <summary>BaconReader's own screen for a link to an image.</summary>
+    public PhotoViewer PhotoViewer { get; } = new(driver);
+
     /// <summary>BaconReader's settings (SettingsActivity): the menu of its sections.</summary>
     public Settings Settings { get; } = new(driver);
 

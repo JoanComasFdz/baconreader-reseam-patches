@@ -24,6 +24,37 @@ public sealed partial class Reddit(RedditWorld world)
     public void HasAPostWithTheTextAndAnImage(string title, string subreddit, string text) =>
         world.AddPost(subreddit, title, post => post.WithTextAndImage(text));
 
+    /// <summary>
+    /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;"": a text post whose text is
+    /// the Markdown <paramref name="markdown"/>.
+    /// </summary>
+    public void HasAPostWithTheText(string title, string subreddit, string markdown) =>
+        world.AddPost(subreddit, title, post => post.WithText(markdown));
+
+    /// <summary>
+    /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;" and the table:" and its rows,
+    /// the first one its header: a text post whose text is <paramref name="text"/>, then the table.
+    /// </summary>
+    public void HasAPostWithTheTextAndTheTable(string title, string subreddit, string text, string[][] rows) =>
+        world.AddPost(subreddit, title, post => post.WithText($"{text}\n\n{RedditTable.ToMarkdown(rows)}"));
+
+    /// <summary>
+    /// The requests Reddit got for the comments of the post "<paramref name="title"/>", oldest first: the <c>limit</c>
+    /// each asked for, null without one.
+    /// </summary>
+    public RedditCommentsRequestsSnapshot ReadRequestsForTheCommentsOf(string title)
+    {
+        var asked = RedditWorld.CommentsOf(PostTitled(title));
+        return new([.. world.Requests
+            .Where(request => asked(request.Method, request.Path))
+            .Select(request => Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(request.Query).TryGetValue("limit", out var limit)
+                && int.TryParse(limit, out var number) ? number : (int?)null)]);
+    }
+
+    /// <summary>The media files Reddit served, oldest first: the paths asked for under <c>/_media/</c> and answered.</summary>
+    public RedditMediaRequestsSnapshot ReadMediaServed() =>
+        new([.. world.Requests.Where(request => request is { Method: "GET", Status: 200 } && request.Path.StartsWith("/_media/", StringComparison.Ordinal)).Select(request => request.Path)]);
+
     /// <summary>"the post "&lt;title&gt;" …": a post this scenario's Given made.</summary>
     public RedditPost ThePost(string title) => new(world, PostTitled(title));
 
@@ -131,6 +162,48 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// <summary>"… has a comment "&lt;text&gt;"": a comment that says only <paramref name="text"/>.</summary>
     public void HasAComment(string text) => world.AddComment(post, text);
 
+    /// <summary>"… has a comment "&lt;text&gt;" by u/&lt;author&gt;".</summary>
+    public void HasACommentBy(string text, string author) => world.AddComment(post, text, comment => comment.By(author));
+
+    /// <summary>"… has a comment "&lt;text&gt;" with the table:" and its rows, the first one its header.</summary>
+    public void HasACommentWithTheTable(string text, string[][] rows) =>
+        world.AddComment(post, $"{text}\n\n{RedditTable.ToMarkdown(rows)}");
+
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" with a table whose cell "&lt;link&gt;" links to an image": a one-column table,
+    /// "Link", whose one cell is a link to an image the fake serves.
+    /// </summary>
+    public void HasACommentWithATableWhoseCellLinksToAnImage(string text, string link) =>
+        world.AddComment(post, $"{text}\n\n{RedditTable.ToMarkdown([["Link"], [$"[{link}]({ImageUrl(link)})"]])}");
+
+    /// <summary>
+    /// "… has a comment that is a spoiler "&lt;spoiler&gt;" linking to an image": a comment that is only a spoiler
+    /// (<c>&gt;!…!&lt;</c>), whose text is a link to an image the fake serves.
+    /// </summary>
+    public void HasACommentThatIsASpoilerLinkingToAnImage(string spoiler) =>
+        world.AddComment(post, $">![{spoiler}]({ImageUrl(spoiler)})!<");
+
+    // An image the fake serves, named after the link's text.
+    private string ImageUrl(string link) =>
+        world.AddMedia(RedditMediaRequestsSnapshot.ImageLinkedBy(link), MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes);
+
+    /// <summary>"… has &lt;count&gt; comments, "Comment 1" to "Comment &lt;count&gt;"": that many comments, oldest first.</summary>
+    public void HasComments(int count)
+    {
+        for (var number = 1; number <= count; number++)
+        {
+            world.AddComment(post, $"Comment {number}");
+        }
+    }
+
+    /// <summary>"… the comment "&lt;text&gt;" …": a comment of this post a Given line made.</summary>
+    public RedditComment TheComment(string text) =>
+        new(world, Flatten(post.Comments).SingleOrDefault(comment => comment.Body == text)
+            ?? throw new InvalidOperationException($"The post \"{post.Title}\" has no comment \"{text}\": a Given line makes it first."));
+
+    private static IEnumerable<Comment> Flatten(IEnumerable<Comment> comments) =>
+        comments.SelectMany(comment => Flatten(comment.Replies).Prepend(comment));
+
     /// <summary>"… has a comment "&lt;text&gt;" with an image": <paramref name="text"/>, then an image uploaded in it.</summary>
     public void HasACommentWithAnImage(string text) => world.AddComment(post, text, comment => comment.WithImage());
 
@@ -149,6 +222,40 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// </summary>
     public void HasACommentWithALinkToAVideo(string text) => world.AddComment(post, text, comment => comment.LinkingToAVideo());
 }
+
+/// <summary>A comment of the scenario's Reddit, which a Given line adds replies to.</summary>
+public sealed class RedditComment(RedditWorld world, Comment comment)
+{
+    /// <summary>"… has a reply "&lt;text&gt;"".</summary>
+    public void HasAReply(string text) => world.AddReply(comment, text);
+
+    /// <summary>"… has the replies "&lt;first&gt;", "&lt;second&gt;" and "&lt;third&gt;"", in that order.</summary>
+    public void HasTheReplies(params string[] texts)
+    {
+        foreach (var text in texts)
+        {
+            world.AddReply(comment, text);
+        }
+    }
+}
+
+/// <summary>A Gherkin's data table as a Markdown table: its first row the header, every column left as Reddit's default.</summary>
+internal static class RedditTable
+{
+    public static string ToMarkdown(string[][] rows) =>
+        string.Join("\n", rows.Take(1).Concat([[.. rows[0].Select(_ => "---")]]).Concat(rows.Skip(1)).Select(row => $"| {string.Join(" | ", row)} |"));
+}
+
+/// <summary>The media files Reddit served, oldest first: their paths under <c>/_media/</c>.</summary>
+public sealed record RedditMediaRequestsSnapshot(ImmutableArray<string> Paths)
+{
+    /// <summary>Where the fake serves the image a link "<paramref name="link"/>" links to: named after its text.</summary>
+    public static string ImageLinkedBy(string link) =>
+        $"example.com/{new string([.. link.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-')])}.jpg";
+}
+
+/// <summary>The requests Reddit got for a post's comments, oldest first: the <c>limit</c> each asked for, null without one.</summary>
+public sealed record RedditCommentsRequestsSnapshot(ImmutableArray<int?> Limits);
 
 /// <summary>An image uploaded to Reddit, as Reddit serves it: the file name its URL ends with, and its size in bytes.</summary>
 public sealed record RedditImageSnapshot(string FileName, long Size);

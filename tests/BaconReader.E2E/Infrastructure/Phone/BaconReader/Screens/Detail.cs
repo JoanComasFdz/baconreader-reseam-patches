@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
+using System.Collections.Immutable;
+using BaconReader.E2E.Infrastructure.Vocabulary;
 using System.Drawing;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
@@ -22,6 +24,12 @@ public sealed class Detail(AndroidDriver driver)
 
     /// <summary>The post's comments, under the post and the sort bar.</summary>
     public Comments Comments { get; } = new(driver);
+
+    /// <summary>The bar over the comments: their sort, "Search comments" and "COLLAPSE ALL".</summary>
+    public SortBar SortBar { get; } = new(driver);
+
+    /// <summary>The find bar "Search comments" opens over the sort bar.</summary>
+    public CommentSearchBar CommentSearch { get; } = new(driver);
 
     /// <summary>
     /// Taps the up arrow of the bar at the bottom while the comments still load ("Loading..."), which upvotes the post,
@@ -75,6 +83,20 @@ public sealed class PostText(AndroidDriver driver)
             return new PostTextLayoutSnapshot(Bounds(driver.FindElement(Text)), image is null ? null : Bounds(image));
         });
 
+    /// <summary>What the tables of the post's text show.</summary>
+    public Task<TableSnapshot> ReadTableAsync() => OnScreen.ReadAsync(driver, () => Tables.Read(driver.FindElement(Text)));
+
+    /// <summary>Where the cells of the post's table show.</summary>
+    public Task<TableLayoutSnapshot> ReadTableLayoutAsync() =>
+        OnScreen.ReadAsync(driver, () => Tables.ReadLayout(driver.FindElement(Text), driver.Manage().Window.Size.Width));
+
+    /// <summary>Waits until the post's text shows a table's cells.</summary>
+    public Task WaitUntilTableShownAsync() =>
+        Waiting.UntilAsync(
+            () => driver.FindElements(Text).FirstOrDefault() is { } text && Tables.HasCells(text),
+            TimeSpan.FromSeconds(10),
+            "A table in the post's text");
+
     private static Rectangle Bounds(IWebElement element) => new(element.Location, element.Size);
 
     // The images that aren't under a comment.
@@ -110,6 +132,10 @@ public sealed class Comments(AndroidDriver driver)
     private static readonly By Text = Locate.AppId("commentBody");
     private static readonly By Position = Locate.AppId("exo_position");
     private static readonly By Duration = Locate.AppId("exo_duration");
+    private static readonly By HiddenComments = Locate.AppId("hiddenComments");
+
+    // A "load more comments" row, whose id the main screen's lists use too.
+    private static readonly By LoadMore = Locate.AppId("text");
 
     // Where the image of each comment was before a tap, to see it change.
     private readonly Dictionary<string, Rectangle> imageBefore = [];
@@ -273,6 +299,157 @@ public sealed class Comments(AndroidDriver driver)
                 comment.FindElements(Duration).FirstOrDefault()?.Text.Trim() ?? "");
         });
 
+    /// <summary>
+    /// What the comments on the screen show, top to bottom: each comment's text and how far it is indented, and each
+    /// "load more comments" among them.
+    /// </summary>
+    public Task<CommentsSnapshot> ReadShownAsync() =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var comments = driver.FindElements(Text).Select(text => (text.Location.Y, Shown: new ShownComment(text.Text.Trim(), text.Location.X, IsLoadMore: false)));
+            var loadMores = driver.FindElements(LoadMore)
+                .Where(row => row.Text.StartsWith("load more comments", StringComparison.Ordinal))
+                .Select(row => (row.Location.Y, Shown: new ShownComment(row.Text.Trim(), row.Location.X, IsLoadMore: true)));
+            return new CommentsSnapshot([.. comments.Concat(loadMores).OrderBy(found => found.Y).Select(found => found.Shown)]);
+        });
+
+    /// <summary>
+    /// Scrolls the comments to their end, a fling at a time, until they move no more: the list loads the comments it
+    /// hasn't yet as it gets there.
+    /// </summary>
+    public Task ScrollToTheEndAsync() =>
+        OnScreen.DoAsync(driver, () =>
+        {
+            for (var flings = 0; FlingDown(); flings++)
+            {
+                if (flings == 200)
+                {
+                    throw new InvalidOperationException("The comments didn't reach their end after 200 flings.");
+                }
+            }
+        });
+
+    /// <summary>Waits until the comment "<paramref name="text"/>" shows "<paramref name="loadMore"/>" under it.</summary>
+    public Task WaitUntilLoadMoreShownAsync(string loadMore) =>
+        Waiting.UntilShownAsync(driver, Locate.AppIdWithText("text", loadMore), TimeSpan.FromSeconds(10), $"\"{loadMore}\"");
+
+    /// <summary>Waits until the comment "<paramref name="text"/>" shows a table's cells.</summary>
+    public Task WaitUntilTableShownAsync(string text) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is not null && Tables.HasCells(TextOf(text)),
+            TimeSpan.FromSeconds(10),
+            $"A table in the comment \"{text}\"");
+
+    /// <summary>What the tables of the comment "<paramref name="text"/>" show.</summary>
+    public Task<TableSnapshot> ReadTableAsync(string text) =>
+        OnScreen.ReadAsync(driver, () => Tables.Read(TextOf(text)));
+
+    /// <summary>Where the cells of the table of the comment "<paramref name="text"/>" show.</summary>
+    public Task<TableLayoutSnapshot> ReadTableLayoutAsync(string text) =>
+        OnScreen.ReadAsync(driver, () => Tables.ReadLayout(TextOf(text), driver.Manage().Window.Size.Width));
+
+    /// <summary>Taps <paramref name="button"/> under the table of the comment "<paramref name="text"/>".</summary>
+    public Task ClickTableButtonAsync(string text, TableButton button) =>
+        OnScreen.PressAsync(driver, () =>
+            Tables.Buttons(TextOf(text)).FirstOrDefault(found => found.Text == button.ToShownText())
+            ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no \"{button.ToShownText()}\"."));
+
+    /// <summary>Waits until the table of the comment "<paramref name="text"/>" shows <paramref name="button"/>.</summary>
+    public Task WaitUntilTableButtonShownAsync(string text, TableButton button) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is not null && Tables.Buttons(TextOf(text)).Any(found => found.Text == button.ToShownText()),
+            TimeSpan.FromSeconds(10),
+            $"\"{button.ToShownText()}\" under the table of the comment \"{text}\"");
+
+    /// <summary>
+    /// Swipes the table of the comment "<paramref name="text"/>" to the left, from near its right edge to near its left
+    /// one, along its first row: an expanded table scrolls sideways.
+    /// </summary>
+    public Task SwipeTableLeftAsync(string text) =>
+        OnScreen.TouchAsync(driver, () => Tables.FirstCell(TextOf(text)) ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no cell."), cell =>
+        {
+            var row = Bounds(cell);
+            var table = Bounds(TextOf(text));
+            var y = row.Top + (row.Height / 2);
+            var finger = new PointerInputDevice(PointerKind.Touch, "finger");
+            var swipe = new ActionSequence(finger, 0);
+            swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, table.Right - 40, y, TimeSpan.Zero));
+            swipe.AddAction(finger.CreatePointerDown(MouseButton.Touch));
+            swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, table.Left + 40, y, TimeSpan.FromMilliseconds(600)));
+            swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
+            driver.PerformActions([swipe]);
+        });
+
+    /// <summary>Waits until the table of the comment "<paramref name="text"/>" shows the cell "<paramref name="cell"/>" whole.</summary>
+    public Task WaitUntilTableCellShownAsync(string text, string cell) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is not null && Tables.FindCell(TextOf(text), cell) is { } found
+                && Bounds(found).Right < Bounds(TextOf(text)).Right,
+            TimeSpan.FromSeconds(10),
+            $"The cell \"{cell}\" of the table of the comment \"{text}\"");
+
+    /// <summary>Taps the link "<paramref name="link"/>" in a cell of the table of the comment "<paramref name="text"/>".</summary>
+    public Task ClickTableLinkAsync(string text, string link) =>
+        OnScreen.PressAsync(driver, () => Tables.FindCell(TextOf(text), link)
+            ?? throw new InvalidOperationException($"The table of the comment \"{text}\" has no cell \"{link}\"."));
+
+    /// <summary>Taps the text of the comment "<paramref name="text"/>", at its start: a spoiler there shows, or hides.</summary>
+    public Task ClickTextAsync(string text) =>
+        OnScreen.TouchAsync(driver, () => TextOf(text), body =>
+        {
+            var bounds = Bounds(body);
+            driver.ExecuteScript("mobile: clickGesture", new Dictionary<string, object>
+            {
+                ["x"] = bounds.Left + 30,
+                ["y"] = bounds.Top + (bounds.Height / 2),
+            });
+        });
+
+    /// <summary>
+    /// Waits until the comment "<paramref name="text"/>" reads its text to accessibility, every spoiler of it shown:
+    /// "Hide formatted spoilers" has it read a hidden one as "spoiler".
+    /// </summary>
+    public Task WaitUntilSpoilersShownAsync(string text) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is { } comment && string.IsNullOrEmpty(comment.FindElements(Text).FirstOrDefault()?.GetAttribute("content-desc")),
+            TimeSpan.FromSeconds(10),
+            $"The spoilers of the comment \"{text}\" showing");
+
+    /// <summary>What the comment "<paramref name="text"/>" reads as to accessibility: its text, or with a hidden spoiler "spoiler" in its place.</summary>
+    public Task<CommentReadingSnapshot> ReadReadingAsync(string text) =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var body = TextOf(text);
+            var description = body.GetAttribute("content-desc");
+            return new CommentReadingSnapshot(body.Text.Trim(), string.IsNullOrEmpty(description) ? body.Text.Trim() : description);
+        });
+
+    /// <summary>What the comment "<paramref name="text"/>" shows under it when collapsed: "1 hidden comment", or null.</summary>
+    public Task<CollapsedCommentSnapshot> ReadCollapsedAsync(string text) =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var comment = Bounds(FindCommentOrFail(text));
+            var next = driver.FindElements(Header).Select(Bounds).Where(header => header.Top > comment.Bottom).Select(header => header.Top).DefaultIfEmpty(int.MaxValue).Min();
+            var hidden = driver.FindElements(HiddenComments).FirstOrDefault(row => Bounds(row).Top >= comment.Bottom - 10 && Bounds(row).Top < next);
+            return new CollapsedCommentSnapshot(text, hidden?.Text.Trim());
+        });
+
+    /// <summary>Waits until the comment "<paramref name="text"/>" shows how many comments it hides.</summary>
+    public Task WaitUntilCollapsedAsync(string text) =>
+        Waiting.UntilShownAsync(driver, HiddenComments, TimeSpan.FromSeconds(10), $"The comments the comment \"{text}\" hides");
+
+    private IWebElement TextOf(string text) =>
+        FindCommentOrFail(text).FindElements(Text).FirstOrDefault() ?? throw new InvalidOperationException($"The comment \"{text}\" shows no text.");
+
+    // Whether the list scrolled: false at its end.
+    private bool FlingDown() =>
+        driver.ExecuteScript("mobile: flingGesture", new Dictionary<string, object>
+        {
+            ["elementId"] = ((AppiumElement)driver.FindElement(List)).Id,
+            ["direction"] = "down",
+            ["speed"] = 7500,
+        }) is true;
+
     // The comment whose text is the given text, or else the one whose text starts with it: with the patch's images or
     // videos off, a comment shows the link under its text.
     private IWebElement? FindComment(string text)
@@ -310,6 +487,18 @@ public sealed class Comments(AndroidDriver driver)
 
     private static Rectangle Bounds(IWebElement element) => new(element.Location, element.Size);
 }
+
+/// <summary>A comment on the screen, or a "load more comments" among them: its text, and how far it is indented, in pixels.</summary>
+public sealed record ShownComment(string Text, int Left, bool IsLoadMore);
+
+/// <summary>The comments on the screen, top to bottom, and the "load more comments" among them.</summary>
+public sealed record CommentsSnapshot(ImmutableArray<ShownComment> Comments);
+
+/// <summary>What a comment reads as to accessibility (<paramref name="ReadAs"/>), and the text it shows.</summary>
+public sealed record CommentReadingSnapshot(string Text, string ReadAs);
+
+/// <summary>What the collapsed comment "<paramref name="Text"/>" shows under it: "1 hidden comment", or null.</summary>
+public sealed record CollapsedCommentSnapshot(string Text, string? Hidden);
 
 /// <summary>What a comment shows: its text, and the GIFs, images and videos under it.</summary>
 public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Videos);

@@ -35,6 +35,38 @@ public sealed class PatchesSettings(AndroidDriver driver)
     /// <summary>Taps <paramref name="setting"/>'s title, which switches it.</summary>
     public Task TickAsync(PatchSetting setting) => OnScreen.PressAsync(driver, Titled(setting.ToShownText()));
 
+    /// <summary>Taps <paramref name="setting"/>'s title, which opens its dialog: a text to type, or a choice.</summary>
+    public Task ClickAsync(PatchSetting setting) => OnScreen.PressAsync(driver, Titled(setting.ToShownText()));
+
+    /// <summary>Waits until the dialog of a setting with a text shows its field.</summary>
+    public Task WaitUntilTextFieldShownAsync() =>
+        Waiting.UntilShownAsync(driver, Locate.TextField(), TimeSpan.FromSeconds(10), "The setting's text field");
+
+    /// <summary>Types <paramref name="value"/> in the setting's text field, instead of what it held.</summary>
+    public Task TypeAsync(string value) =>
+        OnScreen.ActAsync(driver, Locate.TextField(), field =>
+        {
+            field.Clear();
+            field.SendKeys(value);
+        });
+
+    /// <summary>Taps "Save" on the setting's dialog.</summary>
+    public Task ClickSaveAsync() => OnScreen.PressAsync(driver, Titled("Save"));
+
+    /// <summary>Waits until the choices of a setting show <paramref name="choice"/>.</summary>
+    public Task WaitUntilChoiceShownAsync(RepliesToAutoLoad choice) =>
+        Waiting.UntilShownAsync(driver, Titled(choice.ToShownText()), TimeSpan.FromSeconds(10), $"The choice \"{choice.ToShownText()}\"");
+
+    /// <summary>Selects <paramref name="choice"/> among the setting's choices, which closes them.</summary>
+    public Task SelectAsync(RepliesToAutoLoad choice) => OnScreen.PressAsync(driver, Titled(choice.ToShownText()));
+
+    /// <summary>Waits until the setting's dialog closed, back on the page: <paramref name="setting"/>'s title shows alone.</summary>
+    public Task WaitUntilDialogClosedAsync(PatchSetting setting) =>
+        Waiting.UntilAsync(
+            () => driver.FindElements(Locate.TextField()).Count == 0 && driver.FindElements(Titled(setting.ToShownText())).Count == 1,
+            TimeSpan.FromSeconds(10),
+            $"The dialog of \"{setting.ToShownText()}\" closing");
+
     /// <summary>What the page shows: the settings it lists, top to bottom.</summary>
     public Task<PatchesSettingsSnapshot> ReadAsync() =>
         OnScreen.ReadAsync(driver, () => new PatchesSettingsSnapshot(

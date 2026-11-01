@@ -242,6 +242,21 @@ public sealed record CommentData
     public Dictionary<string, MediaMetadata>? MediaMetadata { get; init; }
 }
 
+/// <summary>
+/// A "load more comments" (kind <c>more</c>): the comments of one parent a comment tree leaves out, by their ids
+/// (<c>children</c>), and how many comments they hold with their replies (<c>count</c>). Named by its first child.
+/// </summary>
+public sealed record MoreData(int Count, string Name, string Id, string ParentId, int Depth, IReadOnlyList<string> Children);
+
+/// <summary>What <c>api/morechildren</c> answers (<c>api_type=json</c>): the comments asked for, flat.</summary>
+public sealed record MoreChildrenAnswer(MoreChildrenJson Json);
+
+/// <summary>The <c>json</c> of <see cref="MoreChildrenAnswer"/>.</summary>
+public sealed record MoreChildrenJson(IReadOnlyList<object> Errors, MoreChildrenData Data);
+
+/// <summary>The <c>data</c> of <see cref="MoreChildrenJson"/>.</summary>
+public sealed record MoreChildrenData(IReadOnlyList<Thing> Things);
+
 /// <summary>A private message (t4), as Reddit's inbox sends it.</summary>
 public sealed record MessageData
 {

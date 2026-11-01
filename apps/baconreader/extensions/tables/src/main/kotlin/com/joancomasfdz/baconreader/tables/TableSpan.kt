@@ -44,6 +44,18 @@ internal class Table {
  * table takes one character of the text. Wide tables can be expanded and scrolled sideways, and
  * links in cells can be tapped (see [TableTouch]).
  */
+/**
+ * A cell of a table, or its expand or fit button, as accessibility shows it: its [text], its
+ * [bounds] relative to the table's top left (a cell's text's; empty when out of sight) and the
+ * [link] a tap on it opens, if any.
+ */
+internal class TablePart(
+    val text: CharSequence,
+    val bounds: RectF,
+    val link: ClickableSpan?,
+    val isButton: Boolean = false,
+)
+
 internal class TableSpan(private val table: Table) : ReplacementSpan() {
     private val density = Resources.getSystem().displayMetrics.density
     private val key = key(table)
@@ -131,6 +143,46 @@ internal class TableSpan(private val table: Table) : ReplacementSpan() {
             rowTop += rowHeights[r]
         }
         return null
+    }
+
+    /**
+     * What accessibility shows of the table: each cell, row by row, then the expand or fit button,
+     * with where each shows, relative to the table's top left: a cell's text, where a tap opens its
+     * link. A cell scrolled out of the table's width, or empty, has empty bounds.
+     */
+    fun parts(): List<TablePart> {
+        val layouts = layouts ?: return emptyList()
+        val border = max(1f, density)
+        val shown = RectF(0f, 0f, visibleWidth.toFloat(), gridHeight.toFloat())
+        val parts = ArrayList<TablePart>()
+        var rowTop = 0f
+        for (r in rowHeights.indices) {
+            var cellLeft = border - scrollX
+            for (c in columnWidths.indices) {
+                val cellRight = cellLeft + columnWidths[c] + 2 * padH
+                val layout = layouts[r][c]
+                val bounds = RectF()
+                if (layout != null) {
+                    var left = Float.MAX_VALUE
+                    var right = 0f
+                    for (line in 0 until layout.lineCount) {
+                        left = min(left, layout.getLineLeft(line))
+                        right = max(right, layout.getLineRight(line))
+                    }
+                    val textLeft = cellLeft + padH
+                    val textTop = rowTop + dp(PAD_V_DP) + border
+                    bounds.set(textLeft + left, textTop, textLeft + right, textTop + layout.height)
+                }
+                if (bounds.isEmpty || !bounds.intersect(shown)) bounds.setEmpty()
+                val text = layout?.text ?: ""
+                val link = (text as? Spanned)?.getSpans(0, text.length, ClickableSpan::class.java)
+                parts.add(TablePart(text, bounds, link?.firstOrNull()))
+                cellLeft = cellRight + border
+            }
+            rowTop += rowHeights[r]
+        }
+        if (!toggleRect.isEmpty) parts.add(TablePart(label(), RectF(toggleRect), null, true))
+        return parts
     }
 
     private fun linkInCell(layout: StaticLayout?, x: Float, y: Float): ClickableSpan? {
@@ -439,6 +491,7 @@ internal class TableSpan(private val table: Table) : ReplacementSpan() {
             val spans = text.getSpans(0, text.length, TableSpan::class.java)
             if (spans.isEmpty()) return
             TableTouch.install(textView, null)
+            TableAccessibility.install(textView)
             for (span in spans) span.interactive = true
             relayout(textView)
             textView.post {

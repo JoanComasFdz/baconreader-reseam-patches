@@ -50,6 +50,9 @@ public static class Locate
     /// <summary>A button showing exactly <paramref name="text"/>, where a title shows the same text (a web page's "Log In").</summary>
     public static By ButtonWithText(string text) => UiSelector($"className(\"android.widget.Button\").text({Quote(text)})");
 
+    /// <summary>The one text field a dialog shows (a setting's value), which has no id or description of its own.</summary>
+    public static By TextField() => UiSelector("className(\"android.widget.EditText\")");
+
     /// <summary>The web page a web view shows, which scrolls (its view has no id once the page loaded).</summary>
     public static By WebPage() => UiSelector("className(\"android.webkit.WebView\").scrollable(true)");
 

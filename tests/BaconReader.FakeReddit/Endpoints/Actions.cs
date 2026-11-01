@@ -39,7 +39,7 @@ internal static class Actions
         Act(app, world, "del", (account, form) => Delete(world, form));
         Act(app, world, "read_message", (_, form) => Read(world, form));
         Act(app, world, "read_all_messages", (account, _) => ReadAll(account));
-        Act(app, world, "morechildren", (_, _) => Answers.Json(new { json = new { errors = Array.Empty<object>(), data = new { things = Array.Empty<Thing>() } } }));
+        Act(app, world, "morechildren", (account, form) => MoreChildren(world, things, account, form));
         foreach (var name in Recorded)
         {
             Act(app, world, name, (_, _) => Answers.Json(new { }));
@@ -57,6 +57,24 @@ internal static class Actions
                 return refused ?? (account is null ? Answers.Error(StatusCodes.Status401Unauthorized, "Unauthorized") : apply(account, form));
             }
         });
+
+    // The comments behind a "load more comments" (children, their ids), each with all its replies, flat and in the
+    // request's sort, each naming its parent: the app puts them in its tree.
+    private static IResult MoreChildren(RedditWorld world, Things things, Account account, ImmutableDictionary<string, string> form)
+    {
+        var post = world.FindPost((form.GetValueOrDefault("link_id") ?? "").Replace("t3_", "", StringComparison.Ordinal));
+        var sort = form.GetValueOrDefault("sort") ?? "";
+        IEnumerable<Comment> Thread(Comment comment) =>
+            Listings.SortComments(comment.Replies, sort).SelectMany(Thread).Prepend(comment);
+        var asked = (form.GetValueOrDefault("children") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var found = asked
+            .Select(world.FindComment)
+            .OfType<Comment>()
+            .Where(comment => comment.Post == post);
+        var answer = new MoreChildrenAnswer(new MoreChildrenJson([], new MoreChildrenData(
+            [.. found.SelectMany(Thread).Select(comment => things.Comment(comment, account, CommentTree.Flat))])));
+        return Answers.Json(answer);
+    }
 
     private static IResult Vote(RedditWorld world, Account account, ImmutableDictionary<string, string> form)
     {

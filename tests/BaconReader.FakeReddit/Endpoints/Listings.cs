@@ -214,17 +214,29 @@ internal static class Listings
             var focus = rest?.Split('/', StringSplitOptions.RemoveEmptyEntries) is [_, var commentId, ..]
                 ? world.FindComment(commentId)
                 : null;
-            var comments = focus is null ? post.Comments : [focus];
-            var sorted = SortComments(comments, context.Request.Query["sort"].ToString());
+            var sort = context.Request.Query["sort"].ToString();
+            IEnumerable<Comment> Order(IEnumerable<Comment> comments) => SortComments(comments, sort);
+            if (focus is not null)
+            {
+                return Answers.Json(new[]
+                {
+                    ListingData.Listing([things.Link(post, viewer)]),
+                    ListingData.Listing([things.Comment(focus, viewer)]),
+                });
+            }
+
+            // About 200 comments, or the request's limit, up to 500; the rest behind "load more comments".
+            var limit = int.TryParse(context.Request.Query["limit"], out var asked) && asked > 0 ? asked : (int?)null;
+            var tree = CommentTree.Limited(post.Comments, limit, Order);
             return Answers.Json(new[]
             {
                 ListingData.Listing([things.Link(post, viewer)]),
-                ListingData.Listing([.. sorted.Select(comment => things.Comment(comment, viewer))]),
+                ListingData.Listing(things.Children(post.Comments, post.FullName, 0, viewer, tree)),
             });
         }
     }
 
-    private static IEnumerable<Comment> SortComments(IEnumerable<Comment> comments, string sort) =>
+    internal static IEnumerable<Comment> SortComments(IEnumerable<Comment> comments, string sort) =>
         sort.ToLowerInvariant() switch
         {
             "new" => comments.OrderByDescending(comment => comment.Created),

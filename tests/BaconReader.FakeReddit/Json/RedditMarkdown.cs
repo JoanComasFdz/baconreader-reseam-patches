@@ -10,8 +10,8 @@ namespace BaconReader.FakeReddit.Json;
 
 /// <summary>
 /// Turns Markdown into the HTML Reddit sends in <c>body_html</c> and <c>selftext_html</c>, only as far as the scenarios
-/// use it: paragraphs, quotes, lists, headings, code, links (also bare URLs and r/ u/ names), bold, italics,
-/// strikethrough, inline code, and GIFs uploaded in comments (<c>![gif](id)</c>).
+/// use it: paragraphs, quotes, lists, headings, code, tables, links (also bare URLs and r/ u/ names), bold, italics,
+/// strikethrough, inline code, spoilers (<c>&gt;!…!&lt;</c>), and GIFs uploaded in comments (<c>![gif](id)</c>).
 /// Reddit sends that HTML entity-escaped (<c>&amp;lt;div class="md"&amp;gt;…</c>), and so does <see cref="ToEscapedHtml"/>.
 /// </summary>
 public static partial class RedditMarkdown
@@ -67,7 +67,13 @@ public static partial class RedditMarkdown
             return $"<pre><code>{WebUtility.HtmlEncode(string.Join('\n', lines.Select(line => line[4..])))}\n</code></pre>";
         }
 
-        if (lines.All(line => line.StartsWith('>')))
+        if (IsTable(lines))
+        {
+            return ToTable(lines, Inline);
+        }
+
+        // ">!" starts a spoiler, not a quote.
+        if (lines.All(line => line.StartsWith('>') && !line.StartsWith(">!", StringComparison.Ordinal)))
         {
             var quoted = string.Join('\n', lines.Select(line => line.TrimStart('>').TrimStart()));
             return $"<blockquote>\n{ToHtml(quoted, baseUrl, media)}</blockquote>";
@@ -90,6 +96,46 @@ public static partial class RedditMarkdown
         }
 
         return $"<p>{Inline(block)}</p>";
+    }
+
+    // A table: a header row, then a row of dashes that sets each column's alignment, then its rows, each "| a | b |".
+    private static bool IsTable(string[] lines) =>
+        lines.Length >= 2 && lines.All(line => line.Contains('|', StringComparison.Ordinal)) && TableDelimiter().IsMatch(lines[1]);
+
+    // As Reddit's HTML has it: <table><thead>, a line per tag, align="left|center|right" on each cell of an aligned
+    // column.
+    private static string ToTable(string[] lines, Func<string, string> inline)
+    {
+        var alignments = Cells(lines[1]).Select(cell => (cell.StartsWith(':'), cell.EndsWith(':')) switch
+        {
+            (true, true) => " align=\"center\"",
+            (true, false) => " align=\"left\"",
+            (false, true) => " align=\"right\"",
+            _ => "",
+        }).ToList();
+        string Row(string line, string tag)
+        {
+            var cells = Cells(line);
+            var row = new StringBuilder("<tr>\n");
+            for (var column = 0; column < alignments.Count; column++)
+            {
+                var text = column < cells.Count ? inline(cells[column]) : "";
+                row.Append($"<{tag}{alignments[column]}>{text}</{tag}>\n");
+            }
+
+            return row.Append("</tr>\n").ToString();
+        }
+
+        return "<table><thead>\n" + Row(lines[0], "th") + "</thead><tbody>\n"
+            + string.Concat(lines.Skip(2).Select(line => Row(line, "td"))) + "</tbody></table>";
+    }
+
+    private static List<string> Cells(string line)
+    {
+        var trimmed = line.Trim();
+        trimmed = trimmed.StartsWith('|') ? trimmed[1..] : trimmed;
+        trimmed = trimmed.EndsWith('|') ? trimmed[..^1] : trimmed;
+        return [.. trimmed.Split('|').Select(cell => cell.Trim())];
     }
 
     private static string ToInline(string text, string baseUrl, IReadOnlyDictionary<string, UploadedMedia>? media)
@@ -122,6 +168,11 @@ public static partial class RedditMarkdown
             // URL in the Markdown, a bare link.)
             var file = $"{baseUrl}/_media/{found.Path}";
             return $"<a href=\"{file}\" target=\"_blank\"><img src=\"{file}\" width=\"{found.Width}\" height=\"{found.Height}\"></a>";
+        }
+
+        if (groups["spoiler"].Success)
+        {
+            return $"<span class=\"md-spoiler-text\">{Inline(groups["spoiler"].Value)}</span>";
         }
 
         if (groups["linkText"].Success)
@@ -163,6 +214,9 @@ public static partial class RedditMarkdown
     [GeneratedRegex(@"\n[ \t]*\n+")]
     private static partial Regex Blocks();
 
+    [GeneratedRegex(@"^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")]
+    private static partial Regex TableDelimiter();
+
     [GeneratedRegex(@"^(#{1,6})\s+(.*)$", RegexOptions.Singleline)]
     private static partial Regex Heading();
 
@@ -174,6 +228,7 @@ public static partial class RedditMarkdown
 
     [GeneratedRegex(
         @"!\[gif\]\((?<media>[^)|\s]+)\)"
+        + @"|>!(?<spoiler>.+?)!<"
         + @"|\[(?<linkText>[^\]]+)\]\((?<linkUrl>[^)\s]+)\)"
         + @"|(?<![\w/])(?<url>https?://[^\s<>()]+)"
         + @"|\*\*(?<bold>.+?)\*\*"
