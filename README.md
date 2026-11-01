@@ -40,6 +40,7 @@ Settings live in BaconReader → **Settings → Patches**.
 | Fix list thumbnails | Thumbnails are back; NSFW and spoilers are blurred |
 | Fix unread messages | The inbox envelope resets once you've read everything |
 | Fix lost post votes | Votes made while comments load stick |
+| Fix load more comments | "load more comments" loads the hidden comments again |
 | Fix meme templates | Meme templates load again |
 | Fix empty saved files | Saving media no longer leaves empty files |
 | Save videos with sound | Saved Reddit videos keep their audio |

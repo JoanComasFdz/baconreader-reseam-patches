@@ -90,6 +90,16 @@ public sealed partial class Reddit(RedditWorld world)
     public void DropsTheConnectionForThePosts(string subreddit) =>
         world.AddTrouble(new RequestTrouble(RedditWorld.PostsOf(subreddit), TimeSpan.Zero, Drops: true));
 
+    /// <summary>
+    /// "Reddit refuses "load more comments" with "403 Blocked", as it does to apps since October 2026":
+    /// <c>api/morechildren</c> answers 403 Blocked and Reddit's network security page; threads still answer.
+    /// </summary>
+    public void RefusesLoadMoreComments() => world.BlocksMoreChildren = true;
+
+    /// <summary>The requests Reddit got for "load more comments" (<c>api/morechildren</c>), oldest first: the status each got.</summary>
+    public RedditLoadMoreCommentsRequestsSnapshot ReadRequestsForLoadMoreComments() =>
+        new([.. world.Requests.Where(request => request is { Method: "POST", Path: "/api/morechildren" }).Select(request => request.Status)]);
+
     /// <summary>The votes Reddit got, oldest first: on which post, by its title, and which way.</summary>
     public RedditVotesSnapshot ReadVotes() =>
         new([.. world.Actions.Where(action => action.Name == "vote").Select(action => new RedditVote(
@@ -256,6 +266,9 @@ public sealed record RedditMediaRequestsSnapshot(ImmutableArray<string> Paths)
 
 /// <summary>The requests Reddit got for a post's comments, oldest first: the <c>limit</c> each asked for, null without one.</summary>
 public sealed record RedditCommentsRequestsSnapshot(ImmutableArray<int?> Limits);
+
+/// <summary>The requests Reddit got for "load more comments", oldest first: the HTTP status each got.</summary>
+public sealed record RedditLoadMoreCommentsRequestsSnapshot(ImmutableArray<int> Statuses);
 
 /// <summary>An image uploaded to Reddit, as Reddit serves it: the file name its URL ends with, and its size in bytes.</summary>
 public sealed record RedditImageSnapshot(string FileName, long Size);
