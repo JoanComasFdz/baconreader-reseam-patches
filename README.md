@@ -6,7 +6,7 @@
 
 [![Reseam](https://img.shields.io/badge/Reseam-0.35.1-ff4500?style=flat-square)](https://reseam.app)
 [![BaconReader](https://img.shields.io/badge/BaconReader-6.1.4-f57c00?style=flat-square)](#-install)
-[![Patches](https://img.shields.io/badge/patches-29-2ea44f?style=flat-square)](#-whats-inside)
+[![Patches](https://img.shields.io/badge/patches-30-2ea44f?style=flat-square)](#-whats-inside)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square)](LICENSE)
 
 [**➕ Add to Reseam Manager**](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches)
