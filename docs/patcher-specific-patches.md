@@ -125,6 +125,7 @@ To use your own Reddit app, create an "Installed app" at https://www.reddit.com/
 - **"Mark unread".** ReVanced removes it from the inbox item's menu just before the menu shows, by its type, through reflection. The port skips the call that adds it to the menu, the same way as the removed list entries above.
 - **Videos with sound.** ReVanced reads the service's post and the video's fields by reflection; this port passes the post from the patched code and reads the rest through stubs. The audio download's user agent names the BaconReader patches instead of ReVanced.
 - **Tables and accessibility.** ReVanced draws a table on one character of the text, so TalkBack and UI tests see nothing of it. Here each cell and the "↔ Expand" / "Fit to screen" button are virtual views of the text, with their text and where they show, and the button and the cells with a link can be clicked.
+- **Links in spoilers.** In ReVanced, a tap on a link in a hidden spoiler opens the link without showing the spoiler: the app's touch handler takes the link first. Here the link waits until the spoiler shows.
 - **Hidden spoilers and accessibility.** ReVanced only paints a hidden spoiler over, so TalkBack reads it aloud. Here, while a spoiler is hidden, the text's description reads it as "spoiler".
 - **Comment search buttons.** ReVanced's find bar names only its text field and its filter button. Here its arrows and its close button are named too: "Previous match", "Next match" and "Close search".
 
