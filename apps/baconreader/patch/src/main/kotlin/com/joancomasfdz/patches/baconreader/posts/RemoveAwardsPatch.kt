@@ -5,6 +5,7 @@
 package com.joancomasfdz.patches.baconreader.posts
 
 import app.reseam.patch.Type
+import app.reseam.patch.after
 import app.reseam.patch.alwaysReturn
 import app.reseam.patch.before
 import app.reseam.patch.field
@@ -62,6 +63,21 @@ val removeAwards =
                 }
             }
 
+            // The action bars' buttons are images without a description: each gets its action's
+            // name, and the overflow button the toolbar's "More options", so they can be told
+            // apart.
+            setButton.after {
+                RemoveAwards.describeButton(
+                    result.callVirtual(CONTROL_BAR_BUTTON, "getView", "()Landroid/view/View;"),
+                    param(0),
+                )
+            }
+            setOverflowButton.after {
+                RemoveAwards.describeOverflowButton(
+                    result.callVirtual(CONTROL_BAR_BUTTON, "getView", "()Landroid/view/View;")
+                )
+            }
+
             postMenuShow.before {
                 val menu =
                     capture("popup").callVirtual(POPUP_MENU, "getMenu", "()Landroid/view/Menu;")
@@ -83,6 +99,8 @@ private val controlBarActivity = klass(CONTROL_BAR).field("activity")
 
 // Adds a button to the action bar of comments and posts.
 private val setButton = klass(CONTROL_BAR).method("setButton") { params(Type.String) }
+
+private val setOverflowButton = klass(CONTROL_BAR).method("setOverflowButton")
 
 // The ⋮ menu of posts, shown by the post bar's click handler.
 private val postMenuShow =

@@ -42,8 +42,9 @@ fun install(button: ImageView?) {
 
 /**
  * Called at the start of rotateSelftextArrow(expanded, duration), which rotates the app's icon.
- * Flips the chevron instead and returns true, so the app's rotation is skipped, or returns false
- * when the button doesn't show [PageDrawable].
+ * Flips the chevron instead, says in the button's description whether the text is open, and returns
+ * true, so the app's rotation is skipped, or returns false when the button doesn't show
+ * [PageDrawable].
  */
 @Export
 fun setExpanded(button: ImageView?, expanded: Boolean, duration: Int): Boolean {
@@ -51,6 +52,12 @@ fun setExpanded(button: ImageView?, expanded: Boolean, duration: Int): Boolean {
     button.clearAnimation()
     button.rotation = 0f
     drawable.setExpanded(expanded, duration > 0)
+    button.contentDescription =
+        if (expanded) {
+            BaconReaderStrings.textPostIconContentDescriptionOpen
+        } else {
+            BaconReaderStrings.textPostIconContentDescription
+        }
     return true
 }
 

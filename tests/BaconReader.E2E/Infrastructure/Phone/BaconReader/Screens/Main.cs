@@ -17,6 +17,9 @@ public sealed class Main(AndroidDriver driver, Action noteShown)
     /// <summary>The menu the toolbar's menu button opens: the account, then the app's screens.</summary>
     public LeftMenu LeftMenu { get; } = new(driver);
 
+    /// <summary>The bar over the posts: their sort and, on a subreddit, "Flair filter".</summary>
+    public FeedSortBar SortBar { get; } = new(driver);
+
     /// <summary>The feed's posts.</summary>
     public PostList Posts { get; } = new(driver);
 

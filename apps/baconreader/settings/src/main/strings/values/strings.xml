@@ -18,6 +18,7 @@
     <string name="spoiler_hidden">spoiler</string>
     <!-- Text post icon -->
     <string name="text_post_icon_content_description">Show post text</string>
+    <string name="text_post_icon_content_description_open">Hide post text</string>
     <!-- Detail view videos -->
     <string name="section_detail_video">Detail view</string>
     <string name="autoplay_videos_in_detail_view">Autoplay videos in Detail View</string>
@@ -75,6 +76,8 @@
     <string name="meme_template_error">Could not load the full template</string>
     <!-- Flair filter -->
     <string name="flair_filter_button">Flair</string>
+    <string name="flair_filter_content_description">Flair filter</string>
+    <string name="flair_filter_content_description_chosen">Flair filter: <xliff:g id="flairs">%1$s</xliff:g></string>
     <string name="flair_filter_title">Show posts with flair</string>
     <string name="flair_filter_apply">Apply</string>
     <string name="flair_filter_clear">Clear</string>

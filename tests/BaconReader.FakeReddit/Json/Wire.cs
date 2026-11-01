@@ -164,6 +164,48 @@ public sealed record PreviewImage(PreviewSource Source, IReadOnlyList<PreviewSou
 
 public sealed record PreviewSource(string Url, int Width, int Height);
 
+/// <summary>An award given to a post or a comment: one entry of its <c>all_awardings</c>.</summary>
+public sealed record AwardingData
+{
+    public int? GiverCoinReward { get; init; }
+    public object? SubredditId { get; init; }
+    public bool IsNew { get; init; }
+    public int? DaysOfDripExtension { get; init; }
+    public int CoinPrice { get; init; } = 100;
+    public string Id { get; init; } = "";
+    public int? PennyDonate { get; init; }
+    public string AwardSubType { get; init; } = "GLOBAL";
+    public int CoinReward { get; init; }
+    public string IconUrl { get; init; } = "";
+    public int? DaysOfPremium { get; init; }
+    public object? TiersByRequiredAwardings { get; init; }
+    public object[] ResizedIcons { get; init; } = [];
+    public int IconWidth { get; init; } = 320;
+    public int StaticIconWidth { get; init; } = 320;
+    public object? StartDate { get; init; }
+    public bool IsEnabled { get; init; } = true;
+    public object? AwardingsRequiredToGrantBenefits { get; init; }
+    public string Description { get; init; } = "";
+    public object? EndDate { get; init; }
+    public object? StickyDurationSeconds { get; init; }
+    public int SubredditCoinReward { get; init; }
+    public int Count { get; init; }
+    public int StaticIconHeight { get; init; } = 240;
+    public string Name { get; init; } = "";
+    public object[] ResizedStaticIcons { get; init; } = [];
+    public object? IconFormat { get; init; }
+    public int IconHeight { get; init; } = 240;
+    public object? PennyPrice { get; init; }
+    public string AwardType { get; init; } = "global";
+    public string StaticIconUrl { get; init; } = "";
+}
+
+/// <summary>One part of a flair's <c>richtext</c>: a text (<c>e</c> "text") and what it says (<c>t</c>).</summary>
+public sealed record FlairRichtext(string E, string T);
+
+/// <summary>A post flair a subreddit lets users choose, as <c>api/link_flair</c> lists it.</summary>
+public sealed record LinkFlairData(string Text, bool TextEditable, string Id, string CssClass, string Type = "text", string TextColor = "dark", string BackgroundColor = "");
+
 /// <summary>A comment (t1), as Reddit's comment trees send it.</summary>
 public sealed record CommentData
 {

@@ -106,6 +106,13 @@ public sealed class PostBuilder
         Post.Flair = flair;
         return this;
     }
+
+    /// <summary>Given Reddit's Silver <paramref name="count"/> times: an award, with its icon in the media store.</summary>
+    public PostBuilder WithSilver(int count)
+    {
+        Post.Awards.Add(Award.Silver(world, count));
+        return this;
+    }
 }
 
 /// <summary>
@@ -185,6 +192,13 @@ public sealed class CommentBuilder
     public CommentBuilder WithScore(int score)
     {
         Comment.Score = score;
+        return this;
+    }
+
+    /// <summary>Given Reddit's Silver <paramref name="count"/> times: an award, with its icon in the media store.</summary>
+    public CommentBuilder WithSilver(int count)
+    {
+        Comment.Awards.Add(Award.Silver(world, count));
         return this;
     }
 

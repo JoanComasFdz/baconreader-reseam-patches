@@ -81,9 +81,13 @@ fun onOpenLinkset(activity: Activity?) {
         val textColor = textColor(activity)
         if (selected.isEmpty()) {
             control.text = BaconReaderStrings.flairFilterButton
+            control.contentDescription = BaconReaderStrings.flairFilterContentDescription
             control.setTextColor(textColor)
         } else {
-            control.text = TextUtils.join(", ", selected)
+            val flairs = TextUtils.join(", ", selected)
+            control.text = flairs
+            control.contentDescription =
+                BaconReaderStrings.flairFilterContentDescriptionChosen(flairs)
             control.setTextColor(accentColor(activity, textColor))
         }
         for (drawable in control.compoundDrawablesRelative) {
