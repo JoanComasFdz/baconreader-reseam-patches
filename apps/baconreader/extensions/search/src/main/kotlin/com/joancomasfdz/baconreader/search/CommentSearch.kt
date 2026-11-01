@@ -304,6 +304,7 @@ private fun buildBar(search: Search, collapseButton: TextView, container: ViewGr
     bar.isClickable = true
 
     val input = EditText(activity)
+    input.id = resourceId(activity, "baconreader_patches_comment_search_field")
     input.background = null
     input.isSingleLine = true
     input.inputType = InputType.TYPE_CLASS_TEXT
@@ -335,6 +336,7 @@ private fun buildBar(search: Search, collapseButton: TextView, container: ViewGr
     search.input = input
 
     val counter = TextView(activity)
+    counter.id = resourceId(activity, "baconreader_patches_comment_search_count")
     counter.setTextColor(secondary)
     counter.setTextSize(TypedValue.COMPLEX_UNIT_PX, collapseButton.textSize)
     counter.typeface = collapseButton.typeface
@@ -381,15 +383,36 @@ private fun buildBar(search: Search, collapseButton: TextView, container: ViewGr
     search.filterButton = filterButton
 
     bar.addView(
-        iconButton(activity, "ic_menu_arrow_up_black_24dp", secondary) { move(search, -1) },
+        iconButton(
+            activity,
+            "ic_menu_arrow_up_black_24dp",
+            BaconReaderStrings.commentSearchPrevious,
+            secondary,
+        ) {
+            move(search, -1)
+        },
         LinearLayout.LayoutParams(dp(activity, 36), ViewGroup.LayoutParams.MATCH_PARENT),
     )
     bar.addView(
-        iconButton(activity, "ic_menu_arrow_down_black_24dp", secondary) { move(search, 1) },
+        iconButton(
+            activity,
+            "ic_menu_arrow_down_black_24dp",
+            BaconReaderStrings.commentSearchNext,
+            secondary,
+        ) {
+            move(search, 1)
+        },
         LinearLayout.LayoutParams(dp(activity, 36), ViewGroup.LayoutParams.MATCH_PARENT),
     )
     bar.addView(
-        iconButton(activity, "abc_ic_clear_material", secondary) { close(search) },
+        iconButton(
+            activity,
+            "abc_ic_clear_material",
+            BaconReaderStrings.commentSearchClose,
+            secondary,
+        ) {
+            close(search)
+        },
         LinearLayout.LayoutParams(dp(activity, 44), ViewGroup.LayoutParams.MATCH_PARENT),
     )
 
@@ -412,10 +435,12 @@ private fun buildBar(search: Search, collapseButton: TextView, container: ViewGr
 private fun iconButton(
     activity: Activity,
     drawable: String,
+    description: String,
     color: ColorStateList,
     listener: View.OnClickListener,
 ): ImageView {
     val button = ImageView(activity)
+    button.contentDescription = description
     button.setImageDrawable(tinted(activity, drawable, color))
     button.scaleType = ImageView.ScaleType.CENTER_INSIDE
     button.background = themeDrawable(activity, android.R.attr.selectableItemBackgroundBorderless)
@@ -716,6 +741,12 @@ private fun findField(type: Class<*>, name: String): Field? {
     }
     synchronized(Searches.fields) { Searches.fields[key] = found }
     return found
+}
+
+/** The id the patch adds to the app's resources as [name], for the e2e tests to find a view by. */
+private fun resourceId(activity: Activity, name: String): Int {
+    val id = activity.resources.getIdentifier(name, "id", activity.packageName)
+    return if (id == 0) View.NO_ID else id
 }
 
 private fun tinted(activity: Activity, name: String, color: ColorStateList): Drawable? {

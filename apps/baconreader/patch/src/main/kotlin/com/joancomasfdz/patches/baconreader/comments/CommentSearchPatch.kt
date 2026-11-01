@@ -31,6 +31,11 @@ val commentSearch =
         dependsOn(baconReaderSettings, threadAccess)
 
         execute {
+            // The find bar's field and its count of matches are made in code: these ids name them,
+            // so the e2e tests find them.
+            resources.addId("baconreader_patches_comment_search_field")
+            resources.addId("baconreader_patches_comment_search_count")
+
             collapseButtonSet.after {
                 CommentSearch.addSearchButton(thisObject, thisObject.field(collapseButton))
             }

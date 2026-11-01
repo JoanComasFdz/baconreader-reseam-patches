@@ -15,6 +15,7 @@
     <!-- Show tables -->
     <string name="tables_expand">↔ Expand</string>
     <string name="tables_fit_to_screen">Fit to screen</string>
+    <string name="spoiler_hidden">spoiler</string>
     <!-- Text post icon -->
     <string name="text_post_icon_content_description">Show post text</string>
     <!-- Detail view videos -->
@@ -95,6 +96,9 @@
     <string name="comment_search_hint">Search comments</string>
     <string name="comment_search_all">SEARCH ALL</string>
     <string name="comment_search_filter">Show only matching comments</string>
+    <string name="comment_search_previous">Previous match</string>
+    <string name="comment_search_next">Next match</string>
+    <string name="comment_search_close">Close search</string>
     <string name="comment_search_loading">LOADING…</string>
     <string name="comment_search_error">Could not load all comments: <xliff:g id="error">%1$s</xliff:g></string>
     <!-- Load more comments -->
