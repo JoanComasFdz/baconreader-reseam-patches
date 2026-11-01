@@ -15,4 +15,13 @@ public static class DetailPostSnapshotAssertions
         Assert.True(post.Awards == 0, $"The post shows {post.Awards} award icons, but none was expected.");
         return that;
     }
+
+    /// <summary>BaconReader shows the post "<paramref name="title"/>" on its detail screen.</summary>
+    public static AssertingThat<DetailPostSnapshot> ShowsThePost(this AssertingThat<DetailPostSnapshot> that, string title)
+    {
+        Assert.True(
+            that.InstanceToAssert.Title == title,
+            $"BaconReader shows the post \"{that.InstanceToAssert.Title}\", but the post \"{title}\" was expected.");
+        return that;
+    }
 }

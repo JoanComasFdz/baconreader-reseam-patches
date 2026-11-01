@@ -24,6 +24,7 @@ public sealed class Detail(AndroidDriver driver)
     private static readonly By Upvote = Locate.AppId("upvote_left");
     private static readonly By Downvote = Locate.AppId("downvote_left");
     private static readonly By CommentHeader = Locate.AppId("commentSubText");
+    private static readonly By PostTitle = Locate.AppId("title");
 
     /// <summary>A text post's text, under its title.</summary>
     public PostText PostText { get; } = new(driver);
@@ -41,9 +42,10 @@ public sealed class Detail(AndroidDriver driver)
     public Task WaitUntilShownAsync() =>
         Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(10), "The post over its comments");
 
-    /// <summary>What the post shows over its comments: how many award icons.</summary>
+    /// <summary>What the post shows over its comments: its title, and how many award icons.</summary>
     public Task<DetailPostSnapshot> ReadPostAsync() =>
         OnScreen.ReadAsync(driver, () => new DetailPostSnapshot(
+            driver.FindElement(PostTitle).Text,
             driver.FindElements(Header).SelectMany(header => header.FindElements(AwardIcons))
                 .Sum(icons => icons.FindElements(By.ClassName("android.widget.ImageView")).Count)));
 
@@ -61,6 +63,13 @@ public sealed class Detail(AndroidDriver driver)
     /// post. Fails when the comments loaded before the tap.
     /// </summary>
     public Task DownvoteWhileTheCommentsLoadAsync() => VoteWhileTheCommentsLoadAsync(Downvote, "downvote");
+
+    /// <summary>Waits until the screen shows the post "<paramref name="title"/>": a link opens it a moment after the tap.</summary>
+    public Task WaitUntilPostShownAsync(string title) =>
+        Waiting.UntilShownAsync(driver, Locate.AppIdWithText("title", title), TimeSpan.FromSeconds(30), $"The post \"{title}\"");
+
+    /// <summary>Taps Android's Back, which closes the post and goes back to where it was opened from.</summary>
+    public Task ClickBackAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));
 
     private async Task VoteWhileTheCommentsLoadAsync(By arrow, string vote)
     {
@@ -464,6 +473,9 @@ public sealed class Comments(AndroidDriver driver)
         OnScreen.PressAsync(driver, () => Tables.FindCell(TextOf(text), link)
             ?? throw new InvalidOperationException($"The table of the comment \"{text}\" has no cell \"{link}\"."));
 
+    /// <summary>Taps the link "<paramref name="link"/>", a comment whose whole text is that link, at its start.</summary>
+    public Task ClickLinkAsync(string link) => ClickTextAsync(link);
+
     /// <summary>Taps the text of the comment "<paramref name="text"/>", at its start: a spoiler there shows, or hides.</summary>
     public Task ClickTextAsync(string text) =>
         OnScreen.TouchAsync(driver, () => TextOf(text), body =>
@@ -603,8 +615,8 @@ public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Vide
     public int Awards { get; init; }
 }
 
-/// <summary>What the post shows over its comments: how many award icons.</summary>
-public sealed record DetailPostSnapshot(int Awards);
+/// <summary>What the post shows over its comments: its title, and how many award icons.</summary>
+public sealed record DetailPostSnapshot(string Title, int Awards);
 
 /// <summary>
 /// Where a comment and its image (null without one) are on the screen, in pixels, and how many pixels a dp is: Android
