@@ -39,6 +39,12 @@ public sealed class BaconReaderApp(
     /// <summary>The inbox, which the left menu's "Inbox" opens.</summary>
     public Inbox Inbox { get; } = new(driver);
 
+    /// <summary>The menu a post's or a comment's ⋮ opens.</summary>
+    public PostMenu PostMenu { get; } = new(driver);
+
+    /// <summary>"Show posts with flair", which the button of "Flair filter" in the sort bar opens.</summary>
+    public FlairFilter FlairFilter { get; } = new(driver);
+
     /// <summary>The menu a message of the inbox opens when tapped.</summary>
     public MessageMenu MessageMenu { get; } = new(driver);
 
