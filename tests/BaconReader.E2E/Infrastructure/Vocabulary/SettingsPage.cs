@@ -10,6 +10,7 @@ namespace BaconReader.E2E.Infrastructure.Vocabulary;
 public partial record SettingsPage
 {
     public partial record ImagesAndVideos;
+    public partial record Comments;
 
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
     public partial record Unlisted(string Shown);
@@ -18,12 +19,13 @@ public partial record SettingsPage
 /// <summary>What the app shows for each <see cref="SettingsPage"/>: the only place those strings live.</summary>
 public static class SettingsPageShowing
 {
-    private static readonly SettingsPage[] Listed = [new SettingsPage.ImagesAndVideos()];
+    private static readonly SettingsPage[] Listed = [new SettingsPage.ImagesAndVideos(), new SettingsPage.Comments()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this SettingsPage value) =>
         value.Match(
             imagesAndVideos => "Images and videos",
+            comments => "Comments",
             unlisted => unlisted.Shown);
 
     /// <summary>The case the app's <paramref name="shown"/> text names, or <see cref="SettingsPage.Unlisted"/>.</summary>

@@ -178,6 +178,8 @@ public sealed class Explorer : BaseE2E
                 case "post with text": Reddit.HasAPostWithTheText(command.Argument(1), command.Argument(0), Lines(command.Argument(2))); break;
                 case "comment": Reddit.ThePost(command.Argument(0)).HasAComment(Lines(command.Argument(1))); break;
                 case "comment by": Reddit.ThePost(command.Argument(0)).HasACommentBy(Lines(command.Argument(2)), command.Argument(1)); break;
+                case "comment with table link": Reddit.ThePost(command.Argument(0)).HasACommentWithATableWhoseCellLinksToAnImage(command.Argument(1), command.Argument(2)); break;
+                case "comment with spoiler link": Reddit.ThePost(command.Argument(0)).HasACommentThatIsASpoilerLinkingToAnImage(command.Argument(1)); break;
                 case "comments": Reddit.ThePost(command.Argument(0)).HasComments(int.Parse(command.Argument(1), CultureInfo.InvariantCulture)); break;
                 case "reply": Reddit.ThePost(command.Argument(0)).TheComment(Lines(command.Argument(1))).HasAReply(Lines(command.Argument(2))); break;
                 case "comment with image": Reddit.ThePost(command.Argument(0)).HasACommentWithAnImage(command.Argument(1)); break;
@@ -226,7 +228,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
 {
     private static readonly string[] RedditData =
     [
-        "post", "post with text", "post with text and image", "comment", "comment by", "comments", "reply", "comment with image", "comment with gif", "comment with image link",
+        "post", "post with text", "post with text and image", "comment", "comment by", "comment with table link", "comment with spoiler link", "comments", "reply", "comment with image", "comment with gif", "comment with image link",
         "comment with video", "comment with video link", "subscribe", "message", "late comments", "fail posts",
         "refuse posts", "drop posts",
     ];

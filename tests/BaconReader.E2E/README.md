@@ -193,6 +193,8 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `post with text: <subreddit> \| <title> \| <text>` | a text post whose text is that Markdown |
 | `comment: <post title> \| <text>`, `comment with image`, `comment with gif`, `comment with image link`, `comment with video`, `comment with video link` | a comment on the post, and its media |
 | `comment by: <post title> \| <author> \| <text>` | a comment by that user |
+| `comment with table link: <post title> \| <text> \| <link>` | a comment with a table whose cell is a link to an image |
+| `comment with spoiler link: <post title> \| <spoiler>` | a comment that is a spoiler linking to an image |
 | `comments: <post title> \| <count>` | that many comments, "Comment 1" to "Comment &lt;count&gt;" |
 | `reply: <post title> \| <comment text> \| <text>` | a reply to that comment |
 | `subscribe: <subreddit>` | the test account's subscription |
