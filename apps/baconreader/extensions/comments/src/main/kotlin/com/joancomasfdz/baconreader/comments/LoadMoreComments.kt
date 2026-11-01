@@ -19,6 +19,7 @@ import com.onelouder.baconreader.data.ThreadKey
 import com.onelouder.baconreader.data.ThreadManager
 import com.onelouder.baconreader.reddit.More
 import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.WeakHashMap
 
 /**
@@ -41,11 +42,14 @@ private object Loader {
 
     // Main thread only.
 
-    /** The "more" items already loaded or tried. A reload of the thread has new ones. */
-    val tried: MutableSet<Any> = Collections.newSetFromMap(WeakHashMap())
+    /**
+     * Per opened thread, the "more" items already loaded or tried, by identity: BaconReader's items
+     * are equal by id, and a thread opened again, or reloaded, has new ones to load.
+     */
+    val tried = WeakHashMap<ThreadManager.Thread, MutableSet<Any>>()
 
-    /** Per loaded thread, by its first comment: the automatic requests made. */
-    val requests = WeakHashMap<Any, Int>()
+    /** Per opened thread: the automatic requests made. A post opened again is a new thread. */
+    val requests = WeakHashMap<ThreadManager.Thread, Int>()
 
     /** Comment lists loading a "more" automatically. */
     val running = WeakHashMap<Any, Boolean>()
@@ -86,29 +90,30 @@ private fun loadNext(adapter: CommentsAdapter) {
         }
         val threadKey = field(adapter, "threadKey") as ThreadKey?
         var more: More? = null
-        var firstComment: Any? = null
+        var opened: ThreadManager.Thread? = null
         synchronized(ThreadManager::class.java) {
             val threads = staticField(ThreadManager::class.java, "threads") as Map<*, *>
             val thread = threads[threadKey] as ThreadManager.Thread? ?: return
+            opened = thread
+            val tried = Loader.tried[thread].orEmpty()
             val states = thread.states
             val replies = ArrayList<Any?>(thread.replies)
-            firstComment = replies.firstOrNull()
             more =
                 replies.filterIsInstance<More>().firstOrNull {
                     // "Continue this thread" has no children: it's another page.
                     !it.children.isNullOrEmpty() &&
                         it.count <= maxReplies &&
                         // Not loaded or loading already.
-                        it !in Loader.tried &&
+                        it !in tried &&
                         states?.containsKey(it.id) != true
                 }
         }
         val next = more ?: return
-        val thread = firstComment ?: return
+        val thread = opened ?: return
         val requests = Loader.requests[thread] ?: 0
         if (requests >= Loader.MAX_AUTO_REQUESTS) return
         Loader.requests[thread] = requests + 1
-        Loader.tried.add(next)
+        Loader.tried.getOrPut(thread) { Collections.newSetFromMap(IdentityHashMap()) }.add(next)
         Loader.running[adapter] = true
 
         ThreadManager.loadMore(
