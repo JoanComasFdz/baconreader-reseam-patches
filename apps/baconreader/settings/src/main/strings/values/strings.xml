@@ -18,6 +18,7 @@
     <string name="spoiler_hidden">spoiler</string>
     <!-- Text post icon -->
     <string name="text_post_icon_content_description">Show post text</string>
+    <string name="text_post_icon_content_description_open">Hide post text</string>
     <!-- Detail view videos -->
     <string name="section_detail_video">Detail view</string>
     <string name="autoplay_videos_in_detail_view">Autoplay videos in Detail View</string>
