@@ -14,6 +14,7 @@ import android.widget.ImageView
 import app.reseam.runtime.Export
 import com.bumptech.glide.RequestBuilder
 import com.joancomasfdz.baconreader.common.GlideUtils
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.onelouder.baconreader.Preferences
 import com.onelouder.baconreader.media.gfycat.RedGifsManager
 import com.onelouder.baconreader.reddit.Link
@@ -232,7 +233,13 @@ private fun redgifsId(url: String?): String? = url?.let {
     REDGIFS_ID.find(it)?.groupValues?.get(1)?.lowercase(Locale.ROOT)
 }
 
-/** Blurs the row's thumbnail, or clears the blur, at the start of the app's thumbnail load. */
+/** The description each thumbnail view had before it was blurred: rows are reused. */
+private val descriptions = WeakHashMap<ImageView, CharSequence?>()
+
+/**
+ * Blurs the row's thumbnail, or clears the blur, at the start of the app's thumbnail load. A
+ * blurred thumbnail is described as such, so screen readers and tests tell it apart.
+ */
 @Export
 fun beforeLoad(link: Link?, imageView: ImageView?) {
     if (imageView == null || !canBlur()) return
@@ -242,6 +249,14 @@ fun beforeLoad(link: Link?, imageView: ImageView?) {
         imageView.setRenderEffect(
             if (blur) RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP) else null
         )
+        if (blur) {
+            if (!descriptions.containsKey(imageView)) {
+                descriptions[imageView] = imageView.contentDescription
+            }
+            imageView.contentDescription = BaconReaderStrings.thumbnailBlurred
+        } else if (descriptions.containsKey(imageView)) {
+            imageView.contentDescription = descriptions.remove(imageView)
+        }
     } catch (exception: Exception) {
         Log.i(TAG, "Could not blur the thumbnail", exception)
     }
