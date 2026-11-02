@@ -21,6 +21,7 @@ public sealed class MediaViewer(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By GalleryThumbnail = Locate.AppId("imageView");
 
     private const string Loading = "Loading media";
+    private const string Failed = "Media failed to load";
 
     /// <summary>The menu "More options" opens: "Save".</summary>
     public OverflowMenu MoreOptions { get; } = new(driver);
@@ -36,6 +37,10 @@ public sealed class MediaViewer(AndroidDriver driver)
     /// <summary>Waits until the media's loading bar is gone: the media arrived (a GIF comes 8 seconds late at most).</summary>
     public Task WaitUntilLoadedAsync() =>
         Waiting.UntilAsync(() => driver.FindElements(Media).Count > 0 && LoadingState() is null, TimeSpan.FromSeconds(20), "The media's loading bar gone");
+
+    /// <summary>Waits until the media's loading bar shows the media failed: "Media failed to load".</summary>
+    public Task WaitUntilLoadingFailedAsync() =>
+        Waiting.UntilAsync(() => LoadingState() == Failed, TimeSpan.FromSeconds(20), "The media's loading bar failed");
 
     /// <summary>Waits until the gallery shows, its strip of thumbnails under its image, its loading bar gone.</summary>
     public Task WaitUntilGalleryShownAsync() =>

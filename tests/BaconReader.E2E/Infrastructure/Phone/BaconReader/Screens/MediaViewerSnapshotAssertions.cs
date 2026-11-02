@@ -18,6 +18,16 @@ public static class MediaViewerSnapshotAssertions
         return that;
     }
 
+    /// <summary>The media shows its loading bar as failed: "Media failed to load".</summary>
+    public static AssertingThat<MediaViewerSnapshot> ShowsItsLoadingBarAsFailed(this AssertingThat<MediaViewerSnapshot> that)
+    {
+        var shown = that.InstanceToAssert.Loading;
+        Assert.True(
+            shown == "Media failed to load",
+            shown is null ? "The media shows no loading bar, but one that failed was expected." : $"The media's loading bar shows \"{shown}\", but \"Media failed to load\" was expected.");
+        return that;
+    }
+
     /// <summary>The media shows no loading bar.</summary>
     public static AssertingThat<MediaViewerSnapshot> ShowsNoLoadingBar(this AssertingThat<MediaViewerSnapshot> that)
     {

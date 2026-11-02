@@ -79,6 +79,9 @@ public sealed partial class Reddit
     public void AnswersTheMediaOfThePostWith(string title, string status) =>
         world.AddTrouble(new RequestTrouble(Get(MediaPath(PostTitled(title).Url)), TimeSpan.Zero, StatusCode(status)));
 
+    /// <summary>"Reddit answers the image of "&lt;title&gt;" with an error": its image file fails, 500 Internal Server Error.</summary>
+    public void AnswersTheImageOfThePostWithAnError(string title) => AnswersTheMediaOfThePostWith(title, "500 Internal Server Error");
+
     /// <summary>
     /// "Reddit answers the thumbnail of the post "&lt;title&gt;" with "&lt;status&gt;" the first &lt;times&gt; times": a
     /// network hiccup, after which the thumbnail is served.
