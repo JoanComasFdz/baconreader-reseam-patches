@@ -188,10 +188,39 @@ internal sealed class Things(RedditWorld world)
         };
     }
 
-    /// <summary>A private message (t4), as Reddit's inbox sends it.</summary>
+    /// <summary>
+    /// An inbox entry, as Reddit's inbox sends it: a private message (t4), or a comment reply (t1, <c>was_comment</c>,
+    /// with its post's subreddit, title and context).
+    /// </summary>
     public Thing Message(Message message)
     {
         var created = Seconds(message.Created);
+        if (message.Reply is { } reply)
+        {
+            var post = reply.Post;
+            return new Thing("t1", new MessageData
+            {
+                AuthorFullname = AuthorFullName(message.Author),
+                Id = reply.Id,
+                Subject = message.Subject,
+                Author = message.Author,
+                New = message.IsNew,
+                Body = message.Body,
+                Dest = message.To.Name,
+                WasComment = true,
+                Type = "comment_reply",
+                Subreddit = post.Subreddit.Name,
+                SubredditNamePrefixed = "r/" + post.Subreddit.Name,
+                ParentId = reply.Parent?.FullName ?? post.FullName,
+                LinkTitle = post.Title,
+                Context = $"{post.Permalink}{reply.Id}/?context=3",
+                BodyHtml = RedditMarkdown.ToEscapedHtml(message.Body, world.BaseUrl),
+                Name = message.FullName,
+                Created = created,
+                CreatedUtc = created,
+            });
+        }
+
         return new Thing("t4", new MessageData
         {
             AuthorFullname = AuthorFullName(message.Author),

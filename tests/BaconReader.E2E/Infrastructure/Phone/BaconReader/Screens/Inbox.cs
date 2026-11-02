@@ -25,6 +25,9 @@ public sealed class Inbox(AndroidDriver driver)
             driver.FindElements(Label).Select(label => label.Text).FirstOrDefault(label => label.StartsWith(subject + ": ", StringComparison.Ordinal))
                 ?? throw new InvalidOperationException($"The message \"{subject}\" isn't in the inbox.")));
 
+    /// <summary>Taps the private message "<paramref name="subject"/>", by its subject, which opens its menu.</summary>
+    public Task ClickTheMessageAsync(string subject) => OnScreen.PressAsync(driver, Locate.AppIdWithText("subjectView", subject));
+
     /// <summary>Taps the message saying "<paramref name="body"/>", which opens its menu.</summary>
     public Task ClickMessageAsync(string body) => OnScreen.PressAsync(driver, Locate.AppIdWithText("bodyView", body));
 }

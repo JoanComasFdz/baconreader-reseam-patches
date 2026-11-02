@@ -368,6 +368,12 @@ public sealed class RedditComment(RedditWorld world, Comment comment)
     /// <summary>"… has a reply "&lt;text&gt;"".</summary>
     public void HasAReply(string text) => world.AddReply(comment, text);
 
+    /// <summary>
+    /// "… has a reply "&lt;text&gt;" by u/&lt;author&gt;": to a comment of the test account's, it is in its inbox too, unread,
+    /// as a comment reply.
+    /// </summary>
+    public void HasAReplyBy(string text, string author) => world.AddReply(comment, text, reply => reply.By(author));
+
     /// <summary>"… has the replies "&lt;first&gt;", "&lt;second&gt;" and "&lt;third&gt;"", in that order.</summary>
     public void HasTheReplies(params string[] texts)
     {

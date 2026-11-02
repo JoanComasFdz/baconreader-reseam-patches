@@ -195,6 +195,12 @@ public sealed class RedditWorld
             var reply = new Comment(NewId(), parent.Post, parent, "e2e_commenter", markdown, DateTimeOffset.UtcNow);
             build?.Invoke(new CommentBuilder(this, reply));
             parent.Replies.Add(reply);
+            // As Reddit does, a reply to an account's comment goes to its inbox, unread: a comment reply.
+            if (FindAccount(parent.Author) is { } account && !string.Equals(reply.Author, account.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                account.Inbox.Insert(0, new Message(reply.Id, account, reply.Author, "comment reply", reply.Body, reply.Created) { Reply = reply });
+            }
+
             return reply;
         }
     }
@@ -209,6 +215,20 @@ public sealed class RedditWorld
             var message = new Message(NewId(), to, author, subject, body, DateTimeOffset.UtcNow);
             to.Inbox.Insert(0, message);
             return message;
+        }
+    }
+
+    /// <summary>
+    /// Records <paramref name="from"/>'s reply to the private message <paramref name="message"/>, as <c>api/comment</c>
+    /// on its t4 sends it: a message back to its author, which no inbox of the fake's holds.
+    /// </summary>
+    public Message ReplyToMessage(Message message, Account from, string body)
+    {
+        lock (Sync)
+        {
+            var reply = new Message(NewId(), from, from.Name, "re: " + message.Subject, body, DateTimeOffset.UtcNow) { IsNew = false };
+            message.SentReplies.Add(reply);
+            return reply;
         }
     }
 
@@ -275,7 +295,11 @@ public sealed class RedditWorld
     }
 
     internal Message? FindMessage(string id) =>
-        accounts.SelectMany(account => account.Inbox).FirstOrDefault(message => string.Equals(message.Id, id, StringComparison.OrdinalIgnoreCase));
+        accounts.SelectMany(account => account.Inbox).FirstOrDefault(message => message.Reply is null && string.Equals(message.Id, id, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The inbox entry of a fullname: a private message (t4_) or a comment reply (t1_).</summary>
+    internal Message? FindInboxEntry(string fullName) =>
+        accounts.SelectMany(account => account.Inbox).FirstOrDefault(message => string.Equals(message.FullName, fullName, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Serves <paramref name="bytes"/> at <c>/_media/&lt;path&gt;</c> (<c>i.redd.it/x.gif</c>) and returns its URL, as the

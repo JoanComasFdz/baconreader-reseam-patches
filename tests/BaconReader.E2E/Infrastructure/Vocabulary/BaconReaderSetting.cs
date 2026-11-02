@@ -18,6 +18,9 @@ public partial record BaconReaderSetting
     /// <summary>In "Filters": on with "Show NSFW posts"; off, "Fix list thumbnails" blurs NSFW thumbnails.</summary>
     public partial record ShowNsfwImages;
 
+    /// <summary>In "Detail View": off by default, and BaconReader shows no media in a post's detail view until it is on.</summary>
+    public partial record ShowLargeImage;
+
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
     public partial record Unlisted(string Shown);
 }
@@ -25,7 +28,7 @@ public partial record BaconReaderSetting
 /// <summary>What the app shows for each <see cref="BaconReaderSetting"/>: the only place those strings live.</summary>
 public static class BaconReaderSettingShowing
 {
-    private static readonly BaconReaderSetting[] Listed = [new BaconReaderSetting.HideRedditAwards(), new BaconReaderSetting.ShowNsfwPosts(), new BaconReaderSetting.ShowNsfwImages()];
+    private static readonly BaconReaderSetting[] Listed = [new BaconReaderSetting.HideRedditAwards(), new BaconReaderSetting.ShowNsfwPosts(), new BaconReaderSetting.ShowNsfwImages(), new BaconReaderSetting.ShowLargeImage()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this BaconReaderSetting value) =>
@@ -33,6 +36,7 @@ public static class BaconReaderSettingShowing
             hideRedditAwards => "Hide Reddit Awards",
             showNsfwPosts => "Show NSFW posts",
             showNsfwImages => "Show NSFW images",
+            showLargeImage => "Show large image",
             unlisted => unlisted.Shown);
 
     /// <summary>The case the app's <paramref name="shown"/> text names, or <see cref="BaconReaderSetting.Unlisted"/>.</summary>
