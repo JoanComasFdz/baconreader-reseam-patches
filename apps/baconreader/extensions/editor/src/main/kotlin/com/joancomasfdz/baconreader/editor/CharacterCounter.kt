@@ -6,6 +6,7 @@ package com.joancomasfdz.baconreader.editor
 
 import android.app.Activity
 import android.content.Context
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
@@ -48,6 +49,7 @@ internal class CharacterCounter(
         view.gravity = Gravity.CENTER_VERTICAL or Gravity.END
         val padding = dp(context, 8)
         view.setPadding(padding, 0, padding * 2, 0)
+        view.contentDescription = BaconReaderStrings.markdownCounterDescription
 
         max = if (isPost(context)) POST_LIMIT else COMMENT_LIMIT
         editText.addTextChangedListener(
@@ -70,17 +72,26 @@ internal class CharacterCounter(
         update()
     }
 
+    /**
+     * The view's description names it, so screen readers read the count as its state, after the
+     * name, from Android 11.
+     */
+    private fun show(text: String) {
+        view.text = text
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) view.stateDescription = text
+    }
+
     private fun update() {
         val text = editText.text.toString()
         // Reddit counts characters, not UTF-16 units: an emoji is one.
         val count = text.codePointCount(0, text.length)
         val format = NumberFormat.getIntegerInstance()
         if (textNotAllowed) {
-            view.text = BaconReaderStrings.markdownCounterNotAllowed(subreddit.orEmpty())
+            show(BaconReaderStrings.markdownCounterNotAllowed(subreddit.orEmpty()))
             view.setTextColor(if (count > 0) RED else warningColor)
             return
         }
-        view.text =
+        show(
             if (min > 0 && count < min) {
                 BaconReaderStrings.markdownCounterMin(
                     format.format(count),
@@ -90,6 +101,7 @@ internal class CharacterCounter(
             } else {
                 BaconReaderStrings.markdownCounter(format.format(count), format.format(max))
             }
+        )
         view.setTextColor(
             when {
                 count > max -> RED

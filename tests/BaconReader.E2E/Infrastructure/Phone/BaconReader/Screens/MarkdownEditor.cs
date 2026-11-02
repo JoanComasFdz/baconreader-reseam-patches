@@ -12,15 +12,15 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 
 /// <summary>
 /// The text box of the reply screen and of "Submit a Post", as "Markdown editor" makes it: a bar of Reddit's formats
-/// above it, one button each, described by its name ("Bold"), which scrolls sideways, and the counter at its end, "0 /
-/// 10,000" ("0 / 40,000" for a post, with a subreddit's own limits, or "No text in r/…").
+/// above it, one button each, described by its name ("Bold"), which scrolls sideways, and the counter at its end,
+/// described "Character count", "0 / 10,000" ("0 / 40,000" for a post, with a subreddit's own limits, or "No text in
+/// r/…").
 /// </summary>
 public sealed class MarkdownEditor(AndroidDriver driver)
 {
     private static readonly By Box = Locate.AppId("replyText");
     private static readonly By Bar = Locate.SidewaysList();
-    private static readonly By Counter = Locate.TextContaining(" / ");
-    private static readonly By NoTextCounter = Locate.TextStartingWith("No text in r/");
+    private static readonly By Counter = Locate.Description("Character count");
 
     /// <summary>Waits until the bar shows above the text box.</summary>
     public Task WaitUntilShownAsync() =>
@@ -131,7 +131,7 @@ public sealed class MarkdownEditor(AndroidDriver driver)
     }
 
     private string? CounterText() =>
-        driver.FindElements(Counter).Concat(driver.FindElements(NoTextCounter)).Where(counter => counter.Displayed).Select(counter => counter.Text).FirstOrDefault();
+        driver.FindElements(Counter).Where(counter => counter.Displayed).Select(counter => counter.Text).FirstOrDefault();
 }
 
 /// <summary>The formats the bar above a text box offers, in its order.</summary>
