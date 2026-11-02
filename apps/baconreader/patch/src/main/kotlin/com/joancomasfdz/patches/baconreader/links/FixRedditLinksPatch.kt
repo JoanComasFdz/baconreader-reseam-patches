@@ -14,6 +14,8 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
 private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 private const val LINK_DISPATCHER = "com.onelouder.baconreader.LinkDispatcher"
+private const val CLICKABLE_LINK_SPAN = "com.onelouder.baconreader.ClickableLinkSpan"
+private const val LINK = "com.onelouder.baconreader.reddit.Link"
 
 // LinkProcessor decides where a tapped Reddit link opens, by the shape of its path, and opens
 // every path it doesn't know in its browser. It predates Reddit's share links,
@@ -42,6 +44,14 @@ val fixRedditLinks =
             processing.before {
                 whenTrue(RedditLinks.dispatch(thisObject, param(0))) { returnTrue() }
             }
+
+            // The link next to a post's title starts LinkProcessor's intent only when it opens
+            // the browser, so it dropped the intents above and did nothing.
+            linkSpanClick.before {
+                whenTrue(RedditLinks.open(param(0), thisObject.field(spanLink).field(linkUrl))) {
+                    returnVoid()
+                }
+            }
         }
     }
 
@@ -53,3 +63,8 @@ private val processorForceBrowser = processor.field("forceBrowser")
 
 private val processing =
     klass(LINK_DISPATCHER).method("processing") { params("android.content.Intent") }
+
+private val linkSpan = klass(CLICKABLE_LINK_SPAN)
+private val linkSpanClick = linkSpan.method("onClick") { params("android.view.View") }
+private val spanLink = linkSpan.field("link")
+private val linkUrl = klass(LINK).field("url")

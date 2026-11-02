@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import app.reseam.runtime.Export
 import com.onelouder.baconreader.BrowserActivity
 import com.onelouder.baconreader.DetailActivity
@@ -74,6 +75,23 @@ private fun detail(context: Context, uri: Uri, post: String, comment: String?): 
     )
     if (!comment.isNullOrEmpty()) intent.putExtra(DetailActivity.EXTRA_COMMENTID, comment)
     return intent
+}
+
+/**
+ * Called at the start of ClickableLinkSpan.onClick, the link next to a post's title, which starts
+ * only the intents that open the browser. Opens the links [intent] knows and returns true; returns
+ * false to let the span go on.
+ */
+@Export
+fun open(view: View?, url: String?): Boolean {
+    val context = view?.context ?: return false
+    val next = intent(context, url, false) ?: return false
+    try {
+        context.startActivity(next)
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not open the link $url", exception)
+    }
+    return true
 }
 
 /**
