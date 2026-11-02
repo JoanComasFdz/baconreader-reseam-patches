@@ -59,7 +59,9 @@ fun openReplyScreen(activity: Activity?, message: Message?): Boolean {
 private fun asComment(message: Message): Comment {
     val comment = Comment()
     var type: Class<*>? = Message::class.java
-    while (type != null) {
+    // Not Object's fields: on Android it holds the object's class (shadow$_klass_), and copying it
+    // would turn the new Comment back into a Message, which the reply screen can't cast.
+    while (type != null && type != Any::class.java) {
         for (field in type.declaredFields) {
             if (Modifier.isStatic(field.modifiers)) continue
             field.isAccessible = true
