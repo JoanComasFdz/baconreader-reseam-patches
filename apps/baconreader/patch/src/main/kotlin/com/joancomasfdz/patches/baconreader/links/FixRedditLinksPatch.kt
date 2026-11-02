@@ -16,16 +16,20 @@ private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 private const val LINK_DISPATCHER = "com.onelouder.baconreader.LinkDispatcher"
 private const val CLICKABLE_LINK_SPAN = "com.onelouder.baconreader.ClickableLinkSpan"
 private const val LINK = "com.onelouder.baconreader.reddit.Link"
+private const val DETAIL_LINK_HELPER =
+    "com.onelouder.baconreader.adapters.DetailLinkFragment\$DetailLinkHelper"
 
 // LinkProcessor decides where a tapped Reddit link opens, by the shape of its path, and opens
 // every path it doesn't know in its browser. It predates Reddit's share links,
 // /r/<sub>/s/<code>, which say what they open only through a redirect. It also opens
 // /comments/<post> and /gallery/<post> in its browser, and a post on a user's profile,
-// /user/<user>/comments/<post>, as the profile.
+// /user/<user>/comments/<post>, as the profile. A video's link, v.redd.it/<video>, opens in its
+// media viewer, which looks the post up through www.reddit.com/video/<video>, and Reddit refuses
+// that.
 val fixRedditLinks =
     patch("Fix Reddit links") {
         description(
-            "Opens Reddit's share links, and links to galleries, to posts without their subreddit and to posts on a user's profile, in the app instead of its browser."
+            "Opens Reddit's share links, and links to galleries, to videos, to posts without their subreddit and to posts on a user's profile, in the app instead of its browser."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
@@ -48,10 +52,14 @@ val fixRedditLinks =
             // The link next to a post's title starts LinkProcessor's intent only when it opens
             // the browser, so it dropped the intents above and did nothing.
             linkSpanClick.before {
-                whenTrue(RedditLinks.open(param(0), thisObject.field(spanLink).field(linkUrl))) {
-                    returnVoid()
-                }
+                whenTrue(RedditLinks.open(param(0), thisObject.field(spanLink))) { returnVoid() }
             }
+
+            // A post's thumbnail, in the list and in the post's header, and the link next to its
+            // title, open the gallery or Reddit video the post carries in the app's media viewer,
+            // through LinkProcessor's intent: the intents above would open the post itself again.
+            browserIntent.before { RedditLinks.keepAppMedia(param(1)) }
+            headerOpen.before { RedditLinks.keepAppMedia(param(0)) }
         }
     }
 
@@ -60,6 +68,11 @@ private val getIntent = processor.method("getIntent") { params() }
 private val processorContext = processor.field("context")
 private val processorUrl = processor.field("url")
 private val processorForceBrowser = processor.field("forceBrowser")
+private val browserIntent =
+    processor.method("getBrowserIntent") { params("android.content.Context", LINK) }
+
+// Opens the media of the post shown, from the thumbnail in its header.
+private val headerOpen = klass(DETAIL_LINK_HELPER).method("onOpen") { params(LINK) }
 
 private val processing =
     klass(LINK_DISPATCHER).method("processing") { params("android.content.Intent") }
@@ -67,4 +80,3 @@ private val processing =
 private val linkSpan = klass(CLICKABLE_LINK_SPAN)
 private val linkSpanClick = linkSpan.method("onClick") { params("android.view.View") }
 private val spanLink = linkSpan.field("link")
-private val linkUrl = klass(LINK).field("url")

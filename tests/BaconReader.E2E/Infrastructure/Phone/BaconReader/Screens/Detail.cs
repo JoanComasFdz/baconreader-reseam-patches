@@ -26,6 +26,7 @@ public sealed class Detail(AndroidDriver driver)
     private static readonly By CommentHeader = Locate.AppId("commentSubText");
     private static readonly By PostTitle = Locate.AppId("title");
     private static readonly By PostSubtext = Locate.AppId("subtext");
+    private static readonly By HeaderThumbnail = Locate.AppId("thumbnail");
 
     /// <summary>A text post's text, under its title.</summary>
     public PostText PostText { get; } = new(driver);
@@ -95,6 +96,10 @@ public sealed class Detail(AndroidDriver driver)
                 ["y"] = bounds.Top + (lineHeight / 2),
             });
         });
+
+    /// <summary>Taps the thumbnail in the post's header, which opens the post's media.</summary>
+    public Task ClickHeaderThumbnailAsync() =>
+        OnScreen.PressAsync(driver, () => driver.FindElement(Header).FindElement(HeaderThumbnail));
 
     /// <summary>Taps Android's Back, which closes the post and goes back to where it was opened from.</summary>
     public Task ClickBackAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));

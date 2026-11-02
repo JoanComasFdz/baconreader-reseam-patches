@@ -6,7 +6,7 @@ using OpenQA.Selenium.Appium.Android;
 namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 
 /// <summary>
-/// The screen a post's thumbnail opens in the list view (BrowserActivity): the post's media, an image, a GIF, a video, a
+/// The screen a post's thumbnail opens, in the list view or in a post's header (BrowserActivity): the post's media, an image, a GIF, a video, a
 /// gallery or a web page, under a toolbar with "More options". While the media loads, "Improve post media loading"
 /// draws a loading bar over it, which isn't in the screen's tree: the media's view (<c>viewFlipper</c>) is described
 /// "Loading media" then, with its size once known ("Loading media, GIF · 0.4 MB"), or "Media failed to load".
@@ -44,6 +44,9 @@ public sealed class MediaViewer(AndroidDriver driver)
     /// <summary>Waits until the screen shows a web page, a link post's.</summary>
     public Task WaitUntilPageShownAsync() =>
         Waiting.UntilShownAsync(driver, Page, TimeSpan.FromSeconds(10), "The link post's web page");
+
+    /// <summary>Taps Android's Back, which closes the media and goes back to where it was opened from.</summary>
+    public Task ClickBackAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));
 
     /// <summary>Taps "More options" in the toolbar, which opens its menu.</summary>
     public Task ClickMoreOptionsAsync() => OnScreen.PressAsync(driver, MoreOptionsButton);
