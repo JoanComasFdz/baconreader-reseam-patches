@@ -69,6 +69,12 @@ public sealed class Subreddit
     /// </summary>
     public List<string>? LinkFlairs { get; set; }
 
+    /// <summary>
+    /// What it asks of a text post's text, which <c>api/v1/&lt;sub&gt;/post_requirements</c> answers; null for Reddit's
+    /// defaults (any text, up to Reddit's limit).
+    /// </summary>
+    public PostRequirements? PostRequirements { get; set; }
+
     public string FullName => "t5_" + Id;
 }
 
@@ -253,8 +259,24 @@ public sealed class Message
     /// <summary>Unread: Reddit's <c>new</c>. <c>api/read_message</c> and <c>api/read_all_messages</c> clear it.</summary>
     public bool IsNew { get; set; } = true;
 
-    public string FullName => "t4_" + Id;
+    /// <summary>
+    /// The comment this inbox entry is, a reply to one of the account's comments (Reddit's comment reply, a t1 with
+    /// <c>was_comment</c>); null for a private message (t4).
+    /// </summary>
+    public Comment? Reply { get; init; }
+
+    /// <summary>The replies the account sent to this private message (<c>api/comment</c> on its t4).</summary>
+    public List<Message> SentReplies { get; } = [];
+
+    /// <summary>Its fullname: the comment's for a comment reply (t1), its own for a private message (t4).</summary>
+    public string FullName => Reply?.FullName ?? "t4_" + Id;
 }
+
+/// <summary>
+/// What a subreddit asks of a text post's text: at least <paramref name="MinLength"/> and at most
+/// <paramref name="MaxLength"/> characters (null for none), or none at all (<paramref name="TextNotAllowed"/>).
+/// </summary>
+public sealed record PostRequirements(int? MinLength = null, int? MaxLength = null, bool TextNotAllowed = false);
 
 /// <summary>
 /// An image, GIF or video uploaded to Reddit in a comment or a post's text: one entry of its <c>media_metadata</c>.

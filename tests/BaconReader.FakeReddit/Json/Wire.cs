@@ -356,6 +356,7 @@ public sealed record MessageData
     public double CreatedUtc { get; init; }
     public string Context { get; init; } = "";
     public object? Distinguished { get; init; }
+    public string? LinkTitle { get; init; }
 }
 
 /// <summary>

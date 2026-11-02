@@ -86,13 +86,15 @@ internal static class Accounts
             return Answers.Json(Listings.Page(subscribed, context.Request.Query, subreddit => subreddit.FullName, subreddit => things.Subreddit(subreddit, account)));
         });
 
-    // The messages of an inbox tab: inbox and messages hold every private message, unread the unread ones; the fake
-    // sends none of the others (sent, comments, selfreply, mentions, moderator).
+    // The entries of an inbox tab: inbox holds them all, unread the unread ones, messages the private messages and
+    // comments the comment replies; the fake sends none of the others (sent, selfreply, mentions, moderator).
     private static List<Message> Inbox(Account account, string where) =>
         where.ToLowerInvariant() switch
         {
-            "inbox" or "messages" => [.. account.Inbox],
+            "inbox" => [.. account.Inbox],
             "unread" => [.. account.Inbox.Where(message => message.IsNew)],
+            "messages" => [.. account.Inbox.Where(message => message.Reply is null)],
+            "comments" => [.. account.Inbox.Where(message => message.Reply is not null)],
             _ => [],
         };
 

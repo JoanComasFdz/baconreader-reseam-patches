@@ -67,10 +67,14 @@ world.LoginPage.ShowCookieBanner = true;
     `.mp4`).
 - `Subreddit(name).LinkFlairs`: the flairs `api/link_flair` lists for it; null (the default) keeps them private, and
   Reddit refuses the list with 403 Forbidden.
+- `Subreddit(name).PostRequirements`: what `api/v1/<sub>/post_requirements` says it asks of a text post's text, at
+  least and at most so many characters, or no text at all; null (the default) is Reddit's defaults.
 - `AddShareLink(owner, target)` makes a share link, `/<owner>/s/<code>` (`owner` is `r/<sub>` or `u/<user>`), that
   leads to the path `target`, and returns its path. A post on a user's profile is a post in `u_<name>`, as Reddit keeps
   it.
 - `AddMessage(account, subject, body)` sends the account an unread private message: the newest of its inbox.
+- `AddReply` to a comment of an account's, by someone else, puts the reply in its inbox too, unread: a comment reply,
+  as Reddit's inbox sends it (a t1 with `was_comment`, its post's subreddit, title and context).
 - `AddTrouble(new RequestTrouble(matches, delay, status, explanation, drops))` makes the requests it matches
   (`RedditWorld.CommentsOf(post)`, `RedditWorld.PostsOf(subreddit)`) misbehave until the world is reset: after `delay`,
   they fail with `status` (Reddit's error JSON, with its `explanation` when set), or lose their connection (`drops`), or
@@ -103,10 +107,11 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /reddits/mine`, `/subreddits/mine/{where}`, `/reddits/popular`, `/reddits/default` (and `/subreddits/…`) | `t5` listings |
 | `GET /_onelouder/explore-api/def_subs` | the default subreddits, as BaconReader's own server sent them: `app.top_level_categories[0].subreddits[]` with `name` and `display_name` |
 | `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine` | the account (never on today's day of the year, so no "Happy Cake Day!"), with `has_mail` and `inbox_count` from its unread messages; its prefs, empty lists |
-| `GET /message/{where}` | the account's private messages (t4), newest first: all of them for `inbox` and `messages`, the unread ones for `unread`, none for the other tabs |
+| `GET /message/{where}` | the account's inbox, newest first: everything for `inbox`, the unread for `unread`, the private messages (t4) for `messages`, the comment replies (t1) for `comments`, none for the other tabs |
+| `GET /api/v1/{sub}/post_requirements` | what the subreddit asks of a text post's text (`body_restriction_policy`, `body_text_min_length`, `body_text_max_length`), Reddit's defaults unless the world set them; 404 for no such subreddit |
 | `GET /user/{name}/about` | `t2`, for the world's accounts |
 | `GET /api/user_data_by_account_ids?ids=…` | for each fullname of a user the world gave an avatar (`GiveAvatar`), its `name` and `profile_img`; the others aren't in the answer |
-| `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, `read_message`, `read_all_messages`, and others BaconReader sends | what Reddit answers (`{}`, or the comment), applied to the world and recorded in `Actions`, logged out too |
+| `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, `read_message`, `read_all_messages`, and others BaconReader sends | what Reddit answers (`{}`, or the comment; for a `comment` on a private message, the reply as a t4, kept in its `SentReplies`), applied to the world and recorded in `Actions`, logged out too |
 | `GET /api/v1/authorize.compact` (and `/api/v1/authorize`, `/login.compact`, `/login`) | Reddit's login page: "Log In", the fields in elements with Reddit's ids, `login-username` and `login-password`, a "Log In" button; first the cookie banner when the world asks for it |
 | `POST` of the login page | with a known account and its password, "Hey, &lt;user&gt;! &lt;app&gt; would like to connect with your reddit account", the permissions asked, and "Accept"; otherwise the login page with "Incorrect username or password". The app is named by its client ID: RedReader's is "RedReader (Release)" |
 | `GET /favicon.ico` | 204: the web view asks for the login page's icon |
