@@ -207,6 +207,9 @@ public sealed class Explorer : BaseE2E
                 case "gallery post": Reddit.HasAGalleryPostOf(command.Argument(1), command.Argument(0), int.Parse(command.Argument(2), CultureInfo.InvariantCulture)); break;
                 case "crosspost": Reddit.HasACrosspostOf(command.Argument(1), command.Argument(0), command.Argument(2)); break;
                 case "avatar": Reddit.TheUserHasAnAvatar(command.Argument(0)); break;
+                case "late media": Reddit.AnswersTheMediaOfThePostLate(command.Argument(0), int.Parse(command.Argument(1), CultureInfo.InvariantCulture)); break;
+                case "fail media": Reddit.AnswersTheMediaOfThePostWith(command.Argument(0), command.Argument(1)); break;
+                case "fail thumbnail": Reddit.AnswersTheThumbnailOfThePostWithTheFirstTimes(command.Argument(0), command.Argument(1), int.Parse(command.Argument(2), CultureInfo.InvariantCulture)); break;
                 default: return $"error: unknown command \"{command.Name}\"";
             }
 
@@ -248,6 +251,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
         "comment with video", "comment with video link", "subscribe", "message", "late comments", "fail posts",
         "refuse posts", "drop posts", "image post", "gif post", "signed thumbnail post", "video post",
         "link post with preview", "nsfw image post", "spoiler image post", "gallery post", "crosspost", "avatar",
+        "late media", "fail media", "fail thumbnail",
     ];
 
     /// <summary>Whether it makes Reddit data: from the commands file, it runs before the app opens.</summary>

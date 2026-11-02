@@ -22,7 +22,16 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
 
         Assert.True(data.GetProperty("is_video").GetBoolean());
         Assert.Equal("v.redd.it", data.GetProperty("domain").GetString());
-        Assert.Equal($"{Server.Url}/_media/v.redd.it/{id}", data.GetProperty("url").GetString());
+        var url = data.GetProperty("url").GetString()!;
+        Assert.Equal($"{Server.Url}/_media/v.redd.it/{id}", url);
+        // As v.redd.it does, the video's own address leads to its post; BaconReader's rewrite of it too.
+        foreach (var address in new[] { url, $"{Server.Url}/_media/www.reddit.com/video/{id}" })
+        {
+            using var redirect = await SendAsync(HttpMethod.Get, new Uri(address).PathAndQuery);
+            Assert.Equal(HttpStatusCode.MovedPermanently, redirect.StatusCode);
+            Assert.Equal("https://www.reddit.com" + post.Permalink, redirect.Headers.Location!.ToString());
+        }
+
         var video = data.GetProperty("media").GetProperty("reddit_video");
         Assert.Equal($"{Server.Url}/_media/v.redd.it/{id}/DASH_240.mp4?source=fallback", video.GetProperty("fallback_url").GetString());
         // HTML-escaped, as Reddit sends it without raw_json.
@@ -35,7 +44,54 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
         await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/DASHPlaylist.mpd", "application/dash+xml", MediaAsset.DashPlaylist.Bytes);
         await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/DASH_240.mp4?source=fallback", "video/mp4", MediaAsset.DashVideo.Bytes);
         await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/DASH_AUDIO_128.mp4", "audio/mp4", MediaAsset.DashAudio.Bytes);
+        // BaconReader plays it by its HLS playlist, whose own playlists sit next to it.
+        await AssertServesAsync(video.GetProperty("hls_url").GetString()!, "application/vnd.apple.mpegurl", MediaAsset.HlsPlaylist.Bytes);
+        await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/HLS_240.m3u8", "application/vnd.apple.mpegurl", MediaAsset.HlsVideo.Bytes);
+        await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/HLS_AUDIO_128.m3u8", "application/vnd.apple.mpegurl", MediaAsset.HlsAudio.Bytes);
+        Assert.Contains("BYTERANGE=\"817@0\"", Encoding.UTF8.GetString(MediaAsset.HlsVideo.Bytes));
         await AssertServesAsync(data.GetProperty("thumbnail").GetString()!, "image/jpeg", MediaAsset.Jpeg.Bytes);
+    }
+
+    [Fact]
+    public async Task Media_answer_HEAD_with_their_size()
+    {
+        var post = World.AddPost("e2e", "Dancing", build => build.WithGif());
+
+        using var head = await SendAsync(HttpMethod.Head, new Uri(post.Url!).PathAndQuery);
+
+        Assert.Equal(HttpStatusCode.OK, head.StatusCode);
+        Assert.Equal(MediaAsset.LargeGif.Bytes.Length, head.Content.Headers.ContentLength);
+    }
+
+    [Fact]
+    public async Task A_GIF_post_has_a_still_as_thumbnail_and_preview_and_the_GIF_in_its_preview_variants()
+    {
+        var post = World.AddPost("e2e", "Dancing", build => build.WithGif());
+
+        var data = await ReadPostAsync(post);
+
+        var image = data.GetProperty("preview").GetProperty("images")[0];
+        Assert.Equal(post.Url, image.GetProperty("variants").GetProperty("gif").GetProperty("source").GetProperty("url").GetString());
+        Assert.Equal(data.GetProperty("thumbnail").GetString(), image.GetProperty("source").GetProperty("url").GetString());
+        await AssertServesAsync(image.GetProperty("source").GetProperty("url").GetString()!, "image/jpeg", MediaAsset.Jpeg.Bytes);
+        await AssertServesAsync(post.Url!, "image/gif", MediaAsset.LargeGif.Bytes);
+    }
+
+    [Fact]
+    public async Task A_gallery_post_links_its_gallery_where_E2E_fake_Reddit_moves_Reddits()
+    {
+        var post = World.AddPost("e2e", "Album", build => build.AsGallery());
+
+        Assert.Equal($"{Server.Url}/gallery/{post.Id}", (await ReadPostAsync(post)).GetProperty("url").GetString());
+    }
+
+    [Fact]
+    public void The_web_page_asks_for_itself_again_once_its_script_ran()
+    {
+        var page = Encoding.UTF8.GetString(MediaAsset.WebPage.Bytes);
+
+        Assert.Contains("textContent = \"JavaScript is on\"", page);
+        Assert.Contains("fetch(location.pathname + \"?script=ran\")", page);
     }
 
     [Fact]
@@ -108,6 +164,8 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
         var previews = first.GetProperty("p").EnumerateArray().ToList();
         Assert.Equal([108, 216, 320], previews.Select(preview => preview.GetProperty("x").GetInt32()));
         Assert.Contains("?width=216&amp;crop=smart&amp;", previews[1].GetProperty("u").GetString());
+        // Its full image, where the gallery viewer loads it.
+        await AssertServesAsync($"{Server.Url}/_media/i.redd.it/{items[0].GetProperty("media_id").GetString()}.jpeg", "image/jpeg", MediaAsset.Jpeg.Bytes);
         Assert.False(crosspostData.GetProperty("is_gallery").GetBoolean());
         Assert.Equal("default", crosspostData.GetProperty("thumbnail").GetString());
         Assert.Equal(galleryData.GetProperty("url").GetString(), crosspostData.GetProperty("url").GetString());

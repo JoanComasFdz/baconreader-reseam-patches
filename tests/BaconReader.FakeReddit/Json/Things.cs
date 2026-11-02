@@ -50,7 +50,7 @@ internal sealed class Things(RedditWorld world)
             CrosspostParentList = post.CrosspostOf is null ? null : [Link(post.CrosspostOf, viewer).Data],
             Preview = post.PreviewImages.Count == 0
                 ? null
-                : new Preview([.. post.PreviewImages.Select((image, index) => new PreviewImage(new PreviewSource(image, 320, 240), [], [], $"{post.Id}preview{index}"))]),
+                : new Preview([.. post.PreviewImages.Select((image, index) => new PreviewImage(new PreviewSource(image, 320, 240), [], Variants(index == 0 ? post.PreviewGif : null), $"{post.Id}preview{index}"))]),
             Locked = post.IsLocked,
             SubredditId = post.Subreddit.FullName,
             LinkFlairText = post.Flair,
@@ -260,6 +260,10 @@ internal sealed class Things(RedditWorld world)
             : [];
         return new MediaMetadata("valid", media.IsAnimated ? "AnimatedImage" : "Image", media.Id) { M = media.ContentType, P = previews, S = full };
     }
+
+    // A GIF post's first preview names the GIF in variants.gif, as Reddit sends it; other previews have none.
+    private static Dictionary<string, object> Variants(string? gif) =>
+        gif is null ? [] : new() { ["gif"] = new { source = new PreviewSource(gif, 240, 180), resolutions = Array.Empty<PreviewSource>() } };
 
     private static readonly int[] GalleryPreviewWidths = [108, 216, 320];
 

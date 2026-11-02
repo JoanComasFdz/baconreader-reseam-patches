@@ -3,6 +3,9 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>E2E page</title></head>
 <body>
 <h1 id="state">JavaScript is off</h1>
-<script>document.getElementById("state").textContent = "JavaScript is on";</script>
+<script>
+document.getElementById("state").textContent = "JavaScript is on";
+fetch(location.pathname + "?script=ran");
+</script>
 </body>
 </html>

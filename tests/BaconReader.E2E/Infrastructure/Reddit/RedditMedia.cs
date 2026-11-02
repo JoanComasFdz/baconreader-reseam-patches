@@ -54,6 +54,30 @@ public sealed partial class Reddit
         world.AddPost(subreddit, title, post => post.CrosspostOf(sharedPost));
     }
 
+    /// <summary>
+    /// "Reddit answers the media of the post "&lt;title&gt;" &lt;seconds&gt; seconds late": its image or GIF file comes
+    /// that late, as from a slow connection.
+    /// </summary>
+    public void AnswersTheMediaOfThePostLate(string title, int seconds) =>
+        world.AddTrouble(new RequestTrouble(Get(MediaPath(PostTitled(title).Url)), TimeSpan.FromSeconds(seconds)));
+
+    /// <summary>"Reddit answers the media of the post "&lt;title&gt;" with "&lt;status&gt;"": its image or GIF file fails.</summary>
+    public void AnswersTheMediaOfThePostWith(string title, string status) =>
+        world.AddTrouble(new RequestTrouble(Get(MediaPath(PostTitled(title).Url)), TimeSpan.Zero, StatusCode(status)));
+
+    /// <summary>
+    /// "Reddit answers the thumbnail of the post "&lt;title&gt;" with "&lt;status&gt;" the first &lt;times&gt; times": a
+    /// network hiccup, after which the thumbnail is served.
+    /// </summary>
+    public void AnswersTheThumbnailOfThePostWithTheFirstTimes(string title, string status, int times) =>
+        world.AddTrouble(new RequestTrouble(Get(MediaPath(PostTitled(title).Thumbnail)), TimeSpan.Zero, StatusCode(status), Times: times));
+
     /// <summary>"the user "&lt;user&gt;" has an avatar".</summary>
     public void TheUserHasAnAvatar(string user) => world.GiveAvatar(user);
+
+    // The path the fake serves a media URL at, without its query: what a trouble matches.
+    private static string MediaPath(string? url) =>
+        new Uri(url ?? throw new InvalidOperationException("The post has no media URL.")).AbsolutePath;
+
+    private static Func<string, string, bool> Get(string path) => (method, asked) => method == "GET" && asked == path;
 }

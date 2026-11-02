@@ -293,7 +293,8 @@ public sealed class RedditWorld
     /// <summary>
     /// Serves a video as v.redd.it serves one uploaded to Reddit, under <c>v.redd.it/&lt;id&gt;/</c>: its DASH playlist,
     /// <c>DASHPlaylist.mpd</c>, and the renditions it names next to it, <c>DASH_240.mp4</c> and <c>DASH_AUDIO_128.mp4</c>
-    /// (<see cref="MediaAsset.DashPlaylist"/>). Returns the playlist's path.
+    /// (<see cref="MediaAsset.DashPlaylist"/>), and the same as HLS, <c>HLSPlaylist.m3u8</c> (<see cref="MediaAsset.HlsPlaylist"/>).
+    /// Returns the DASH playlist's path.
     /// </summary>
     public string AddRedditVideo(string id)
     {
@@ -301,6 +302,9 @@ public sealed class RedditWorld
         AddMedia(playlist, MediaAsset.DashPlaylist.ContentType, MediaAsset.DashPlaylist.Bytes);
         AddMedia($"v.redd.it/{id}/DASH_240.mp4", MediaAsset.DashVideo.ContentType, MediaAsset.DashVideo.Bytes);
         AddMedia($"v.redd.it/{id}/DASH_AUDIO_128.mp4", MediaAsset.DashAudio.ContentType, MediaAsset.DashAudio.Bytes);
+        AddMedia($"v.redd.it/{id}/HLSPlaylist.m3u8", MediaAsset.HlsPlaylist.ContentType, MediaAsset.HlsPlaylist.Bytes);
+        AddMedia($"v.redd.it/{id}/HLS_240.m3u8", MediaAsset.HlsVideo.ContentType, MediaAsset.HlsVideo.Bytes);
+        AddMedia($"v.redd.it/{id}/HLS_AUDIO_128.m3u8", MediaAsset.HlsAudio.ContentType, MediaAsset.HlsAudio.Bytes);
         return playlist;
     }
 

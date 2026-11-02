@@ -56,11 +56,25 @@ public sealed class PostBuilder
         return this;
     }
 
-    /// <summary>A GIF post, uploaded to i.redd.it.</summary>
-    public PostBuilder WithGif() => WithImage(MediaAsset.Gif);
+    /// <summary>
+    /// A GIF post, uploaded to i.redd.it, as Reddit sends one: a still of it as thumbnail and preview, and the GIF in the
+    /// preview's <c>variants.gif</c>. <see cref="MediaAsset.LargeGif"/> unless <paramref name="gif"/> says otherwise.
+    /// </summary>
+    public PostBuilder WithGif(MediaAsset? gif = null)
+    {
+        var id = world.NewId();
+        var url = world.AddMedia($"i.redd.it/{id}.gif", "image/gif", (gif ?? MediaAsset.LargeGif).Bytes);
+        LinkingTo(url);
+        var still = world.AddMedia($"preview.redd.it/{id}e2estill.jpg", MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes);
+        Post.Thumbnail = still;
+        Post.PreviewImages.Add(still);
+        Post.PreviewGif = url;
+        return this;
+    }
 
     /// <summary>
-    /// A gallery post of one JPEG, as Reddit sends one: its URL <c>https://www.reddit.com/gallery/&lt;id&gt;</c>, its
+    /// A gallery post of JPEGs, one unless <paramref name="images"/> says otherwise, as Reddit sends one: its URL
+    /// <c>https://www.reddit.com/gallery/&lt;id&gt;</c>, moved to the fake (<c>&lt;baseUrl&gt;/gallery/&lt;id&gt;</c>), its
     /// image in <c>media_metadata</c> and <c>gallery_data</c>.
     /// </summary>
     public PostBuilder AsGallery(int images = 1)
@@ -72,7 +86,9 @@ public sealed class PostBuilder
         }
 
         Post.IsGallery = true;
-        LinkingTo("https://www.reddit.com/gallery/" + Post.Id);
+        // As BaconReader recognizes a gallery: Reddit's https://www.reddit.com/gallery/<id>, its prefix moved to the
+        // fake by "E2E fake Reddit", as for media.
+        LinkingTo($"{world.BaseUrl}/gallery/{Post.Id}");
         Post.Thumbnail = world.MediaUrl(Post.Media.Values.First().Path);
         return this;
     }
@@ -123,15 +139,17 @@ public sealed class PostBuilder
     }
 
     /// <summary>
-    /// A video post, as Reddit sends one uploaded to v.redd.it: its URL <c>https://v.redd.it/&lt;id&gt;</c>, its
-    /// <c>media.reddit_video</c> (the DASH and HLS playlists, and the MP4 its <c>fallback_url</c> names) and a still as
-    /// thumbnail and preview; the video is served as v.redd.it serves it, with a sound track
+    /// A video post, as Reddit sends one uploaded to v.redd.it: its URL <c>https://v.redd.it/&lt;id&gt;</c>, moved to the
+    /// fake, which redirects it to the post as v.redd.it does, its <c>media.reddit_video</c> (the DASH and HLS playlists, and the MP4 its <c>fallback_url</c> names, at the
+    /// fake) and a still as thumbnail and preview; the video is served as v.redd.it serves it, with a sound track
     /// (<see cref="RedditWorld.AddRedditVideo"/>).
     /// </summary>
     public PostBuilder AsVideo()
     {
         var id = world.NewId() + "e2evideo";
         world.AddRedditVideo(id);
+        // Where "E2E fake Reddit" moves https://v.redd.it/<id>: the fake answers it as v.redd.it does, with a redirect
+        // to the post, which BaconReader follows to the post's media.reddit_video.
         LinkingTo(world.MediaUrl($"v.redd.it/{id}"));
         Post.VideoId = id;
         var still = world.AddMedia($"preview.redd.it/{id}.jpg", MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes);
