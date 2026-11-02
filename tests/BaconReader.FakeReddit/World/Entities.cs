@@ -116,9 +116,18 @@ public sealed class Post
     /// <summary>A gallery post: its <see cref="Media"/> are the gallery's images, in order (<c>gallery_data</c>).</summary>
     public bool IsGallery { get; set; }
 
+    /// <summary>A video post's video, as v.redd.it serves it (<see cref="RedditWorld.AddRedditVideo"/>); null for any other post.</summary>
+    public string? VideoId { get; set; }
+
     public int Score { get; set; } = 1;
 
     public bool IsNsfw { get; set; }
+
+    /// <summary>Marked as a spoiler.</summary>
+    public bool IsSpoiler { get; set; }
+
+    /// <summary>The post a crosspost shares (Reddit's <c>crosspost_parent_list</c>); null for any other post.</summary>
+    public Post? CrosspostOf { get; set; }
 
     public bool IsStickied { get; set; }
 

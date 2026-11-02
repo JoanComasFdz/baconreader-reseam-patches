@@ -63,13 +63,80 @@ public sealed class PostBuilder
     /// A gallery post of one JPEG, as Reddit sends one: its URL <c>https://www.reddit.com/gallery/&lt;id&gt;</c>, its
     /// image in <c>media_metadata</c> and <c>gallery_data</c>.
     /// </summary>
-    public PostBuilder AsGallery()
+    public PostBuilder AsGallery(int images = 1)
     {
-        var uploaded = UploadedMedia.Upload(world, MediaAsset.Jpeg);
-        Post.Media[uploaded.Id] = uploaded;
+        for (var image = 0; image < images; image++)
+        {
+            var uploaded = UploadedMedia.Upload(world, MediaAsset.Jpeg);
+            Post.Media[uploaded.Id] = uploaded;
+        }
+
         Post.IsGallery = true;
         LinkingTo("https://www.reddit.com/gallery/" + Post.Id);
-        Post.Thumbnail = world.MediaUrl(uploaded.Path);
+        Post.Thumbnail = world.MediaUrl(Post.Media.Values.First().Path);
+        return this;
+    }
+
+    /// <summary>
+    /// Its thumbnail a signed preview of its image, as Reddit sends one without <c>raw_json</c>:
+    /// <c>preview.redd.it/&lt;id&gt;.jpg?width=140&amp;amp;height=105&amp;amp;…&amp;amp;s=…</c>, its "&amp;" HTML-escaped. The
+    /// preview is refused unless they are unescaped (<see cref="Endpoints.Media"/>). Returns the preview's path.
+    /// </summary>
+    public string WithASignedThumbnail()
+    {
+        var path = $"preview.redd.it/{world.NewId()}e2ethumbnail.jpg";
+        Post.Thumbnail = world.MediaUrl(path) + "?width=140&amp;height=105&amp;crop=140:105,smart&amp;auto=webp&amp;s=e2ethumbnail";
+        world.AddMedia(path, MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes);
+        return path;
+    }
+
+    /// <summary>
+    /// A link post to a web page the fake serves, <c>&lt;baseUrl&gt;/_media/example.com/&lt;id&gt;e2epage.html</c>, with
+    /// Reddit's preview of it but no thumbnail (<c>"default"</c>), as Reddit sends many link posts. Returns the preview's
+    /// path.
+    /// </summary>
+    public string LinkingToAPageWithAPreview()
+    {
+        var id = world.NewId();
+        LinkingTo(world.AddMedia($"example.com/{id}e2epage.html", "text/html", MediaAsset.WebPage.Bytes));
+        var preview = $"preview.redd.it/{id}e2epreview.jpg";
+        Post.PreviewImages.Add(world.AddMedia(preview, MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes));
+        return preview;
+    }
+
+    /// <summary>Marked as a spoiler.</summary>
+    public PostBuilder Spoiler()
+    {
+        Post.IsSpoiler = true;
+        return this;
+    }
+
+    /// <summary>
+    /// A crosspost of <paramref name="shared"/>: its URL the shared post's, and the shared post in its
+    /// <c>crosspost_parent_list</c>, with no thumbnail or gallery of its own, as Reddit sends one.
+    /// </summary>
+    public PostBuilder CrosspostOf(Post shared)
+    {
+        Post.CrosspostOf = shared;
+        LinkingTo(shared.Url ?? "https://www.reddit.com" + shared.Permalink);
+        return this;
+    }
+
+    /// <summary>
+    /// A video post, as Reddit sends one uploaded to v.redd.it: its URL <c>https://v.redd.it/&lt;id&gt;</c>, its
+    /// <c>media.reddit_video</c> (the DASH and HLS playlists, and the MP4 its <c>fallback_url</c> names) and a still as
+    /// thumbnail and preview; the video is served as v.redd.it serves it, with a sound track
+    /// (<see cref="RedditWorld.AddRedditVideo"/>).
+    /// </summary>
+    public PostBuilder AsVideo()
+    {
+        var id = world.NewId() + "e2evideo";
+        world.AddRedditVideo(id);
+        LinkingTo(world.MediaUrl($"v.redd.it/{id}"));
+        Post.VideoId = id;
+        var still = world.AddMedia($"preview.redd.it/{id}.jpg", MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes);
+        Post.Thumbnail = still;
+        Post.PreviewImages.Add(still);
         return this;
     }
 
@@ -177,15 +244,12 @@ public sealed class CommentBuilder
     /// <c>https://reddit.com/link/&lt;comment&gt;/video/&lt;id&gt;/player</c>, named by the comment's own id (as real
     /// comments in Reddit's API have it, seen in the Arctic Shift archive), an entry (<c>RedditVideo</c>) in its
     /// <c>media_metadata</c> (the archive has none for these comments: unconfirmed), and the video in the media store as
-    /// v.redd.it serves it: its DASH playlist, <c>v.redd.it/&lt;id&gt;/DASHPlaylist.mpd</c>, and its one rendition next to
-    /// it (<see cref="MediaAsset.DashPlaylist"/>).
+    /// v.redd.it serves it (<see cref="RedditWorld.AddRedditVideo"/>).
     /// </summary>
     public CommentBuilder WithVideo()
     {
         var id = world.NewId() + "e2evideo";
-        var playlist = $"v.redd.it/{id}/DASHPlaylist.mpd";
-        world.AddMedia(playlist, MediaAsset.DashPlaylist.ContentType, MediaAsset.DashPlaylist.Bytes);
-        world.AddMedia($"v.redd.it/{id}/DASH_240.mp4", MediaAsset.DashVideo.ContentType, MediaAsset.DashVideo.Bytes);
+        var playlist = world.AddRedditVideo(id);
         Comment.Media[id] = new UploadedMedia(id, MediaAsset.DashVideo.ContentType, playlist, MediaAsset.DashVideo.Width, MediaAsset.DashVideo.Height);
         return Add($"https://reddit.com/link/{Comment.Id}/video/{id}/player");
     }

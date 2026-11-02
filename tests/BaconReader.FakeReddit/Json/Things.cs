@@ -32,18 +32,22 @@ internal sealed class Things(RedditWorld world)
             Gilded = post.Awards.Where(IsGilding).Sum(award => award.Count),
             Name = post.FullName,
             Ups = post.Score + vote,
-            ThumbnailWidth = post.Thumbnail is null ? null : 140,
-            ThumbnailHeight = post.Thumbnail is null ? null : 105,
+            ThumbnailWidth = post.Thumbnail is null && post.PreviewImages.Count == 0 ? null : 140,
+            ThumbnailHeight = post.Thumbnail is null && post.PreviewImages.Count == 0 ? null : 105,
             Score = post.Score + vote,
-            Thumbnail = post.Thumbnail ?? (self ? "self" : "default"),
+            // Reddit names a spoiler's and an NSFW post's thumbnail instead of linking it.
+            Thumbnail = post.IsSpoiler ? "spoiler" : post.IsNsfw ? "nsfw" : post.Thumbnail ?? (self ? "self" : "default"),
             PostHint = post.PreviewImages.Count > 0 ? "image" : self ? null : "link",
             IsSelf = self,
             Created = created,
-            Domain = self ? "self." + post.Subreddit.Name : Domain(url),
+            Domain = self ? "self." + post.Subreddit.Name : post.VideoId is null ? Domain(url) : "v.redd.it",
             SelftextHtml = RedditMarkdown.ToEscapedSelfTextHtml(post.Text, world.BaseUrl, post.Media),
             Likes = vote switch { 1 => true, -1 => false, _ => null },
             UrlOverriddenByDest = self ? null : url,
             Over18 = post.IsNsfw,
+            Spoiler = post.IsSpoiler,
+            CrosspostParent = post.CrosspostOf?.FullName,
+            CrosspostParentList = post.CrosspostOf is null ? null : [Link(post.CrosspostOf, viewer).Data],
             Preview = post.PreviewImages.Count == 0
                 ? null
                 : new Preview([.. post.PreviewImages.Select((image, index) => new PreviewImage(new PreviewSource(image, 320, 240), [], [], $"{post.Id}preview{index}"))]),
@@ -60,11 +64,14 @@ internal sealed class Things(RedditWorld world)
             SubredditSubscribers = post.Subreddit.Subscribers,
             CreatedUtc = created,
             IsRedditMediaDomain = url.Contains("/_media/", StringComparison.Ordinal),
+            Media = post.VideoId is null ? null : new MediaData(RedditVideo(post.VideoId)),
+            SecureMedia = post.VideoId is null ? null : new MediaData(RedditVideo(post.VideoId)),
+            IsVideo = post.VideoId is not null,
             IsGallery = post.IsGallery,
             GalleryData = post.IsGallery
                 ? new GalleryData([.. post.Media.Values.Select((media, index) => new GalleryItem(media.Id, index + 1))])
                 : null,
-            MediaMetadata = MediaMetadataOf(post.Media),
+            MediaMetadata = MediaMetadataOf(post.Media, post.IsGallery),
         });
     }
 
@@ -225,10 +232,12 @@ internal sealed class Things(RedditWorld world)
 
     private static bool IsGilding(Award award) => award.Id.StartsWith("gid_", StringComparison.Ordinal);
 
-    private Dictionary<string, MediaMetadata>? MediaMetadataOf(Dictionary<string, UploadedMedia> media) =>
-        media.Count == 0 ? null : media.Values.ToDictionary(found => found.Id, Metadata);
+    private Dictionary<string, MediaMetadata>? MediaMetadataOf(Dictionary<string, UploadedMedia> media, bool gallery = false) =>
+        media.Count == 0 ? null : media.Values.ToDictionary(found => found.Id, found => Metadata(found, gallery));
 
-    private MediaMetadata Metadata(UploadedMedia media)
+    // A gallery's images have Reddit's smaller previews in p, as signed preview.redd.it URLs, HTML-escaped as Reddit
+    // sends them without raw_json; an image uploaded in a comment or a text post has none, as in Reddit's API.
+    private MediaMetadata Metadata(UploadedMedia media, bool gallery)
     {
         var url = world.MediaUrl(media.Path);
         if (media.IsVideo)
@@ -246,12 +255,32 @@ internal sealed class Things(RedditWorld world)
         var full = media.IsAnimated
             ? new MediaSize(media.Height, media.Width) { Gif = url, Mp4 = url }
             : new MediaSize(media.Height, media.Width) { U = RedditMarkdown.UploadedImageUrl(world.BaseUrl, media) };
-        return new MediaMetadata("valid", media.IsAnimated ? "AnimatedImage" : "Image", media.Id) { M = media.ContentType, P = [], S = full };
+        IReadOnlyList<MediaSize> previews = gallery && !media.IsAnimated
+            ? [.. GalleryPreviewWidths.Select(width => new MediaSize(media.Height * width / media.Width, width) { U = GalleryPreviewUrl(media, width) })]
+            : [];
+        return new MediaMetadata("valid", media.IsAnimated ? "AnimatedImage" : "Image", media.Id) { M = media.ContentType, P = previews, S = full };
     }
 
+    private static readonly int[] GalleryPreviewWidths = [108, 216, 320];
+
+    /// <summary>The preview of a gallery image <paramref name="width"/> pixels wide, as its <c>media_metadata</c>'s <c>p</c> names it, escaped.</summary>
+    public string GalleryPreviewUrl(UploadedMedia media, int width) =>
+        $"{world.BaseUrl}/_media/{media.Path}?width={width}&amp;crop=smart&amp;auto=webp&amp;s=e2e{width}";
+
     // The fake has no account behind most authors; Reddit's fullname is "t2_" and an id, and a stable one will do.
-    private string AuthorFullName(string author) =>
-        world.FindAccount(author)?.FullName ?? "t2_" + author.ToLowerInvariant();
+    private string AuthorFullName(string author) => world.UserFullName(author);
+
+    // A video post's media.reddit_video, as Reddit sends one uploaded to v.redd.it.
+    private RedditVideoData RedditVideo(string id) => new(
+        FallbackUrl: world.MediaUrl($"v.redd.it/{id}/DASH_240.mp4?source=fallback"),
+        Height: MediaAsset.DashVideo.Height,
+        Width: MediaAsset.DashVideo.Width,
+        ScrubberMediaUrl: world.MediaUrl($"v.redd.it/{id}/DASH_96.mp4"),
+        DashUrl: world.MediaUrl($"v.redd.it/{id}/DASHPlaylist.mpd?a=e2e&amp;v=1&amp;f=sd"),
+        Duration: 10,
+        HlsUrl: world.MediaUrl($"v.redd.it/{id}/HLSPlaylist.m3u8?a=e2e&amp;v=1&amp;f=sd"),
+        IsGif: false,
+        TranscodingStatus: "completed");
 
     private static string Domain(string url) => Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : "";
 

@@ -23,13 +23,20 @@ public sealed record MediaAsset(string ContentType, string Extension, int Width,
     public static MediaAsset LongMp4 { get; } = Load("e2e-video.mp4", "video/mp4", 320, 240);
 
     /// <summary>
-    /// A video as Reddit serves one uploaded to v.redd.it, ten seconds, 320×240, without sound: this DASH playlist, whose
-    /// one rendition is <see cref="DashVideo"/>, at <c>DASH_240.mp4</c> next to it.
+    /// A video as Reddit serves one uploaded to v.redd.it, ten seconds, 320×240, its sound in a track of its own: this
+    /// DASH playlist, whose video rendition is <see cref="DashVideo"/>, at <c>DASH_240.mp4</c> next to it, and whose audio
+    /// rendition is <see cref="DashAudio"/>, at <c>DASH_AUDIO_128.mp4</c>.
     /// </summary>
     public static MediaAsset DashPlaylist { get; } = Load("e2e-dash.mpd", "application/dash+xml", 320, 240);
 
     /// <summary>The rendition <see cref="DashPlaylist"/> names, <c>DASH_240.mp4</c>: a fragmented MP4.</summary>
     public static MediaAsset DashVideo { get; } = Load("e2e-dash.mp4", "video/mp4", 320, 240);
+
+    /// <summary>The audio rendition <see cref="DashPlaylist"/> names, <c>DASH_AUDIO_128.mp4</c>: a 440 Hz tone, AAC, in a fragmented MP4.</summary>
+    public static MediaAsset DashAudio { get; } = Load("e2e-dash-audio.mp4", "audio/mp4", 0, 0);
+
+    /// <summary>A web page whose heading says "JavaScript is off", and "JavaScript is on" once its script runs.</summary>
+    public static MediaAsset WebPage { get; } = Load("e2e-page.html", "text/html", 0, 0);
 
     private static MediaAsset Load(string name, string contentType, int width, int height)
     {
