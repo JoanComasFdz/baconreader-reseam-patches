@@ -24,6 +24,7 @@ public sealed class FixRedditLinksTests : BaseE2E
           And Reddit has a post "Shared post" in r/e2e
           And Reddit has a gallery post "Holiday photos" in r/e2e
           And Reddit has a post "Profile post" on the test account's profile
+          And Reddit has a link post "Shared as a link" in r/e2e linking to a share link of the post "Shared post"
           And the post "Links" has a comment "Shared" linking to a share link of the post "Shared post"
           And the post "Links" has a comment "Shared from a profile" linking to a profile share link of the post "Profile post"
           And the post "Links" has a comment "Expired share" linking to a share link Reddit no longer knows in r/e2e
@@ -55,6 +56,11 @@ public sealed class FixRedditLinksTests : BaseE2E
           And I tap the link "On a profile"
           Then BaconReader shows the post "Profile post"
           And BaconReader doesn't show the test account's profile
+          When I go back
+          And I go back
+          And I tap the post "Shared as a link"
+          And I tap "www.reddit.com" in the post's header
+          Then BaconReader shows the post "Shared post"
         """)]
     public async Task FixRedditLinksOpensShareLinksAndOtherRedditLinksInBaconReader(Screen screen)
     {
@@ -63,6 +69,7 @@ public sealed class FixRedditLinksTests : BaseE2E
         Reddit.HasAPost("Shared post", "e2e");
         Reddit.HasAGalleryPost("Holiday photos", "e2e");
         Reddit.HasAPostOnTheTestAccountsProfile("Profile post");
+        Reddit.HasALinkPostLinkingToAShareLinkOfThePost("Shared as a link", "e2e", "Shared post");
         Reddit.ThePost("Links").HasACommentLinkingToAShareLinkOfThePost("Shared", "Shared post");
         Reddit.ThePost("Links").HasACommentLinkingToAProfileShareLinkOfThePost("Shared from a profile", "Profile post");
         Reddit.ThePost("Links").HasACommentLinkingToAShareLinkRedditNoLongerKnowsIn("Expired share", "e2e");
@@ -137,5 +144,18 @@ public sealed class FixRedditLinksTests : BaseE2E
         var profile = await Phone.BaconReader.Profile.ReadAsync();
         Asserting.That(onAProfile).ShowsThePost("Profile post");
         Asserting.That(profile).IsNotShown();
+
+        // When
+        await Phone.BaconReader.Detail.ClickBackAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilCommentShownAsync("On a profile");
+        await Phone.BaconReader.Detail.ClickBackAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Shared as a link");
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Shared as a link");
+        await Phone.BaconReader.Detail.ClickHeaderLinkAsync("www.reddit.com");
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Shared post");
+
+        // Then
+        var sharedAsALink = await Phone.BaconReader.Detail.ReadPostAsync();
+        Asserting.That(sharedAsALink).ShowsThePost("Shared post");
     }
 }
