@@ -64,8 +64,8 @@ internal sealed class Things(RedditWorld world)
             SubredditSubscribers = post.Subreddit.Subscribers,
             CreatedUtc = created,
             IsRedditMediaDomain = url.Contains("/_media/", StringComparison.Ordinal),
-            Media = post.VideoId is null ? null : new MediaData(RedditVideo(post.VideoId)),
-            SecureMedia = post.VideoId is null ? null : new MediaData(RedditVideo(post.VideoId)),
+            Media = post.VideoId is null ? null : new MediaData(RedditVideo(post.VideoId, post.VideoHasSound)),
+            SecureMedia = post.VideoId is null ? null : new MediaData(RedditVideo(post.VideoId, post.VideoHasSound)),
             IsVideo = post.VideoId is not null,
             IsGallery = post.IsGallery,
             GalleryData = post.IsGallery
@@ -275,7 +275,8 @@ internal sealed class Things(RedditWorld world)
     private string AuthorFullName(string author) => world.UserFullName(author);
 
     // A video post's media.reddit_video, as Reddit sends one uploaded to v.redd.it.
-    private RedditVideoData RedditVideo(string id) => new(
+    private RedditVideoData RedditVideo(string id, bool hasSound) => new(
+        HasAudio: hasSound,
         FallbackUrl: world.MediaUrl($"v.redd.it/{id}/DASH_240.mp4?source=fallback"),
         Height: MediaAsset.DashVideo.Height,
         Width: MediaAsset.DashVideo.Width,

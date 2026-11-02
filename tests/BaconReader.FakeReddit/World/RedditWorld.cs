@@ -293,18 +293,24 @@ public sealed class RedditWorld
     /// <summary>
     /// Serves a video as v.redd.it serves one uploaded to Reddit, under <c>v.redd.it/&lt;id&gt;/</c>: its DASH playlist,
     /// <c>DASHPlaylist.mpd</c>, and the renditions it names next to it, <c>DASH_240.mp4</c> and <c>DASH_AUDIO_128.mp4</c>
-    /// (<see cref="MediaAsset.DashPlaylist"/>), and the same as HLS, <c>HLSPlaylist.m3u8</c> (<see cref="MediaAsset.HlsPlaylist"/>).
-    /// Returns the DASH playlist's path.
+    /// (<see cref="MediaAsset.DashPlaylist"/>), and the same as HLS, <c>HLSPlaylist.m3u8</c> (<see cref="MediaAsset.HlsPlaylist"/>);
+    /// without a sound track unless <paramref name="withSound"/>. Returns the DASH playlist's path.
     /// </summary>
-    public string AddRedditVideo(string id)
+    public string AddRedditVideo(string id, bool withSound = true)
     {
         var playlist = $"v.redd.it/{id}/DASHPlaylist.mpd";
-        AddMedia(playlist, MediaAsset.DashPlaylist.ContentType, MediaAsset.DashPlaylist.Bytes);
+        var dash = withSound ? MediaAsset.DashPlaylist : MediaAsset.SilentDashPlaylist;
+        var hls = withSound ? MediaAsset.HlsPlaylist : MediaAsset.SilentHlsPlaylist;
+        AddMedia(playlist, dash.ContentType, dash.Bytes);
         AddMedia($"v.redd.it/{id}/DASH_240.mp4", MediaAsset.DashVideo.ContentType, MediaAsset.DashVideo.Bytes);
-        AddMedia($"v.redd.it/{id}/DASH_AUDIO_128.mp4", MediaAsset.DashAudio.ContentType, MediaAsset.DashAudio.Bytes);
-        AddMedia($"v.redd.it/{id}/HLSPlaylist.m3u8", MediaAsset.HlsPlaylist.ContentType, MediaAsset.HlsPlaylist.Bytes);
+        AddMedia($"v.redd.it/{id}/HLSPlaylist.m3u8", hls.ContentType, hls.Bytes);
         AddMedia($"v.redd.it/{id}/HLS_240.m3u8", MediaAsset.HlsVideo.ContentType, MediaAsset.HlsVideo.Bytes);
-        AddMedia($"v.redd.it/{id}/HLS_AUDIO_128.m3u8", MediaAsset.HlsAudio.ContentType, MediaAsset.HlsAudio.Bytes);
+        if (withSound)
+        {
+            AddMedia($"v.redd.it/{id}/DASH_AUDIO_128.mp4", MediaAsset.DashAudio.ContentType, MediaAsset.DashAudio.Bytes);
+            AddMedia($"v.redd.it/{id}/HLS_AUDIO_128.m3u8", MediaAsset.HlsAudio.ContentType, MediaAsset.HlsAudio.Bytes);
+        }
+
         return playlist;
     }
 
@@ -339,14 +345,16 @@ public sealed class RedditWorld
 
     /// <summary>
     /// Gives <paramref name="user"/> an avatar, a PNG the fake serves, which <c>api/user_data_by_account_ids</c> names
-    /// in its <c>profile_img</c>. Returns the avatar's path.
+    /// in its <c>profile_img</c>: a picture, or one that is all see-through (<paramref name="seeThrough"/>). Returns the
+    /// avatar's path.
     /// </summary>
-    public string GiveAvatar(string user)
+    public string GiveAvatar(string user, bool seeThrough = false)
     {
         lock (Sync)
         {
             var path = $"styles.redditmedia.com/{NewId()}e2eavatar.png";
-            AddMedia(path, MediaAsset.Png.ContentType, MediaAsset.Png.Bytes);
+            var image = seeThrough ? MediaAsset.SeeThroughPng : MediaAsset.Png;
+            AddMedia(path, image.ContentType, image.Bytes);
             avatars[UserFullName(user)] = (user, path);
             return path;
         }

@@ -16,6 +16,9 @@ public sealed record MediaAsset(string ContentType, string Extension, int Width,
     /// <summary>A PNG image, 320×240.</summary>
     public static MediaAsset Png { get; } = Load("e2e.png", "image/png", 320, 240);
 
+    /// <summary>A PNG image, 64×64, every pixel see-through: an avatar that shows only what's drawn behind it.</summary>
+    public static MediaAsset SeeThroughPng { get; } = Load("e2e-see-through.png", "image/png", 64, 64);
+
     /// <summary>An MP4 video with an audio track, 320×240, two seconds.</summary>
     public static MediaAsset Mp4 { get; } = Load("e2e.mp4", "video/mp4", 320, 240);
 
@@ -32,6 +35,9 @@ public sealed record MediaAsset(string ContentType, string Extension, int Width,
     /// <summary>The rendition <see cref="DashPlaylist"/> names, <c>DASH_240.mp4</c>: a fragmented MP4.</summary>
     public static MediaAsset DashVideo { get; } = Load("e2e-dash.mp4", "video/mp4", 320, 240);
 
+    /// <summary>The same video without a sound track, as a DASH playlist: only <see cref="DashVideo"/>.</summary>
+    public static MediaAsset SilentDashPlaylist { get; } = Load("e2e-dash-silent.mpd", "application/dash+xml", 320, 240);
+
     /// <summary>The audio rendition <see cref="DashPlaylist"/> names, <c>DASH_AUDIO_128.mp4</c>: a 440 Hz tone, AAC, in a fragmented MP4.</summary>
     public static MediaAsset DashAudio { get; } = Load("e2e-dash-audio.mp4", "audio/mp4", 0, 0);
 
@@ -41,6 +47,9 @@ public sealed record MediaAsset(string ContentType, string Extension, int Width,
     /// <c>HLS_AUDIO_128.m3u8</c>), byte ranges of the DASH renditions. BaconReader plays a Reddit video post by it.
     /// </summary>
     public static MediaAsset HlsPlaylist { get; } = Load("e2e-hls.m3u8", "application/vnd.apple.mpegurl", 320, 240);
+
+    /// <summary>The same video without a sound track, as an HLS master playlist: only <see cref="HlsVideo"/>.</summary>
+    public static MediaAsset SilentHlsPlaylist { get; } = Load("e2e-hls-silent.m3u8", "application/vnd.apple.mpegurl", 320, 240);
 
     /// <summary>The video playlist <see cref="HlsPlaylist"/> names: <see cref="DashVideo"/>'s segment.</summary>
     public static MediaAsset HlsVideo { get; } = Load("e2e-hls-video.m3u8", "application/vnd.apple.mpegurl", 320, 240);

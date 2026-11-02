@@ -30,13 +30,26 @@ world.LoginPage.ShowCookieBanner = true;
 - `Subreddit(name)` makes a subreddit on first use, a default one (the Front Page of an account without
   subscriptions shows its posts) unless `IsDefault` is set to false.
 - `PostBuilder`: `By`, `WithText`, `WithTextAndImage`, `LinkingTo`, `WithImage`, `WithGif`, `WithScore`, `PostedAgo`,
-  `Nsfw`, `Stickied`, `WithFlair`, `WithSilver`, `AsGallery`. `CommentBuilder`: `By`, `WithGif`, `WithImage`, `WithVideo`,
+  `Nsfw`, `Spoiler`, `Stickied`, `WithFlair`, `WithSilver`, `AsGallery`, `AsVideo`, `WithASignedThumbnail`,
+  `LinkingToAPageWithAPreview`, `CrosspostOf`. `CommentBuilder`: `By`, `WithGif`, `WithImage`, `WithVideo`,
   `LinkingToAnImage`, `LinkingToAVideo`, `WithScore`, `WithSilver`; each media one is a paragraph of its own after the
   comment's text. Each fills in everything Reddit sends for it, with media the fake serves:
   - a flair is the post's `link_flair_text`, a `link_flair_css_class` made of its words, and one text part in its
     `link_flair_richtext`;
-  - a gallery (`AsGallery`) is one JPEG: `is_gallery`, the URL `https://www.reddit.com/gallery/<id>`, the image in
-    `media_metadata` and `gallery_data`;
+  - a gallery (`AsGallery`) is one JPEG or more: `is_gallery`, the URL `https://www.reddit.com/gallery/<id>` moved to
+    the fake (`<baseUrl>/gallery/<id>`, as BaconReader recognizes one), the images in `media_metadata`, with Reddit's
+    `p` previews 108, 216 and 320 pixels wide (signed, their "&" HTML-escaped), and `gallery_data`; each image's full
+    file at `i.redd.it/<id>.jpeg`, where the gallery viewer loads it;
+  - a GIF post (`WithGif`) is `MediaAsset.LargeGif` at i.redd.it, a still of it as thumbnail and preview, and the GIF in
+    the preview's `variants.gif`;
+  - a video post (`AsVideo`) links `https://v.redd.it/<id>` moved to the fake (`<baseUrl>/_media/v.redd.it/<id>`),
+    which answers as v.redd.it does, with a 301 to the post; its `media.reddit_video` names the DASH and HLS playlists
+    and the fallback MP4, with a sound track unless `withSound: false`;
+  - a signed thumbnail (`WithASignedThumbnail`) is `preview.redd.it/<id>.jpg?width=140&amp;…&amp;s=…`, as Reddit sends
+    one without `raw_json`: the fake refuses it, 403, until its "&" are unescaped;
+  - a link post with a preview (`LinkingToAPageWithAPreview`) links a web page the fake serves, with a preview and no
+    thumbnail (`"default"`); NSFW and spoiler posts name their thumbnail `"nsfw"` and `"spoiler"`; a crosspost
+    (`CrosspostOf`) has the shared post in its `crosspost_parent_list`;
   - Silver is an entry of `all_awardings` with its icon in the media store, counted in `total_awards_received`,
     `gildings` (`gid_1`) and `gilded`: awards as Reddit's API sent them until 2023;
   - a GIF uploaded in a comment is `![gif](<id>)` in its body, an entry in its `media_metadata`, a link to the GIF
@@ -63,9 +76,13 @@ world.LoginPage.ShowCookieBanner = true;
   they fail with `status` (Reddit's error JSON, with its `explanation` when set), or lose their connection (`drops`), or
   get the answer the world gave when they came, late: a vote made meanwhile isn't in it. BaconReader's Reddit requests
   have no timeout, so a delay alone never fails one.
-- `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a JPEG, a
-  PNG, an MP4 with an audio track (two seconds, and `LongMp4`, ten), and a ten-second video as a DASH playlist and its
-  rendition.
+- `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a bigger one
+  (`LargeGif`, 0.4 MB), a JPEG, a PNG, an MP4 with an audio track (two seconds, and `LongMp4`, ten), a ten-second video
+  as DASH and HLS playlists and their video and sound renditions (and playlists without the sound), and a web page whose
+  script asks for the page again with `?script=ran` once it runs. `AddRedditVideo(id)` serves a video as v.redd.it
+  does.
+- `GiveAvatar(user, seeThrough)` gives a user an avatar, a picture or one that is all see-through, which `api/user_data_by_account_ids` names.
+- A `RequestTrouble` with `Times` hits only the first requests it matches: a network hiccup.
 - The E2E project wraps this in the Gherkins' words (`Infrastructure/Reddit/`).
 
 ## What it answers
@@ -88,13 +105,14 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine` | the account (never on today's day of the year, so no "Happy Cake Day!"), with `has_mail` and `inbox_count` from its unread messages; its prefs, empty lists |
 | `GET /message/{where}` | the account's private messages (t4), newest first: all of them for `inbox` and `messages`, the unread ones for `unread`, none for the other tabs |
 | `GET /user/{name}/about` | `t2`, for the world's accounts |
+| `GET /api/user_data_by_account_ids?ids=…` | for each fullname of a user the world gave an avatar (`GiveAvatar`), its `name` and `profile_img`; the others aren't in the answer |
 | `POST /api/vote`, `save`, `unsave`, `hide`, `unhide`, `subscribe`, `comment`, `editusertext`, `del`, `morechildren`, `read_message`, `read_all_messages`, and others BaconReader sends | what Reddit answers (`{}`, or the comment), applied to the world and recorded in `Actions`, logged out too |
 | `GET /api/v1/authorize.compact` (and `/api/v1/authorize`, `/login.compact`, `/login`) | Reddit's login page: "Log In", the fields in elements with Reddit's ids, `login-username` and `login-password`, a "Log In" button; first the cookie banner when the world asks for it |
 | `POST` of the login page | with a known account and its password, "Hey, &lt;user&gt;! &lt;app&gt; would like to connect with your reddit account", the permissions asked, and "Accept"; otherwise the login page with "Incorrect username or password". The app is named by its client ID: RedReader's is "RedReader (Release)" |
 | `GET /favicon.ico` | 204: the web view asks for the login page's icon |
 | `GET /api/v1/authorize/answer` ("Accept" or "Decline") | 302 to `<redirect_uri>?state=<state>&code=<code>`, or `error=access_denied` |
 | `POST /api/v1/access_token` | Basic auth by the client ID; trades a code (once) or a refresh token for `access_token`, `refresh_token`, `token_type`, `expires_in`, `scope` |
-| `GET /_media/{host}/{path}` | the media store's file; `www.reddit.com/video/…` is `v.redd.it/…`, as BaconReader rewrites it |
+| `GET`, `HEAD /_media/{host}/{path}` | the media store's file; `www.reddit.com/video/…` is `v.redd.it/…`, as BaconReader rewrites it; a video post's `v.redd.it/<id>` is a 301 to its post; a `preview.redd.it` URL whose query still has `&amp;` is a 403, as Reddit refuses a signature that doesn't match |
 | `GET`, `POST`, `PUT /_fake/…` | for debugging: `requests`, `unhandled`, `actions`, `logins`, `world`; `reset`, `accounts`, `subscriptions`, `posts`, `comments`, `media/{path}` |
 | anything else | 404, recorded in `Unhandled` |
 
@@ -122,6 +140,12 @@ Each step of the login records the client ID, redirect URI and User-Agent it saw
   an `.mp4` `fallback_url`: without it, BaconReader follows a redirect that must point at a reddit.com host.
 - **Galleries:** BaconReader recognizes one by a `url` containing `<baseUrl>/gallery/` (its `https://www.reddit.com/gallery`
   moved there), and needs `gallery_data` and `media_metadata`.
+- **Video posts:** BaconReader plays and saves a post as a Reddit video only when its URL's host is `v.redd.it`, then plays
+  its HLS playlist and saves its `fallback_url` made https. "E2E fake Reddit" takes a URL under
+  `<baseUrl>/_media/v.redd.it/` for a Reddit video and keeps the fake's plain HTTP when a video is saved; without them,
+  BaconReader opens the real reddit.com in its browser.
+- **Slow media:** BaconReader's own cache loader, which loads GIFs with "Improve post media loading", gives up after about
+  15 s and shows a web page instead: answer media late by less (8 s).
 - **Relative links:** `RedditSpanner` builds `//reddit.com/…` for relative links, which stays on Reddit.
 - **Reddit links in content:** BaconReader recognizes them by bare domain. Content that should open as a Reddit link
   says `https://www.reddit.com/…`: the app then fetches it through the moved API. Not `<baseUrl>/r/…`.

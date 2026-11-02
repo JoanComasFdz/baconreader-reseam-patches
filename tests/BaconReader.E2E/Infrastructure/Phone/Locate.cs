@@ -40,6 +40,13 @@ public static class Locate
     public static By AppIdWithText(string id, string text) =>
         UiSelector($"resourceId({Quote($"{E2EDevice.Package}:id/{id}")}).text({Quote(text)})");
 
+    /// <summary>
+    /// The view of BaconReader with resource id <paramref name="id"/> whose text starts with <paramref name="text"/>: a
+    /// post's title, which BaconReader tags " NSFW" after it.
+    /// </summary>
+    public static By AppIdWithTextStartingWith(string id, string text) =>
+        UiSelector($"resourceId({Quote($"{E2EDevice.Package}:id/{id}")}).textStartsWith({Quote(text)})");
+
     /// <summary>The view of Android's own with resource id <paramref name="id"/> that shows exactly <paramref name="text"/> (a dialog's list item).</summary>
     public static By AndroidIdWithText(string id, string text) =>
         UiSelector($"resourceId({Quote($"android:id/{id}")}).text({Quote(text)})");
@@ -59,6 +66,9 @@ public static class Locate
 
     /// <summary>The web page a web view shows, which scrolls (its view has no id once the page loaded).</summary>
     public static By WebPage() => UiSelector("className(\"android.webkit.WebView\").scrollable(true)");
+
+    /// <summary>A web view, even one whose page is too short to scroll.</summary>
+    public static By AnyWebPage() => UiSelector("className(\"android.webkit.WebView\")");
 
     /// <summary>The text field inside the web page's view with HTML id <paramref name="id"/> (a form's field and its label).</summary>
     public static By WebFieldIn(string id) =>

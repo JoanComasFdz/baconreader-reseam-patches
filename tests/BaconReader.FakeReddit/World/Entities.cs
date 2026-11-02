@@ -122,6 +122,9 @@ public sealed class Post
     /// <summary>A video post's video, as v.redd.it serves it (<see cref="RedditWorld.AddRedditVideo"/>); null for any other post.</summary>
     public string? VideoId { get; set; }
 
+    /// <summary>Whether a video post's video has a sound track.</summary>
+    public bool VideoHasSound { get; set; } = true;
+
     public int Score { get; set; } = 1;
 
     public bool IsNsfw { get; set; }

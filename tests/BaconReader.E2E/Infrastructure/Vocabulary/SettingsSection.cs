@@ -13,6 +13,7 @@ public partial record SettingsSection
     public partial record ListView;
 
     public partial record DetailView;
+    public partial record Filters;
 
     public partial record Patches;
 
@@ -23,13 +24,14 @@ public partial record SettingsSection
 /// <summary>What the app shows for each <see cref="SettingsSection"/>: the only place those strings live.</summary>
 public static class SettingsSectionShowing
 {
-    private static readonly SettingsSection[] Listed = [new SettingsSection.ListView(), new SettingsSection.DetailView(), new SettingsSection.Patches()];
+    private static readonly SettingsSection[] Listed = [new SettingsSection.ListView(), new SettingsSection.DetailView(), new SettingsSection.Filters(), new SettingsSection.Patches()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this SettingsSection value) =>
         value.Match(
             listView => "List View",
             detailView => "Detail View",
+            filters => "Filters",
             patches => "Patches",
             unlisted => unlisted.Shown);
 

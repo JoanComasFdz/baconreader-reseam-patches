@@ -166,6 +166,7 @@ public sealed class Comments(AndroidDriver driver)
     private static readonly By Content = Locate.AppId("contentContainer");
     private static readonly By AwardIcons = Locate.AppId("award_layout");
     private static readonly By ActionBarMoreOptions = Locate.Description("More options");
+    private static readonly By ActionBarComment = Locate.Description("Comment");
 
     // A "load more comments" row, whose id the main screen's lists use too.
     private static readonly By LoadMore = Locate.AppId("text");
@@ -260,6 +261,44 @@ public sealed class Comments(AndroidDriver driver)
             swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
             driver.PerformActions([swipe]);
         });
+
+    /// <summary>Taps "Comment" in the action bar a comment shows, which opens the reply screen.</summary>
+    public Task ClickActionBarCommentAsync() =>
+        OnScreen.PressAsync(driver, () => driver.FindElements(List).SelectMany(list => list.FindElements(ActionBarComment)).FirstOrDefault(button => button.Displayed)
+            ?? throw new InvalidOperationException("No comment shows its action bar."));
+
+    /// <summary>
+    /// The author line of the comment "<paramref name="text"/>": its text ("avatar_user 1 points moments ago"; "Show user
+    /// avatars" puts its avatar first, an object replacement character, "￼ ") and its height, in pixels.
+    /// </summary>
+    public Task<CommentAuthorLineSnapshot> ReadAuthorLineAsync(string text) =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var line = AuthorLineOf(text);
+            return new CommentAuthorLineSnapshot(text, line.Text, line.Size.Height);
+        });
+
+    /// <summary>
+    /// Whether anything is drawn where the comment "<paramref name="text"/>" shows its avatar, at the start of its author
+    /// line, a square as tall as the line. The avatar isn't a view of its own, so this reads a screenshot: only that
+    /// square, and only whether it differs from the plain background around it (E2E-TEST-CODE-RULES.md, rule d).
+    /// </summary>
+    public Task<AvatarSpotSnapshot> ReadAvatarSpotAsync(string text) =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var line = AuthorLineOf(text);
+            var bounds = new Rectangle(line.Location, line.Size);
+            var spot = new Rectangle(bounds.Left, bounds.Top, bounds.Height, bounds.Height);
+            return new AvatarSpotSnapshot(text, Screenshots.Differs(driver.GetScreenshot().AsByteArray, spot));
+        });
+
+    // The author line of the comment whose text is the given text.
+    private IWebElement AuthorLineOf(string text) =>
+        driver.FindElements(Content)
+            .Where(content => content.FindElements(Text).Any(shown => shown.Text.Trim() == text))
+            .SelectMany(content => content.FindElements(Header))
+            .FirstOrDefault()
+        ?? throw new InvalidOperationException($"The comment \"{text}\" isn't on the screen.");
 
     /// <summary>Waits until a comment shows its action bar: its "More options".</summary>
     public Task WaitUntilActionBarShownAsync() =>
@@ -614,6 +653,12 @@ public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Vide
     /// <summary>How many award icons it shows, by its author's name.</summary>
     public int Awards { get; init; }
 }
+
+/// <summary>A comment's author line: its text, and its height in pixels.</summary>
+public sealed record CommentAuthorLineSnapshot(string Comment, string Text, int Height);
+
+/// <summary>Whether anything is drawn at the start of a comment's author line, where its avatar shows.</summary>
+public sealed record AvatarSpotSnapshot(string Comment, bool Drawn);
 
 /// <summary>What the post shows over its comments: its title, and how many award icons.</summary>
 public sealed record DetailPostSnapshot(string Title, int Awards);

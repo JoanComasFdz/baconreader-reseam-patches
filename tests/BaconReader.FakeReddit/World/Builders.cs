@@ -140,14 +140,16 @@ public sealed class PostBuilder
 
     /// <summary>
     /// A video post, as Reddit sends one uploaded to v.redd.it: its URL <c>https://v.redd.it/&lt;id&gt;</c>, moved to the
-    /// fake, which redirects it to the post as v.redd.it does, its <c>media.reddit_video</c> (the DASH and HLS playlists, and the MP4 its <c>fallback_url</c> names, at the
-    /// fake) and a still as thumbnail and preview; the video is served as v.redd.it serves it, with a sound track
+    /// fake, which redirects it to the post as v.redd.it does; its <c>media.reddit_video</c> (the DASH and HLS
+    /// playlists, and the MP4 its <c>fallback_url</c> names, at the fake); and a still as thumbnail and preview. The
+    /// video is served as v.redd.it serves it, with a sound track unless <paramref name="withSound"/> is false
     /// (<see cref="RedditWorld.AddRedditVideo"/>).
     /// </summary>
-    public PostBuilder AsVideo()
+    public PostBuilder AsVideo(bool withSound = true)
     {
         var id = world.NewId() + "e2evideo";
-        world.AddRedditVideo(id);
+        world.AddRedditVideo(id, withSound);
+        Post.VideoHasSound = withSound;
         // Where "E2E fake Reddit" moves https://v.redd.it/<id>: the fake answers it as v.redd.it does, with a redirect
         // to the post, which BaconReader follows to the post's media.reddit_video.
         LinkingTo(world.MediaUrl($"v.redd.it/{id}"));

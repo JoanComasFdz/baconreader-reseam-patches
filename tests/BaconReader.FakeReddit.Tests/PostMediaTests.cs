@@ -95,6 +95,23 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
     }
 
     [Fact]
+    public async Task A_video_post_without_sound_has_no_sound_track_in_its_playlists()
+    {
+        var post = World.AddPost("e2e", "Silent clip", build => build.AsVideo(withSound: false));
+        var id = post.VideoId!;
+
+        var video = (await ReadPostAsync(post)).GetProperty("media").GetProperty("reddit_video");
+
+        Assert.False(video.GetProperty("has_audio").GetBoolean());
+        await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/DASHPlaylist.mpd", "application/dash+xml", MediaAsset.SilentDashPlaylist.Bytes);
+        await AssertServesAsync($"{Server.Url}/_media/v.redd.it/{id}/HLSPlaylist.m3u8", "application/vnd.apple.mpegurl", MediaAsset.SilentHlsPlaylist.Bytes);
+        Assert.DoesNotContain("audio", Encoding.UTF8.GetString(MediaAsset.SilentDashPlaylist.Bytes));
+        Assert.DoesNotContain("AUDIO", Encoding.UTF8.GetString(MediaAsset.SilentHlsPlaylist.Bytes));
+        using var audio = await SendAsync(HttpMethod.Get, $"/_media/v.redd.it/{id}/DASH_AUDIO_128.mp4");
+        Assert.Equal(HttpStatusCode.NotFound, audio.StatusCode);
+    }
+
+    [Fact]
     public async Task A_comment_with_a_video_has_the_sound_track_too()
     {
         var post = World.AddPost("e2e", "Weekly thread");
@@ -189,6 +206,14 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
         Assert.Equal("avatar_user", user.GetProperty("name").GetString());
         Assert.False(users.TryGetProperty("t2_nobody", out _));
         await AssertServesAsync(user.GetProperty("profile_img").GetString()!, "image/png", MediaAsset.Png.Bytes);
+    }
+
+    [Fact]
+    public async Task A_see_through_avatar_is_served_as_a_see_through_png()
+    {
+        var path = World.GiveAvatar("glass_user", seeThrough: true);
+
+        await AssertServesAsync(World.MediaUrl(path), "image/png", MediaAsset.SeeThroughPng.Bytes);
     }
 
     [Fact]

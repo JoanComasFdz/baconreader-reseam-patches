@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
+using System.Collections.Immutable;
 using BaconReader.FakeReddit.World;
 
 namespace BaconReader.E2E.Infrastructure.Reddit;
@@ -27,6 +28,19 @@ public sealed partial class Reddit
 
     /// <summary>"Reddit has a video post "&lt;title&gt;" in r/&lt;subreddit&gt;": a video uploaded to v.redd.it, with sound.</summary>
     public void HasAVideoPost(string title, string subreddit) => world.AddPost(subreddit, title, post => post.AsVideo());
+
+    /// <summary>"Reddit has a video post "&lt;title&gt;" in r/&lt;subreddit&gt; with sound".</summary>
+    public void HasAVideoPostWithSound(string title, string subreddit) => world.AddPost(subreddit, title, post => post.AsVideo());
+
+    /// <summary>"Reddit has a video post "&lt;title&gt;" in r/&lt;subreddit&gt; without sound": its playlists have no sound track.</summary>
+    public void HasAVideoPostWithoutSound(string title, string subreddit) => world.AddPost(subreddit, title, post => post.AsVideo(withSound: false));
+
+    /// <summary>
+    /// "Reddit has a link post "&lt;title&gt;" in r/&lt;subreddit&gt; to a page that runs JavaScript": a web page whose
+    /// script, once it runs, asks Reddit for the page again (<see cref="ReadTheScriptRunsOfThePage"/>).
+    /// </summary>
+    public void HasALinkPostToAPageThatRunsJavaScript(string title, string subreddit) =>
+        world.AddPost(subreddit, title, post => post.LinkingToAPageWithAPreview());
 
     /// <summary>
     /// "Reddit has a link post "&lt;title&gt;" in r/&lt;subreddit&gt; with a preview and no thumbnail": a link to a web
@@ -73,7 +87,130 @@ public sealed partial class Reddit
         world.AddTrouble(new RequestTrouble(Get(MediaPath(PostTitled(title).Thumbnail)), TimeSpan.Zero, StatusCode(status), Times: times));
 
     /// <summary>"the user "&lt;user&gt;" has an avatar".</summary>
-    public void TheUserHasAnAvatar(string user) => world.GiveAvatar(user);
+    public void TheUserHasAnAvatar(string user) => avatars[user] = world.GiveAvatar(user);
+
+    /// <summary>"the user "&lt;user&gt;" has a see-through avatar": every pixel of it, so only what's drawn behind it shows.</summary>
+    public void TheUserHasASeeThroughAvatar(string user) => avatars[user] = world.GiveAvatar(user, seeThrough: true);
+
+    /// <summary>"Reddit served the thumbnail of "&lt;title&gt;" …": the requests for it, with their query and answer.</summary>
+    public RedditMediaFileRequestsSnapshot ReadRequestsForTheThumbnailOf(string title) =>
+        RequestsFor($"the thumbnail of \"{title}\"", MediaPath(PostTitled(title).Thumbnail));
+
+    /// <summary>"Reddit served the preview of "&lt;title&gt;"": the requests for the post's preview image.</summary>
+    public RedditMediaFileRequestsSnapshot ReadRequestsForThePreviewOf(string title) =>
+        RequestsFor($"the preview of \"{title}\"", MediaPath(PostTitled(title).PreviewImages.FirstOrDefault()));
+
+    /// <summary>"Reddit served the avatar of "&lt;user&gt;"": the requests for the avatar the Given gave the user.</summary>
+    public RedditMediaFileRequestsSnapshot ReadRequestsForTheAvatarOf(string user) =>
+        RequestsFor($"the avatar of \"{user}\"", "/_media/" + avatars[user]);
+
+    /// <summary>
+    /// "Reddit served the gallery's thumbnails …": for each image of the gallery post "&lt;title&gt;", in order, the widths
+    /// of the previews Reddit served for it, and whether it served the full image.
+    /// </summary>
+    public RedditGalleryRequestsSnapshot ReadRequestsForTheGalleryOf(string title)
+    {
+        var post = PostTitled(title);
+        var requests = world.Requests;
+        return new(title, [.. post.Media.Values.Select(image =>
+        {
+            var preview = "/_media/" + image.Path;
+            var full = $"/_media/i.redd.it/{image.Id}.{image.ContentType["image/".Length..]}";
+            return new RedditGalleryImageRequests(
+                [.. requests.Where(request => request is { Method: "GET", Status: 200 } && request.Path == preview)
+                    .Select(request => PreviewWidth(request.Query)).OfType<int>().Distinct().Order()],
+                requests.Any(request => request is { Method: "GET", Status: 200 } && request.Path == full));
+        })]);
+    }
+
+    /// <summary>
+    /// Waits until Reddit served the thumbnail of the post "&lt;title&gt;": BaconReader asks again, a second later and two,
+    /// when it fails.
+    /// </summary>
+    public Task WaitUntilTheThumbnailOfThePostIsServedAsync(string title)
+    {
+        var thumbnail = MediaPath(PostTitled(title).Thumbnail);
+        return WaitUntilAsync(
+            () => world.Requests.Any(request => request is { Method: "GET", Status: 200 } && request.Path == thumbnail),
+            TimeSpan.FromSeconds(15),
+            $"Reddit didn't serve the thumbnail of \"{title}\" within 15 s.");
+    }
+
+    /// <summary>Waits until Reddit served the avatar of "&lt;user&gt;": BaconReader asks for it when it first shows the user.</summary>
+    public Task WaitUntilTheAvatarOfTheUserIsServedAsync(string user)
+    {
+        var avatar = "/_media/" + avatars[user];
+        return WaitUntilAsync(
+            () => world.Requests.Any(request => request is { Method: "GET", Status: 200 } && request.Path == avatar),
+            TimeSpan.FromSeconds(10),
+            $"Reddit didn't serve the avatar of \"{user}\" within 10 s.");
+    }
+
+    /// <summary>
+    /// Waits until Reddit served the page of the link post "&lt;title&gt;" again, since the last time this was asked, and as
+    /// long as its script takes to run after that (3 s): what the page's script does shows in Reddit's requests.
+    /// </summary>
+    public async Task WaitUntilThePageOfThePostIsServedAsync(string title)
+    {
+        var page = MediaPath(PostTitled(title).Url);
+        var until = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(15);
+        while (PageLoads(page) <= pagesSeen.GetValueOrDefault(page))
+        {
+            if (DateTimeOffset.UtcNow > until)
+            {
+                throw new TimeoutException($"Reddit didn't serve the page of \"{title}\" within 15 s.");
+            }
+
+            await Task.Delay(200);
+        }
+
+        pagesSeen[page] = PageLoads(page);
+        await Task.Delay(TimeSpan.FromSeconds(3));
+    }
+
+    /// <summary>
+    /// "the page of "&lt;title&gt;" ran its script": whether the page's script asked Reddit for the page again
+    /// (<c>?script=ran</c>) since the last time this was read.
+    /// </summary>
+    public RedditPageScriptSnapshot ReadTheScriptRunsOfThePage(string title)
+    {
+        var page = MediaPath(PostTitled(title).Url);
+        var runs = world.Requests.Count(request => request.Method == "GET" && request.Path == page && request.Query == "?script=ran");
+        var before = scriptRunsSeen.GetValueOrDefault(page);
+        scriptRunsSeen[page] = runs;
+        return new RedditPageScriptSnapshot(title, runs > before);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> done, TimeSpan timeout, string failure)
+    {
+        var until = DateTimeOffset.UtcNow + timeout;
+        while (!done())
+        {
+            if (DateTimeOffset.UtcNow > until)
+            {
+                throw new TimeoutException(failure);
+            }
+
+            await Task.Delay(200);
+        }
+    }
+
+    private readonly Dictionary<string, string> avatars = [];
+    private readonly Dictionary<string, int> pagesSeen = [];
+    private readonly Dictionary<string, int> scriptRunsSeen = [];
+
+    // The page's own loads, not its script's.
+    private int PageLoads(string page) =>
+        world.Requests.Count(request => request is { Method: "GET", Status: 200 } && request.Path == page && request.Query != "?script=ran");
+
+    private RedditMediaFileRequestsSnapshot RequestsFor(string what, string path) =>
+        new(what, [.. world.Requests.Where(request => request.Method == "GET" && request.Path == path).Select(request => new RedditMediaRequest(request.Query, request.Status))]);
+
+    // The width a preview's query asks for: "?width=216&…".
+    private static int? PreviewWidth(string query) =>
+        System.Text.RegularExpressions.Regex.Match(query, @"[?&]width=(\d+)") is { Success: true } match
+            ? int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture)
+            : null;
 
     // The path the fake serves a media URL at, without its query: what a trouble matches.
     private static string MediaPath(string? url) =>
@@ -81,3 +218,18 @@ public sealed partial class Reddit
 
     private static Func<string, string, bool> Get(string path) => (method, asked) => method == "GET" && asked == path;
 }
+
+/// <summary>A request for a media file: its query ("?width=140&amp;…") and the status Reddit answered.</summary>
+public sealed record RedditMediaRequest(string Query, int Status);
+
+/// <summary>The requests for one media file, in order, and what it is ("the thumbnail of "Signed thumbnail"").</summary>
+public sealed record RedditMediaFileRequestsSnapshot(string What, ImmutableArray<RedditMediaRequest> Requests);
+
+/// <summary>For one image of a gallery: the widths of the previews Reddit served, and whether it served the full image.</summary>
+public sealed record RedditGalleryImageRequests(ImmutableArray<int> PreviewWidths, bool FullImage);
+
+/// <summary>What Reddit served for each image of the gallery post titled <c>Title</c>, in order.</summary>
+public sealed record RedditGalleryRequestsSnapshot(string Title, ImmutableArray<RedditGalleryImageRequests> Images);
+
+/// <summary>Whether the script of the page of the link post titled <c>Title</c> ran, since the last read.</summary>
+public sealed record RedditPageScriptSnapshot(string Title, bool Ran);
