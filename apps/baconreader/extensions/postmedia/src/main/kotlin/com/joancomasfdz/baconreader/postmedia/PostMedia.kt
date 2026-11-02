@@ -49,6 +49,9 @@ import retrofit2.Response
  *
  * The overlay is drawn in the ViewOverlay of the media's ViewFlipper, so it floats above whichever
  * page the app shows (an empty PhotoView while a GIF downloads) without changing the app's views.
+ * Views in a ViewOverlay are not in the accessibility tree: while the overlay shows, the
+ * ViewFlipper's description tells its state ("Loading media, GIF · 80.6 MB", "Media failed to
+ * load"), for screen readers and tests.
  */
 
 private const val TAG = "PostMedia"
@@ -186,6 +189,9 @@ private class LoadingOverlay(
     private var progressKnown = false
     private var failed = false
 
+    /** The ViewFlipper's own description, given back when the overlay hides. */
+    private var flipperDescription: CharSequence? = null
+
     /** Changes on every [show], so a late size lookup for a previous post is ignored. */
     private var generation = Any()
 
@@ -276,6 +282,8 @@ private class LoadingOverlay(
         GlideUtils.clear(still)
         still.setImageDrawable(null)
         if (!attached) {
+            // Another overlay of the same ViewFlipper may have described it: that isn't its own.
+            flipperDescription = flipper.contentDescription?.takeUnless(::isLoadingDescription)
             flipper.overlay.add(root)
             flipper.addOnLayoutChangeListener(resizer)
             flipper.viewTreeObserver.addOnPreDrawListener(watcher)
@@ -298,6 +306,9 @@ private class LoadingOverlay(
         attached = false
         flipper.removeCallbacks(ticker)
         flipper.overlay.remove(root)
+        if (isLoadingDescription(flipper.contentDescription)) {
+            flipper.contentDescription = flipperDescription
+        }
         flipper.removeOnLayoutChangeListener(resizer)
         if (flipper.viewTreeObserver.isAlive) {
             flipper.viewTreeObserver.removeOnPreDrawListener(watcher)
@@ -320,6 +331,12 @@ private class LoadingOverlay(
     private fun setLabel(text: String?) {
         label.text = text
         label.visibility = if (text.isNullOrEmpty()) View.GONE else View.VISIBLE
+        flipper.contentDescription =
+            when {
+                failed -> BaconReaderStrings.postMediaLoadingFailed
+                text.isNullOrEmpty() -> BaconReaderStrings.postMediaLoading
+                else -> "${BaconReaderStrings.postMediaLoading}, $text"
+            }
         // Views in a ViewOverlay are not measured again when their text changes.
         layout()
     }
@@ -403,6 +420,12 @@ private class LoadingOverlay(
         private const val TICK_MS = 500L
     }
 }
+
+/** Whether a ViewFlipper's description is one a loading overlay gave it. */
+private fun isLoadingDescription(description: CharSequence?): Boolean =
+    description != null &&
+        (description.startsWith(BaconReaderStrings.postMediaLoading) ||
+            description.toString() == BaconReaderStrings.postMediaLoadingFailed)
 
 /** "12.3 / 84.5 MB", or "12.3 MB" when the total size is unknown. */
 private fun progressLabel(received: Long, total: Long): String =

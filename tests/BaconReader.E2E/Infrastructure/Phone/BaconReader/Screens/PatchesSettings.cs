@@ -60,6 +60,13 @@ public sealed class PatchesSettings(AndroidDriver driver)
     /// <summary>Selects <paramref name="choice"/> among the setting's choices, which closes them.</summary>
     public Task SelectAsync(RepliesToAutoLoad choice) => OnScreen.PressAsync(driver, Titled(choice.ToShownText()));
 
+    /// <summary>Waits until the choices of a setting show <paramref name="choice"/>.</summary>
+    public Task WaitUntilChoiceShownAsync(AvatarSize choice) =>
+        Waiting.UntilShownAsync(driver, Titled(choice.ToShownText()), TimeSpan.FromSeconds(10), $"The choice \"{choice.ToShownText()}\"");
+
+    /// <summary>Selects <paramref name="choice"/> among the setting's choices, which closes them.</summary>
+    public Task SelectAsync(AvatarSize choice) => OnScreen.PressAsync(driver, Titled(choice.ToShownText()));
+
     /// <summary>Waits until the setting's dialog closed, back on the page: <paramref name="setting"/>'s title shows alone.</summary>
     public Task WaitUntilDialogClosedAsync(PatchSetting setting) =>
         Waiting.UntilAsync(

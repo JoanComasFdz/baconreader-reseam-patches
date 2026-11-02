@@ -110,15 +110,30 @@ public sealed class Post
     /// <summary>The preview images (<c>preview.images[].source.url</c>), URLs.</summary>
     public List<string> PreviewImages { get; } = [];
 
+    /// <summary>A GIF post's GIF, as its first preview image's <c>variants.gif</c> names it; null for any other post.</summary>
+    public string? PreviewGif { get; set; }
+
     /// <summary>The media a text post's text shows (<c>![img](id)</c>), by id: Reddit's <c>media_metadata</c>.</summary>
     public Dictionary<string, UploadedMedia> Media { get; } = [];
 
     /// <summary>A gallery post: its <see cref="Media"/> are the gallery's images, in order (<c>gallery_data</c>).</summary>
     public bool IsGallery { get; set; }
 
+    /// <summary>A video post's video, as v.redd.it serves it (<see cref="RedditWorld.AddRedditVideo"/>); null for any other post.</summary>
+    public string? VideoId { get; set; }
+
+    /// <summary>Whether a video post's video has a sound track.</summary>
+    public bool VideoHasSound { get; set; } = true;
+
     public int Score { get; set; } = 1;
 
     public bool IsNsfw { get; set; }
+
+    /// <summary>Marked as a spoiler.</summary>
+    public bool IsSpoiler { get; set; }
+
+    /// <summary>The post a crosspost shares (Reddit's <c>crosspost_parent_list</c>); null for any other post.</summary>
+    public Post? CrosspostOf { get; set; }
 
     public bool IsStickied { get; set; }
 
@@ -258,7 +273,8 @@ public sealed record UploadedMedia(string Id, string ContentType, string Path, i
 
     /// <summary>
     /// An image or GIF uploaded to Reddit, in <paramref name="world"/>'s media store: a GIF at
-    /// <c>i.redd.it/&lt;id&gt;.gif</c>, an image at its preview, <c>preview.redd.it/&lt;id&gt;.png</c>.
+    /// <c>i.redd.it/&lt;id&gt;.gif</c>, an image at its preview, <c>preview.redd.it/&lt;id&gt;.png</c>, and its full
+    /// image at <c>i.redd.it/&lt;id&gt;.&lt;the extension of its type&gt;</c> (<c>.jpeg</c> for a JPEG).
     /// </summary>
     internal static UploadedMedia Upload(RedditWorld world, MediaAsset asset)
     {
@@ -266,6 +282,8 @@ public sealed record UploadedMedia(string Id, string ContentType, string Path, i
         var host = asset.ContentType == "image/gif" ? "i.redd.it" : "preview.redd.it";
         var path = $"{host}/{id}.{asset.Extension}";
         world.AddMedia(path, asset.ContentType, asset.Bytes);
+        // Its full image, at i.redd.it/<id>.<the extension its type names>, where BaconReader's gallery viewer loads it.
+        world.AddMedia($"i.redd.it/{id}.{asset.ContentType["image/".Length..]}", asset.ContentType, asset.Bytes);
         return new UploadedMedia(id, asset.ContentType, path, asset.Width, asset.Height);
     }
 }

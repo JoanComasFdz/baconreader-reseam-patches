@@ -4,9 +4,15 @@
 package com.joancomasfdz.patches.baconreader.e2e
 
 import app.reseam.patch.CompatiblePackage
+import app.reseam.patch.Type
+import app.reseam.patch.after
+import app.reseam.patch.before
 import app.reseam.patch.invoke
+import app.reseam.patch.klass
+import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.types.EncodedVal
+import com.joancomasfdz.baconreader.fakereddit.bindings.E2EFakeReddit
 
 // The main bundle's core/BaconReader.kt: this bundle is built apart from it.
 internal val BACONREADER: CompatiblePackage = "com.onelouder.baconreader"("6.1.4")
@@ -32,6 +38,18 @@ val e2eFakeReddit =
                 required = true,
             )
 
+        // The fake's media come moved like the app's own URLs, over plain HTTP, and two checks
+        // assume
+        // Reddit's: a post is a Reddit video only by the host v.redd.it, and a video is saved from
+        // an
+        // https URL.
+        execute {
+            redditVideoUrl.before {
+                whenTrue(E2EFakeReddit.isMovedRedditVideo(param(0))) { returnTrue() }
+            }
+            savedVideoUrl.after { returnValue(E2EFakeReddit.keepFakeScheme(param(0), result)) }
+        }
+
         // After every patch's execute, of every loaded bundle: the extensions they merged hold
         // Reddit URLs too, and "Spoof client" moves ssl.reddit.com to www.reddit.com first.
         afterDependents {
@@ -55,6 +73,16 @@ val e2eFakeReddit =
             }
             log.info("Pointed $strings strings and $fields fields at the fake Reddit server")
         }
+    }
+
+// Whether a URL is a v.redd.it video: its host is v.redd.it.
+private val redditVideoUrl =
+    klass("com.onelouder.baconreader.reddit.RedditVideo").method("isValid") { params(Type.String) }
+
+// The URL a video is saved from: the video's URL, made https.
+private val savedVideoUrl =
+    klass("com.onelouder.baconreader.imageutils.SaveImage").method("getVideoFilename") {
+        params(Type.String)
     }
 
 private val REDDIT_ORIGINS =

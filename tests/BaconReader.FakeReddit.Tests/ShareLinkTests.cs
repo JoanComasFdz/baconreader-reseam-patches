@@ -51,7 +51,7 @@ public sealed class ShareLinkTests(FakeRedditFixture fixture) : FakeRedditTest(f
 
         var data = page[0].GetProperty("data").GetProperty("children")[0].GetProperty("data");
         Assert.True(data.GetProperty("is_gallery").GetBoolean());
-        Assert.Equal($"https://www.reddit.com/gallery/{post.Id}", data.GetProperty("url").GetString());
+        Assert.Equal($"{Server.Url}/gallery/{post.Id}", data.GetProperty("url").GetString());
         var item = data.GetProperty("gallery_data").GetProperty("items")[0];
         var mediaId = item.GetProperty("media_id").GetString()!;
         Assert.Equal("Image", data.GetProperty("media_metadata").GetProperty(mediaId).GetProperty("e").GetString());

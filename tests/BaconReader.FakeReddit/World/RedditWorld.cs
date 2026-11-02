@@ -25,6 +25,8 @@ public sealed class RedditWorld
     private readonly List<RecordedAction> actions = [];
     private readonly List<LoginSeen> logins = [];
     private readonly List<RequestTrouble> troubles = [];
+    private readonly Dictionary<string, (string User, string Path)> avatars = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<RequestTrouble, int> troubleHits = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<string, string> shareLinks = new(StringComparer.Ordinal);
     private long nextId;
     private long nextOrder;
@@ -97,6 +99,8 @@ public sealed class RedditWorld
             actions.Clear();
             logins.Clear();
             troubles.Clear();
+            troubleHits.Clear();
+            avatars.Clear();
             shareLinks.Clear();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
@@ -260,7 +264,13 @@ public sealed class RedditWorld
     {
         lock (Sync)
         {
-            return troubles.FirstOrDefault(trouble => trouble.Matches(method, path));
+            var trouble = troubles.FirstOrDefault(trouble => trouble.Matches(method, path) && (trouble.Times is null || troubleHits.GetValueOrDefault(trouble) < trouble.Times));
+            if (trouble is not null)
+            {
+                troubleHits[trouble] = troubleHits.GetValueOrDefault(trouble) + 1;
+            }
+
+            return trouble;
         }
     }
 
@@ -280,6 +290,30 @@ public sealed class RedditWorld
         }
     }
 
+    /// <summary>
+    /// Serves a video as v.redd.it serves one uploaded to Reddit, under <c>v.redd.it/&lt;id&gt;/</c>: its DASH playlist,
+    /// <c>DASHPlaylist.mpd</c>, and the renditions it names next to it, <c>DASH_240.mp4</c> and <c>DASH_AUDIO_128.mp4</c>
+    /// (<see cref="MediaAsset.DashPlaylist"/>), and the same as HLS, <c>HLSPlaylist.m3u8</c> (<see cref="MediaAsset.HlsPlaylist"/>);
+    /// without a sound track unless <paramref name="withSound"/>. Returns the DASH playlist's path.
+    /// </summary>
+    public string AddRedditVideo(string id, bool withSound = true)
+    {
+        var playlist = $"v.redd.it/{id}/DASHPlaylist.mpd";
+        var dash = withSound ? MediaAsset.DashPlaylist : MediaAsset.SilentDashPlaylist;
+        var hls = withSound ? MediaAsset.HlsPlaylist : MediaAsset.SilentHlsPlaylist;
+        AddMedia(playlist, dash.ContentType, dash.Bytes);
+        AddMedia($"v.redd.it/{id}/DASH_240.mp4", MediaAsset.DashVideo.ContentType, MediaAsset.DashVideo.Bytes);
+        AddMedia($"v.redd.it/{id}/HLSPlaylist.m3u8", hls.ContentType, hls.Bytes);
+        AddMedia($"v.redd.it/{id}/HLS_240.m3u8", MediaAsset.HlsVideo.ContentType, MediaAsset.HlsVideo.Bytes);
+        if (withSound)
+        {
+            AddMedia($"v.redd.it/{id}/DASH_AUDIO_128.mp4", MediaAsset.DashAudio.ContentType, MediaAsset.DashAudio.Bytes);
+            AddMedia($"v.redd.it/{id}/HLS_AUDIO_128.m3u8", MediaAsset.HlsAudio.ContentType, MediaAsset.HlsAudio.Bytes);
+        }
+
+        return playlist;
+    }
+
     /// <summary>The URL a media path is served at: <c>&lt;base&gt;/_media/&lt;path&gt;</c>.</summary>
     public string MediaUrl(string path) => $"{BaseUrl}/_media/{path.TrimStart('/')}";
 
@@ -296,6 +330,39 @@ public sealed class RedditWorld
     internal IReadOnlyList<Subreddit> SubredditsUnlocked => subreddits;
 
     internal IReadOnlyList<Post> PostsUnlocked => posts;
+
+    /// <summary>
+    /// A user's fullname, <c>t2_&lt;id&gt;</c>, as the JSON sends it in <c>author_fullname</c>: an account's own, or for
+    /// an author without an account (most of them), a stable one made from the name.
+    /// </summary>
+    public string UserFullName(string name)
+    {
+        lock (Sync)
+        {
+            return FindAccount(name)?.FullName ?? "t2_" + name.ToLowerInvariant();
+        }
+    }
+
+    /// <summary>
+    /// Gives <paramref name="user"/> an avatar, a PNG the fake serves, which <c>api/user_data_by_account_ids</c> names
+    /// in its <c>profile_img</c>: a picture, or one that is all see-through (<paramref name="seeThrough"/>). Returns the
+    /// avatar's path.
+    /// </summary>
+    public string GiveAvatar(string user, bool seeThrough = false)
+    {
+        lock (Sync)
+        {
+            var path = $"styles.redditmedia.com/{NewId()}e2eavatar.png";
+            var image = seeThrough ? MediaAsset.SeeThroughPng : MediaAsset.Png;
+            AddMedia(path, image.ContentType, image.Bytes);
+            avatars[UserFullName(user)] = (user, path);
+            return path;
+        }
+    }
+
+    /// <summary>The user and the avatar's path of a user fullname that has one, or null.</summary>
+    internal (string User, string Path)? AvatarOf(string fullName) =>
+        avatars.TryGetValue(fullName, out var avatar) ? avatar : null;
 
     internal Account? FindAccount(string name) =>
         accounts.FirstOrDefault(account => string.Equals(account.Name, name, StringComparison.OrdinalIgnoreCase));

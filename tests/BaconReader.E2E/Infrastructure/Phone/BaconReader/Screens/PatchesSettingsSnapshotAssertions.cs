@@ -9,12 +9,15 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 /// <summary>What a test checks on the patches' settings.</summary>
 public static class PatchesSettingsSnapshotAssertions
 {
-    /// <summary>The settings shown are <paramref name="settings"/>, in this order, and no other setting a case names.</summary>
+    /// <summary>
+    /// The page shows <paramref name="settings"/>, in this order: a page also shows other patches' settings (the Comments
+    /// page "Show user avatars" and "Load more comments"), which this leaves out.
+    /// </summary>
     public static AssertingThat<PatchesSettingsSnapshot> ShowsTheSettings(this AssertingThat<PatchesSettingsSnapshot> that, params PatchSetting[] settings)
     {
         var shown = that.InstanceToAssert.Settings;
         Assert.True(
-            shown.SequenceEqual(settings),
+            shown.Where(settings.Contains).SequenceEqual(settings),
             $"The settings show {Listed(shown)}, but {Listed(settings)} were expected, in this order.");
         return that;
     }

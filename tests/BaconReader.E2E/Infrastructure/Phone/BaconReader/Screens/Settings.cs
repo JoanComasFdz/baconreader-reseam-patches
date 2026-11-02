@@ -28,6 +28,9 @@ public sealed class Settings(AndroidDriver driver)
     public Task WaitUntilSectionShownAsync(SettingsSection section) =>
         Waiting.UntilShownAsync(driver, Locate.AppIdWithText("toolbarTitle", section.ToShownText()), TimeSpan.FromSeconds(10), $"BaconReader's \"{section.ToShownText()}\" settings");
 
+    /// <summary>Taps <paramref name="setting"/> in the open section, which ticks or unticks its checkbox.</summary>
+    public Task TickAsync(BaconReaderSetting setting) => OnScreen.PressAsync(driver, Locate.AppIdWithText("text", setting.ToShownText()));
+
     /// <summary>What the open section offers: its settings and headers, top to bottom, as far as the screen shows them.</summary>
     public Task<SettingsSectionSnapshot> ReadSectionAsync() =>
         OnScreen.ReadAsync(driver, () => new SettingsSectionSnapshot(
