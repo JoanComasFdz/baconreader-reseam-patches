@@ -25,6 +25,7 @@ public sealed class Detail(AndroidDriver driver)
     private static readonly By Downvote = Locate.AppId("downvote_left");
     private static readonly By CommentHeader = Locate.AppId("commentSubText");
     private static readonly By PostTitle = Locate.AppId("title");
+    private static readonly By PostSubtext = Locate.AppId("subtext");
 
     /// <summary>A text post's text, under its title.</summary>
     public PostText PostText { get; } = new(driver);
@@ -67,6 +68,30 @@ public sealed class Detail(AndroidDriver driver)
     /// <summary>Waits until the screen shows the post "<paramref name="title"/>": a link opens it a moment after the tap.</summary>
     public Task WaitUntilPostShownAsync(string title) =>
         Waiting.UntilShownAsync(driver, Locate.AppIdWithText("title", title), TimeSpan.FromSeconds(30), $"The post \"{title}\"");
+
+    /// <summary>
+    /// Taps the link "<paramref name="link"/>" on the first line of the post's header, after its author ("by e2e_poster
+    /// www.reddit.com"): a link post's site, which opens what the post links to. A link inside a text has no view of its
+    /// own, so the tap lands on its middle character, at about 0.45 of a line's height a character.
+    /// </summary>
+    public Task ClickHeaderLinkAsync(string link) =>
+        OnScreen.TouchAsync(driver, () => driver.FindElement(Header).FindElement(PostSubtext), subtext =>
+        {
+            var lines = subtext.Text.Split('\n');
+            var start = lines[0].IndexOf(link, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                throw new InvalidOperationException($"The post's header shows \"{lines[0]}\" on its first line, but the link \"{link}\" was expected there.");
+            }
+
+            var bounds = new Rectangle(subtext.Location, subtext.Size);
+            var lineHeight = bounds.Height / lines.Length;
+            driver.ExecuteScript("mobile: clickGesture", new Dictionary<string, object>
+            {
+                ["x"] = bounds.Left + (int)((start + (link.Length / 2.0)) * lineHeight * 0.45),
+                ["y"] = bounds.Top + (lineHeight / 2),
+            });
+        });
 
     /// <summary>Taps Android's Back, which closes the post and goes back to where it was opened from.</summary>
     public Task ClickBackAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));

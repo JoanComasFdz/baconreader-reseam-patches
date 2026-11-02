@@ -28,6 +28,18 @@ public sealed partial class Reddit(RedditWorld world)
         world.AddPost("u_" + TestAccount.UserName, title, post => post.By(TestAccount.UserName));
 
     /// <summary>
+    /// "Reddit has a link post "&lt;title&gt;" in r/&lt;subreddit&gt; linking to a share link of the post "&lt;target&gt;"":
+    /// a link post whose address is <c>https://www.reddit.com/r/&lt;sub&gt;/s/&lt;code&gt;</c>, that Reddit redirects to
+    /// that post.
+    /// </summary>
+    public void HasALinkPostLinkingToAShareLinkOfThePost(string title, string subreddit, string target)
+    {
+        var shared = PostTitled(target);
+        var link = world.AddShareLink("r/" + shared.Subreddit.Name, shared.Permalink);
+        world.AddPost(subreddit, title, post => post.LinkingTo("https://www.reddit.com" + link));
+    }
+
+    /// <summary>
     /// The requests Reddit got for share links, oldest first: each link's path, the status it answered, and the title of
     /// the post it leads to (null when it leads to none).
     /// </summary>
