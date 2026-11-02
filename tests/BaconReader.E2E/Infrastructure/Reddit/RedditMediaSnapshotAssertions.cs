@@ -8,11 +8,20 @@ namespace BaconReader.E2E.Infrastructure.Reddit;
 /// <summary>What a test checks on the media Reddit served: thumbnails, previews, galleries, avatars, a page's script.</summary>
 public static class RedditMediaSnapshotAssertions
 {
-    /// <summary>Reddit served the file: one request for it was answered 200.</summary>
+    /// <summary>Reddit served the file: one request for it was answered 200, or 206 for a part of it (a video's).</summary>
     public static AssertingThat<RedditMediaFileRequestsSnapshot> Served(this AssertingThat<RedditMediaFileRequestsSnapshot> that)
     {
         var media = that.InstanceToAssert;
-        Assert.True(media.Requests.Any(request => request.Status == 200), $"Reddit was asked for {media.What} {Asked(media)}, but served it was expected.");
+        Assert.True(media.Requests.Any(request => request.Status is 200 or 206), $"Reddit was asked for {media.What} {Asked(media)}, but served it was expected.");
+        return that;
+    }
+
+    /// <summary>Reddit didn't serve the file: no request for it was answered.</summary>
+    public static AssertingThat<RedditMediaFileRequestsSnapshot> DidntServe(this AssertingThat<RedditMediaFileRequestsSnapshot> that)
+    {
+        var media = that.InstanceToAssert;
+        var served = media.Requests.Count(request => request.Status is 200 or 206);
+        Assert.True(served == 0, $"Reddit served {media.What} {served} times, but not serving it was expected.");
         return that;
     }
 

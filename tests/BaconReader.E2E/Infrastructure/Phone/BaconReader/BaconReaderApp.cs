@@ -63,6 +63,9 @@ public sealed class BaconReaderApp(
     /// <summary>The post's screen in its "Slide Show View": a link post's page.</summary>
     public SlideShow SlideShow { get; } = new(driver);
 
+    /// <summary>"Submit a Post", which "Submit post" in the left menu opens.</summary>
+    public SubmitPost SubmitPost { get; } = new(driver);
+
     /// <summary>"Where do you want to save?", which "Save" in the media viewer's "More options" opens.</summary>
     public WhereToSave WhereToSave { get; } = new(driver);
 

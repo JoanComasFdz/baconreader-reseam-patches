@@ -30,6 +30,9 @@ public sealed class Detail(AndroidDriver driver)
     /// <summary>A text post's text, under its title.</summary>
     public PostText PostText { get; } = new(driver);
 
+    /// <summary>The post's media, under its title, with BaconReader's "Show large image" on.</summary>
+    public DetailMedia PostMedia { get; } = new(driver);
+
     /// <summary>The post's comments, under the post and the sort bar.</summary>
     public Comments Comments { get; } = new(driver);
 

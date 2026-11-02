@@ -124,6 +124,35 @@ public sealed partial class Reddit
     }
 
     /// <summary>
+    /// "Reddit served the video of "&lt;title&gt;"", or didn't, since the post last opened: the requests for the files of
+    /// the video post's v.redd.it video (its playlists, picture and sound) since BaconReader last asked for the post's
+    /// comments, which it does when the post opens.
+    /// </summary>
+    public RedditMediaFileRequestsSnapshot ReadRequestsForTheVideoOf(string title) =>
+        new($"the video of \"{title}\"", [.. VideoRequestsSinceThePostOpened(title).Select(request => new RedditMediaRequest(request.Query, request.Status))]);
+
+    /// <summary>Waits until Reddit served a file of the video of the post "&lt;title&gt;" since the post last opened.</summary>
+    public Task WaitUntilTheVideoOfThePostIsServedAsync(string title) =>
+        WaitUntilAsync(
+            () => VideoRequestsSinceThePostOpened(title).Any(request => request.Status is 200 or 206),
+            TimeSpan.FromSeconds(10),
+            $"Reddit didn't serve the video of \"{title}\" within 10 s.");
+
+    /// <summary>"Reddit served the GIF of "&lt;title&gt;"": the requests for the GIF post's GIF.</summary>
+    public RedditMediaFileRequestsSnapshot ReadRequestsForTheGifOf(string title) =>
+        RequestsFor($"the GIF of \"{title}\"", MediaPath(PostTitled(title).Url));
+
+    /// <summary>Waits until Reddit served the GIF of the GIF post "&lt;title&gt;".</summary>
+    public Task WaitUntilTheGifOfThePostIsServedAsync(string title)
+    {
+        var gif = MediaPath(PostTitled(title).Url);
+        return WaitUntilAsync(
+            () => world.Requests.Any(request => request is { Method: "GET", Status: 200 } && request.Path == gif),
+            TimeSpan.FromSeconds(10),
+            $"Reddit didn't serve the GIF of \"{title}\" within 10 s.");
+    }
+
+    /// <summary>
     /// Waits until Reddit served the thumbnail of the post "&lt;title&gt;": BaconReader asks again, a second later and two,
     /// when it fails.
     /// </summary>
@@ -202,6 +231,18 @@ public sealed partial class Reddit
     // The page's own loads, not its script's.
     private int PageLoads(string page) =>
         world.Requests.Count(request => request is { Method: "GET", Status: 200 } && request.Path == page && request.Query != "?script=ran");
+
+    // The requests for the video post's video files since BaconReader last asked for its comments, as it does when the
+    // post opens, less a second: the post's media can be asked for just before its comments.
+    private IEnumerable<RecordedRequest> VideoRequestsSinceThePostOpened(string title)
+    {
+        var post = PostTitled(title);
+        var video = $"/_media/v.redd.it/{post.VideoId ?? throw new InvalidOperationException($"\"{title}\" isn't a video post.")}/";
+        var requests = world.Requests;
+        var opened = requests.LastOrDefault(request => request.Method == "GET" && request.Path.StartsWith($"/comments/{post.Id}", StringComparison.Ordinal))?.At
+            ?? throw new InvalidOperationException($"BaconReader hasn't opened the post \"{title}\".");
+        return requests.Where(request => request.Method == "GET" && request.Path.StartsWith(video, StringComparison.Ordinal) && request.At >= opened - TimeSpan.FromSeconds(1));
+    }
 
     private RedditMediaFileRequestsSnapshot RequestsFor(string what, string path) =>
         new(what, [.. world.Requests.Where(request => request.Method == "GET" && request.Path == path).Select(request => new RedditMediaRequest(request.Query, request.Status))]);

@@ -26,6 +26,7 @@ public partial record PatchSetting
     public partial record ShowUserAvatars;
     public partial record AvatarSize;
     public partial record AvatarBackground;
+    public partial record AutoplayVideosInDetailView;
 
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
     public partial record Unlisted(string Shown);
@@ -50,6 +51,7 @@ public static class PatchSettingShowing
         new PatchSetting.ShowUserAvatars(),
         new PatchSetting.AvatarSize(),
         new PatchSetting.AvatarBackground(),
+        new PatchSetting.AutoplayVideosInDetailView(),
     ];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
@@ -68,6 +70,7 @@ public static class PatchSettingShowing
             showUserAvatars => "Show user avatars",
             avatarSize => "Avatar size",
             avatarBackground => "Avatar background",
+            autoplayVideosInDetailView => "Autoplay videos in Detail View",
             unlisted => unlisted.Shown);
 
     /// <summary>The case the app's <paramref name="shown"/> text names, or <see cref="PatchSetting.Unlisted"/>.</summary>

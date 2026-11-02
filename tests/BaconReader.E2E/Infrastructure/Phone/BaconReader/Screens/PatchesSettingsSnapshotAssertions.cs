@@ -24,4 +24,19 @@ public static class PatchesSettingsSnapshotAssertions
 
     private static string Listed(IEnumerable<PatchSetting> settings) =>
         string.Join(", ", settings.Select(setting => $"\"{setting.ToShownText()}\""));
+
+    /// <summary>The patches' settings screen shows.</summary>
+    public static AssertingThat<PatchesSettingsScreenSnapshot> IsShown(this AssertingThat<PatchesSettingsScreenSnapshot> that)
+    {
+        Assert.True(that.InstanceToAssert.Shown, "BaconReader doesn't show the patches' settings, but it was expected.");
+        return that;
+    }
+
+    /// <summary>The setting's switch is on.</summary>
+    public static AssertingThat<PatchSettingSwitchSnapshot> IsOn(this AssertingThat<PatchSettingSwitchSnapshot> that)
+    {
+        var setting = that.InstanceToAssert;
+        Assert.True(setting.On, $"The setting \"{setting.Setting.ToShownText()}\" is off, but on was expected.");
+        return that;
+    }
 }
