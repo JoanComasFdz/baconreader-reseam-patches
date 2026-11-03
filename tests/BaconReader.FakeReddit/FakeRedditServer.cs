@@ -179,6 +179,7 @@ public sealed class FakeRedditServer : IAsyncDisposable
         Media.Map(app, world);
         ShareLinks.Map(app, world);
         Info.Map(app, world);
+        ImgurApi.Map(app, world);
         Debug.Map(app, world);
         app.MapFallback((HttpContext context) =>
         {

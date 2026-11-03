@@ -22,6 +22,8 @@ internal static class Media
 
     private const string SignedPreviewHost = "preview.redd.it/";
 
+    private const string ImgurImages = "i.imgur.com/";
+
     public static void Map(WebApplication app, RedditWorld world)
     {
         app.MapGet("/video/{id}", (HttpContext context, string id) => VideoPost(context, world, id));
@@ -55,6 +57,12 @@ internal static class Media
                 if (world.FindMedia(stored) is { } file)
                 {
                     return Results.File(file.Bytes, file.ContentType, enableRangeProcessing: true);
+                }
+
+                // An Imgur image, at any of Imgur's sizes: <id>l.jpg, <id>t.png…
+                if (stored.StartsWith(ImgurImages, StringComparison.Ordinal) && world.Imgur.FindImageFile(stored[ImgurImages.Length..]) is { } image)
+                {
+                    return Results.File(image.Bytes, image.ContentType, enableRangeProcessing: true);
                 }
             }
 

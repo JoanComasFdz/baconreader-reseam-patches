@@ -343,6 +343,17 @@ public sealed class RedditPost(RedditWorld world, Post post)
     }
 
     /// <summary>
+    /// "… has a comment "&lt;text&gt;" with a link to the Imgur album "&lt;album&gt;"": the text, then the album's bare
+    /// link, at Imgur's own address, on a line of its own.
+    /// </summary>
+    public void HasACommentWithALinkToTheImgurAlbum(string text, string album)
+    {
+        var link = world.Imgur.Albums.SingleOrDefault(found => found.Title == album)?.Link
+            ?? throw new InvalidOperationException($"The scenario's Imgur has no album \"{album}\": a Given line makes it first.");
+        world.AddComment(post, $"{text}\n\n{link}");
+    }
+
+    /// <summary>
     /// "… has a comment "&lt;text&gt;" linking to the video of "&lt;title&gt;"": a link to the video's own address,
     /// <c>https://v.redd.it/&lt;id&gt;</c>, where "E2E fake Reddit" moves it, as Reddit's comments link a video.
     /// </summary>

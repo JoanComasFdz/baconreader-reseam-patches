@@ -34,11 +34,15 @@ public sealed class RedditWorld
     internal RedditWorld(string baseUrl)
     {
         BaseUrl = baseUrl.TrimEnd('/');
+        Imgur = new Imgur(this);
         Reset();
     }
 
     /// <summary>The fake's URL as the phone reaches it, which media URLs in the JSON start with.</summary>
     public string BaseUrl { get; }
+
+    /// <summary>Imgur, which "E2E fake Reddit" moves here too: its albums and the uploads the app sent.</summary>
+    public Imgur Imgur { get; }
 
     /// <summary>Guards the world: the server answers on its own threads while a test builds.</summary>
     internal object Sync { get; } = new();
@@ -102,6 +106,7 @@ public sealed class RedditWorld
             troubleHits.Clear();
             avatars.Clear();
             shareLinks.Clear();
+            Imgur.Reset();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;

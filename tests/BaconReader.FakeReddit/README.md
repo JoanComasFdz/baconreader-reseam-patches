@@ -86,6 +86,7 @@ world.LoginPage.ShowCookieBanner = true;
   as DASH and HLS playlists and their video and sound renditions (and playlists without the sound), and a web page whose
   script asks for the page again with `?script=ran` once it runs. `AddVideoWithoutPost()` serves one that no post has, whose `/video/<id>` is a 404. `AddRedditVideo(id)` serves a video as v.redd.it
   does.
+- `Imgur.AddAlbum(…)` makes an Imgur album ("Imgur" below).
 - `GiveAvatar(user, seeThrough)` gives a user an avatar, a picture or one that is all see-through, which `api/user_data_by_account_ids` names.
 - A `RequestTrouble` with `Times` hits only the first requests it matches: a network hiccup.
 - The E2E project wraps this in the Gherkins' words (`Infrastructure/Reddit/`).
@@ -121,11 +122,31 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /api/v1/authorize/answer` ("Accept" or "Decline") | 302 to `<redirect_uri>?state=<state>&code=<code>`, or `error=access_denied` |
 | `POST /api/v1/access_token` | Basic auth by the client ID; trades a code (once) or a refresh token for `access_token`, `refresh_token`, `token_type`, `expires_in`, `scope` |
 | `GET`, `HEAD /_media/{host}/{path}` | the media store's file; `www.reddit.com/video/…` is `v.redd.it/…`, as BaconReader rewrites it; a video's own `v.redd.it/<id>` is a 302 to `/video/<id>`, and BaconReader's rewrite of it, `www.reddit.com/video/<id>`, answers as `/video/<id>`; a `preview.redd.it` URL whose query still has `&amp;` is a 403, as Reddit refuses a signature that doesn't match |
+| `GET /_imgur/3/album/{id}/images` | Imgur's API, "Imgur" below: the album's images (`{"data": [image…], "success": true, "status": 200}`); 404 with `"album not found"` for an album the world doesn't have |
+| `GET /_imgur/3/gallery/{id}` | Imgur's gallery post: the album with its title and images; Imgur's HTML 404 page for one the world doesn't have |
+| `POST /_imgur/3/image` | an upload: the raw file stored at `i.imgur.com/<id>.<ext>` and answered as Imgur does (`link`, `type`, `deletehash`…), recorded in `Imgur.Uploads` with its content type; one sent as a form (`application/x-www-form-urlencoded`, BaconReader's without "Fix Imgur API") or that isn't a PNG or a JPEG is refused, 400 |
 | `GET`, `POST`, `PUT /_fake/…` | for debugging: `requests`, `unhandled`, `actions`, `logins`, `world`; `reset`, `accounts`, `subscriptions`, `posts`, `comments`, `media/{path}` |
 | anything else | 404, recorded in `Unhandled` |
 
 Each step of the login records the client ID, redirect URI and User-Agent it saw (`Logins`), so a test can check that
 "Spoof client" logged in as RedReader.
+
+## Imgur
+
+"E2E fake Reddit" moves Imgur's API, `https://api.imgur.com/`, to `<base>/_imgur/`, and its images,
+`https://i.imgur.com/`, to `<base>/_media/i.imgur.com/`: "Fix Imgur API" and "Embed comment images" fetch albums and
+upload images there. `RedditWorld.Imgur` holds the albums and the uploads.
+
+- `Imgur.AddAlbum(title, images, inGallery, videos)`: an album of that many JPEGs, then MP4 videos, linked
+  `https://imgur.com/a/<id>`, or on Imgur's gallery `https://imgur.com/gallery/<id>`. A post or a comment links it at
+  that address, Imgur's own: BaconReader and "Embed comment images" know an album by it ("Real addresses in content").
+- Its answers have every field Imgur's API sent BaconReader's client ID on 2026-11-03 (album `AmB1y`, gallery post
+  `EoM2jZi`), in Imgur's order: a still image with `"mp4": ""`, as Imgur sends it, not left out; a video with its `mp4`,
+  `gifv`, `hls`, `mp4_size` and `processing`. Each image's `link` is at the fake's address, which BaconReader only loads.
+- `i.imgur.com/<id><size>.<ext>` serves the image whatever size letter (`s`, `b`, `t`, `m`, `l`, `h`) and extension are
+  asked for, as Imgur does; a video's sizes are a still of it.
+- A request without Imgur's `Authorization: Client-ID …` is refused, 401.
+- Unconfirmed: what Imgur answers an upload it refuses (the fake doesn't upload to the real Imgur to see).
 
 ## The JSON
 
