@@ -17,3 +17,14 @@ import java.net.HttpURLConnection
 fun setUploadContentType(connection: HttpURLConnection?) {
     connection?.setRequestProperty("Content-Type", "application/octet-stream")
 }
+
+/**
+ * Whether an image of an Imgur album is a video. Imgur's API sends "mp4" empty for a still image,
+ * which BaconReader takes for a video because it only checks it for null.
+ */
+@Export fun isVideo(mp4: String?): Boolean = !mp4.isNullOrEmpty()
+
+/**
+ * What the album viewer plays or saves: the image's video, or the image itself when it has none.
+ */
+@Export fun link(mp4: String?, link: String?): String? = if (mp4.isNullOrEmpty()) link else mp4
