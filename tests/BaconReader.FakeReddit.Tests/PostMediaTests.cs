@@ -78,11 +78,11 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
     }
 
     [Fact]
-    public async Task A_gallery_post_links_its_gallery_where_E2E_fake_Reddit_moves_Reddits()
+    public async Task A_gallery_post_links_its_gallery_on_Reddit_as_E2E_fake_Reddit_leaves_it()
     {
         var post = World.AddPost("e2e", "Album", build => build.AsGallery());
 
-        Assert.Equal($"{Server.Url}/gallery/{post.Id}", (await ReadPostAsync(post)).GetProperty("url").GetString());
+        Assert.Equal($"https://www.reddit.com/gallery/{post.Id}", (await ReadPostAsync(post)).GetProperty("url").GetString());
     }
 
     [Fact]

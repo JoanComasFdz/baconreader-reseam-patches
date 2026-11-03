@@ -56,7 +56,10 @@ val e2eFakeReddit =
             val prefixes = redditPrefixes(options[baseUrl].trimEnd('/'))
             var strings = 0
             for ((old, new) in prefixes) {
-                strings += bytecode.replaceStringsContaining(old) { it.replace(old, new) }
+                strings +=
+                    bytecode.replaceStringsContaining(old) {
+                        if (it.startsWith(REDDIT_GALLERY)) it else it.replace(old, new)
+                    }
             }
 
             // Constants.REDDIT_DOMAIN and REDDIT_GALLERY_DOMAIN are read at run time, not inlined.
@@ -64,6 +67,7 @@ val e2eFakeReddit =
             for (dexClass in bytecode.classes) {
                 for (field in dexClass.staticFields) {
                     val value = (field.initialValue as? EncodedVal.StringVal)?.field0 ?: continue
+                    if (value.startsWith(REDDIT_GALLERY)) continue
                     val moved = prefixes.fold(value) { url, (old, new) -> url.replace(old, new) }
                     if (moved != value) {
                         dexClass.setStaticFieldValue(field.name, EncodedVal.StringVal(moved))
@@ -96,6 +100,11 @@ private val REDDIT_ORIGINS =
         "http://www.reddit.com",
         "http://reddit.com",
     )
+
+// The app knows a gallery by Reddit's own address, https://www.reddit.com/gallery/<id>, which the
+// fake's gallery posts link to as Reddit's do. Moved, "Fix Reddit links" would not take them for
+// Reddit links, as it does on Reddit.
+private const val REDDIT_GALLERY = "https://www.reddit.com/gallery"
 
 private val MEDIA_HOSTS = listOf("i.redd.it", "preview.redd.it", "v.redd.it")
 

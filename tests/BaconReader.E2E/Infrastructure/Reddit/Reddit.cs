@@ -51,6 +51,18 @@ public sealed partial class Reddit(RedditWorld world)
                 : null))]);
 
     /// <summary>
+    /// The requests Reddit got for the posts of a video, <c>api/info?url=https://v.redd.it/&lt;id&gt;</c>, oldest first:
+    /// each one's status and the title of the video's post (null when the video is no post's).
+    /// </summary>
+    public RedditVideoPostRequestsSnapshot ReadRequestsForThePostsOfVideos() =>
+        new([.. world.Requests
+            .Where(request => request.Method == "GET" && request.Path.TrimEnd('/') is "/api/info" or "/api/info.json")
+            .Select(request => (request.Status, Url: Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(request.Query).TryGetValue("url", out var url) ? url.ToString() : ""))
+            .Where(request => request.Url.StartsWith("https://v.redd.it/", StringComparison.Ordinal))
+            .Select(request => new RedditVideoPostRequest(request.Status, world.Posts
+                .FirstOrDefault(post => post.CrosspostOf is null && post.VideoId == request.Url["https://v.redd.it/".Length..])?.Title))]);
+
+    /// <summary>
     /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;" and an image": a text post
     /// whose text is <paramref name="text"/> and then an image uploaded in it.
     /// </summary>
@@ -313,6 +325,17 @@ public sealed class RedditPost(RedditWorld world, Post post)
     }
 
     /// <summary>
+    /// "… has a comment "&lt;text&gt;" linking to the video of "&lt;title&gt;"": a link <c>https://v.redd.it/&lt;id&gt;</c>,
+    /// the video's own address, as Reddit's comments link a video.
+    /// </summary>
+    public void HasACommentLinkingToTheVideoOf(string text, string title)
+    {
+        var video = Titled(title).VideoId
+            ?? throw new InvalidOperationException($"The post \"{title}\" has no video: a Given line makes it a video post first.");
+        world.AddComment(post, $"[{text}](https://v.redd.it/{video})");
+    }
+
+    /// <summary>
     /// A post's address on its author's profile, <c>/user/&lt;author&gt;/comments/&lt;id&gt;/&lt;slug&gt;/</c>: its
     /// permalink with the author's profile in place of the subreddit.
     /// </summary>
@@ -425,6 +448,12 @@ public sealed record RedditShareLinkRequest(string Path, int Status, string? Pos
 
 /// <summary>The requests Reddit got for share links, oldest first.</summary>
 public sealed record RedditShareLinkRequestsSnapshot(ImmutableArray<RedditShareLinkRequest> Requests);
+
+/// <summary>A request for the posts of a video: what Reddit answered, and the title of the video's post.</summary>
+public sealed record RedditVideoPostRequest(int Status, string? Post);
+
+/// <summary>The requests Reddit got for the posts of videos, oldest first.</summary>
+public sealed record RedditVideoPostRequestsSnapshot(ImmutableArray<RedditVideoPostRequest> Requests);
 
 /// <summary>The requests Reddit got for posts while logged in, oldest first.</summary>
 public sealed record RedditPostsRequestsSnapshot(ImmutableArray<RecordedRequest> Requests);

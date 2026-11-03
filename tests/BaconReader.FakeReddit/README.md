@@ -105,6 +105,7 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /r/{sub}/s/{code}`, `/u/{user}/s/{code}` | a share link, logged out too: 301 to `https://www.reddit.com<target>` with Reddit's share query (`share_id`, `utm_source=share`…); a subreddit's code the world doesn't know is a 307 to `https://www.reddit.com/r/{sub}/`, as Reddit answers one; a user's is a 404 |
 | `GET /r/{sub}/about`, `/r/{sub}/stylesheet` | `t5`; an empty stylesheet |
 | `GET /reddits/mine`, `/subreddits/mine/{where}`, `/reddits/popular`, `/reddits/default` (and `/subreddits/…`) | `t5` listings |
+| `GET /api/info?url=…` | a Listing of the posts linking to the URL, newest first; for a video's `https://v.redd.it/<id>`, the video's post and the crossposts of it |
 | `GET /_onelouder/explore-api/def_subs` | the default subreddits, as BaconReader's own server sent them: `app.top_level_categories[0].subreddits[]` with `name` and `display_name` |
 | `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine` | the account (never on today's day of the year, so no "Happy Cake Day!"), with `has_mail` and `inbox_count` from its unread messages; its prefs, empty lists |
 | `GET /message/{where}` | the account's inbox, newest first: everything for `inbox`, the unread for `unread`, the private messages (t4) for `messages`, the comment replies (t1) for `comments`, none for the other tabs |

@@ -13,9 +13,9 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Media;
 /// "Improve post media loading": while a post's GIF downloads, a loading bar shows with its size, which the patch tells
 /// UiAutomator in the media view's description ("Loading media, GIF · 0.4 MB"); a gallery's thumbnail strip loads small
 /// previews, not the full images; and "JavaScript in link posts", "Blocked sites" and "Allowed sites" decide whether a
-/// link post's page runs its script, in the post's slide show (BaconReader's own browser always runs it). Left out: the
-/// red bar when media fails to load, which doesn't show for an image Reddit answers with an error (reported in the PR);
-/// and the RedGIFs message, which needs RedGIFs.
+/// link post's page runs its script, in the post's slide show (BaconReader's own browser always runs it); and when an
+/// image fails to load, the bar turns red, which the media view's description tells ("Media failed to load"). Left out:
+/// the RedGIFs message, which needs RedGIFs.
 /// </summary>
 public sealed class ImprovePostMediaLoadingTests : BaseE2E
 {
@@ -27,6 +27,8 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
           Given Reddit has a GIF post "Slow GIF" in r/e2e
           And Reddit answers the media of "Slow GIF" 8 seconds late
           And Reddit has a gallery post "Album" in r/e2e of 3 images
+          And Reddit has an image post "Broken image" in r/e2e
+          And Reddit answers the image of "Broken image" with an error
           And Reddit has a link post "Link with a preview" in r/e2e to a page that runs JavaScript
           And BaconReader is patched with every patch
           And BaconReader is open
@@ -44,6 +46,9 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
           # Not on the screen: the fake Reddit records what BaconReader asked for.
           Then Reddit served the gallery's 3 thumbnails as previews 216 pixels wide, and no full image for them
           And the gallery shows its first image
+          When I go back to the posts
+          And I tap the thumbnail of "Broken image"
+          Then the media shows its loading bar as failed
           When I go back to the posts
           And I tap the post "Link with a preview"
           And I tap "Slide Show View" in the toolbar
@@ -101,6 +106,8 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
         Reddit.HasAGifPost("Slow GIF", "e2e");
         Reddit.AnswersTheMediaOfThePostLate("Slow GIF", 8);
         Reddit.HasAGalleryPostOf("Album", "e2e", 3);
+        Reddit.HasAnImagePost("Broken image", "e2e");
+        Reddit.AnswersTheImageOfThePostWithAnError("Broken image");
         Reddit.HasALinkPostToAPageThatRunsJavaScript("Link with a preview", "e2e");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
@@ -140,6 +147,15 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
         Asserting.That(gallery).ServedItsThumbnailsAsPreviews(3, 216);
         Asserting.That(shown).ShowsTheGalleryWith(3);
         Asserting.That(gallery).ServedTheFirstImageWhole();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickThumbnailAsync("Broken image");
+        await Phone.BaconReader.MediaViewer.WaitUntilLoadingFailedAsync();
+
+        // Then
+        var failed = await Phone.BaconReader.MediaViewer.ReadAsync();
+        Asserting.That(failed).ShowsItsLoadingBarAsFailed();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();

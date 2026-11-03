@@ -70,6 +70,10 @@ val improvePostMediaLoading =
                 }
             }
 
+            // With "elongated image support", images load into the app's view for long images,
+            // whose Glide target has no failure handler.
+            glideTargetFailed.before { PostMedia.onLargeImageFailed(thisObject) }
+
             // GIFs load through the app's cache loader, which reports the download progress,
             // instead of Glide.
             loadGifContent.before {
@@ -154,6 +158,11 @@ private val gifFallbackFailures =
         }
 private val gifFallbackListener = gifFallback.field("this\$1")
 private val glideListenerHandler = klass("$POST_MEDIA_HANDLER\$4").field("this\$0")
+
+private val glideTargetFailed =
+    klass("com.bumptech.glide.request.target.CustomTarget").method("onLoadFailed") {
+        params("android.graphics.drawable.Drawable")
+    }
 
 // The download listener of the app's cache loader.
 private val cacheListener = klass("$POST_MEDIA_HANDLER\$5")

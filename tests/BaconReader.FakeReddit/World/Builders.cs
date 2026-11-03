@@ -74,8 +74,8 @@ public sealed class PostBuilder
 
     /// <summary>
     /// A gallery post of JPEGs, one unless <paramref name="images"/> says otherwise, as Reddit sends one: its URL
-    /// <c>https://www.reddit.com/gallery/&lt;id&gt;</c>, moved to the fake (<c>&lt;baseUrl&gt;/gallery/&lt;id&gt;</c>), its
-    /// image in <c>media_metadata</c> and <c>gallery_data</c>.
+    /// <c>https://www.reddit.com/gallery/&lt;id&gt;</c>, which "E2E fake Reddit" leaves on Reddit, its image in
+    /// <c>media_metadata</c> and <c>gallery_data</c>.
     /// </summary>
     public PostBuilder AsGallery(int images = 1)
     {
@@ -86,9 +86,9 @@ public sealed class PostBuilder
         }
 
         Post.IsGallery = true;
-        // As BaconReader recognizes a gallery: Reddit's https://www.reddit.com/gallery/<id>, its prefix moved to the
-        // fake by "E2E fake Reddit", as for media.
-        LinkingTo($"{world.BaseUrl}/gallery/{Post.Id}");
+        // As BaconReader recognizes a gallery, and as Reddit sends it: "E2E fake Reddit" leaves the app's gallery
+        // address on Reddit, so the app treats it as a Reddit link, as it does on Reddit.
+        LinkingTo($"https://www.reddit.com/gallery/{Post.Id}");
         Post.Thumbnail = world.MediaUrl(Post.Media.Values.First().Path);
         return this;
     }

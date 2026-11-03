@@ -10,8 +10,9 @@ using JoanComasFdz.AssertingThat;
 namespace BaconReader.E2E.Scenarios.LoggedIn.Links;
 
 /// <summary>
-/// "Fix Reddit links": Reddit's share links, and links to posts without their subreddit, to galleries and to posts on a
-/// user's profile, open in BaconReader instead of its browser, or the profile.
+/// "Fix Reddit links": Reddit's share links, and links to posts without their subreddit, to galleries, to videos and to
+/// posts on a user's profile, open in BaconReader instead of its browser, or the profile. A gallery post's own thumbnail
+/// and link still open its gallery.
 /// </summary>
 public sealed class FixRedditLinksTests : BaseE2E
 {
@@ -20,7 +21,8 @@ public sealed class FixRedditLinksTests : BaseE2E
     [TestDescription("""
         @phone
         Scenario: Fix Reddit links opens share links and other Reddit links in BaconReader
-          Given Reddit has a post "Links" in r/e2e
+          Given Reddit has a video post "Clip" in r/e2e
+          And Reddit has a post "Links" in r/e2e
           And Reddit has a post "Shared post" in r/e2e
           And Reddit has a gallery post "Holiday photos" in r/e2e
           And Reddit has a post "Profile post" on the test account's profile
@@ -31,6 +33,7 @@ public sealed class FixRedditLinksTests : BaseE2E
           And the post "Links" has a comment "No subreddit" linking to the post "Shared post" without its subreddit
           And the post "Links" has a comment "Gallery" linking to the gallery of "Holiday photos"
           And the post "Links" has a comment "On a profile" linking to the post "Profile post" on the test account's profile
+          And the post "Links" has a comment "Video" linking to the video of "Clip"
           And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
@@ -61,10 +64,27 @@ public sealed class FixRedditLinksTests : BaseE2E
           And I tap the post "Shared as a link"
           And I tap "www.reddit.com" in the post's header
           Then BaconReader shows the post "Shared post"
+          When I go back
+          And I go back
+          And I tap the post "Holiday photos"
+          And I tap the thumbnail in the post's header
+          Then the gallery shows its first image
+          When I go back
+          And I tap "www.reddit.com" in the post's header
+          Then the gallery shows its first image
+          When I go back
+          Then BaconReader shows the post "Holiday photos"
+          When I go back
+          And I tap the post "Links"
+          And I tap the link "Video"
+          Then BaconReader shows the post "Clip"
+          # Not on the screen: the fake Reddit records what BaconReader asked for.
+          And Reddit was asked for the post of the video of "Clip"
         """)]
     public async Task FixRedditLinksOpensShareLinksAndOtherRedditLinksInBaconReader(Screen screen)
     {
         // Given
+        Reddit.HasAVideoPost("Clip", "e2e");
         Reddit.HasAPost("Links", "e2e");
         Reddit.HasAPost("Shared post", "e2e");
         Reddit.HasAGalleryPost("Holiday photos", "e2e");
@@ -76,10 +96,12 @@ public sealed class FixRedditLinksTests : BaseE2E
         Reddit.ThePost("Links").HasACommentLinkingToThePostWithoutItsSubreddit("No subreddit", "Shared post");
         Reddit.ThePost("Links").HasACommentLinkingToTheGalleryOf("Gallery", "Holiday photos");
         Reddit.ThePost("Links").HasACommentLinkingToThePostOnTheTestAccountsProfile("On a profile", "Profile post");
+        Reddit.ThePost("Links").HasACommentLinkingToTheVideoOf("Video", "Clip");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
+        await Phone.BaconReader.Main.Posts.WaitUntilPostShownAsync("Links");
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Links");
         await Phone.BaconReader.Detail.Comments.WaitUntilCommentShownAsync("Shared");
         await Phone.BaconReader.Detail.Comments.ClickLinkAsync("Shared");
@@ -149,6 +171,7 @@ public sealed class FixRedditLinksTests : BaseE2E
         await Phone.BaconReader.Detail.ClickBackAsync();
         await Phone.BaconReader.Detail.Comments.WaitUntilCommentShownAsync("On a profile");
         await Phone.BaconReader.Detail.ClickBackAsync();
+        await Phone.BaconReader.Main.Posts.WaitUntilPostShownAsync("Shared as a link");
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Shared as a link");
         await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Shared as a link");
         await Phone.BaconReader.Detail.ClickHeaderLinkAsync("www.reddit.com");
@@ -157,5 +180,52 @@ public sealed class FixRedditLinksTests : BaseE2E
         // Then
         var sharedAsALink = await Phone.BaconReader.Detail.ReadPostAsync();
         Asserting.That(sharedAsALink).ShowsThePost("Shared post");
+
+        // When
+        await Phone.BaconReader.Detail.ClickBackAsync();
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Shared as a link");
+        await Phone.BaconReader.Detail.ClickBackAsync();
+        await Phone.BaconReader.Main.Posts.WaitUntilPostShownAsync("Holiday photos");
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Holiday photos");
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Holiday photos");
+        await Phone.BaconReader.Detail.ClickHeaderThumbnailAsync();
+        await Phone.BaconReader.MediaViewer.WaitUntilGalleryShownAsync();
+
+        // Then
+        var galleryFromTheThumbnail = await Phone.BaconReader.MediaViewer.ReadAsync();
+        Asserting.That(galleryFromTheThumbnail).ShowsTheGalleryWith(1);
+
+        // When
+        await Phone.BaconReader.MediaViewer.ClickBackAsync();
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Holiday photos");
+        await Phone.BaconReader.Detail.ClickHeaderLinkAsync("www.reddit.com");
+        await Phone.BaconReader.MediaViewer.WaitUntilGalleryShownAsync();
+
+        // Then
+        var galleryFromTheLink = await Phone.BaconReader.MediaViewer.ReadAsync();
+        Asserting.That(galleryFromTheLink).ShowsTheGalleryWith(1);
+
+        // When
+        await Phone.BaconReader.MediaViewer.ClickBackAsync();
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Holiday photos");
+
+        // Then
+        var galleryPost = await Phone.BaconReader.Detail.ReadPostAsync();
+        Asserting.That(galleryPost).ShowsThePost("Holiday photos");
+
+        // When
+        await Phone.BaconReader.Detail.ClickBackAsync();
+        await Phone.BaconReader.Main.Posts.WaitUntilPostShownAsync("Links");
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Links");
+        await Phone.BaconReader.Detail.Comments.WaitUntilCommentShownAsync("Video");
+        await Phone.BaconReader.Detail.Comments.ClickLinkAsync("Video");
+        await Phone.BaconReader.Detail.WaitUntilPostShownAsync("Clip");
+
+        // Then
+        var video = await Phone.BaconReader.Detail.ReadPostAsync();
+        // Not on the screen: the fake Reddit records what BaconReader asked for.
+        var videoPosts = Reddit.ReadRequestsForThePostsOfVideos();
+        Asserting.That(video).ShowsThePost("Clip");
+        Asserting.That(videoPosts).AnsweredThePostOfTheVideoOf("Clip");
     }
 }

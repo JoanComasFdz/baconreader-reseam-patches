@@ -26,6 +26,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.ViewFlipper
 import app.reseam.runtime.Export
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.joancomasfdz.baconreader.common.DownloadProgress
 import com.joancomasfdz.baconreader.common.ErrorDialog
 import com.joancomasfdz.baconreader.common.GlideUtils
@@ -58,6 +59,9 @@ private const val TAG = "PostMedia"
 
 private const val PAGE_LOADING = 0
 private const val PAGE_VIDEO = 3
+
+/** The Glide target that loads an image into the app's view for long images. */
+private const val LARGE_IMAGE_TARGET = "com.onelouder.baconreader.PostMediaHandler$3"
 
 // ExoPlayer's Player.STATE_READY.
 private const val PLAYER_READY = 3
@@ -110,6 +114,23 @@ fun onStart(
 fun onImageLoadFailed(handler: Any?) {
     val overlay = handler?.let { overlays[it] } ?: return
     overlay.flipper.post { overlay.fail() }
+}
+
+/**
+ * Called at the start of Glide's CustomTarget.onLoadFailed. With "elongated image support", the app
+ * loads images into its view for long images, whose Glide target has no failure handler: the bar
+ * shows the failure.
+ */
+@Export
+fun onLargeImageFailed(target: Any?) {
+    if (target == null || target.javaClass.name != LARGE_IMAGE_TARGET) return
+    try {
+        val handler = target.javaClass.getDeclaredField("this$0")
+        handler.isAccessible = true
+        onImageLoadFailed(handler.get(target))
+    } catch (exception: Exception) {
+        Log.i(TAG, "Could not tell the image failed", exception)
+    }
 }
 
 /** The download progress of the app's cache loader. */
@@ -361,10 +382,22 @@ private class LoadingOverlay(
         return when (flipper.displayedChild) {
             PAGE_LOADING -> false
             PAGE_VIDEO -> playerReady()
-            // Web page, blocked, error, galleries: nothing to wait for.
-            else -> current !is ImageView || current.drawable != null
+            else -> {
+                // The view for long images, which the app shows before Glide loads its image.
+                val largeImage = (current as? ViewGroup)?.let(::largeImageView)
+                when {
+                    largeImage != null -> largeImage.hasImage()
+                    // Web page, blocked, error, galleries: nothing to wait for.
+                    else -> current !is ImageView || current.drawable != null
+                }
+            }
         }
     }
+
+    private fun largeImageView(page: ViewGroup): SubsamplingScaleImageView? =
+        (0 until page.childCount).firstNotNullOfOrNull {
+            page.getChildAt(it) as? SubsamplingScaleImageView
+        }
 
     /** Whether the app's video player has a frame ready, for videos the app starts itself. */
     private fun playerReady(): Boolean =
