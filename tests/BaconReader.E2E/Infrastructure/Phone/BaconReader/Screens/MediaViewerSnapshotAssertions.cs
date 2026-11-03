@@ -28,6 +28,13 @@ public static class MediaViewerSnapshotAssertions
         return that;
     }
 
+    /// <summary>The media's player plays a video.</summary>
+    public static AssertingThat<MediaViewerSnapshot> PlaysTheVideo(this AssertingThat<MediaViewerSnapshot> that)
+    {
+        Assert.True(that.InstanceToAssert.PlaysAVideo, "The media viewer shows no video, but one playing was expected.");
+        return that;
+    }
+
     /// <summary>The media shows no loading bar.</summary>
     public static AssertingThat<MediaViewerSnapshot> ShowsNoLoadingBar(this AssertingThat<MediaViewerSnapshot> that)
     {

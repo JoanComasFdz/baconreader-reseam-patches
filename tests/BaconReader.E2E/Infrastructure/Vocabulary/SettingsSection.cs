@@ -15,6 +15,9 @@ public partial record SettingsSection
     public partial record DetailView;
     public partial record Filters;
 
+    /// <summary>Holds "Open links inside app".</summary>
+    public partial record Other;
+
     public partial record Patches;
 
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
@@ -24,7 +27,7 @@ public partial record SettingsSection
 /// <summary>What the app shows for each <see cref="SettingsSection"/>: the only place those strings live.</summary>
 public static class SettingsSectionShowing
 {
-    private static readonly SettingsSection[] Listed = [new SettingsSection.ListView(), new SettingsSection.DetailView(), new SettingsSection.Filters(), new SettingsSection.Patches()];
+    private static readonly SettingsSection[] Listed = [new SettingsSection.ListView(), new SettingsSection.DetailView(), new SettingsSection.Filters(), new SettingsSection.Other(), new SettingsSection.Patches()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this SettingsSection value) =>
@@ -32,6 +35,7 @@ public static class SettingsSectionShowing
             listView => "List View",
             detailView => "Detail View",
             filters => "Filters",
+            other => "Other",
             patches => "Patches",
             unlisted => unlisted.Shown);
 
