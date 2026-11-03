@@ -12,7 +12,8 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Media;
 /// <summary>
 /// "Fix list thumbnails": the list view loads thumbnails Reddit sends as signed previews (their "&amp;" unescaped) and
 /// asks again for one that fails; a link post shows its preview as thumbnail, a crosspost of a gallery the preview of
-/// its first image and BaconReader's gallery indicator; spoiler thumbnails are blurred, and NSFW ones while "Show NSFW
+/// its first image and BaconReader's gallery indicator, and in the card list a gallery and its crosspost show the
+/// gallery's first image in their cards; spoiler thumbnails are blurred, and NSFW ones while "Show NSFW
 /// images" is off. The patch describes a thumbnail it blurs "Blurred thumbnail". Out of scope: YouTube and embed
 /// thumbnails and RedGIFs posts, which come from other hosts.
 /// </summary>
@@ -63,6 +64,10 @@ public sealed class FixListThumbnailsTests : BaseE2E
           And I go back to the posts
           And I tap "Refresh" in the toolbar
           Then the post "NSFW picture" shows a blurred thumbnail
+          When I tap "More options" in the toolbar
+          And I tap "Card View"
+          Then the post "Album" shows its first image in its card
+          And the post "Shared album" shows its first image in its card
         """)]
     public async Task FixListThumbnailsLoadsSignedAndFailingThumbnailsFindsMissingOnesAndBlursNsfwAndSpoilers(Screen screen)
     {
@@ -143,5 +148,22 @@ public sealed class FixListThumbnailsTests : BaseE2E
         // Then
         var blurred = await Phone.BaconReader.Main.Posts.ReadPostAsync("NSFW picture");
         Asserting.That(blurred).ShowsABlurredThumbnail();
+
+        // When
+        await Phone.BaconReader.Main.Toolbar.ClickMoreOptionsAsync();
+        await Phone.BaconReader.Main.Toolbar.MoreOptions.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.Toolbar.MoreOptions.ClickAsync(new OverflowMenuEntry.CardView());
+        await Phone.BaconReader.Main.Posts.WaitUntilCardImageShownAsync("Album");
+
+        // Then
+        var album = await Phone.BaconReader.Main.Posts.ReadPostAsync("Album");
+        Asserting.That(album).ShowsAnImageInItsCard();
+
+        // When
+        await Phone.BaconReader.Main.Posts.WaitUntilCardImageShownAsync("Shared album");
+
+        // Then
+        var sharedAlbum = await Phone.BaconReader.Main.Posts.ReadPostAsync("Shared album");
+        Asserting.That(sharedAlbum).ShowsAnImageInItsCard();
     }
 }

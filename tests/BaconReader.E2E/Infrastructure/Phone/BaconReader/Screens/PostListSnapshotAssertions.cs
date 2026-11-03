@@ -60,6 +60,13 @@ public static class PostListSnapshotAssertions
     public static AssertingThat<PostSnapshot> ShowsABlurredThumbnail(this AssertingThat<PostSnapshot> that) =>
         ShowsThumbnail(that, PostThumbnail.Blurred, "a blurred thumbnail");
 
+    /// <summary>The post's card, in the card list, shows an image under its title.</summary>
+    public static AssertingThat<PostSnapshot> ShowsAnImageInItsCard(this AssertingThat<PostSnapshot> that)
+    {
+        Assert.True(that.InstanceToAssert.ShowsCardImage, $"The card of the post \"{that.InstanceToAssert.Title}\" shows no image, but one was expected.");
+        return that;
+    }
+
     /// <summary>The post shows BaconReader's gallery indicator over its thumbnail.</summary>
     public static AssertingThat<PostSnapshot> ShowsTheGalleryIndicator(this AssertingThat<PostSnapshot> that)
     {

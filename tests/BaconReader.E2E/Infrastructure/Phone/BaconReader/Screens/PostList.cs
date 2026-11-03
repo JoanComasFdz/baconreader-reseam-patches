@@ -33,6 +33,7 @@ public sealed class PostList(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By Thumbnail = Locate.AppId("thumbnail");
     private static readonly OpenQA.Selenium.By ThumbnailClicker = Locate.AppId("thumbnailClicker");
     private static readonly OpenQA.Selenium.By GalleryIndicator = Locate.AppId("thumbnail_album");
+    private static readonly OpenQA.Selenium.By CardImage = Locate.AppId("preview");
 
     // "Fix list thumbnails" describes a thumbnail it blurs.
     private const string BlurredThumbnail = "Blurred thumbnail";
@@ -111,6 +112,16 @@ public sealed class PostList(AndroidDriver driver)
             TimeSpan.FromSeconds(10),
             $"The post \"{title}\" with {(thumbnail == PostThumbnail.Blurred ? "a blurred thumbnail" : "a thumbnail that isn't blurred")}");
 
+    /// <summary>Waits until the card of the post titled <paramref name="title"/> shows an image, scrolling to it.</summary>
+    public async Task WaitUntilCardImageShownAsync(string title)
+    {
+        await WaitUntilPostShownAsync(title);
+        await Waiting.UntilAsync(
+            () => FindPost(title)?.FindElements(CardImage).Any(image => image.Displayed) == true,
+            TimeSpan.FromSeconds(10),
+            $"The image in the card of the post \"{title}\"");
+    }
+
     /// <summary>Taps the thumbnail of the post titled <paramref name="title"/>, in the list view: it opens its media.</summary>
     public Task ClickThumbnailAsync(string title) =>
         OnScreen.PressAsync(driver, () => PostOrFail(title).FindElement(ThumbnailClicker));
@@ -124,7 +135,8 @@ public sealed class PostList(AndroidDriver driver)
         OnScreen.ReadAsync(driver, () =>
         {
             var post = PostOrFail(title);
-            return new PostSnapshot(title, post.FindElement(Points).Text.Trim())
+            // A card shows its points apart from the post's view.
+            return new PostSnapshot(title, post.FindElements(Points).FirstOrDefault()?.Text.Trim() ?? "")
             {
                 Awards = post.FindElements(AwardIcons).Sum(icons => icons.FindElements(By.ClassName("android.widget.ImageView")).Count),
                 TextButton = post.FindElements(TextButton).FirstOrDefault()?.GetAttribute("content-desc") is { Length: > 0 } description
@@ -135,6 +147,7 @@ public sealed class PostList(AndroidDriver driver)
                     ? PostThumbnail.None
                     : thumbnail.GetAttribute("content-desc") == BlurredThumbnail ? PostThumbnail.Blurred : PostThumbnail.Shown,
                 ShowsGalleryIndicator = post.FindElements(GalleryIndicator).Any(indicator => indicator.Displayed),
+                ShowsCardImage = post.FindElements(CardImage).Any(image => image.Displayed),
             };
         });
 
@@ -270,6 +283,9 @@ public sealed record PostSnapshot(string Title, string Points)
 
     /// <summary>Whether BaconReader's gallery indicator, the lines above the thumbnail, shows.</summary>
     public bool ShowsGalleryIndicator { get; init; }
+
+    /// <summary>Whether the post's card, in the card list, shows an image under its title.</summary>
+    public bool ShowsCardImage { get; init; }
 }
 
 /// <summary>A post's thumbnail in the list: none, one, or one "Fix list thumbnails" blurred.</summary>

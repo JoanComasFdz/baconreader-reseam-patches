@@ -23,11 +23,13 @@ private const val DETAIL_LINK_FRAGMENT = "com.onelouder.baconreader.adapters.Det
 // Reddit sends list thumbnails as signed preview URLs whose "&" arrive HTML-escaped, since
 // BaconReader doesn't ask for raw JSON. BaconReader loads them as they are, the server answers 403,
 // and the thumbnail stays empty. It also loads each thumbnail once, so a network hiccup leaves it
-// empty, and shows no thumbnail for link posts, NSFW posts or crossposted galleries.
+// empty, and shows no thumbnail for link posts, NSFW posts or crossposted galleries, and no image
+// in
+// the card of a gallery.
 val fixListThumbnails =
     patch("Fix list thumbnails") {
         description(
-            "Fixes empty thumbnails in the post list, shows a preview as thumbnail for link posts and crossposted galleries, and blurs the thumbnails of NSFW and spoiler posts."
+            "Fixes empty thumbnails in the post list, shows a preview as thumbnail for link posts and crossposted galleries and as image in the card of galleries, and blurs the thumbnails of NSFW and spoiler posts."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
@@ -59,6 +61,11 @@ val fixListThumbnails =
             headerGallery.after {
                 capture("gallery").assign(FixListThumbnails.isGallery(thisObject.field(headerLink)))
             }
+
+            // The card list shows no image for galleries: the first image's preview instead.
+            cardPreview.before {
+                whenTrue(FixListThumbnails.resolveCardPreview(param(1), param(2))) { returnTrue() }
+            }
         }
     }
 
@@ -80,6 +87,15 @@ private val thumbnailInto =
         }
         .captureArgumentAs("request", 0)
         .captureArgumentAs("view", 1)
+
+private val cardPreview =
+    klass("com.onelouder.baconreader.imageutils.ImageHelper").method("resolvePreview") {
+        params(
+            "android.content.Context",
+            LINK,
+            "com.onelouder.baconreader.imageutils.ImageHelper\$ImagePreviewListener",
+        )
+    }
 
 private val listLink = klass(LINK_HOLDER).field("link")
 private val headerLink = klass(DETAIL_LINK_FRAGMENT).field("link")

@@ -18,6 +18,7 @@ import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.onelouder.baconreader.Preferences
 import com.onelouder.baconreader.media.gfycat.RedGifsManager
 import com.onelouder.baconreader.reddit.Link
+import com.onelouder.baconreader.reddit_gallery.RedditImagePreview
 import java.util.Locale
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -33,12 +34,24 @@ import java.util.concurrent.Executors
  * (with "Show NSFW images" off) and spoiler posts get a blurred one. Crossposts of galleries get
  * the preview of the first image, and BaconReader's own gallery indicator. RedGIFs posts without a
  * thumbnail get theirs from the RedGIFs API when they are shown.
+ *
+ * The card list shows a post's image from ImageHelper.resolvePreview, which knows image, video,
+ * Imgur and embed addresses but not a gallery's, reddit.com/gallery/<id>: a gallery's card shows
+ * the first image's preview.
  */
 
 private const val TAG = "FixListThumbnails"
 
 /** Smallest preview width used as a list thumbnail: the list shows them at about 70dp. */
 private const val MIN_PREVIEW_WIDTH = 216
+
+/** Largest preview width used for a card, which shows it at the screen's width. */
+private const val CARD_PREVIEW_WIDTH = 1080
+
+private const val CONTENT_TYPE = "com.onelouder.baconreader.imageutils.ImageHelper\$ContentType"
+private const val RESOLVED_URL = "com.onelouder.baconreader.imageutils.ImageHelper\$ResolvedUrl"
+private const val PREVIEW_LISTENER =
+    "com.onelouder.baconreader.imageutils.ImageHelper\$ImagePreviewListener"
 private val WIDTH = Regex("[?&]width=(\\d+)")
 
 // The blur is remembered in the URL fragment, which is never sent to the server, so it survives
@@ -323,20 +336,65 @@ private fun findOwnThumbnail(link: Link): String? {
     return null
 }
 
-/** A preview of the first image of a Reddit gallery, or null. */
+/** A preview of the first image of a Reddit gallery, for the list's thumbnail, or null. */
 private fun galleryPreview(link: Link): String? {
-    val items = link.redditGalleryData?.galleryItems
-    val metadata = link.redditMediaMetadata
-    if (items.isNullOrEmpty() || metadata == null) return null
-    val previews = metadata[items[0]?.media_id]?.p ?: return null
     var best: String? = null
-    for (preview in previews) {
+    for (preview in firstImagePreviews(link)) {
         val url = preview?.u ?: continue
         best = url
         val width = preview.x?.toIntOrNull()
         if (width != null && width >= MIN_PREVIEW_WIDTH) break
     }
     return if (best != null && best.startsWith("http")) unescape(best) else null
+}
+
+/** The largest preview of the first image of a Reddit gallery that fits a card, or null. */
+private fun galleryCardPreview(link: Link): String? {
+    var best: String? = null
+    for (preview in firstImagePreviews(link)) {
+        val url = preview?.u ?: continue
+        val width = preview.x?.toIntOrNull()
+        if (best != null && width != null && width > CARD_PREVIEW_WIDTH) break
+        best = url
+    }
+    return if (best != null && best.startsWith("http")) unescape(best) else null
+}
+
+/** The previews of the first image of a Reddit gallery, smallest first. */
+private fun firstImagePreviews(link: Link): List<RedditImagePreview?> {
+    val items = link.redditGalleryData?.galleryItems
+    val metadata = link.redditMediaMetadata
+    if (items.isNullOrEmpty() || metadata == null) return emptyList()
+    return metadata[items[0]?.media_id]?.p.orEmpty()
+}
+
+/**
+ * Called at the start of ImageHelper.resolvePreview(Context, Link, ImagePreviewListener), which
+ * picks the image of a post's card. A gallery, or a crosspost of one, gets the preview of its first
+ * image: returns true once the listener has it, false to let the app decide.
+ */
+@Export
+fun resolveCardPreview(link: Link?, listener: Any?): Boolean {
+    if (link == null || listener == null) return false
+    try {
+        val url =
+            galleryCardPreview(link)
+                ?: crosspostParent(link)?.let(::galleryCardPreview)
+                ?: return false
+        // ResolvedUrl's constructor is package-private.
+        val contentType = Class.forName(CONTENT_TYPE)
+        val resolvedUrl = Class.forName(RESOLVED_URL)
+        val constructor = resolvedUrl.getDeclaredConstructor(contentType, String::class.java)
+        constructor.isAccessible = true
+        val resolved = constructor.newInstance(contentType.getField("IMAGE").get(null), url)
+        Class.forName(PREVIEW_LISTENER)
+            .getMethod("onResolved", resolvedUrl)
+            .invoke(listener, resolved)
+        return true
+    } catch (exception: Exception) {
+        Log.i(TAG, "Could not show the gallery's image in its card", exception)
+        return false
+    }
 }
 
 /** The video id of a YouTube watch, youtu.be, shorts, live or embed link, or null. */
