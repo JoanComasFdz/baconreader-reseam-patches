@@ -48,6 +48,7 @@ public sealed class RedGifs
                 id,
                 state,
                 world.AddMedia($"media.redgifs.com/{Capitalized(id)}.mp4", MediaAsset.Mp4.ContentType, MediaAsset.Mp4.Bytes),
+                world.AddMedia($"media.redgifs.com/{Capitalized(id)}-mobile.mp4", MediaAsset.Mp4.ContentType, MediaAsset.Mp4.Bytes),
                 world.AddMedia($"media.redgifs.com/{Capitalized(id)}-poster.jpg", MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes),
                 world.AddMedia($"media.redgifs.com/{Capitalized(id)}-mobile.jpg", MediaAsset.Jpeg.ContentType, MediaAsset.Jpeg.Bytes));
             gifs.Add(gif);
@@ -120,8 +121,11 @@ public enum RedGifState
     Deleted,
 }
 
-/// <summary>A RedGIFs video: its id, whether RedGIFs has it, and its files' URLs, at the fake's address.</summary>
-public sealed record RedGif(string Id, RedGifState State, string Hd, string Poster, string Thumbnail)
+/// <summary>
+/// A RedGIFs video: its id, whether RedGIFs has it, and its files' URLs, at the fake's address, named as RedGIFs names
+/// them: <c>&lt;Id&gt;.mp4</c>, <c>-mobile.mp4</c>, <c>-poster.jpg</c> and <c>-mobile.jpg</c>.
+/// </summary>
+public sealed record RedGif(string Id, RedGifState State, string Hd, string Sd, string Poster, string Thumbnail)
 {
     /// <summary>Its page, as a post links it: RedGIFs' own address.</summary>
     public string Link => $"https://www.redgifs.com/watch/{Id}";
