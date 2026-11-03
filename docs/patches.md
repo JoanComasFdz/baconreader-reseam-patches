@@ -8,7 +8,7 @@ What each patch does. Shared by the Reseam and Morphe BaconReader repos, word fo
 | Patch | What it does |
 |---|---|
 | Spoof client | Logs in to Reddit with another app's client ID, since Reddit no longer accepts BaconReader's own. Defaults to RedReader's client ID, redirect URI and user agent, like ReVanced. Also rewrites `ssl.reddit.com` URLs to `www.reddit.com`. |
-| Fix Redgifs API | Replaces BaconReader's Redgifs interceptor with one that fetches the temporary tokens the Redgifs API now requires. |
+| Fix Redgifs API | Replaces BaconReader's Redgifs interceptor with one that fetches the temporary tokens the Redgifs API now requires, and a new one when Redgifs refuses the last, as it does after the phone joins another network. |
 | Fix list thumbnails | Fixes empty thumbnails in the post list: unescapes the signed preview URLs Reddit sends and tries again when loading fails. Link posts get a thumbnail from Reddit's preview, the embed or YouTube, crossposted galleries the preview of their first image and BaconReader's gallery indicator, galleries their first image in the card list, and RedGIFs posts theirs from the RedGIFs API. NSFW posts (with "Show NSFW images" off) and spoilers get a blurred thumbnail on Android 12 and later. |
 | Show tables | Draws tables in comments and posts as a grid instead of BaconReader's "header: value" lines. Tables wider than the text get an Expand button, and then scroll sideways. Links in cells open as anywhere else in the text. |
 | Text post icon | Replaces the button that opens a text post's text in the post list, which looks like a video's play button, with a page icon and a chevron that flips when the text is open. In the list and card views. |
