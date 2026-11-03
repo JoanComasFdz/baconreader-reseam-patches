@@ -16,7 +16,13 @@
 ## ⚡ Install
 
 1. Install [Reseam Manager](https://reseam.app/download/).
-2. On your phone, open [**Add to Reseam Manager**](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches) and add the source. Reseam Manager shows the bundle's signing key; it must be:
+2. Add this repository as a patch source, one of two ways:
+   - On your phone, open [**Add to Reseam Manager**](https://reseam.app/add/?url=https%3A%2F%2Fgithub.com%2FJoanComasFdz%2Fbaconreader-reseam-patches): the link opens Reseam Manager.
+   - Or, in Reseam Manager, open **Add patch source** and paste this address:
+     ```text
+     https://github.com/JoanComasFdz/baconreader-reseam-patches
+     ```
+   Before adding it, Reseam Manager shows the bundle's apps, BaconReader's two packages `com.onelouder.baconreader` and `com.onelouder.baconreader.premium`, and its signing key, which must be:
    ```text
    8fcc605f22082b88c826675e5614938e1fedcd769c3c568b79f3cd9564159437
    ```
@@ -27,6 +33,14 @@ Settings live in BaconReader → **Settings → Patches**.
 
 > [!WARNING]
 > Use an APK you trust. Repackaged "Premium" APKs often carry malware.
+
+### Troubleshooting
+
+- **Reseam Manager shows another signing key, or not both BaconReader packages, when adding the source:** it's another
+  source, or the address was pasted wrongly. Don't add it; add the repository as step 2 says, with the link or the
+  address `https://github.com/JoanComasFdz/baconreader-reseam-patches`. If you added it already, remove it first.
+- **Reseam Manager can't load the bundle and says so:** the bundle was built with an older Reseam than your Reseam
+  Manager. It's rebuilt within a day of each new Reseam; update the source then.
 
 ## 🧩 What's inside
 
