@@ -1,14 +1,14 @@
 name: Reseam update
 
 # Reseam Manager loads only bundles built with its own minor version while Reseam is on 0.x, so each Reseam release
-# breaks the published bundle until it's rebuilt. Once a day this checks for a newer app.reseam.workspace plugin. When
+# breaks the published bundle until it's rebuilt. Once an hour this checks for a newer app.reseam.workspace plugin. When
 # there is one, it builds the bundle with it and patches the clean BaconReader APK with every patch. When all of them
 # apply, it commits the new version to main and runs release.yml with the next patch version.
 # One-time setup (patcher-specific-release.md, "Reseam updates"): the CLEAN_APK_URL secret, and main open to the workflow's pushes.
 
 on:
   schedule:
-    - cron: '17 6 * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
