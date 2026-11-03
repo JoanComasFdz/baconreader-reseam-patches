@@ -101,11 +101,21 @@ the test process.
   | `https://i.redd.it/`, `https://preview.redd.it/`, `https://v.redd.it/` | `<baseUrl>/_media/i.redd.it/`, `<baseUrl>/_media/preview.redd.it/`, `<baseUrl>/_media/v.redd.it/` |
   | `https://cf-baconreader.onelouder.com/` | `<baseUrl>/_onelouder/` |
 
-  Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit links in posts by
-  them. Two of BaconReader's checks assume Reddit's own addresses, so the patch also takes a URL under
+  A string that starts with `https://www.reddit.com/gallery` stays: BaconReader and "Fix Reddit links" know a gallery by
+  Reddit's own address. Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit
+  links in posts by them. Two of BaconReader's checks assume Reddit's own addresses, so the patch also takes a URL under
   `<baseUrl>/_media/v.redd.it/` for a Reddit video (BaconReader plays one only by the host `v.redd.it`), and keeps the
   fake's plain HTTP where BaconReader saves a video from an https URL. Its option, `baseUrl` (default `http://127.0.0.1:5080`), is `E2E_FAKE_REDDIT_URL`
   (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
+- **Content keeps Reddit's addresses; only what the app fetches goes to the fake.** A link in the Reddit data a scenario
+  makes (a post's `url`, a link in a comment or a post's text) that a patch must recognize as Reddit's keeps Reddit's
+  real address, `https://www.reddit.com/…`, `https://v.redd.it/<id>`, as Reddit sends it. The patch moves the app's own
+  addresses, so what the app fetches from such a link still reaches the fake. A link moved to the fake in the content
+  takes a path real Reddit never takes: the patch's code doesn't see a Reddit link, and the scenario passes or fails
+  for another reason. "Fix Reddit links" missed a gallery that way, and a link post to a video
+  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Real addresses in content"). Media files, which the
+  app only loads, may be at the fake's address. Where a check can't see Reddit's address (`RedditVideo.isValid` on a
+  video moved to the fake), add the smallest hook to "E2E fake Reddit", and say so above.
 - **Every scenario gets it.** BaseE2E adds "E2E fake Reddit" to every scenario's patches. A Given and `[PatchedWith]`
   never name it, only the patches under test (`ScenarioShapeTests` checks it).
 - **The bundle's other patch.** "E2E inbox envelope label", which every scenario gets too: with unread messages, the
@@ -214,6 +224,7 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `link post with preview: <subreddit> \| <title>` | a link post to a web page that runs JavaScript, with a preview and no thumbnail |
 | `gallery post: <subreddit> \| <title> \| <images>` | a gallery of that many images |
 | `crosspost: <subreddit> \| <title> \| <shared post title>` | a crosspost of that post |
+| `link post to video: <subreddit> \| <title> \| <video post title>` | a link post to that post's video, on v.redd.it |
 | `avatar: <user>` | the user's avatar, for "Show user avatars" |
 | `late media: <post title> \| <seconds>` | the post's image or GIF answered that late |
 | `fail media: <post title> \| <status>` | the post's image or GIF answered with that status |

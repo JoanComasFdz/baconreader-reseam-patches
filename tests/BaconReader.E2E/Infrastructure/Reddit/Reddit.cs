@@ -68,6 +68,19 @@ public sealed partial class Reddit(RedditWorld world)
         world.AddPost(subreddit, title, post => post.LinkingTo("https://www.reddit.com/gallery/" + PostTitled(target).Id));
 
     /// <summary>
+    /// "Reddit has a link post "&lt;title&gt;" in r/&lt;subreddit&gt; linking to the video of "&lt;target&gt;"": a link post
+    /// whose address is that video's, <c>https://v.redd.it/&lt;id&gt;</c>, without the video. Reddit's own address, not the
+    /// fake's: BaconReader looks such a post up by <c>www.reddit.com/video/&lt;id&gt;</c>, made from it, which "Fix Reddit
+    /// links" recognizes only on Reddit's address.
+    /// </summary>
+    public void HasALinkPostLinkingToTheVideoOf(string title, string subreddit, string target)
+    {
+        var video = PostTitled(target).VideoId
+            ?? throw new InvalidOperationException($"The post \"{target}\" has no video: a Given line makes it a video post first.");
+        world.AddPost(subreddit, title, post => post.LinkingTo("https://v.redd.it/" + video));
+    }
+
+    /// <summary>
     /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;" and an image": a text post
     /// whose text is <paramref name="text"/> and then an image uploaded in it.
     /// </summary>
