@@ -36,8 +36,8 @@ world.LoginPage.ShowCookieBanner = true;
   comment's text. Each fills in everything Reddit sends for it, with media the fake serves:
   - a flair is the post's `link_flair_text`, a `link_flair_css_class` made of its words, and one text part in its
     `link_flair_richtext`;
-  - a gallery (`AsGallery`) is one JPEG or more: `is_gallery`, the URL `https://www.reddit.com/gallery/<id>` moved to
-    the fake (`<baseUrl>/gallery/<id>`, as BaconReader recognizes one), the images in `media_metadata`, with Reddit's
+  - a gallery (`AsGallery`) is one JPEG or more: `is_gallery`, the URL `https://www.reddit.com/gallery/<id>`, Reddit's
+    own, which "E2E fake Reddit" doesn't move ("Real addresses in content"), the images in `media_metadata`, with Reddit's
     `p` previews 108, 216 and 320 pixels wide (signed, their "&" HTML-escaped), and `gallery_data`; each image's full
     file at `i.redd.it/<id>.jpeg`, where the gallery viewer loads it;
   - a GIF post (`WithGif`) is `MediaAsset.LargeGif` at i.redd.it, a still of it as thumbnail and preview, and the GIF in
@@ -146,8 +146,31 @@ Each step of the login records the client ID, redirect URI and User-Agent it saw
 - **`v.redd.it` links:** BaconReader turns any link containing "v.redd.it" into one with `www.reddit.com/video`, by
   string replace: `/_media/www.reddit.com/video/x` serves `v.redd.it/x`. A video post needs `media.reddit_video` with
   an `.mp4` `fallback_url`: without it, BaconReader follows a redirect that must point at a reddit.com host.
-- **Galleries:** BaconReader recognizes one by a `url` containing `<baseUrl>/gallery/` (its `https://www.reddit.com/gallery`
-  moved there), and needs `gallery_data` and `media_metadata`.
+- **Galleries:** BaconReader recognizes one by a `url` containing `https://www.reddit.com/gallery/`, which "E2E fake
+  Reddit" leaves as it is, and needs `gallery_data` and `media_metadata`.
+
+## Real addresses in content
+
+**Content links that a patch must recognize as Reddit's keep Reddit's real address; only what the app fetches goes to
+the fake.** "E2E fake Reddit" moves every full Reddit URL prefix in the app's code to the fake. Data the fake serves is
+not code: a link in it stays as written. Write a link the app or a patch checks by host or prefix as Reddit sends it
+(`https://www.reddit.com/…`, `https://v.redd.it/<id>`); what the app then fetches, from addresses its code makes,
+reaches the fake. A link written with the fake's address takes a path real Reddit never takes, and the scenario
+doesn't test the patch. Two such gaps reached users or a test:
+
+- A gallery's `url`, `https://www.reddit.com/gallery/<id>`: moved, "Fix Reddit links" didn't take it for a Reddit link,
+  and its gallery regression passed the tests. The patch now leaves strings that start with it alone.
+- A link post to a video, `https://v.redd.it/<id>` (`Reddit.HasALinkPostLinkingToTheVideoOf`): BaconReader turns it
+  into `https://www.reddit.com/video/<id>` to find the video's post, which "Fix Reddit links" answers with the video.
+  Moved, it was `<baseUrl>/_media/www.reddit.com/video/<id>`, which the patch doesn't know: the app's own lookup got a
+  403.
+
+Where a check needs Reddit's address and the content can't keep it, "E2E fake Reddit" has the smallest hook instead:
+`RedditVideo.isValid` takes a URL under `<baseUrl>/_media/v.redd.it/` for a Reddit video, so videos posted to the fake
+play. A comment's link to a video's address uses the moved form for that reason, and is faithful through the hook.
+
+Media files the app only loads (`i.redd.it`, `preview.redd.it`, a video's playlists, an example page) are at the fake's
+address: nothing checks their host before loading them, beyond the hook.
 - **Video posts:** BaconReader plays and saves a post as a Reddit video only when its URL's host is `v.redd.it`, then plays
   its HLS playlist and saves its `fallback_url` made https. "E2E fake Reddit" takes a URL under
   `<baseUrl>/_media/v.redd.it/` for a Reddit video and keeps the fake's plain HTTP when a video is saved; without them,
