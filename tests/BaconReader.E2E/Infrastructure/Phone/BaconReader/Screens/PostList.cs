@@ -56,12 +56,14 @@ public sealed class PostList(AndroidDriver driver)
             TimeSpan.FromSeconds(10),
             "BaconReader's message instead of the feed's posts");
 
-    /// <summary>Taps the post titled <paramref name="title"/>, which opens it with its comments.</summary>
+    /// <summary>
+    /// Taps the post titled <paramref name="title"/>, which opens it with its comments, scrolling to it first: the list
+    /// may have moved since it was last seen (the Front Page jumps back to its top right after the login).
+    /// </summary>
     public async Task ClickPostAsync(string title)
     {
-        var post = Locate.AppIdWithText("title", title);
-        await Waiting.UntilShownAsync(driver, post, TimeSpan.FromSeconds(10), $"The post \"{title}\" in the main screen's list");
-        await OnScreen.PressAsync(driver, post);
+        await WaitUntilPostShownAsync(title);
+        await OnScreen.PressAsync(driver, Locate.AppIdWithText("title", title));
     }
 
     /// <summary>
