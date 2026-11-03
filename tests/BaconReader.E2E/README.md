@@ -100,6 +100,8 @@ the test process.
   | `https://www.reddit.com`, `https://oauth.reddit.com`, `https://api.reddit.com`, `https://ssl.reddit.com`, `https://reddit.com`, `https://m.reddit.com`, `http://www.reddit.com`, `http://reddit.com` | `<baseUrl>` |
   | `https://i.redd.it/`, `https://preview.redd.it/`, `https://v.redd.it/` | `<baseUrl>/_media/i.redd.it/`, `<baseUrl>/_media/preview.redd.it/`, `<baseUrl>/_media/v.redd.it/` |
   | `https://cf-baconreader.onelouder.com/` | `<baseUrl>/_onelouder/` |
+  | `https://api.imgur.com/` | `<baseUrl>/_imgur/` |
+  | `https://i.imgur.com/` | `<baseUrl>/_media/i.imgur.com/` |
 
   A string that starts with `https://www.reddit.com/gallery` stays: BaconReader and "Fix Reddit links" know a gallery by
   Reddit's own address. Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit
@@ -107,6 +109,10 @@ the test process.
   `<baseUrl>/_media/v.redd.it/` for a Reddit video (BaconReader plays one only by the host `v.redd.it`), and keeps the
   fake's plain HTTP where BaconReader saves a video from an https URL. Its option, `baseUrl` (default `http://127.0.0.1:5080`), is `E2E_FAKE_REDDIT_URL`
   (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
+- **Third-party services the patches fetch from** have their hosts in the same table: Imgur's API and images, which
+  "Fix Imgur API" and "Embed comment images" load. The fake answers them as the service does
+  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur"). Content links to them keep the service's
+  real address (`https://imgur.com/a/<id>`), as for Reddit below: BaconReader and the patches know an Imgur album by it.
 - **Content keeps Reddit's addresses; only what the app fetches goes to the fake.** A link in the Reddit data a scenario
   makes (a post's `url`, a link in a comment or a post's text) that a patch must recognize as Reddit's keeps Reddit's
   real address, `https://www.reddit.com/…`, `https://v.redd.it/<id>`, as Reddit sends it. The patch moves the app's own
@@ -229,6 +235,9 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `late media: <post title> \| <seconds>` | the post's image or GIF answered that late |
 | `fail media: <post title> \| <status>` | the post's image or GIF answered with that status |
 | `fail thumbnail: <post title> \| <status> \| <times>` | the post's thumbnail answered with that status the first times |
+| `imgur album: <title> \| <images>`, `imgur video album: <title> \| <videos>`, `imgur gallery post: <title> \| <images>` | an Imgur album of that many JPEGs, or MP4 videos, or an album on Imgur's gallery |
+| `imgur album post: <subreddit> \| <title> \| <album>` | a link post to that Imgur album, at Imgur's address |
+| `comment with imgur album: <post title> \| <text> \| <album>` | a comment: the text, then a bare link to that Imgur album |
 
 **The phone and what Reddit saw:**
 
