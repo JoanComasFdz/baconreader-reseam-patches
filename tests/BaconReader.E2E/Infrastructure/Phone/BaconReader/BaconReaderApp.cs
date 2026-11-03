@@ -60,6 +60,12 @@ public sealed class BaconReaderApp(
     /// <summary>The screen a post's thumbnail opens in the list view: its media, or its web page.</summary>
     public MediaViewer MediaViewer { get; } = new(driver);
 
+    /// <summary>The Imgur album viewer (ImgurGalleryViewer), which an Imgur album post's link opens.</summary>
+    public ImgurGalleryViewer ImgurGalleryViewer { get; } = new(driver);
+
+    /// <summary>The drawing screen (DrawChat), which "Draw" in "Attach media" opens.</summary>
+    public DrawChat DrawChat { get; } = new(driver);
+
     /// <summary>The post's screen in its "Slide Show View": a link post's page.</summary>
     public SlideShow SlideShow { get; } = new(driver);
 
