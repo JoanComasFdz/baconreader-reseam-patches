@@ -174,6 +174,10 @@ public sealed class Explorer : BaseE2E
             switch (command.Name)
             {
                 case "post": Reddit.HasAPost(command.Argument(1), command.Argument(0)); break;
+                case "forget redgifs tokens": Reddit.RedGifsNoLongerTakesTheTokensItGave(); break;
+                case "redgifs post": Reddit.HasARedGifsPost(command.Argument(1), command.Argument(0)); break;
+                case "deleted redgifs post": Reddit.HasARedGifsPostWhoseVideoWasDeleted(command.Argument(1), command.Argument(0)); break;
+                case "missing redgifs post": Reddit.HasARedGifsPostWhoseVideoRedGifsNeverHad(command.Argument(1), command.Argument(0)); break;
                 case "imgur album": Reddit.ImgurHasAnAlbumOf(command.Argument(0), int.Parse(command.Argument(1), CultureInfo.InvariantCulture)); break;
                 case "imgur video album": Reddit.ImgurHasAnAlbumOfVideos(command.Argument(0), int.Parse(command.Argument(1), CultureInfo.InvariantCulture)); break;
                 case "imgur gallery post": Reddit.ImgurHasAGalleryPostOf(command.Argument(0), int.Parse(command.Argument(1), CultureInfo.InvariantCulture)); break;
@@ -258,7 +262,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
         "refuse posts", "drop posts", "image post", "gif post", "signed thumbnail post", "video post",
         "link post with preview", "nsfw image post", "spoiler image post", "gallery post", "crosspost",
         "link post to video", "avatar", "late media", "fail media", "fail thumbnail", "imgur album", "imgur video album", "imgur gallery post",
-        "imgur album post", "comment with imgur album",
+        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "forget redgifs tokens",
     ];
 
     /// <summary>Whether it makes Reddit data: from the commands file, it runs before the app opens.</summary>
