@@ -19,6 +19,7 @@ public sealed class MediaViewer(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By Page = Locate.AnyWebPage();
     private static readonly OpenQA.Selenium.By GalleryStrip = Locate.AppId("recyclerView");
     private static readonly OpenQA.Selenium.By GalleryThumbnail = Locate.AppId("imageView");
+    private static readonly OpenQA.Selenium.By Video = Locate.AppId("videoView");
 
     private const string Loading = "Loading media";
     private const string Failed = "Media failed to load";
@@ -46,6 +47,10 @@ public sealed class MediaViewer(AndroidDriver driver)
     public Task WaitUntilGalleryShownAsync() =>
         Waiting.UntilAsync(() => GalleryThumbnails() > 0 && LoadingState() is null, TimeSpan.FromSeconds(10), "The gallery");
 
+    /// <summary>Waits until a video plays in the media's player.</summary>
+    public Task WaitUntilVideoPlaysAsync() =>
+        Waiting.UntilShownAsync(driver, Video, TimeSpan.FromSeconds(15), "The video playing");
+
     /// <summary>Waits until the screen shows a web page, a link post's.</summary>
     public Task WaitUntilPageShownAsync() =>
         Waiting.UntilShownAsync(driver, Page, TimeSpan.FromSeconds(10), "The link post's web page");
@@ -58,7 +63,10 @@ public sealed class MediaViewer(AndroidDriver driver)
 
     /// <summary>What the media shows: its loading bar's state, and a gallery's thumbnails in its strip.</summary>
     public Task<MediaViewerSnapshot> ReadAsync() =>
-        OnScreen.ReadAsync(driver, () => new MediaViewerSnapshot(LoadingState(), GalleryThumbnails()));
+        OnScreen.ReadAsync(driver, () => new MediaViewerSnapshot(LoadingState(), GalleryThumbnails())
+        {
+            PlaysAVideo = driver.FindElements(Video).Any(video => video.Displayed),
+        });
 
     // The description of the media's view on the screen, while the loading bar shows; null without one. The viewer is a
     // pager that has the posts before and after it ready, to each side of the screen: their media's views are left out.
@@ -75,4 +83,8 @@ public sealed class MediaViewer(AndroidDriver driver)
 /// What the media viewer shows: the media's loading bar ("Loading media, GIF · 0.4 MB", "Media failed to load"; null
 /// when none shows), and a gallery's thumbnails in its strip (0 without a gallery).
 /// </summary>
-public sealed record MediaViewerSnapshot(string? Loading, int GalleryThumbnails);
+public sealed record MediaViewerSnapshot(string? Loading, int GalleryThumbnails)
+{
+    /// <summary>Whether the media's player shows a video.</summary>
+    public bool PlaysAVideo { get; init; }
+}

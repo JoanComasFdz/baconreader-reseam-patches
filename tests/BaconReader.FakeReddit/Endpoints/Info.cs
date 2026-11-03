@@ -15,7 +15,7 @@ namespace BaconReader.FakeReddit.Endpoints;
 /// </summary>
 internal static class Info
 {
-    private const string VideoPrefix = "https://v.redd.it/";
+    private const string VideoHost = "v.redd.it/";
 
     public static void Map(WebApplication app, RedditWorld world)
     {
@@ -43,10 +43,11 @@ internal static class Info
 
     private static bool LinksTo(Post post, string url)
     {
-        if (url.StartsWith(VideoPrefix, StringComparison.Ordinal))
+        // v.redd.it/<id>, on Reddit or where "E2E fake Reddit" moves it.
+        var video = url.IndexOf(VideoHost, StringComparison.Ordinal);
+        if (video >= 0)
         {
-            var video = url[VideoPrefix.Length..].TrimEnd('/');
-            return (post.CrosspostOf ?? post).VideoId == video;
+            return (post.CrosspostOf ?? post).VideoId == url[(video + VideoHost.Length)..].TrimEnd('/');
         }
 
         return url.Length > 0 && post.Url == url;

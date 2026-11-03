@@ -51,16 +51,21 @@ public sealed partial class Reddit(RedditWorld world)
                 : null))]);
 
     /// <summary>
-    /// The requests Reddit got for the posts of a video, <c>api/info?url=https://v.redd.it/&lt;id&gt;</c>, oldest first:
-    /// each one's status and the title of the video's post (null when the video is no post's).
+    /// The requests Reddit got for the post of a video, <c>www.reddit.com/video/&lt;id&gt;</c>, where v.redd.it redirects a
+    /// video's address, oldest first: each one's status and the title of the video's post (null when no post has it).
     /// </summary>
-    public RedditVideoPostRequestsSnapshot ReadRequestsForThePostsOfVideos() =>
+    public RedditVideoRedirectsSnapshot ReadRequestsForVideoRedirects() =>
         new([.. world.Requests
-            .Where(request => request.Method == "GET" && request.Path.TrimEnd('/') is "/api/info" or "/api/info.json")
-            .Select(request => (request.Status, Url: Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(request.Query).TryGetValue("url", out var url) ? url.ToString() : ""))
-            .Where(request => request.Url.StartsWith("https://v.redd.it/", StringComparison.Ordinal))
-            .Select(request => new RedditVideoPostRequest(request.Status, world.Posts
-                .FirstOrDefault(post => post.CrosspostOf is null && post.VideoId == request.Url["https://v.redd.it/".Length..])?.Title))]);
+            .Where(request => request.Method == "GET" && request.Path.StartsWith("/video/", StringComparison.Ordinal))
+            .Select(request => new RedditVideoRedirect(request.Status, world.Posts
+                .FirstOrDefault(post => post.CrosspostOf is null && post.VideoId == request.Path["/video/".Length..].TrimEnd('/'))?.Title))]);
+
+    /// <summary>
+    /// "Reddit has a link post "&lt;title&gt;" in r/&lt;subreddit&gt; linking to the gallery of "&lt;target&gt;"": a link post
+    /// whose address is that gallery's, <c>https://www.reddit.com/gallery/&lt;id&gt;</c>, without its images.
+    /// </summary>
+    public void HasALinkPostLinkingToTheGalleryOf(string title, string subreddit, string target) =>
+        world.AddPost(subreddit, title, post => post.LinkingTo("https://www.reddit.com/gallery/" + PostTitled(target).Id));
 
     /// <summary>
     /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;" and an image": a text post
@@ -325,15 +330,22 @@ public sealed class RedditPost(RedditWorld world, Post post)
     }
 
     /// <summary>
-    /// "… has a comment "&lt;text&gt;" linking to the video of "&lt;title&gt;"": a link <c>https://v.redd.it/&lt;id&gt;</c>,
-    /// the video's own address, as Reddit's comments link a video.
+    /// "… has a comment "&lt;text&gt;" linking to the video of "&lt;title&gt;"": a link to the video's own address,
+    /// <c>https://v.redd.it/&lt;id&gt;</c>, where "E2E fake Reddit" moves it, as Reddit's comments link a video.
     /// </summary>
     public void HasACommentLinkingToTheVideoOf(string text, string title)
     {
         var video = Titled(title).VideoId
             ?? throw new InvalidOperationException($"The post \"{title}\" has no video: a Given line makes it a video post first.");
-        world.AddComment(post, $"[{text}](https://v.redd.it/{video})");
+        world.AddComment(post, $"[{text}]({world.MediaUrl("v.redd.it/" + video)})");
     }
+
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" linking to a video Reddit has no post for": a link to the address of a video on
+    /// v.redd.it that no post has, where "E2E fake Reddit" moves it.
+    /// </summary>
+    public void HasACommentLinkingToAVideoRedditHasNoPostFor(string text) =>
+        world.AddComment(post, $"[{text}]({world.MediaUrl("v.redd.it/" + world.AddVideoWithoutPost())})");
 
     /// <summary>
     /// A post's address on its author's profile, <c>/user/&lt;author&gt;/comments/&lt;id&gt;/&lt;slug&gt;/</c>: its
@@ -449,11 +461,11 @@ public sealed record RedditShareLinkRequest(string Path, int Status, string? Pos
 /// <summary>The requests Reddit got for share links, oldest first.</summary>
 public sealed record RedditShareLinkRequestsSnapshot(ImmutableArray<RedditShareLinkRequest> Requests);
 
-/// <summary>A request for the posts of a video: what Reddit answered, and the title of the video's post.</summary>
-public sealed record RedditVideoPostRequest(int Status, string? Post);
+/// <summary>A request for the post of a video, www.reddit.com/video/&lt;id&gt;: what Reddit answered, and the title of the video's post.</summary>
+public sealed record RedditVideoRedirect(int Status, string? Post);
 
 /// <summary>The requests Reddit got for the posts of videos, oldest first.</summary>
-public sealed record RedditVideoPostRequestsSnapshot(ImmutableArray<RedditVideoPostRequest> Requests);
+public sealed record RedditVideoRedirectsSnapshot(ImmutableArray<RedditVideoRedirect> Requests);
 
 /// <summary>The requests Reddit got for posts while logged in, oldest first.</summary>
 public sealed record RedditPostsRequestsSnapshot(ImmutableArray<RecordedRequest> Requests);

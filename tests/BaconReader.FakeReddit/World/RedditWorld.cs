@@ -315,6 +315,17 @@ public sealed class RedditWorld
     }
 
     /// <summary>
+    /// A video uploaded to v.redd.it that no post has (<see cref="AddRedditVideo"/>), as one removed from its post. Returns
+    /// its id.
+    /// </summary>
+    public string AddVideoWithoutPost()
+    {
+        var id = NewId() + "e2evideo";
+        AddRedditVideo(id);
+        return id;
+    }
+
+    /// <summary>
     /// Serves a video as v.redd.it serves one uploaded to Reddit, under <c>v.redd.it/&lt;id&gt;/</c>: its DASH playlist,
     /// <c>DASHPlaylist.mpd</c>, and the renditions it names next to it, <c>DASH_240.mp4</c> and <c>DASH_AUDIO_128.mp4</c>
     /// (<see cref="MediaAsset.DashPlaylist"/>), and the same as HLS, <c>HLSPlaylist.m3u8</c> (<see cref="MediaAsset.HlsPlaylist"/>);

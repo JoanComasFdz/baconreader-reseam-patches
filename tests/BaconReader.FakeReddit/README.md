@@ -43,7 +43,8 @@ world.LoginPage.ShowCookieBanner = true;
   - a GIF post (`WithGif`) is `MediaAsset.LargeGif` at i.redd.it, a still of it as thumbnail and preview, and the GIF in
     the preview's `variants.gif`;
   - a video post (`AsVideo`) links `https://v.redd.it/<id>` moved to the fake (`<baseUrl>/_media/v.redd.it/<id>`),
-    which answers as v.redd.it does, with a 301 to the post; its `media.reddit_video` names the DASH and HLS playlists
+    which answers as v.redd.it does, with a 302 to `/video/<id>`, Reddit's `www.reddit.com/video/<id>`, which redirects
+    a browser to the post; its `media.reddit_video` names the DASH and HLS playlists
     and the fallback MP4, with a sound track unless `withSound: false`;
   - a signed thumbnail (`WithASignedThumbnail`) is `preview.redd.it/<id>.jpg?width=140&amp;…&amp;s=…`, as Reddit sends
     one without `raw_json`: the fake refuses it, 403, until its "&" are unescaped;
@@ -83,7 +84,7 @@ world.LoginPage.ShowCookieBanner = true;
 - `AddMedia(path, contentType, bytes)` serves any file; `MediaAsset` holds the small ones it ships: a GIF, a bigger one
   (`LargeGif`, 0.4 MB), a JPEG, a PNG, an MP4 with an audio track (two seconds, and `LongMp4`, ten), a ten-second video
   as DASH and HLS playlists and their video and sound renditions (and playlists without the sound), and a web page whose
-  script asks for the page again with `?script=ran` once it runs. `AddRedditVideo(id)` serves a video as v.redd.it
+  script asks for the page again with `?script=ran` once it runs. `AddVideoWithoutPost()` serves one that no post has, whose `/video/<id>` is a 404. `AddRedditVideo(id)` serves a video as v.redd.it
   does.
 - `GiveAvatar(user, seeThrough)` gives a user an avatar, a picture or one that is all see-through, which `api/user_data_by_account_ids` names.
 - A `RequestTrouble` with `Times` hits only the first requests it matches: a network hiccup.
@@ -105,6 +106,7 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /r/{sub}/s/{code}`, `/u/{user}/s/{code}` | a share link, logged out too: 301 to `https://www.reddit.com<target>` with Reddit's share query (`share_id`, `utm_source=share`…); a subreddit's code the world doesn't know is a 307 to `https://www.reddit.com/r/{sub}/`, as Reddit answers one; a user's is a 404 |
 | `GET /r/{sub}/about`, `/r/{sub}/stylesheet` | `t5`; an empty stylesheet |
 | `GET /reddits/mine`, `/subreddits/mine/{where}`, `/reddits/popular`, `/reddits/default` (and `/subreddits/…`) | `t5` listings |
+| `GET /video/{id}` | Reddit's `www.reddit.com/video/<id>`, where v.redd.it redirects a video's address: a 302 to the video's post, on `www.reddit.com`, for a browser (a `Mozilla/` User-Agent), a 403 for other clients, as Reddit refuses them, and a 404 for a video no post has |
 | `GET /api/info?url=…` | a Listing of the posts linking to the URL, newest first; for a video's `https://v.redd.it/<id>`, the video's post and the crossposts of it |
 | `GET /_onelouder/explore-api/def_subs` | the default subreddits, as BaconReader's own server sent them: `app.top_level_categories[0].subreddits[]` with `name` and `display_name` |
 | `GET /api/v1/me`, `/api/me`, `/api/v1/me/prefs`, `/api/v1/me/friends`, `/prefs/blocked`, `/api/multi/mine` | the account (never on today's day of the year, so no "Happy Cake Day!"), with `has_mail` and `inbox_count` from its unread messages; its prefs, empty lists |
@@ -118,7 +120,7 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /favicon.ico` | 204: the web view asks for the login page's icon |
 | `GET /api/v1/authorize/answer` ("Accept" or "Decline") | 302 to `<redirect_uri>?state=<state>&code=<code>`, or `error=access_denied` |
 | `POST /api/v1/access_token` | Basic auth by the client ID; trades a code (once) or a refresh token for `access_token`, `refresh_token`, `token_type`, `expires_in`, `scope` |
-| `GET`, `HEAD /_media/{host}/{path}` | the media store's file; `www.reddit.com/video/…` is `v.redd.it/…`, as BaconReader rewrites it; a video post's `v.redd.it/<id>` is a 301 to its post; a `preview.redd.it` URL whose query still has `&amp;` is a 403, as Reddit refuses a signature that doesn't match |
+| `GET`, `HEAD /_media/{host}/{path}` | the media store's file; `www.reddit.com/video/…` is `v.redd.it/…`, as BaconReader rewrites it; a video's own `v.redd.it/<id>` is a 302 to `/video/<id>`, and BaconReader's rewrite of it, `www.reddit.com/video/<id>`, answers as `/video/<id>`; a `preview.redd.it` URL whose query still has `&amp;` is a 403, as Reddit refuses a signature that doesn't match |
 | `GET`, `POST`, `PUT /_fake/…` | for debugging: `requests`, `unhandled`, `actions`, `logins`, `world`; `reset`, `accounts`, `subscriptions`, `posts`, `comments`, `media/{path}` |
 | anything else | 404, recorded in `Unhandled` |
 

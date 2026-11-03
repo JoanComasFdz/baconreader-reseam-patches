@@ -24,12 +24,23 @@ public sealed class PostMediaTests(FakeRedditFixture fixture) : FakeRedditTest(f
         Assert.Equal("v.redd.it", data.GetProperty("domain").GetString());
         var url = data.GetProperty("url").GetString()!;
         Assert.Equal($"{Server.Url}/_media/v.redd.it/{id}", url);
-        // As v.redd.it does, the video's own address leads to its post; BaconReader's rewrite of it too.
-        foreach (var address in new[] { url, $"{Server.Url}/_media/www.reddit.com/video/{id}" })
+        // As v.redd.it does, the video's own address redirects to www.reddit.com/video/<id>, which leads a browser to the
+        // post and refuses other clients; BaconReader's rewrite of the address is that lookup.
+        using (var redirect = await SendAsync(HttpMethod.Get, new Uri(url).PathAndQuery))
         {
-            using var redirect = await SendAsync(HttpMethod.Get, new Uri(address).PathAndQuery);
-            Assert.Equal(HttpStatusCode.MovedPermanently, redirect.StatusCode);
-            Assert.Equal("https://www.reddit.com" + post.Permalink, redirect.Headers.Location!.ToString());
+            Assert.Equal(HttpStatusCode.Redirect, redirect.StatusCode);
+            Assert.Equal($"{Server.Url}/video/{id}", redirect.Headers.Location!.ToString());
+        }
+
+        foreach (var lookup in new[] { $"/video/{id}", $"/_media/www.reddit.com/video/{id}" })
+        {
+            using var browser = new HttpRequestMessage(HttpMethod.Get, lookup);
+            browser.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 17)");
+            using var toPost = await Client.SendAsync(browser, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Redirect, toPost.StatusCode);
+            Assert.Equal("https://www.reddit.com" + post.Permalink, toPost.Headers.Location!.ToString());
+            using var app = await SendAsync(HttpMethod.Get, lookup);
+            Assert.Equal(HttpStatusCode.Forbidden, app.StatusCode);
         }
 
         var video = data.GetProperty("media").GetProperty("reddit_video");
