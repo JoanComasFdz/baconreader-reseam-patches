@@ -78,4 +78,20 @@ public static class CommentSnapshotAssertions
 
     private static string Media(CommentSnapshot comment) =>
         $"{comment.Images} images, {comment.Gifs} GIFs and {comment.Videos} videos";
+
+    /// <summary>The comment's Imgur album shows the counter <paramref name="counter"/> over its image: "1 / 3".</summary>
+    public static AssertingThat<CommentSnapshot> ShowsTheAlbumCounter(this AssertingThat<CommentSnapshot> that, string counter)
+    {
+        var shown = that.InstanceToAssert.AlbumCounter;
+        Assert.True(shown == counter, $"The comment \"{that.InstanceToAssert.Text}\" shows {(shown is null ? "no counter" : $"\"{shown}\"")}, but \"{counter}\" was expected.");
+        return that;
+    }
+
+    /// <summary>The comment shows no album counter: an album of one image has none.</summary>
+    public static AssertingThat<CommentSnapshot> ShowsNoAlbumCounter(this AssertingThat<CommentSnapshot> that)
+    {
+        var shown = that.InstanceToAssert.AlbumCounter;
+        Assert.True(shown is null, $"The comment \"{that.InstanceToAssert.Text}\" shows the counter \"{shown}\", but none was expected.");
+        return that;
+    }
 }

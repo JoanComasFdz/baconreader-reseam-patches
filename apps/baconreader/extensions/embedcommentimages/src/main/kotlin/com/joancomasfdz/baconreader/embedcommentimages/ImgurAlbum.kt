@@ -174,6 +174,9 @@ internal object ImgurAlbum {
             touchSlop = configuration.scaledTouchSlop
             minFlingVelocity = configuration.scaledMinimumFlingVelocity * 4
 
+            // The e2e tests find an album and its counter by these ids.
+            id = CommentImages.resourceId(context, "baconreader_patches_comment_album")
+            counter.id = CommentImages.resourceId(context, "baconreader_patches_album_counter")
             counter.setTextColor(Color.WHITE)
             counter.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             counter.background =

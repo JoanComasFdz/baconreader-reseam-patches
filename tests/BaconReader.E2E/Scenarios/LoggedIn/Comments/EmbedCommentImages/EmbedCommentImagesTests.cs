@@ -13,7 +13,8 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Comments;
 /// <summary>
 /// "Embed comment images": BaconReader shows the images, GIFs and videos of comments and post texts under the text, and
 /// plays the videos in place. A tap switches an image between full width and 200×200, a double tap opens it in full
-/// screen, a long press saves it to Downloads/BaconReader.
+/// screen, a long press saves it to Downloads/BaconReader. An Imgur album shows one image at a time, swiped sideways, with
+/// its place in the album over it.
 /// </summary>
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
@@ -31,6 +32,10 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Media thread" has a comment "Here is a video" with a video
           And the post "Media thread" has a comment "Here is a video link" with a link to a video
           And the post "Media thread" has a comment "Just text"
+          And Imgur has an album "Trip" of 3 images
+          And Imgur has an album "Single" of 1 image
+          And the post "Media thread" has a comment "Here is an album" with a link to the Imgur album "Trip"
+          And the post "Media thread" has a comment "One picture" with a link to the Imgur album "Single"
           And Reddit has a post "A picture in text" in r/e2e with the text "Look at this" and an image
           And BaconReader is patched with every patch
           And BaconReader is open
@@ -68,6 +73,15 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           Then the video of the comment "Here is a video link" played to "00:10" of "00:10"
           When I scroll to the comment "Just text"
           Then the comment "Just text" shows no image
+          When I scroll to the comment "Here is an album"
+          # An Imgur album shows one image at a time, with its place in the album over it.
+          Then the comment "Here is an album" shows 1 image
+          And the comment "Here is an album" shows "1 / 3"
+          When I swipe the image of the comment "Here is an album" to the left
+          Then the comment "Here is an album" shows "2 / 3"
+          When I scroll to the comment "One picture"
+          Then the comment "One picture" shows 1 image
+          And the comment "One picture" shows no counter
           When I go back to the posts
           And I tap the post "A picture in text"
           Then the post's text "Look at this" shows 1 image
@@ -135,6 +149,10 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("Media thread").HasACommentWithAVideo("Here is a video");
         Reddit.ThePost("Media thread").HasACommentWithALinkToAVideo("Here is a video link");
         Reddit.ThePost("Media thread").HasAComment("Just text");
+        Reddit.ImgurHasAnAlbumOf("Trip", 3);
+        Reddit.ImgurHasAnAlbumOf("Single", 1);
+        Reddit.ThePost("Media thread").HasACommentWithALinkToTheImgurAlbum("Here is an album", "Trip");
+        Reddit.ThePost("Media thread").HasACommentWithALinkToTheImgurAlbum("One picture", "Single");
         Reddit.HasAPostWithTheTextAndAnImage("A picture in text", "e2e", "Look at this");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
@@ -241,6 +259,31 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         var justText = await Phone.BaconReader.Detail.Comments.ReadAsync("Just text");
         Asserting.That(justText).ShowsNoImage();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is an album");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an album");
+
+        // Then
+        // An Imgur album shows one image at a time, with its place in the album over it.
+        var album = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an album");
+        Asserting.That(album).ShowsImages(1).ShowsTheAlbumCounter("1 / 3");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.SwipeAlbumAsync("Here is an album");
+        await Phone.BaconReader.Detail.Comments.WaitUntilAlbumCounterShownAsync("Here is an album", "2 / 3");
+
+        // Then
+        var swiped = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an album");
+        Asserting.That(swiped).ShowsTheAlbumCounter("2 / 3");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("One picture");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("One picture");
+
+        // Then
+        var onePicture = await Phone.BaconReader.Detail.Comments.ReadAsync("One picture");
+        Asserting.That(onePicture).ShowsImages(1).ShowsNoAlbumCounter();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();

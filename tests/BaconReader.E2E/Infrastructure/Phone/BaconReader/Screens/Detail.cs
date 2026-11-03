@@ -163,7 +163,7 @@ public sealed class PostText(AndroidDriver driver)
     // The images that aren't under a comment.
     private static IReadOnlyCollection<IWebElement> PostImages(AndroidDriver driver)
     {
-        var inComments = driver.FindElements(Comments.Comment).SelectMany(comment => comment.FindElements(Media.Image)).Select(Id).ToHashSet();
+        var inComments = driver.FindElements(Comments.Comment).SelectMany(comment => Media.In(comment, Media.Image)).Select(Id).ToHashSet();
         return [.. driver.FindElements(Media.Image).Where(image => !inComments.Contains(Id(image)))];
     }
 
@@ -255,7 +255,7 @@ public sealed class Comments(AndroidDriver driver)
     public Task WaitUntilMediaShownAsync(string text) =>
         Waiting.UntilAsync(
             () => FindComment(text) is { } comment
-                && Media.Gifs(comment).Count + Media.Images(comment.FindElements(Media.Image)).Count + Media.Videos(comment).Count > 0,
+                && Media.Gifs(comment).Count + Media.Images(Media.In(comment, Media.Image)).Count + Media.Videos(comment).Count > 0,
             TimeSpan.FromSeconds(30),
             $"A GIF, an image or a video under the comment \"{text}\" loading");
 
@@ -267,9 +267,10 @@ public sealed class Comments(AndroidDriver driver)
             return new CommentSnapshot(
                 comment.FindElements(Text).FirstOrDefault()?.Text.Trim() ?? "",
                 Media.Gifs(comment).Count,
-                Media.Images(comment.FindElements(Media.Image)).Count,
+                Media.Images(Media.In(comment, Media.Image)).Count,
                 Media.Videos(comment).Count)
             {
+                AlbumCounter = Media.In(comment, Media.AlbumCounter).FirstOrDefault(counter => counter.Displayed)?.Text.Trim(),
                 Awards = driver.FindElements(Content)
                     .Where(content => content.FindElements(Text).Any(shown => shown.Text.Trim() == text))
                     .SelectMany(content => content.FindElements(AwardIcons))
@@ -294,6 +295,38 @@ public sealed class Comments(AndroidDriver driver)
             swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
             driver.PerformActions([swipe]);
         });
+
+    /// <summary>
+    /// Swipes the Imgur album of the comment "<paramref name="text"/>" to the left, from three quarters of its width to
+    /// a quarter, in ten moves: it shows its next image. The album takes a drag only once it has seen it move sideways,
+    /// so a swipe of one move, Appium's own, leaves it where it was.
+    /// </summary>
+    public Task SwipeAlbumAsync(string text) =>
+        OnScreen.TouchAsync(driver, () => Media.In(FindCommentOrFail(text), Media.Album).First(), album =>
+        {
+            var bounds = Bounds(album);
+            var y = bounds.Top + (bounds.Height / 2);
+            var from = bounds.Left + (bounds.Width * 3 / 4);
+            var to = bounds.Left + (bounds.Width / 4);
+            var finger = new PointerInputDevice(PointerKind.Touch, "finger");
+            var swipe = new ActionSequence(finger, 0);
+            swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, from, y, TimeSpan.Zero));
+            swipe.AddAction(finger.CreatePointerDown(MouseButton.Touch));
+            for (var step = 1; step <= 10; step++)
+            {
+                swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, from + ((to - from) * step / 10), y, TimeSpan.FromMilliseconds(20)));
+            }
+
+            swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
+            driver.PerformActions([swipe]);
+        });
+
+    /// <summary>Waits until the Imgur album of the comment "<paramref name="text"/>" shows the counter <paramref name="counter"/>.</summary>
+    public Task WaitUntilAlbumCounterShownAsync(string text, string counter) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is { } comment && Media.In(comment, Media.AlbumCounter).Any(shown => shown.Displayed && shown.Text.Trim() == counter),
+            TimeSpan.FromSeconds(10),
+            $"The album of the comment \"{text}\" showing \"{counter}\"");
 
     /// <summary>Taps "Comment" in the action bar a comment shows, which opens the reply screen.</summary>
     public Task ClickActionBarCommentAsync() =>
@@ -353,7 +386,7 @@ public sealed class Comments(AndroidDriver driver)
         OnScreen.ReadAsync(driver, () =>
         {
             var comment = FindCommentOrFail(text);
-            var image = Media.Images(comment.FindElements(Media.Image)).Concat(Media.Gifs(comment)).FirstOrDefault();
+            var image = Media.Images(Media.In(comment, Media.Image)).Concat(Media.Gifs(comment)).FirstOrDefault();
             return new CommentLayoutSnapshot(Bounds(comment), image is null ? null : Bounds(image), Density());
         });
 
@@ -417,7 +450,7 @@ public sealed class Comments(AndroidDriver driver)
 
     /// <summary>Taps the video of the comment "<paramref name="text"/>", which plays it.</summary>
     public Task ClickVideoAsync(string text) =>
-        OnScreen.PressAsync(driver, () => FindCommentOrFail(text).FindElement(Media.Video));
+        OnScreen.PressAsync(driver, () => Media.In(FindCommentOrFail(text), Media.Video).First());
 
     /// <summary>
     /// Waits until the video of the comment "<paramref name="text"/>" has ended: its player shows its
@@ -643,7 +676,7 @@ public sealed class Comments(AndroidDriver driver)
         FindComment(text) ?? throw new InvalidOperationException($"The comment \"{text}\" isn't on the screen.");
 
     private IWebElement ImageOf(string text) =>
-        Media.Images(FindCommentOrFail(text).FindElements(Media.Image)).FirstOrDefault()
+        Media.Images(Media.In(FindCommentOrFail(text), Media.Image)).FirstOrDefault()
         ?? throw new InvalidOperationException($"The comment \"{text}\" shows no image.");
 
     // Null when the comment shows whole; else the way to scroll: "down" while it's below or cut at the bottom (Android
@@ -683,6 +716,9 @@ public sealed record CollapsedCommentSnapshot(string Text, string? Hidden);
 /// <summary>What a comment shows: its text, and the GIFs, images and videos under it.</summary>
 public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Videos)
 {
+    /// <summary>The counter over an Imgur album's image, "1 / 3", or null without one (an album of one image shows none).</summary>
+    public string? AlbumCounter { get; init; }
+
     /// <summary>How many award icons it shows, by its author's name.</summary>
     public int Awards { get; init; }
 }
@@ -711,15 +747,43 @@ internal static class Media
     public static readonly By Gif = Locate.AppId("baconreader_patches_comment_gif");
     public static readonly By Image = Locate.AppId("baconreader_patches_comment_image");
     public static readonly By Video = Locate.AppId("baconreader_patches_comment_video");
+    public static readonly By Album = Locate.AppId("baconreader_patches_comment_album");
+    public static readonly By AlbumCounter = Locate.AppId("baconreader_patches_album_counter");
 
-    public static IReadOnlyCollection<IWebElement> Gifs(ISearchContext within) =>
-        [.. within.FindElements(Gif).Where(Loaded)];
+    public static IReadOnlyCollection<IWebElement> Gifs(IWebElement comment) =>
+        [.. In(comment, Gif).Where(Loaded)];
 
     public static IReadOnlyCollection<IWebElement> Images(IEnumerable<IWebElement> images) =>
         [.. images.Where(Loaded)];
 
-    public static IReadOnlyCollection<IWebElement> Videos(ISearchContext within) =>
-        [.. within.FindElements(Video).Where(Loaded)];
+    public static IReadOnlyCollection<IWebElement> Videos(IWebElement comment) =>
+        [.. In(comment, Video).Where(Loaded)];
+
+    /// <summary>
+    /// The views <paramref name="by"/> finds inside <paramref name="comment"/>. UiAutomator2's search from a comment's
+    /// view also returns views of the comments after it in the list (an Imgur album's image under the next comment):
+    /// only those within the comment's bounds are its own.
+    /// </summary>
+    public static IReadOnlyCollection<IWebElement> In(IWebElement comment, By by)
+    {
+        var found = comment.FindElements(by);
+        if (found.Count == 0)
+        {
+            return [];
+        }
+
+        // One round trip a view: UiAutomator2's bounds, "[left,top][right,bottom]".
+        var bounds = BoundsOf(comment);
+        return [.. found.Where(view => bounds.Contains(BoundsOf(view)))];
+    }
+
+    private static Rectangle BoundsOf(IWebElement view)
+    {
+        var edges = (view.GetAttribute("bounds") ?? "").Split(['[', ']', ','], StringSplitOptions.RemoveEmptyEntries)
+            .Select(edge => int.Parse(edge, System.Globalization.CultureInfo.InvariantCulture))
+            .ToArray();
+        return Rectangle.FromLTRB(edges[0], edges[1], edges[2], edges[3]);
+    }
 
     // An image's view is empty, 0 high, until its image loads.
     private static bool Loaded(IWebElement view) => view.Displayed && view.Size.Height > 0;
