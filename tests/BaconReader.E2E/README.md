@@ -105,6 +105,9 @@ the test process.
   | `https://api.redgifs.com/` | `<baseUrl>/_redgifs/` |
   | `https://www.youtube.com/oembed` | `<baseUrl>/_youtube/oembed` |
   | `https://i.ytimg.com/` | `<baseUrl>/_media/i.ytimg.com/` |
+  | `https://cdn.syndication.twimg.com/` | `<baseUrl>/_x/` |
+  | `https://public.api.bsky.app/` | `<baseUrl>/_bluesky/` |
+  | `https://pbs.twimg.com/` | `<baseUrl>/_media/pbs.twimg.com/` |
 
   A string that starts with `https://www.reddit.com/gallery` stays: BaconReader and "Fix Reddit links" know a gallery by
   Reddit's own address. Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit
@@ -114,15 +117,16 @@ the test process.
   (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
 - **Third-party services the patches fetch from** have their hosts in the same table: Imgur's API and images, which
   "Fix Imgur API" and "Embed comment images" load, and RedGIFs' API, which "Fix Redgifs API", "Fix list thumbnails"
-  and "Improve post media loading" ask, and YouTube's oEmbed and thumbnails, which "Embed comment images" and "Fix list
-  thumbnails" load. "Fix Redgifs API" builds its own RedGIFs addresses from the host
+  and "Improve post media loading" ask, YouTube's oEmbed and thumbnails, which "Embed comment images" and "Fix list
+  thumbnails" load, and X's embed service and Bluesky's public API, where "Embed comment images" finds a post. The
+  patch asks X for a small photo only at X's own address, `https://pbs.twimg.com/`, so that prefix moves too. "Fix Redgifs API" builds its own RedGIFs addresses from the host
   `api.redgifs.com` and the path `/v2/oauth/client`, so the patch also replaces those exact strings: the host with the
   fake's, and the path with `/_redgifs/v2/oauth/client`. RedGIFs' answers point at its videos'
   `https://media.redgifs.com/…`, which the fake gives at its own address. The fake answers them as the service does
-  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur", "RedGIFs", "YouTube"). Content links to
-  them keep the service's real address (`https://imgur.com/a/<id>`, `https://www.redgifs.com/watch/<id>`,
-  `https://www.youtube.com/watch?v=<id>`), as for Reddit below: BaconReader and the patches know an Imgur album, a
-  RedGIFs video and a YouTube video by it.
+  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur", "RedGIFs", "YouTube", "X and Bluesky").
+  Content links to them keep the service's real address (`https://imgur.com/a/<id>`,
+  `https://www.redgifs.com/watch/<id>`, `https://www.youtube.com/watch?v=<id>`, `https://x.com/<handle>/status/<id>`,
+  `https://bsky.app/profile/<handle>/post/<key>`), as for Reddit below: BaconReader and the patches know each by it.
 - **Content keeps Reddit's addresses; only what the app fetches goes to the fake.** A link in the Reddit data a scenario
   makes (a post's `url`, a link in a comment or a post's text) that a patch must recognize as Reddit's keeps Reddit's
   real address, `https://www.reddit.com/…`, `https://v.redd.it/<id>`, as Reddit sends it. The patch moves the app's own
@@ -251,6 +255,8 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `redgifs post: <subreddit> \| <title>`, `deleted redgifs post: …`, `missing redgifs post: …` | a link post to a RedGIFs video, at RedGIFs' address: one RedGIFs has, one it deleted (410), or one it never had (404) |
 | `youtube video: <title> \| @<channel>`, `removed youtube video: <title>` | a YouTube video, with its title and thumbnails, or one YouTube removed (oEmbed answers 404); ids are `e2eVideo000`, `e2eVideo001`… in the order made |
 | `youtube post: <subreddit> \| <title> \| <video>` | a link post to that YouTube video, at YouTube's address, with no thumbnail or preview of Reddit's |
+| `x post: <name> \| @<handle> \| <text> \| none\|photo\|video`, `long x post: <name> \| @<handle> \| <start>` | an X post; ids are `1990000000000000000`, `…001`… in the order made, dated 2 October 2025 |
+| `bluesky post: <name> \| @<handle> \| <text> \| none\|images\|video\|external\|gallery` | a Bluesky post; record keys are `3e2epost00000`, `…00001`… in the order made |
 | `comment with link: <post title> \| <text> \| <link>` | a comment: the text, then the link on its own line, bare or as `[words](address)` |
 | `phone joins another network` | the fake RedGIFs refuses each token it gave, 401 WrongSender, as RedGIFs does once the phone's address changes |
 

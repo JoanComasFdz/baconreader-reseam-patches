@@ -283,6 +283,32 @@ public sealed class RedditPost(RedditWorld world, Post post)
     public void HasACommentWithABareLinkToTheYouTubeChannel(string text, string channel) =>
         HasACommentWithTheLink(text, $"https://www.youtube.com/@{channel.TrimStart('@')}");
 
+    /// <summary>"… has a comment "&lt;text&gt;" with a bare link to the X post "&lt;post&gt;"": the post's address, its text starting so.</summary>
+    public void HasACommentWithABareLinkToTheXPost(string text, string xPost) =>
+        HasACommentWithTheLink(text, XPost(xPost).Link);
+
+    /// <summary>"… with a bare link to an X post X doesn't have".</summary>
+    public void HasACommentWithABareLinkToAnXPostXDoesntHave(string text) => HasACommentWithTheLink(text, Reddit.MissingXPost);
+
+    /// <summary>"… with the link "&lt;words&gt;" to the X post "&lt;post&gt;"": written as <c>[words](address)</c>.</summary>
+    public void HasACommentWithTheLinkToTheXPost(string text, string words, string xPost) =>
+        HasACommentWithTheLink(text, $"[{words}]({XPost(xPost).Link})");
+
+    /// <summary>"… with a bare link to the Bluesky post "&lt;post&gt;"": the post's address.</summary>
+    public void HasACommentWithABareLinkToTheBlueskyPost(string text, string blueskyPost) =>
+        HasACommentWithTheLink(text, BlueskyPost(blueskyPost).Link);
+
+    /// <summary>"… with a bare link to a Bluesky post Bluesky doesn't have".</summary>
+    public void HasACommentWithABareLinkToABlueskyPostBlueskyDoesntHave(string text) => HasACommentWithTheLink(text, Reddit.MissingBlueskyPost);
+
+    private XPost XPost(string text) =>
+        world.X.FindPostStarting(text)
+            ?? throw new InvalidOperationException($"The scenario's X has no post starting \"{text}\": a Given line makes it first.");
+
+    private BlueskyPost BlueskyPost(string text) =>
+        world.Bluesky.FindPostSaying(text)
+            ?? throw new InvalidOperationException($"The scenario's Bluesky has no post \"{text}\": a Given line makes it first.");
+
     private YouTubeVideo YouTubeVideo(string title) =>
         world.YouTube.FindVideoTitled(title)
             ?? throw new InvalidOperationException($"The scenario's YouTube has no video \"{title}\": a Given line makes it first.");

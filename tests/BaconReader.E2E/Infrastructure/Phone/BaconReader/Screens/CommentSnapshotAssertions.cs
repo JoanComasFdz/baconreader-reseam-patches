@@ -139,6 +139,60 @@ public static class CommentSnapshotAssertions
         return that;
     }
 
+    /// <summary>
+    /// The comment shows a post in place of its link, as "Embed comment images" writes an X or Bluesky post: the line
+    /// "<paramref name="header"/>" (its author's name, @handle and date), then the line "<paramref name="text"/>", and no
+    /// picture under it.
+    /// </summary>
+    public static AssertingThat<CommentSnapshot> ShowsThePost(this AssertingThat<CommentSnapshot> that, string header, string text)
+    {
+        var comment = that.InstanceToAssert;
+        var after = LinesAfter(comment, header);
+        Assert.True(
+            after.Length >= 1 && after[0] == text && (after.Length == 1 || after[1] != Drawn),
+            $"The comment shows the text \"{comment.Text}\", but the post \"{header}\" saying \"{text}\", with no picture, was expected.");
+        return that;
+    }
+
+    /// <summary>
+    /// The comment shows a post in place of its link, with a picture: the line "<paramref name="header"/>", the line
+    /// "<paramref name="text"/>", then a line with only the picture, which the patch draws in the text.
+    /// </summary>
+    public static AssertingThat<CommentSnapshot> ShowsThePostWithAPicture(this AssertingThat<CommentSnapshot> that, string header, string text)
+    {
+        var comment = that.InstanceToAssert;
+        var after = LinesAfter(comment, header);
+        Assert.True(
+            after.Length >= 2 && after[0] == text && after[1] == Drawn,
+            $"The comment shows the text \"{comment.Text}\", but the post \"{header}\" saying \"{text}\", with a picture under it, was expected.");
+        return that;
+    }
+
+    /// <summary>The comment shows a post in place of its link: the line "<paramref name="header"/>", then its text, ending with "<paramref name="ending"/>".</summary>
+    public static AssertingThat<CommentSnapshot> ShowsThePostEndingWith(this AssertingThat<CommentSnapshot> that, string header, string ending)
+    {
+        var comment = that.InstanceToAssert;
+        var after = LinesAfter(comment, header);
+        Assert.True(
+            after.Length >= 1 && after[0].EndsWith(ending, StringComparison.Ordinal),
+            $"The comment shows the text \"{comment.Text}\", but the post \"{header}\", its text ending with \"{ending}\", was expected.");
+        return that;
+    }
+
+    /// <summary>The comment shows the address of the link it was written with, on a line of its own, as Reddit shows it.</summary>
+    public static AssertingThat<CommentSnapshot> ShowsTheAddressOf(this AssertingThat<CommentSnapshot> that, LinkSnapshot link)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.True(
+            Lines(comment).Contains(link.Address),
+            $"The comment shows the text \"{comment.Text}\", but the address of {link.What}, \"{link.Address}\", was expected on a line of its own.");
+        return that;
+    }
+
+    // The lines after the line "header"; none without it.
+    private static string[] LinesAfter(CommentSnapshot comment, string header) =>
+        Lines(comment).SkipWhile(line => line != header).Skip(1).ToArray();
+
     // What the screen's tree shows for a picture drawn in a text: U+FFFC, the object replacement character.
     private const string Drawn = "\uFFFC";
 

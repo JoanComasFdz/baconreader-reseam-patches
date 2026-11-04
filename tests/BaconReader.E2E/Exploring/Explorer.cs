@@ -178,7 +178,8 @@ public sealed class Explorer : BaseE2E
                 case "removed youtube video": Reddit.YouTubeHasRemovedItsVideo(command.Argument(0)); break;
                 case "youtube post": Reddit.HasALinkPostLinkingToTheYouTubeVideo(command.Argument(1), command.Argument(0), command.Argument(2)); break;
                 case "comment with link": Reddit.ThePost(command.Argument(0)).HasACommentWithTheLink(command.Argument(1), command.Argument(2)); break;
-                case "x post": Reddit.XHasAPost(command.Argument(0), command.Argument(1), command.Argument(2), Enum.Parse<BaconReader.FakeReddit.World.XMedia>(command.Argument(3), ignoreCase: true), command.Argument(4) == "long"); break;
+                case "x post": Reddit.XHasAPost(command.Argument(0), command.Argument(1), command.Argument(2), Enum.Parse<BaconReader.FakeReddit.World.XMedia>(command.Argument(3), ignoreCase: true)); break;
+                case "long x post": Reddit.XHasALongPost(command.Argument(0), command.Argument(1), command.Argument(2)); break;
                 case "bluesky post": Reddit.BlueskyHasAPost(command.Argument(0), command.Argument(1), command.Argument(2), Enum.Parse<BaconReader.FakeReddit.World.BlueskyEmbed>(command.Argument(3), ignoreCase: true)); break;
                 case "phone joins another network": Reddit.ThePhoneJoinsAnotherNetwork(); break;
                 case "redgifs post": Reddit.HasARedGifsPost(command.Argument(1), command.Argument(0)); break;
@@ -268,7 +269,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
         "refuse posts", "drop posts", "image post", "gif post", "signed thumbnail post", "video post",
         "link post with preview", "nsfw image post", "spoiler image post", "gallery post", "crosspost",
         "link post to video", "avatar", "late media", "fail media", "fail thumbnail", "imgur album", "imgur video album", "imgur gallery post",
-        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network", "x post", "bluesky post", "youtube video", "removed youtube video", "youtube post", "comment with link",
+        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network", "x post", "long x post", "bluesky post", "youtube video", "removed youtube video", "youtube post", "comment with link",
     ];
 
     /// <summary>Whether it makes Reddit data: from the commands file, it runs before the app opens.</summary>
