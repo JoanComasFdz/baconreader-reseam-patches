@@ -43,6 +43,9 @@ public static class Locate
     public static By Described() => UiSelector("descriptionMatches(\".+\")");
 
     /// <summary>A list that scrolls sideways: a bar of buttons wider than the screen.</summary>
+    /// <summary>A list that scrolls up and down and has no id: a page of the patches' settings.</summary>
+    public static By UpDownList() => UiSelector("className(\"android.widget.ScrollView\").scrollable(true)");
+
     public static By SidewaysList() => UiSelector("className(\"android.widget.HorizontalScrollView\").scrollable(true)");
 
     /// <summary>A switch: one of a settings screen's, found next to its title.</summary>

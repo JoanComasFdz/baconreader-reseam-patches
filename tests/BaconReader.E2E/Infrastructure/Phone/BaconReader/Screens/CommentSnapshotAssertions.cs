@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
+using BaconReader.E2E.Infrastructure.Reddit;
 using JoanComasFdz.AssertingThat;
 
 namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
@@ -94,4 +95,52 @@ public static class CommentSnapshotAssertions
         Assert.True(shown is null, $"The comment \"{that.InstanceToAssert.Text}\" shows the counter \"{shown}\", but none was expected.");
         return that;
     }
+
+    /// <summary>The comment shows the link "<paramref name="link"/>" on a line of its own: a bare YouTube link, as "Embed comment images" writes it.</summary>
+    public static AssertingThat<CommentSnapshot> ShowsTheLink(this AssertingThat<CommentSnapshot> that, string link)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.True(
+            Lines(comment).Contains(link),
+            $"The comment shows the text \"{comment.Text}\", but a line \"{link}\" was expected in it.");
+        return that;
+    }
+
+    /// <summary>The comment shows the address of the YouTube video <paramref name="video"/> on a line of its own: its link, as Reddit shows it.</summary>
+    public static AssertingThat<CommentSnapshot> ShowsTheAddressOf(this AssertingThat<CommentSnapshot> that, YouTubeVideoSnapshot video)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.True(
+            Lines(comment).Contains(video.Address),
+            $"The comment shows the text \"{comment.Text}\", but the address of the YouTube video \"{video.Title}\", \"{video.Address}\", was expected on a line of its own.");
+        return that;
+    }
+
+    /// <summary>
+    /// The comment shows a thumbnail on the line under its link. "Embed comment images" draws it in the text, so the
+    /// screen's tree shows it as Android's object replacement character on that line.
+    /// </summary>
+    public static AssertingThat<CommentSnapshot> ShowsAThumbnailUnderItsLink(this AssertingThat<CommentSnapshot> that)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.True(
+            Lines(comment).Contains(Drawn),
+            $"The comment shows the text \"{comment.Text}\", but a thumbnail was expected on a line of its own.");
+        return that;
+    }
+
+    /// <summary>The comment shows no thumbnail drawn in its text.</summary>
+    public static AssertingThat<CommentSnapshot> ShowsNoThumbnail(this AssertingThat<CommentSnapshot> that)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.False(
+            Lines(comment).Contains(Drawn),
+            $"The comment shows a thumbnail in its text, \"{comment.Text}\", but none was expected.");
+        return that;
+    }
+
+    // What the screen's tree shows for a picture drawn in a text: U+FFFC, the object replacement character.
+    private const string Drawn = "\uFFFC";
+
+    private static string[] Lines(CommentSnapshot comment) => comment.Text.Split('\n');
 }

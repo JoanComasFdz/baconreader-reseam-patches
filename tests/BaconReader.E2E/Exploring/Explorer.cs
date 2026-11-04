@@ -174,6 +174,10 @@ public sealed class Explorer : BaseE2E
             switch (command.Name)
             {
                 case "post": Reddit.HasAPost(command.Argument(1), command.Argument(0)); break;
+                case "youtube video": Reddit.YouTubeHasAVideo(command.Argument(0), command.Argument(1)); break;
+                case "removed youtube video": Reddit.YouTubeHasRemovedItsVideo(command.Argument(0)); break;
+                case "youtube post": Reddit.HasALinkPostLinkingToTheYouTubeVideo(command.Argument(1), command.Argument(0), command.Argument(2)); break;
+                case "comment with link": Reddit.ThePost(command.Argument(0)).HasACommentWithTheLink(command.Argument(1), command.Argument(2)); break;
                 case "phone joins another network": Reddit.ThePhoneJoinsAnotherNetwork(); break;
                 case "redgifs post": Reddit.HasARedGifsPost(command.Argument(1), command.Argument(0)); break;
                 case "deleted redgifs post": Reddit.HasARedGifsPostWhoseVideoWasDeleted(command.Argument(1), command.Argument(0)); break;
@@ -262,7 +266,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
         "refuse posts", "drop posts", "image post", "gif post", "signed thumbnail post", "video post",
         "link post with preview", "nsfw image post", "spoiler image post", "gallery post", "crosspost",
         "link post to video", "avatar", "late media", "fail media", "fail thumbnail", "imgur album", "imgur video album", "imgur gallery post",
-        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network",
+        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network", "youtube video", "removed youtube video", "youtube post", "comment with link",
     ];
 
     /// <summary>Whether it makes Reddit data: from the commands file, it runs before the app opens.</summary>
