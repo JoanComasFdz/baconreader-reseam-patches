@@ -21,7 +21,16 @@ fun embedComment(textView: TextView?, markdown: String?) {
     if (textView != null) CommentImages.embed(textView, markdown)
 }
 
-/** Called right after BaconReader sets the text of a post. */
+/**
+ * Called right after BaconReader sets the text of a text post, in its detail view and in card mode:
+ * the media of its bare links show where the links are.
+ */
+@Export
+fun embedPostText(textView: TextView?) {
+    if (textView != null) CommentImages.embedPostText(textView)
+}
+
+/** Called right after BaconReader sets the text of an image, GIF or video post, under its media. */
 @Export
 fun embed(textView: TextView?) {
     if (textView != null) CommentImages.embed(textView, null)

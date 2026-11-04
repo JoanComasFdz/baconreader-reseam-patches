@@ -359,6 +359,182 @@ internal object CommentImages {
     }
 
     /** Identifies the images, albums and videos shown under a text. */
+    // The views put in a post text's column in place of its bare media links: each link's media,
+    // then a copy of the TextView with the text up to the next link. Only used on the main thread.
+    private val inPlaceViews = WeakHashMap<TextView, List<View>>()
+
+    /** A bare link to media in a post's text: where it is, and the media that replaces it. */
+    private class Anchor(val start: Int, val end: Int, val slot: (TextView) -> View)
+
+    /**
+     * Shows the media of a post's bare links where the links are: the text is cut at each link, the
+     * part before the first one stays in [textView], and each link's media goes under it, followed
+     * by the text up to the next link in a copy of [textView].
+     */
+    fun embedPostText(textView: TextView) {
+        removeInPlace(textView)
+        try {
+            val text = fullText(textView) as? Spanned
+            val anchors =
+                if (text == null || textView is ExpandableTextView) emptyList()
+                else anchors(textView, text)
+            if (text == null || anchors.isEmpty()) {
+                embed(textView, null)
+                return
+            }
+            val parent = textView.parent as LinearLayout
+            textView.setText(piece(text, 0, anchors[0].start), TextView.BufferType.SPANNABLE)
+            embed(textView, null)
+            if (textView.text.isEmpty()) textView.visibility = View.GONE
+
+            val added = ArrayList<View>()
+            var index = parent.indexOfChild(textView) + 1 + (slots[textView]?.size ?: 0)
+            for ((i, anchor) in anchors.withIndex()) {
+                val slot = anchor.slot(textView)
+                parent.addView(slot, index++)
+                added.add(slot)
+                val end = if (i + 1 < anchors.size) anchors[i + 1].start else text.length
+                val rest = piece(text, anchor.end, end)
+                if (rest.isEmpty()) continue
+                val copy = copyOf(textView)
+                copy.setText(rest, TextView.BufferType.SPANNABLE)
+                parent.addView(copy, index++)
+                added.add(copy)
+                embed(copy, null)
+                index += slots[copy]?.size ?: 0
+            }
+            inPlaceViews[textView] = added
+        } catch (throwable: Throwable) {
+            ErrorDialog.report(TAG, "Could not show the images of the post's text", throwable)
+        }
+    }
+
+    /**
+     * The bare links of [text] whose media are shown, in the order of the text, as [embed] finds
+     * them.
+     */
+    private fun anchors(textView: TextView, text: Spanned): List<Anchor> {
+        val column = textView.parent as? LinearLayout
+        if (column == null || column.orientation != LinearLayout.VERTICAL) return emptyList()
+        val imagesOn = settings.showImages.value
+        val videosOn = settings.showVideos.value
+        val plain = text.toString()
+        val result = ArrayList<Anchor>()
+        val spans = text.getSpans(0, text.length, URLSpan::class.java)
+        spans.sortBy { text.getSpanStart(it) }
+        for (span in spans) {
+            val start = text.getSpanStart(span)
+            val end = text.getSpanEnd(span)
+            if (result.isNotEmpty() && start < result.last().end) continue
+            val linkText = plain.substring(start, end)
+            val link = normalizeLink(span.url)
+            val img = IMG_TAG.matcher(linkText)
+            val giphy = imagesOn && link != null && img.find()
+            if (!giphy && !linkText.trim().startsWith("http")) continue
+            val videoId = if (videosOn) CommentVideo.videoId(link) else null
+            if (videoId != null) {
+                val loadPreviews = !loadOnTap(textView.context)
+                result.add(
+                    Anchor(start, end) {
+                        CommentVideo.createSlot(
+                            it,
+                            videoId,
+                            fullWidthDefault(),
+                            dp(it.context, IMAGE_SIZE_DP),
+                            (it.resources.displayMetrics.heightPixels * EXPANDED_MAX_SCREEN_HEIGHT)
+                                .toInt(),
+                            loadPreviews,
+                        )
+                    }
+                )
+                continue
+            }
+            val xPostsOn = settings.xPosts.value
+            val blueskyPostsOn = settings.blueskyPosts.value
+            if (SocialPosts.postKey(link, xPostsOn, blueskyPostsOn) != null) continue
+            if (YoutubeTitles.isYoutubeUrl(link)) continue
+            if (!imagesOn || link == null) continue
+            if (ImgurAlbum.isAlbum(link)) {
+                result.add(Anchor(start, end) { ImgurAlbum.createSlot(it, link) })
+                continue
+            }
+            val image =
+                if (giphy) {
+                    val preview = unescape(img.group(1)!!)
+                    ImageRef(
+                        preview,
+                        toImageUrl(link) ?: preview,
+                        width(img.group()),
+                        height(img.group()),
+                    )
+                } else {
+                    val imageUrl = toImageUrl(link) ?: continue
+                    ImageRef(imageUrl, imageUrl, 0, 0)
+                }
+            result.add(Anchor(start, end) { createImageSlot(it, image) })
+        }
+        return result
+    }
+
+    /** [start, end) of [text], with its spans, without the blank lines around it. */
+    private fun piece(text: Spanned, start: Int, end: Int): SpannableStringBuilder {
+        val builder = SpannableStringBuilder(text, start, end)
+        trimWhitespace(builder)
+        return builder
+    }
+
+    /** A TextView that shows text like [textView] does, in its column. */
+    private fun copyOf(textView: TextView): TextView {
+        val context = textView.context
+        // The app's ClickableTextView handles the taps on its links itself.
+        val copy =
+            try {
+                textView.javaClass.getConstructor(Context::class.java).newInstance(context)
+            } catch (exception: Exception) {
+                Log.i(TAG, "Could not copy the post's TextView", exception)
+                TextView(context)
+            }
+        copy.setTextSize(TypedValue.COMPLEX_UNIT_PX, textView.textSize)
+        copy.setTextColor(textView.textColors)
+        textView.linkTextColors?.let { copy.setLinkTextColor(it) }
+        copy.typeface = textView.typeface
+        copy.setLineSpacing(textView.lineSpacingExtra, textView.lineSpacingMultiplier)
+        copy.setPadding(
+            textView.paddingLeft,
+            textView.paddingTop,
+            textView.paddingRight,
+            textView.paddingBottom,
+        )
+        copy.movementMethod = textView.movementMethod
+        val text = textView.layoutParams as? ViewGroup.MarginLayoutParams
+        copy.layoutParams =
+            LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+                .apply {
+                    topMargin = dp(context, 8)
+                    leftMargin = text?.leftMargin ?: 0
+                    rightMargin = text?.rightMargin ?: 0
+                }
+        return copy
+    }
+
+    /** Removes the media and the copies [embedPostText] put in the column of [textView]. */
+    private fun removeInPlace(textView: TextView) {
+        val old = inPlaceViews.remove(textView) ?: return
+        for (view in old) {
+            if (view is TextView) {
+                removeSlots(slots.remove(view))
+                slotKeys.remove(view)
+                generations.remove(view)
+                (view.parent as? ViewGroup)?.removeView(view)
+            } else {
+                removeSlots(listOf(view))
+            }
+        }
+    }
+
     private fun slotKey(images: List<ImageRef>, albums: List<String>, videoIds: List<String>) =
         buildString {
             for (image in images) {

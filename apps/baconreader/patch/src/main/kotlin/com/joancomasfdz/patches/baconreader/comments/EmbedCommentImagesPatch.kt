@@ -83,11 +83,12 @@ val embedCommentImages =
                     param(0).field(messageBody),
                 )
             }
-            postText.after { EmbedCommentImages.embed(capture("textView")) }
+            // A post's text is cut at its bare media links, which its media replace.
+            postText.after { EmbedCommentImages.embedPostText(capture("textView")) }
             // Card mode shows the post text in a list whose rows are a TextView alone, so each
             // row is put in a column where its images go under the text.
             cardPostRow.redirectTo(EmbedCommentImages.inflateCardText)
-            cardPostText.after { EmbedCommentImages.embed(capture("textView")) }
+            cardPostText.after { EmbedCommentImages.embedPostText(capture("textView")) }
             // Image, GIF and video posts show their text under the media.
             mediaPostText.after { EmbedCommentImages.embed(capture("textView")) }
         }
