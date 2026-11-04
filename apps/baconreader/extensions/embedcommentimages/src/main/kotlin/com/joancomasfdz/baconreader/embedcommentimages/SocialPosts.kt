@@ -329,7 +329,7 @@ internal object SocialPosts {
      */
     private fun imageSize(textView: TextView, width: Int, height: Int): IntArray {
         val baseWidth =
-            if (CommentImages.fullWidthDefault()) contentWidth(textView)
+            if (CommentImages.fullWidthFor(textView)) contentWidth(textView)
             else dp(textView, IMAGE_WIDTH_DP)
         val ratio = if (width > 0 && height > 0) height.toFloat() / width else 9f / 16f
         var w = baseWidth

@@ -23,6 +23,7 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.SettingsPages
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.commentBodyTouch
 import com.joancomasfdz.patches.baconreader.media.fixImgurApi
 
 private const val COMMENT_HOLDER = "com.onelouder.baconreader.adapters.CommentHolder"
@@ -83,7 +84,13 @@ val embedCommentImages =
                     param(0).field(messageBody),
                 )
             }
-            // A post's text is cut at its bare media links, which its media replace.
+            // A comment's text is cut at its bare media links too; the copies with the text after
+            // each link get the comment body's touch listener.
+            commentBodyTouch.captureArgumentAs("view", 0).captureArgumentAs("listener", 1).after {
+                EmbedCommentImages.rememberTouch(capture("view"), capture("listener"))
+            }
+            // A post's text is cut at its bare media links, which its media replace, and its
+            // images start at full width.
             postText.after { EmbedCommentImages.embedPostText(capture("textView")) }
             // Card mode shows the post text in a list whose rows are a TextView alone, so each
             // row is put in a column where its images go under the text.
