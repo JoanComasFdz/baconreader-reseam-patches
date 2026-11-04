@@ -118,6 +118,23 @@ public sealed class PostList(AndroidDriver driver)
     public async Task WaitUntilCardImageShownAsync(string title)
     {
         await WaitUntilPostShownAsync(title);
+        // The scroll stops once the title is on the screen, and a card's image is under its title: further down, a bit
+        // at a time, until the image is on the screen too (the list's end shows the last card whole).
+        for (var scrolls = 0; scrolls < 5 && await Task.Run(() => FindPost(title)?.FindElements(CardImage).Any(image => image.Displayed) != true); scrolls++)
+        {
+            object? canScrollMore = null;
+            await OnScreen.DoAsync(driver, () => canScrollMore = driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
+            {
+                ["elementId"] = ((OpenQA.Selenium.Appium.AppiumElement)driver.FindElement(List)).Id,
+                ["direction"] = "down",
+                ["percent"] = 0.3,
+            }));
+            if (canScrollMore is false)
+            {
+                break;
+            }
+        }
+
         await Waiting.UntilAsync(
             () => FindPost(title)?.FindElements(CardImage).Any(image => image.Displayed) == true,
             TimeSpan.FromSeconds(10),
