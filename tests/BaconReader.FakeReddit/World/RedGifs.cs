@@ -92,7 +92,8 @@ public sealed class RedGifs
     /// <summary>The User-Agent <paramref name="token"/> was given to, or null for a token RedGIFs never gave.</summary>
     internal string? UserAgentOf(string token) => tokens.GetValueOrDefault(token);
 
-    internal RedGif? FindGif(string id) => gifs.FirstOrDefault(gif => string.Equals(gif.Id, id, StringComparison.OrdinalIgnoreCase));
+    /// <summary>The video with the id <paramref name="id"/>, or null for one RedGIFs never had.</summary>
+    public RedGif? FindGif(string id) => gifs.FirstOrDefault(gif => string.Equals(gif.Id, id, StringComparison.OrdinalIgnoreCase));
 
     internal void RecordLookup(string id, string? token, string userAgent, int status) =>
         requests.Add(new RedGifsRequest(RedGifsRequestKind.Gif, id, userAgent, token, status));

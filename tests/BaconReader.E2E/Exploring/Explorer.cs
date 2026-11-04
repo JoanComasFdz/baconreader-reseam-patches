@@ -174,7 +174,7 @@ public sealed class Explorer : BaseE2E
             switch (command.Name)
             {
                 case "post": Reddit.HasAPost(command.Argument(1), command.Argument(0)); break;
-                case "forget redgifs tokens": Reddit.RedGifsNoLongerTakesTheTokensItGave(); break;
+                case "phone joins another network": Reddit.ThePhoneJoinsAnotherNetwork(); break;
                 case "redgifs post": Reddit.HasARedGifsPost(command.Argument(1), command.Argument(0)); break;
                 case "deleted redgifs post": Reddit.HasARedGifsPostWhoseVideoWasDeleted(command.Argument(1), command.Argument(0)); break;
                 case "missing redgifs post": Reddit.HasARedGifsPostWhoseVideoRedGifsNeverHad(command.Argument(1), command.Argument(0)); break;
@@ -262,7 +262,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
         "refuse posts", "drop posts", "image post", "gif post", "signed thumbnail post", "video post",
         "link post with preview", "nsfw image post", "spoiler image post", "gallery post", "crosspost",
         "link post to video", "avatar", "late media", "fail media", "fail thumbnail", "imgur album", "imgur video album", "imgur gallery post",
-        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "forget redgifs tokens",
+        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network",
     ];
 
     /// <summary>Whether it makes Reddit data: from the commands file, it runs before the app opens.</summary>
