@@ -448,7 +448,10 @@ internal object SocialPosts {
         )
     }
 
-    /** A Bluesky post (getPostThread). Its first image, video still or link preview is shown. */
+    /**
+     * A Bluesky post (getPostThread). Its first image, gallery photo, video still or link preview
+     * is shown.
+     */
     private fun parseBluesky(json: JSONObject): Post {
         // Deleted or blocked.
         val post = json.optJSONObject("thread")?.optJSONObject("post") ?: return MISSING
@@ -473,6 +476,16 @@ internal object SocialPosts {
                     if (images == null || images.length() == 0) null else images.getJSONObject(0)
                 if (first != null) {
                     imageUrl = optStringOrNull(first, "thumb")
+                    ratio = first.optJSONObject("aspectRatio")
+                }
+            } else if (type.startsWith("app.bsky.embed.gallery")) {
+                // Bluesky sends a post's photos as a gallery too (seen on 2026-11-04): each item
+                // has its "thumbnail" where an image has its "thumb".
+                val items = embed.optJSONArray("items")
+                val first =
+                    if (items == null || items.length() == 0) null else items.getJSONObject(0)
+                if (first != null) {
+                    imageUrl = optStringOrNull(first, "thumbnail")
                     ratio = first.optJSONObject("aspectRatio")
                 }
             } else if (type.startsWith("app.bsky.embed.video")) {

@@ -37,6 +37,8 @@ public sealed class RedditWorld
         Imgur = new Imgur(this);
         RedGifs = new RedGifs(this);
         YouTube = new YouTube(this);
+        X = new X(this);
+        Bluesky = new Bluesky(this);
         Reset();
     }
 
@@ -51,6 +53,12 @@ public sealed class RedditWorld
 
     /// <summary>YouTube, which "E2E fake Reddit" moves here too: its videos' titles and thumbnails.</summary>
     public YouTube YouTube { get; }
+
+    /// <summary>X, which "E2E fake Reddit" moves here too: its posts, as its embed service sends them.</summary>
+    public X X { get; }
+
+    /// <summary>Bluesky, which "E2E fake Reddit" moves here too: its posts, as its public API sends them.</summary>
+    public Bluesky Bluesky { get; }
 
     /// <summary>Guards the world: the server answers on its own threads while a test builds.</summary>
     internal object Sync { get; } = new();
@@ -117,6 +125,8 @@ public sealed class RedditWorld
             Imgur.Reset();
             RedGifs.Reset();
             YouTube.Reset();
+            X.Reset();
+            Bluesky.Reset();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;

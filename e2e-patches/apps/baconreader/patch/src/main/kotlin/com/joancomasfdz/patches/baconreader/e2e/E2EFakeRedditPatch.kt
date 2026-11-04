@@ -23,8 +23,8 @@ private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 // Reddit detects automation, rate-limits logins and changes its content, so the e2e tests talk to
 // a fake Reddit server in the test process instead, which the phone reaches through
 // `adb reverse`. It answers the third-party services the patches fetch from too (Imgur, RedGIFs,
-// YouTube). Only full URL prefixes move: BaconReader recognizes Reddit and Imgur links in posts by
-// bare domains (reddit.com, v.redd.it, imgur.com), and those stay.
+// YouTube, X, Bluesky). Only full URL prefixes move: BaconReader recognizes Reddit and Imgur links
+// in posts by bare domains (reddit.com, v.redd.it, imgur.com), and those stay.
 val e2eFakeReddit =
     patch("E2E fake Reddit") {
         description("Test only: points BaconReader at a fake Reddit server instead of Reddit.")
@@ -119,7 +119,14 @@ private val REDDIT_ORIGINS =
 private const val REDDIT_GALLERY = "https://www.reddit.com/gallery"
 
 private val MEDIA_HOSTS =
-    listOf("i.redd.it", "preview.redd.it", "v.redd.it", "i.imgur.com", "i.ytimg.com")
+    listOf(
+        "i.redd.it",
+        "preview.redd.it",
+        "v.redd.it",
+        "i.imgur.com",
+        "i.ytimg.com",
+        "pbs.twimg.com",
+    )
 
 // Imgur's API, which "Fix Imgur API" calls instead of BaconReader's RapidAPI proxy.
 private const val IMGUR_API = "https://api.imgur.com/"
@@ -134,6 +141,11 @@ private const val REDGIFS_PATH = "/_redgifs"
 // address moves: comments and posts link YouTube at its own, which the patches recognize.
 private const val YOUTUBE_OEMBED = "https://www.youtube.com/oembed"
 
+// X's embed service and Bluesky's public API, where "Embed comment images" asks for a post. X's
+// photos move with the media hosts: the patch asks for a small one only at X's own address.
+private const val X_SYNDICATION = "https://cdn.syndication.twimg.com/"
+private const val BLUESKY_API = "https://public.api.bsky.app/"
+
 // Each full URL prefix and what it becomes; paths after it are kept.
 private fun redditPrefixes(baseUrl: String): List<Pair<String, String>> =
     REDDIT_ORIGINS.map { it to baseUrl } +
@@ -141,4 +153,6 @@ private fun redditPrefixes(baseUrl: String): List<Pair<String, String>> =
         ("https://cf-baconreader.onelouder.com/" to "$baseUrl/_onelouder/") +
         (IMGUR_API to "$baseUrl/_imgur/") +
         (REDGIFS_API to "$baseUrl$REDGIFS_PATH/") +
-        (YOUTUBE_OEMBED to "$baseUrl/_youtube/oembed")
+        (YOUTUBE_OEMBED to "$baseUrl/_youtube/oembed") +
+        (X_SYNDICATION to "$baseUrl/_x/") +
+        (BLUESKY_API to "$baseUrl/_bluesky/")

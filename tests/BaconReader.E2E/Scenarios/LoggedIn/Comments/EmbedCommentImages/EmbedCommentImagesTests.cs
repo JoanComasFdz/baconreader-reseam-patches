@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using BaconReader.E2E.Infrastructure;
+using BaconReader.FakeReddit.World;
 using BaconReader.E2E.Infrastructure.Phone;
 using BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 using BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
@@ -17,7 +18,9 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Comments;
 /// screen, a long press saves it to Downloads/BaconReader. An Imgur album shows one image at a time, swiped sideways, with
 /// its place in the album over it. A bare YouTube link shows its video's channel and title, from YouTube's oEmbed, and,
 /// with "Show YouTube thumbnails" on, the video's thumbnail drawn in the text under it. Left out: a playlist, whose
-/// thumbnail the patch takes from oEmbed's answer only at an https address, which the fake's plain HTTP isn't.
+/// thumbnail the patch takes from oEmbed's answer only at an https address, which the fake's plain HTTP isn't. A bare X
+/// or Bluesky link shows the post in its place: its author, @handle and date, its text, and its first photo or video
+/// still, drawn in the text.
 /// </summary>
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
@@ -50,6 +53,29 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "YouTube thread" has a comment "Written link" with the link "my video" to the YouTube video "Cooking pasta at home"
           And the post "YouTube thread" has a comment "Channel link" with a bare link to the YouTube channel "@e2ekitchen"
           And the post "YouTube thread" has a comment "Removed link" with a bare link to the YouTube video "Gone video"
+          And X has a post by "E2E Writer" @e2ewriter saying "Just setting up my fake account"
+          And X has a post by "E2E Writer" @e2ewriter saying "A photo from the beach" with a photo
+          And X has a post by "E2E Writer" @e2ewriter saying "A clip of the match" with a video
+          And X has a long post by "E2E Writer" @e2ewriter starting "This is a very long post"
+          And Reddit has a post "X thread" in r/e2e
+          And the post "X thread" has a comment "Plain X post" with a bare link to the X post "Just setting up my fake account"
+          And the post "X thread" has a comment "X photo" with a bare link to the X post "A photo from the beach"
+          And the post "X thread" has a comment "X video" with a bare link to the X post "A clip of the match"
+          And the post "X thread" has a comment "Long X post" with a bare link to the X post "This is a very long post"
+          And the post "X thread" has a comment "Missing X post" with a bare link to an X post X doesn't have
+          And the post "X thread" has a comment "Written X link" with the link "their post" to the X post "Just setting up my fake account"
+          And Bluesky has a post by "E2E Poster" @e2eposter.bsky.social saying "Hello from Bluesky"
+          And Bluesky has a post by "E2E Poster" @e2eposter.bsky.social saying "Photos of the park" with photos
+          And Bluesky has a post by "E2E Poster" @e2eposter.bsky.social saying "Watch this" with a video
+          And Bluesky has a post by "E2E Poster" @e2eposter.bsky.social saying "Read this page" with a link card
+          And Bluesky has a post by "E2E Poster" @e2eposter.bsky.social saying "A gallery of photos" with a gallery
+          And Reddit has a post "Bluesky thread" in r/e2e
+          And the post "Bluesky thread" has a comment "Plain Bluesky post" with a bare link to the Bluesky post "Hello from Bluesky"
+          And the post "Bluesky thread" has a comment "Bluesky photos" with a bare link to the Bluesky post "Photos of the park"
+          And the post "Bluesky thread" has a comment "Bluesky video" with a bare link to the Bluesky post "Watch this"
+          And the post "Bluesky thread" has a comment "Bluesky link card" with a bare link to the Bluesky post "Read this page"
+          And the post "Bluesky thread" has a comment "Bluesky gallery" with a bare link to the Bluesky post "A gallery of photos"
+          And the post "Bluesky thread" has a comment "Missing Bluesky post" with a bare link to a Bluesky post Bluesky doesn't have
           And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
@@ -184,6 +210,48 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I go back to the posts
           And I tap the post "YouTube thread"
           Then the comment "Bare link" shows the address of the YouTube video "Cooking pasta at home"
+          When I go back to the posts
+          And I tap the post "X thread"
+          Then the comment "Plain X post" shows the post "E2E Writer @e2ewriter · Oct 2, 2025" saying "Just setting up my fake account"
+          # The photo is drawn in the comment's text, on its own line under the post.
+          And the comment "X photo" shows the post "E2E Writer @e2ewriter · Oct 2, 2025" saying "A photo from the beach", with a picture
+          # Not on the screen: the fake X records what BaconReader asked for. The patch asks X for the small photo.
+          And X served the small photo of "A photo from the beach"
+          When I scroll to the comment "X video"
+          # A video shows its still, with a play badge.
+          Then the comment "X video" shows the post "E2E Writer @e2ewriter · Oct 2, 2025" saying "A clip of the match", with a picture
+          When I scroll to the comment "Long X post"
+          # X's embed service cuts a long post: the patch ends it with "…".
+          Then the comment "Long X post" shows the post "E2E Writer @e2ewriter · Oct 2, 2025", its text ending with "…"
+          When I scroll to the comment "Missing X post"
+          # X has no such post: the link stays as Reddit shows it.
+          Then the comment "Missing X post" shows its link's address
+          And the comment "Written X link" shows "their post"
+          When I go back to the posts
+          And I tap the post "Bluesky thread"
+          Then the comment "Plain Bluesky post" shows the post "E2E Poster @e2eposter.bsky.social · Oct 2, 2025" saying "Hello from Bluesky"
+          And the comment "Bluesky photos" shows the post "E2E Poster @e2eposter.bsky.social · Oct 2, 2025" saying "Photos of the park", with a picture
+          When I scroll to the comment "Bluesky video"
+          Then the comment "Bluesky video" shows the post "E2E Poster @e2eposter.bsky.social · Oct 2, 2025" saying "Watch this", with a picture
+          When I scroll to the comment "Bluesky link card"
+          Then the comment "Bluesky link card" shows the post "E2E Poster @e2eposter.bsky.social · Oct 2, 2025" saying "Read this page", with a picture
+          When I scroll to the comment "Bluesky gallery"
+          Then the comment "Bluesky gallery" shows the post "E2E Poster @e2eposter.bsky.social · Oct 2, 2025" saying "A gallery of photos", with a picture
+          When I scroll to the comment "Missing Bluesky post"
+          Then the comment "Missing Bluesky post" shows its link's address
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Links"
+          And I tap "Show X posts"
+          And I tap "Show Bluesky posts"
+          And I go back to the posts
+          And I tap the post "X thread"
+          Then the comment "Plain X post" shows its link's address
+          When I go back to the posts
+          And I tap the post "Bluesky thread"
+          Then the comment "Plain Bluesky post" shows its link's address
         """)]
     public async Task EmbedCommentImagesShowsTheMediaOfCommentsAndPostTextsAndFollowsItsSettings(Screen screen)
     {
@@ -212,6 +280,29 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("YouTube thread").HasACommentWithTheLinkToTheYouTubeVideo("Written link", "my video", "Cooking pasta at home");
         Reddit.ThePost("YouTube thread").HasACommentWithABareLinkToTheYouTubeChannel("Channel link", "@e2ekitchen");
         Reddit.ThePost("YouTube thread").HasACommentWithABareLinkToTheYouTubeVideo("Removed link", "Gone video");
+        Reddit.XHasAPost("E2E Writer", "@e2ewriter", "Just setting up my fake account");
+        Reddit.XHasAPost("E2E Writer", "@e2ewriter", "A photo from the beach", XMedia.Photo);
+        Reddit.XHasAPost("E2E Writer", "@e2ewriter", "A clip of the match", XMedia.Video);
+        Reddit.XHasALongPost("E2E Writer", "@e2ewriter", "This is a very long post");
+        Reddit.HasAPost("X thread", "e2e");
+        Reddit.ThePost("X thread").HasACommentWithABareLinkToTheXPost("Plain X post", "Just setting up my fake account");
+        Reddit.ThePost("X thread").HasACommentWithABareLinkToTheXPost("X photo", "A photo from the beach");
+        Reddit.ThePost("X thread").HasACommentWithABareLinkToTheXPost("X video", "A clip of the match");
+        Reddit.ThePost("X thread").HasACommentWithABareLinkToTheXPost("Long X post", "This is a very long post");
+        Reddit.ThePost("X thread").HasACommentWithABareLinkToAnXPostXDoesntHave("Missing X post");
+        Reddit.ThePost("X thread").HasACommentWithTheLinkToTheXPost("Written X link", "their post", "Just setting up my fake account");
+        Reddit.BlueskyHasAPost("E2E Poster", "@e2eposter.bsky.social", "Hello from Bluesky");
+        Reddit.BlueskyHasAPost("E2E Poster", "@e2eposter.bsky.social", "Photos of the park", BlueskyEmbed.Images);
+        Reddit.BlueskyHasAPost("E2E Poster", "@e2eposter.bsky.social", "Watch this", BlueskyEmbed.Video);
+        Reddit.BlueskyHasAPost("E2E Poster", "@e2eposter.bsky.social", "Read this page", BlueskyEmbed.External);
+        Reddit.BlueskyHasAPost("E2E Poster", "@e2eposter.bsky.social", "A gallery of photos", BlueskyEmbed.Gallery);
+        Reddit.HasAPost("Bluesky thread", "e2e");
+        Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Plain Bluesky post", "Hello from Bluesky");
+        Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Bluesky photos", "Photos of the park");
+        Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Bluesky video", "Watch this");
+        Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Bluesky link card", "Read this page");
+        Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Bluesky gallery", "A gallery of photos");
+        Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToABlueskyPostBlueskyDoesntHave("Missing Bluesky post");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
@@ -553,5 +644,134 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         var titleOff = await Phone.BaconReader.Detail.Comments.ReadAsync("Bare link");
         var cookingVideo = Reddit.ReadTheYouTubeVideo("Cooking pasta at home");
         Asserting.That(titleOff).ShowsTheAddressOf(cookingVideo);
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("X thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkShownAsync("Plain X post", "E2E Writer @e2ewriter · Oct 2, 2025");
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("X photo");
+        await Reddit.WaitUntilThePhotoOfTheXPostIsServedAsync("A photo from the beach");
+
+        // Then
+        var plainXPost = await Phone.BaconReader.Detail.Comments.ReadAsync("Plain X post");
+        // The photo is drawn in the comment's text, on its own line under the post.
+        var xPhoto = await Phone.BaconReader.Detail.Comments.ReadAsync("X photo");
+        // Not on the screen: the fake X records what BaconReader asked for. The patch asks X for the small photo.
+        var xPhotoRequests = Reddit.ReadRequestsForThePhotoOfTheXPost("A photo from the beach");
+        Asserting.That(plainXPost).ShowsThePost("E2E Writer @e2ewriter · Oct 2, 2025", "Just setting up my fake account");
+        Asserting.That(xPhoto).ShowsThePostWithAPicture("E2E Writer @e2ewriter · Oct 2, 2025", "A photo from the beach");
+        Asserting.That(xPhotoRequests).ServedTheSmallPhoto();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("X video");
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("X video");
+
+        // Then
+        // A video shows its still, with a play badge.
+        var xVideo = await Phone.BaconReader.Detail.Comments.ReadAsync("X video");
+        Asserting.That(xVideo).ShowsThePostWithAPicture("E2E Writer @e2ewriter · Oct 2, 2025", "A clip of the match");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Long X post");
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkShownAsync("Long X post", "E2E Writer @e2ewriter · Oct 2, 2025");
+
+        // Then
+        // X's embed service cuts a long post: the patch ends it with "…".
+        var longXPost = await Phone.BaconReader.Detail.Comments.ReadAsync("Long X post");
+        Asserting.That(longXPost).ShowsThePostEndingWith("E2E Writer @e2ewriter · Oct 2, 2025", "…");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Missing X post");
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkTitlesLoadedAsync("Missing X post");
+
+        // Then
+        // X has no such post: the link stays as Reddit shows it.
+        var missingXPost = await Phone.BaconReader.Detail.Comments.ReadAsync("Missing X post");
+        var missingXLink = Reddit.ReadTheLinkToTheMissingXPost();
+        var writtenXLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Written X link");
+        Asserting.That(missingXPost).ShowsTheAddressOf(missingXLink);
+        Asserting.That(writtenXLink).ShowsTheLink("their post");
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Bluesky thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkShownAsync("Plain Bluesky post", "E2E Poster @e2eposter.bsky.social · Oct 2, 2025");
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("Bluesky photos");
+
+        // Then
+        var plainBlueskyPost = await Phone.BaconReader.Detail.Comments.ReadAsync("Plain Bluesky post");
+        var blueskyPhotos = await Phone.BaconReader.Detail.Comments.ReadAsync("Bluesky photos");
+        Asserting.That(plainBlueskyPost).ShowsThePost("E2E Poster @e2eposter.bsky.social · Oct 2, 2025", "Hello from Bluesky");
+        Asserting.That(blueskyPhotos).ShowsThePostWithAPicture("E2E Poster @e2eposter.bsky.social · Oct 2, 2025", "Photos of the park");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Bluesky video");
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("Bluesky video");
+
+        // Then
+        var blueskyVideo = await Phone.BaconReader.Detail.Comments.ReadAsync("Bluesky video");
+        Asserting.That(blueskyVideo).ShowsThePostWithAPicture("E2E Poster @e2eposter.bsky.social · Oct 2, 2025", "Watch this");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Bluesky link card");
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("Bluesky link card");
+
+        // Then
+        var blueskyLinkCard = await Phone.BaconReader.Detail.Comments.ReadAsync("Bluesky link card");
+        Asserting.That(blueskyLinkCard).ShowsThePostWithAPicture("E2E Poster @e2eposter.bsky.social · Oct 2, 2025", "Read this page");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Bluesky gallery");
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("Bluesky gallery");
+
+        // Then
+        var blueskyGallery = await Phone.BaconReader.Detail.Comments.ReadAsync("Bluesky gallery");
+        Asserting.That(blueskyGallery).ShowsThePostWithAPicture("E2E Poster @e2eposter.bsky.social · Oct 2, 2025", "A gallery of photos");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Missing Bluesky post");
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkTitlesLoadedAsync("Missing Bluesky post");
+
+        // Then
+        var missingBlueskyPost = await Phone.BaconReader.Detail.Comments.ReadAsync("Missing Bluesky post");
+        var missingBlueskyLink = Reddit.ReadTheLinkToTheMissingBlueskyPost();
+        Asserting.That(missingBlueskyPost).ShowsTheAddressOf(missingBlueskyLink);
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Links());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Links());
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.ShowXPosts());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowXPosts());
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.ShowBlueskyPosts());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowBlueskyPosts());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("X thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkTitlesLoadedAsync("Plain X post");
+
+        // Then
+        var xPostsOff = await Phone.BaconReader.Detail.Comments.ReadAsync("Plain X post");
+        var plainXLink = Reddit.ReadTheLinkToTheXPost("Just setting up my fake account");
+        Asserting.That(xPostsOff).ShowsTheAddressOf(plainXLink);
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Bluesky thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkTitlesLoadedAsync("Plain Bluesky post");
+
+        // Then
+        var blueskyPostsOff = await Phone.BaconReader.Detail.Comments.ReadAsync("Plain Bluesky post");
+        var plainBlueskyLink = Reddit.ReadTheLinkToTheBlueskyPost("Hello from Bluesky");
+        Asserting.That(blueskyPostsOff).ShowsTheAddressOf(plainBlueskyLink);
     }
 }
