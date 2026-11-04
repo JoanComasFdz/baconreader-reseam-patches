@@ -86,7 +86,8 @@ world.LoginPage.ShowCookieBanner = true;
   as DASH and HLS playlists and their video and sound renditions (and playlists without the sound), and a web page whose
   script asks for the page again with `?script=ran` once it runs. `AddVideoWithoutPost()` serves one that no post has, whose `/video/<id>` is a 404. `AddRedditVideo(id)` serves a video as v.redd.it
   does.
-- `Imgur.AddAlbum(…)` makes an Imgur album ("Imgur" below), `RedGifs.AddGif(…)` a RedGIFs video ("RedGIFs" below).
+- `Imgur.AddAlbum(…)` makes an Imgur album ("Imgur" below), `RedGifs.AddGif(…)` a RedGIFs video ("RedGIFs" below),
+  `YouTube.AddVideo(…)` a YouTube video ("YouTube" below).
 - `GiveAvatar(user, seeThrough)` gives a user an avatar, a picture or one that is all see-through, which `api/user_data_by_account_ids` names.
 - A `RequestTrouble` with `Times` hits only the first requests it matches: a network hiccup.
 - The E2E project wraps this in the Gherkins' words (`Infrastructure/Reddit/`).
@@ -127,6 +128,7 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `POST /_imgur/3/image` | an upload: the raw file stored at `i.imgur.com/<id>.<ext>` and answered as Imgur does (`link`, `type`, `deletehash`…), recorded in `Imgur.Uploads` with its content type; one sent as a form (`application/x-www-form-urlencoded`, BaconReader's without "Fix Imgur API") or that isn't a PNG or a JPEG is refused, 400 |
 | `GET /_redgifs/v2/auth/temporary` | RedGIFs' API, "RedGIFs" below: a temporary token for the request's User-Agent (`token`, `addr`, `agent`, `session`, `rtfm`) |
 | `GET /_redgifs/v2/gifs/{id}` | the video's information (`gif.urls`: `hd`, `sd`, `poster`, `thumbnail`, `html`), with a token RedGIFs gave and its User-Agent; RedGIFs' errors otherwise |
+| `GET /_youtube/oembed?format=json&url=…` | YouTube's oEmbed, "YouTube" below: the linked video's title and channel; 404 `Not Found` for one YouTube removed or never had |
 | `GET`, `POST`, `PUT /_fake/…` | for debugging: `requests`, `unhandled`, `actions`, `logins`, `world`; `reset`, `accounts`, `subscriptions`, `posts`, `comments`, `media/{path}` |
 | anything else | 404, recorded in `Unhandled` |
 
@@ -167,6 +169,24 @@ what the app asked (`RedGifs.Requests`: each token asked for, and each lookup wi
   one RedGIFs never had `404 GifNotFound`.
 - `RedGifs.ForgetTokens()` refuses each token it gave, `401 WrongSender`, as RedGIFs does once the phone's address
   changes, until the app asks for a new one.
+
+## YouTube
+
+"E2E fake Reddit" moves YouTube's oEmbed endpoint, `https://www.youtube.com/oembed`, to `<base>/_youtube/oembed`, and
+its thumbnails, `https://i.ytimg.com/`, to `<base>/_media/i.ytimg.com/`: "Embed comment images" asks oEmbed for a bare
+YouTube link's title, and it and "Fix list thumbnails" load a video's thumbnail. `RedditWorld.YouTube` holds the videos.
+
+- `YouTube.AddVideo(title, channel, removed)`: a video on the channel `@<channel>`, linked
+  `https://www.youtube.com/watch?v=<id>` (or `https://youtu.be/<id>`, `/shorts/<id>`), YouTube's own address, which the
+  patches know it by. Its id is 11 characters, as YouTube's are, and its thumbnails are served at
+  `i.ytimg.com/vi/<id>/mqdefault.jpg` and `hqdefault.jpg`. `removed` makes one YouTube no longer has.
+- oEmbed answers as YouTube answered on 2026-11-04, every field in its order (`title`, `author_name`, `author_url`,
+  `type`, `height`, `width`, `version`, `provider_name`, `provider_url`, `thumbnail_height`, `thumbnail_width`,
+  `thumbnail_url`, `html`). A video YouTube removed or never had is `404` with the body `Not Found`, as YouTube answers
+  one (an id it can't read is `400 Bad Request` there; the patch treats both alike).
+- Its `thumbnail_url` is YouTube's own address, as YouTube sends it. The patches load a video's thumbnail from its id
+  instead, and read this one only for a playlist, which the fake doesn't have: the patch takes it only at an https
+  address, which the fake's plain HTTP isn't.
 
 ## The JSON
 

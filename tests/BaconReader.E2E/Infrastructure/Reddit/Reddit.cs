@@ -257,6 +257,12 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// <summary>"… has a comment "&lt;text&gt;"": a comment that says only <paramref name="text"/>.</summary>
     public void HasAComment(string text) => world.AddComment(post, text);
 
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" with the link &lt;link&gt;": the text, then the link on its own line, bare (Reddit
+    /// shows its address) or written as <c>[words](address)</c>.
+    /// </summary>
+    public void HasACommentWithTheLink(string text, string link) => world.AddComment(post, $"{text}\n\n{link}");
+
     /// <summary>"… has a comment "&lt;text&gt;" with &lt;count&gt; Silver awards": a comment given Reddit's Silver that many times.</summary>
     public void HasACommentWithSilverAwards(string text, int count) => world.AddComment(post, text, comment => comment.WithSilver(count));
 
