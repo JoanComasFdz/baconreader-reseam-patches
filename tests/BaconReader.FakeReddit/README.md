@@ -87,7 +87,8 @@ world.LoginPage.ShowCookieBanner = true;
   script asks for the page again with `?script=ran` once it runs. `AddVideoWithoutPost()` serves one that no post has, whose `/video/<id>` is a 404. `AddRedditVideo(id)` serves a video as v.redd.it
   does.
 - `Imgur.AddAlbum(…)` makes an Imgur album ("Imgur" below), `RedGifs.AddGif(…)` a RedGIFs video ("RedGIFs" below),
-  `YouTube.AddVideo(…)` a YouTube video ("YouTube" below).
+  `YouTube.AddVideo(…)` a YouTube video ("YouTube" below), `X.AddPost(…)` and `Bluesky.AddPost(…)` a post ("X and
+  Bluesky" below).
 - `GiveAvatar(user, seeThrough)` gives a user an avatar, a picture or one that is all see-through, which `api/user_data_by_account_ids` names.
 - A `RequestTrouble` with `Times` hits only the first requests it matches: a network hiccup.
 - The E2E project wraps this in the Gherkins' words (`Infrastructure/Reddit/`).
@@ -129,6 +130,8 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /_redgifs/v2/auth/temporary` | RedGIFs' API, "RedGIFs" below: a temporary token for the request's User-Agent (`token`, `addr`, `agent`, `session`, `rtfm`) |
 | `GET /_redgifs/v2/gifs/{id}` | the video's information (`gif.urls`: `hd`, `sd`, `poster`, `thumbnail`, `html`), with a token RedGIFs gave and its User-Agent; RedGIFs' errors otherwise |
 | `GET /_youtube/oembed?format=json&url=…` | YouTube's oEmbed, "YouTube" below: the linked video's title and channel; 404 `Not Found` for one YouTube removed or never had |
+| `GET /_x/tweet-result?id=…&token=…` | X's embed service, "X and Bluesky" below: the post; a 404 page for one X doesn't have |
+| `GET /_bluesky/xrpc/app.bsky.feed.getPostThread?…&uri=at://…` | Bluesky's public API: the post's thread; `400 NotFound` for one Bluesky doesn't have |
 | `GET`, `POST`, `PUT /_fake/…` | for debugging: `requests`, `unhandled`, `actions`, `logins`, `world`; `reset`, `accounts`, `subscriptions`, `posts`, `comments`, `media/{path}` |
 | anything else | 404, recorded in `Unhandled` |
 
@@ -187,6 +190,23 @@ YouTube link's title, and it and "Fix list thumbnails" load a video's thumbnail.
 - Its `thumbnail_url` is YouTube's own address, as YouTube sends it. The patches load a video's thumbnail from its id
   instead, and read this one only for a playlist, which the fake doesn't have: the patch takes it only at an https
   address, which the fake's plain HTTP isn't.
+
+## X and Bluesky
+
+"E2E fake Reddit" moves X's embed service, `https://cdn.syndication.twimg.com/`, to `<base>/_x/`, Bluesky's public API,
+`https://public.api.bsky.app/`, to `<base>/_bluesky/`, and X's photos, `https://pbs.twimg.com/`, to
+`<base>/_media/pbs.twimg.com/`: "Embed comment images" shows a bare X or Bluesky link as the post. `RedditWorld.X` and
+`RedditWorld.Bluesky` hold the posts.
+
+- `X.AddPost(name, handle, text, createdAt, media, long)`: a post linked `https://x.com/<handle>/status/<id>`, X's own
+  address. Its answer is X's of 2026-11-04, its fields in X's order: a photo or video still in `mediaDetails`, at the
+  fake's `pbs.twimg.com` (the patch asks for it with `?name=small`), whose `t.co` link ends the text, outside
+  `display_text_range`; a `long` post cut at 279 characters, with `note_tweet`. A post X doesn't have is `404` with an
+  HTML page. X didn't check the token on 2026-11-04, and neither does the fake.
+- `Bluesky.AddPost(name, handle, text, createdAt, embed)`: a post linked `https://bsky.app/profile/<handle>/post/<key>`.
+  `getPostThread` answers as Bluesky did on 2026-11-04, with the embed's view: `images`, `video`, `external` (a link
+  card) or `gallery`, which Bluesky sent for a post of several photos; each picture at the fake's `cdn.bsky.app` or
+  `video.bsky.app`. A post Bluesky doesn't have is `400 {"error": "NotFound", …}`.
 
 ## The JSON
 
