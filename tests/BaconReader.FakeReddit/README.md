@@ -86,7 +86,7 @@ world.LoginPage.ShowCookieBanner = true;
   as DASH and HLS playlists and their video and sound renditions (and playlists without the sound), and a web page whose
   script asks for the page again with `?script=ran` once it runs. `AddVideoWithoutPost()` serves one that no post has, whose `/video/<id>` is a 404. `AddRedditVideo(id)` serves a video as v.redd.it
   does.
-- `Imgur.AddAlbum(…)` makes an Imgur album ("Imgur" below).
+- `Imgur.AddAlbum(…)` makes an Imgur album ("Imgur" below), `RedGifs.AddGif(…)` a RedGIFs video ("RedGIFs" below).
 - `GiveAvatar(user, seeThrough)` gives a user an avatar, a picture or one that is all see-through, which `api/user_data_by_account_ids` names.
 - A `RequestTrouble` with `Times` hits only the first requests it matches: a network hiccup.
 - The E2E project wraps this in the Gherkins' words (`Infrastructure/Reddit/`).
@@ -125,6 +125,8 @@ without is logged out, and Reddit's API refuses it with `HTTP 403 Blocked`, as R
 | `GET /_imgur/3/album/{id}/images` | Imgur's API, "Imgur" below: the album's images (`{"data": [image…], "success": true, "status": 200}`); 404 with `"album not found"` for an album the world doesn't have |
 | `GET /_imgur/3/gallery/{id}` | Imgur's gallery post: the album with its title and images; Imgur's HTML 404 page for one the world doesn't have |
 | `POST /_imgur/3/image` | an upload: the raw file stored at `i.imgur.com/<id>.<ext>` and answered as Imgur does (`link`, `type`, `deletehash`…), recorded in `Imgur.Uploads` with its content type; one sent as a form (`application/x-www-form-urlencoded`, BaconReader's without "Fix Imgur API") or that isn't a PNG or a JPEG is refused, 400 |
+| `GET /_redgifs/v2/auth/temporary` | RedGIFs' API, "RedGIFs" below: a temporary token for the request's User-Agent (`token`, `addr`, `agent`, `session`, `rtfm`) |
+| `GET /_redgifs/v2/gifs/{id}` | the video's information (`gif.urls`: `hd`, `sd`, `poster`, `thumbnail`, `html`), with a token RedGIFs gave and its User-Agent; RedGIFs' errors otherwise |
 | `GET`, `POST`, `PUT /_fake/…` | for debugging: `requests`, `unhandled`, `actions`, `logins`, `world`; `reset`, `accounts`, `subscriptions`, `posts`, `comments`, `media/{path}` |
 | anything else | 404, recorded in `Unhandled` |
 
@@ -147,6 +149,24 @@ upload images there. `RedditWorld.Imgur` holds the albums and the uploads.
   asked for, as Imgur does; a video's sizes are a still of it.
 - A request without Imgur's `Authorization: Client-ID …` is refused, 401.
 - Unconfirmed: what Imgur answers an upload it refuses (the fake doesn't upload to the real Imgur to see).
+
+## RedGIFs
+
+"E2E fake Reddit" moves RedGIFs' API, `https://api.redgifs.com/`, to `<base>/_redgifs/`: "Fix Redgifs API" asks it for a
+temporary token and for a video's files, "Fix list thumbnails" for a video's thumbnail, and "Improve post media
+loading" tells from its errors that a video is gone. `RedditWorld.RedGifs` holds the videos, the tokens it gave and
+what the app asked (`RedGifs.Requests`: each token asked for, and each lookup with its token, User-Agent and status).
+
+- `RedGifs.AddGif(state)`: a video, linked `https://www.redgifs.com/watch/<id>`, RedGIFs' own address, which BaconReader
+  and the patches know it by. Its id is lowercase letters, as RedGIFs' are, and its files are served at
+  `<base>/_media/media.redgifs.com/<Id>.mp4`, `-mobile.mp4`, `-poster.jpg` and `-mobile.jpg`, named as RedGIFs names
+  them. `RedGifState.Deleted` makes one RedGIFs deleted.
+- Every answer is RedGIFs' own of 2026-11-03, its fields in RedGIFs' order: a token is bound to the User-Agent it was
+  given to (RedGIFs binds it to the address too); a lookup without a token is `401 AuthorizationHeaderMissing`, with one
+  RedGIFs never gave `401 Unauthorized`, with another User-Agent `401 WrongSender`; a deleted video is `410 GifDeleted`,
+  one RedGIFs never had `404 GifNotFound`.
+- `RedGifs.ForgetTokens()` refuses each token it gave, `401 WrongSender`, as RedGIFs does once the phone's address
+  changes, until the app asks for a new one.
 
 ## The JSON
 

@@ -102,6 +102,7 @@ the test process.
   | `https://cf-baconreader.onelouder.com/` | `<baseUrl>/_onelouder/` |
   | `https://api.imgur.com/` | `<baseUrl>/_imgur/` |
   | `https://i.imgur.com/` | `<baseUrl>/_media/i.imgur.com/` |
+  | `https://api.redgifs.com/` | `<baseUrl>/_redgifs/` |
 
   A string that starts with `https://www.reddit.com/gallery` stays: BaconReader and "Fix Reddit links" know a gallery by
   Reddit's own address. Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit
@@ -110,9 +111,14 @@ the test process.
   fake's plain HTTP where BaconReader saves a video from an https URL. Its option, `baseUrl` (default `http://127.0.0.1:5080`), is `E2E_FAKE_REDDIT_URL`
   (`--option com.joancomasfdz.patches.baconreader.e2e.e2eFakeReddit.baseUrl=…`).
 - **Third-party services the patches fetch from** have their hosts in the same table: Imgur's API and images, which
-  "Fix Imgur API" and "Embed comment images" load. The fake answers them as the service does
-  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur"). Content links to them keep the service's
-  real address (`https://imgur.com/a/<id>`), as for Reddit below: BaconReader and the patches know an Imgur album by it.
+  "Fix Imgur API" and "Embed comment images" load, and RedGIFs' API, which "Fix Redgifs API", "Fix list thumbnails"
+  and "Improve post media loading" ask. "Fix Redgifs API" builds its own RedGIFs addresses from the host
+  `api.redgifs.com` and the path `/v2/oauth/client`, so the patch also replaces those exact strings: the host with the
+  fake's, and the path with `/_redgifs/v2/oauth/client`. RedGIFs' answers point at its videos'
+  `https://media.redgifs.com/…`, which the fake gives at its own address. The fake answers them as the service does
+  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur", "RedGIFs"). Content links to them keep the
+  service's real address (`https://imgur.com/a/<id>`, `https://www.redgifs.com/watch/<id>`), as for Reddit below:
+  BaconReader and the patches know an Imgur album and a RedGIFs video by it.
 - **Content keeps Reddit's addresses; only what the app fetches goes to the fake.** A link in the Reddit data a scenario
   makes (a post's `url`, a link in a comment or a post's text) that a patch must recognize as Reddit's keeps Reddit's
   real address, `https://www.reddit.com/…`, `https://v.redd.it/<id>`, as Reddit sends it. The patch moves the app's own
@@ -238,6 +244,8 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `imgur album: <title> \| <images>`, `imgur video album: <title> \| <videos>`, `imgur gallery post: <title> \| <images>` | an Imgur album of that many JPEGs, or MP4 videos, or an album on Imgur's gallery |
 | `imgur album post: <subreddit> \| <title> \| <album>` | a link post to that Imgur album, at Imgur's address |
 | `comment with imgur album: <post title> \| <text> \| <album>` | a comment: the text, then a bare link to that Imgur album |
+| `redgifs post: <subreddit> \| <title>`, `deleted redgifs post: …`, `missing redgifs post: …` | a link post to a RedGIFs video, at RedGIFs' address: one RedGIFs has, one it deleted (410), or one it never had (404) |
+| `phone joins another network` | the fake RedGIFs refuses each token it gave, 401 WrongSender, as RedGIFs does once the phone's address changes |
 
 **The phone and what Reddit saw:**
 

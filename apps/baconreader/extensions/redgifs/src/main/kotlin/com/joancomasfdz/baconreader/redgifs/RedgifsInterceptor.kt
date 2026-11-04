@@ -46,18 +46,31 @@ internal object RedgifsInterceptor : Interceptor {
             if (request.url.encodedPath == "/v2/oauth/client") {
                 return jsonResponse(request, RedgifsTokenManager.oAuthResponseBody(token))
             }
+            val response = chain.proceed(withToken(request, token, userAgent))
+            if (response.code != HttpURLConnection.HTTP_UNAUTHORIZED) return response
+            // Redgifs ties a token to the address it was given to: after the phone's address
+            // changes, it refuses the cached one (401 WrongSender) until a new one is asked for.
+            // BaconReader's own requests carry no token, so the refresh above never runs for them.
+            response.close()
             return chain.proceed(
-                request
-                    .newBuilder()
-                    .header("Authorization", "Bearer " + token.accessToken)
-                    .header("User-Agent", userAgent)
-                    .build()
+                withToken(request, RedgifsTokenManager.refreshToken(userAgent, true), userAgent)
             )
         } catch (exception: JSONException) {
             Log.e(TAG, "Could not parse the Redgifs token response", exception)
             throw IOException(exception)
         }
     }
+
+    private fun withToken(
+        request: Request,
+        token: RedgifsTokenManager.RedgifsToken,
+        userAgent: String,
+    ): Request =
+        request
+            .newBuilder()
+            .header("Authorization", "Bearer " + token.accessToken)
+            .header("User-Agent", userAgent)
+            .build()
 
     private fun jsonResponse(request: Request, body: String): Response =
         Response.Builder()

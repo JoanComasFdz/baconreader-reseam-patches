@@ -35,6 +35,7 @@ public sealed class RedditWorld
     {
         BaseUrl = baseUrl.TrimEnd('/');
         Imgur = new Imgur(this);
+        RedGifs = new RedGifs(this);
         Reset();
     }
 
@@ -43,6 +44,9 @@ public sealed class RedditWorld
 
     /// <summary>Imgur, which "E2E fake Reddit" moves here too: its albums and the uploads the app sent.</summary>
     public Imgur Imgur { get; }
+
+    /// <summary>RedGIFs, which "E2E fake Reddit" moves here too: its videos, the tokens it gave and what the app asked.</summary>
+    public RedGifs RedGifs { get; }
 
     /// <summary>Guards the world: the server answers on its own threads while a test builds.</summary>
     internal object Sync { get; } = new();
@@ -107,6 +111,7 @@ public sealed class RedditWorld
             avatars.Clear();
             shareLinks.Clear();
             Imgur.Reset();
+            RedGifs.Reset();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;

@@ -14,8 +14,9 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Media;
 /// asks again for one that fails; a link post shows its preview as thumbnail, a crosspost of a gallery the preview of
 /// its first image and BaconReader's gallery indicator, and in the card list a gallery and its crosspost show the
 /// gallery's first image in their cards; spoiler thumbnails are blurred, and NSFW ones while "Show NSFW
-/// images" is off. The patch describes a thumbnail it blurs "Blurred thumbnail". Out of scope: YouTube and embed
-/// thumbnails and RedGIFs posts, which come from other hosts.
+/// images" is off; a RedGIFs post, which Reddit sends without a thumbnail, shows its video's, which the patch asks
+/// RedGIFs for. The patch describes a thumbnail it blurs "Blurred thumbnail". Out of scope: YouTube and embed
+/// thumbnails, which come from other hosts.
 /// </summary>
 public sealed class FixListThumbnailsTests : BaseE2E
 {
@@ -32,6 +33,7 @@ public sealed class FixListThumbnailsTests : BaseE2E
           And Reddit has a gallery post "Album" in r/e2e of 2 images
           And Reddit has a crosspost "Shared album" in r/e2e of the post "Album"
           And Reddit has a spoiler image post "Spoiler picture" in r/e2e
+          And Reddit has a RedGIFs post "Clip" in r/e2e
           And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
@@ -48,6 +50,10 @@ public sealed class FixListThumbnailsTests : BaseE2E
           And the post "Shared album" shows the gallery indicator
           And Reddit served a preview of the first image of "Album"
           And the post "Spoiler picture" shows a blurred thumbnail
+          # Reddit sends no thumbnail for it: the patch asks RedGIFs for the video's.
+          And the post "Clip" shows a thumbnail
+          # Not on the screen: the fake RedGIFs records what BaconReader asked for.
+          And RedGIFs served the thumbnail of "Clip"
           # BaconReader hides NSFW posts until "Show NSFW posts" is on.
           When I open the left menu
           And I tap "Settings"
@@ -80,6 +86,7 @@ public sealed class FixListThumbnailsTests : BaseE2E
         Reddit.HasAGalleryPostOf("Album", "e2e", 2);
         Reddit.HasACrosspostOf("Shared album", "e2e", "Album");
         Reddit.HasASpoilerImagePost("Spoiler picture", "e2e");
+        Reddit.HasARedGifsPost("Clip", "e2e");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
@@ -93,6 +100,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
         await Phone.BaconReader.Main.Posts.WaitUntilShownAsRowsAsync();
         await Phone.BaconReader.Main.Posts.WaitUntilThumbnailShownAsync("Spoiler picture", PostThumbnail.Blurred);
         await Reddit.WaitUntilTheThumbnailOfThePostIsServedAsync("Flaky thumbnail");
+        await Phone.BaconReader.Main.Posts.WaitUntilThumbnailShownAsync("Clip", PostThumbnail.Shown);
+        await Reddit.WaitUntilTheRedGifsThumbnailOfThePostIsServedAsync("Clip");
 
         // Then
         // Not on the screen: the fake Reddit records what BaconReader asked for. Reddit sends the signed URL with its "&" HTML-escaped, and refuses it so.
@@ -105,6 +114,10 @@ public sealed class FixListThumbnailsTests : BaseE2E
         var crosspost = await Phone.BaconReader.Main.Posts.ReadPostAsync("Shared album");
         var gallery = Reddit.ReadRequestsForTheGalleryOf("Album");
         var spoiler = await Phone.BaconReader.Main.Posts.ReadPostAsync("Spoiler picture");
+        // Reddit sends no thumbnail for it: the patch asks RedGIFs for the video's.
+        var clip = await Phone.BaconReader.Main.Posts.ReadPostAsync("Clip");
+        // Not on the screen: the fake RedGIFs records what BaconReader asked for.
+        var clipThumbnail = Reddit.ReadRequestsForTheRedGifsThumbnailOf("Clip");
         Asserting.That(signed).ServedWithItsAmpersandsUnescaped();
         Asserting.That(flaky).ServedOnTheThirdRequest();
         Asserting.That(link).ShowsAThumbnail();
@@ -112,6 +125,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
         Asserting.That(crosspost).ShowsTheGalleryIndicator();
         Asserting.That(gallery).ServedAPreviewOfTheFirstImage();
         Asserting.That(spoiler).ShowsABlurredThumbnail();
+        Asserting.That(clip).ShowsAThumbnail();
+        Asserting.That(clipThumbnail).Served();
 
         // When
         // BaconReader hides NSFW posts until "Show NSFW posts" is on.

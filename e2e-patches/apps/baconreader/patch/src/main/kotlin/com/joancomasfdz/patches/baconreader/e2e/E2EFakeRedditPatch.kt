@@ -22,7 +22,8 @@ private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 
 // Reddit detects automation, rate-limits logins and changes its content, so the e2e tests talk to
 // a fake Reddit server in the test process instead, which the phone reaches through
-// `adb reverse`. It answers the third-party services the patches fetch from too (Imgur). Only
+// `adb reverse`. It answers the third-party services the patches fetch from too (Imgur, RedGIFs).
+// Only
 // full URL prefixes move: BaconReader recognizes Reddit and Imgur links in posts by bare domains
 // (reddit.com, v.redd.it, imgur.com), and those stay.
 val e2eFakeReddit =
@@ -76,6 +77,17 @@ val e2eFakeReddit =
                     }
                 }
             }
+            // "Fix Redgifs API" authenticates only requests to RedGIFs' API host, and answers its
+            // old OAuth path itself: moved, both checks name the fake's host and path.
+            val fakeHost = java.net.URI(options[baseUrl]).host
+            strings +=
+                bytecode.replaceStringsContaining(REDGIFS_API_HOST) {
+                    if (it == REDGIFS_API_HOST) fakeHost else it
+                }
+            strings +=
+                bytecode.replaceStringsContaining(REDGIFS_OAUTH_PATH) {
+                    if (it == REDGIFS_OAUTH_PATH) REDGIFS_PATH + REDGIFS_OAUTH_PATH else it
+                }
             log.info("Pointed $strings strings and $fields fields at the fake Reddit server")
         }
     }
@@ -112,9 +124,16 @@ private val MEDIA_HOSTS = listOf("i.redd.it", "preview.redd.it", "v.redd.it", "i
 // Imgur's API, which "Fix Imgur API" calls instead of BaconReader's RapidAPI proxy.
 private const val IMGUR_API = "https://api.imgur.com/"
 
+// RedGIFs' API, which BaconReader calls with the temporary tokens "Fix Redgifs API" fetches.
+private const val REDGIFS_API = "https://api.redgifs.com/"
+private const val REDGIFS_API_HOST = "api.redgifs.com"
+private const val REDGIFS_OAUTH_PATH = "/v2/oauth/client"
+private const val REDGIFS_PATH = "/_redgifs"
+
 // Each full URL prefix and what it becomes; paths after it are kept.
 private fun redditPrefixes(baseUrl: String): List<Pair<String, String>> =
     REDDIT_ORIGINS.map { it to baseUrl } +
         MEDIA_HOSTS.map { "https://$it/" to "$baseUrl/_media/$it/" } +
         ("https://cf-baconreader.onelouder.com/" to "$baseUrl/_onelouder/") +
-        (IMGUR_API to "$baseUrl/_imgur/")
+        (IMGUR_API to "$baseUrl/_imgur/") +
+        (REDGIFS_API to "$baseUrl$REDGIFS_PATH/")
