@@ -1033,6 +1033,25 @@ internal object CommentImages {
         }
     }
 
+    /**
+     * A vertical LinearLayout around [view], a list's row, to put images under it. It keeps the
+     * row's layout params; the view fills its width.
+     */
+    fun columnFor(view: View): View {
+        if (view !is TextView || view.parent != null) return view
+        val column = LinearLayout(view.context)
+        column.orientation = LinearLayout.VERTICAL
+        view.layoutParams?.let { column.layoutParams = it }
+        column.addView(
+            view,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+        return column
+    }
+
     fun dp(context: Context, value: Int): Int =
         Math.round(
             TypedValue.applyDimension(

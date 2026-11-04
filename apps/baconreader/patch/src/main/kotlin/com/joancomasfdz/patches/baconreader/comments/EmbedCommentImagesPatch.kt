@@ -13,6 +13,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import app.reseam.patch.redirectTo
 import app.reseam.patch.settings.gate
 import app.reseam.patch.settings.section
 import com.joancomasfdz.baconreader.embedcommentimages.bindings.EmbedCommentImages
@@ -83,9 +84,9 @@ val embedCommentImages =
                 )
             }
             postText.after { EmbedCommentImages.embed(capture("textView")) }
-            // Card mode shows the post text in a list, one TextView per paragraph: YouTube titles
-            // and thumbnails are drawn in the text, but there is no room for images under it, so
-            // they stay links.
+            // Card mode shows the post text in a list whose rows are a TextView alone, so each
+            // row is put in a column where its images go under the text.
+            cardPostRow.redirectTo(EmbedCommentImages.inflateCardText)
             cardPostText.after { EmbedCommentImages.embed(capture("textView")) }
             // Image, GIF and video posts show their text under the media.
             mediaPostText.after { EmbedCommentImages.embed(capture("textView")) }
@@ -113,6 +114,16 @@ private val postText =
     klass("com.onelouder.baconreader.adapters.DetailLinkFragment")
         .method("updateSelftext")
         .setText("postText", "android.widget.TextView")
+
+private val cardPostRow =
+    klass("com.onelouder.baconreader.adapters.SelftextAdapter").method("getView").point(
+        "cardPostRow"
+    ) {
+        invokeVirtual {
+            owner("android.view.LayoutInflater")
+            name("inflate")
+        }
+    }
 
 private val cardPostText =
     klass("com.onelouder.baconreader.adapters.SelftextAdapter")
