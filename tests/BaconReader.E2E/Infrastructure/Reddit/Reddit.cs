@@ -263,6 +263,30 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// </summary>
     public void HasACommentWithTheLink(string text, string link) => world.AddComment(post, $"{text}\n\n{link}");
 
+    /// <summary>"… has a comment "&lt;text&gt;" with a bare link to the YouTube video "&lt;video&gt;"": its watch page, as Reddit auto-links it.</summary>
+    public void HasACommentWithABareLinkToTheYouTubeVideo(string text, string video) =>
+        HasACommentWithTheLink(text, YouTubeVideo(video).Link);
+
+    /// <summary>"… with a bare short link to the YouTube video "&lt;video&gt;" at &lt;seconds&gt; seconds": <c>https://youtu.be/&lt;id&gt;?t=&lt;seconds&gt;</c>.</summary>
+    public void HasACommentWithABareShortLinkToTheYouTubeVideoAt(string text, string video, int seconds) =>
+        HasACommentWithTheLink(text, YouTubeVideo(video).ShortLink(seconds));
+
+    /// <summary>"… with a bare link to the YouTube Short "&lt;video&gt;"": <c>https://www.youtube.com/shorts/&lt;id&gt;</c>.</summary>
+    public void HasACommentWithABareLinkToTheYouTubeShort(string text, string video) =>
+        HasACommentWithTheLink(text, $"https://www.youtube.com/shorts/{YouTubeVideo(video).Id}");
+
+    /// <summary>"… with the link "&lt;words&gt;" to the YouTube video "&lt;video&gt;"": written as <c>[words](address)</c>.</summary>
+    public void HasACommentWithTheLinkToTheYouTubeVideo(string text, string words, string video) =>
+        HasACommentWithTheLink(text, $"[{words}]({YouTubeVideo(video).Link})");
+
+    /// <summary>"… with a bare link to the YouTube channel "@&lt;channel&gt;"": <c>https://www.youtube.com/@&lt;channel&gt;</c>.</summary>
+    public void HasACommentWithABareLinkToTheYouTubeChannel(string text, string channel) =>
+        HasACommentWithTheLink(text, $"https://www.youtube.com/@{channel.TrimStart('@')}");
+
+    private YouTubeVideo YouTubeVideo(string title) =>
+        world.YouTube.FindVideoTitled(title)
+            ?? throw new InvalidOperationException($"The scenario's YouTube has no video \"{title}\": a Given line makes it first.");
+
     /// <summary>"… has a comment "&lt;text&gt;" with &lt;count&gt; Silver awards": a comment given Reddit's Silver that many times.</summary>
     public void HasACommentWithSilverAwards(string text, int count) => world.AddComment(post, text, comment => comment.WithSilver(count));
 

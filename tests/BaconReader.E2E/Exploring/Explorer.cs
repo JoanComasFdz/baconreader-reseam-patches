@@ -175,7 +175,7 @@ public sealed class Explorer : BaseE2E
             {
                 case "post": Reddit.HasAPost(command.Argument(1), command.Argument(0)); break;
                 case "youtube video": Reddit.YouTubeHasAVideo(command.Argument(0), command.Argument(1)); break;
-                case "removed youtube video": Reddit.YouTubeHasRemovedAVideo(command.Argument(0), command.Argument(1)); break;
+                case "removed youtube video": Reddit.YouTubeHasRemovedItsVideo(command.Argument(0)); break;
                 case "youtube post": Reddit.HasALinkPostLinkingToTheYouTubeVideo(command.Argument(1), command.Argument(0), command.Argument(2)); break;
                 case "comment with link": Reddit.ThePost(command.Argument(0)).HasACommentWithTheLink(command.Argument(1), command.Argument(2)); break;
                 case "phone joins another network": Reddit.ThePhoneJoinsAnotherNetwork(); break;

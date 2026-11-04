@@ -249,6 +249,40 @@ public sealed class Comments(AndroidDriver driver)
     }
 
     /// <summary>
+    /// Waits until the comment "<paramref name="text"/>" shows the link "<paramref name="link"/>" on a line of its own:
+    /// "Embed comment images" swaps a bare YouTube link for its title once YouTube answers, a spinner after the link until
+    /// then.
+    /// </summary>
+    public Task WaitUntilLinkShownAsync(string text, string link) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is { } comment
+                && (comment.FindElements(Text).FirstOrDefault()?.Text ?? "").Split('\n').Contains(link),
+            TimeSpan.FromSeconds(30),
+            $"The link \"{link}\" in the comment \"{text}\"");
+
+    /// <summary>
+    /// Waits until the comment "<paramref name="text"/>" shows no spinner after a link: YouTube answered for each of its
+    /// bare YouTube links, with a title or with none.
+    /// </summary>
+    public Task WaitUntilLinkTitlesLoadedAsync(string text) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is { } comment
+                && !(comment.FindElements(Text).FirstOrDefault()?.Text ?? "").Contains(" \uFFFC", StringComparison.Ordinal),
+            TimeSpan.FromSeconds(30),
+            $"The links of the comment \"{text}\" loading");
+
+    /// <summary>
+    /// Waits until the comment "<paramref name="text"/>" shows a thumbnail on a line of its own, drawn in its text:
+    /// Android's object replacement character on that line.
+    /// </summary>
+    public Task WaitUntilThumbnailInTextShownAsync(string text) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is { } comment
+                && (comment.FindElements(Text).FirstOrDefault()?.Text ?? "").Split('\n').Contains("\uFFFC"),
+            TimeSpan.FromSeconds(30),
+            $"A thumbnail in the comment \"{text}\"");
+
+    /// <summary>
     /// Waits until the comment "<paramref name="text"/>" shows a GIF, an image or a video under it,
     /// loaded: an image's view is empty, and so hidden, until then.
     /// </summary>

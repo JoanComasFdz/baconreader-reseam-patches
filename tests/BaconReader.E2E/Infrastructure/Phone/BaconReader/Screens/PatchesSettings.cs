@@ -32,6 +32,10 @@ public sealed class PatchesSettings(AndroidDriver driver)
             TimeSpan.FromSeconds(10),
             $"The patches' \"{page.ToShownText()}\" settings");
 
+    /// <summary>Scrolls the page until <paramref name="setting"/>'s title is on the screen: a page can be longer than the screen.</summary>
+    public Task ScrollToAsync(PatchSetting setting) =>
+        OnScreen.ScrollToAsync(driver, Locate.UpDownList(), Titled(setting.ToShownText()), $"The setting \"{setting.ToShownText()}\"");
+
     /// <summary>Taps <paramref name="setting"/>'s title, which switches it.</summary>
     public Task TickAsync(PatchSetting setting) => OnScreen.PressAsync(driver, Titled(setting.ToShownText()));
 

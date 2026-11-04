@@ -5,6 +5,7 @@ using BaconReader.E2E.Infrastructure;
 using BaconReader.E2E.Infrastructure.Phone;
 using BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 using BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
+using BaconReader.E2E.Infrastructure.Reddit;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using JoanComasFdz.AssertingThat;
 
@@ -14,7 +15,9 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Comments;
 /// "Embed comment images": BaconReader shows the images, GIFs and videos of comments and post texts under the text, and
 /// plays the videos in place. A tap switches an image between full width and 200×200, a double tap opens it in full
 /// screen, a long press saves it to Downloads/BaconReader. An Imgur album shows one image at a time, swiped sideways, with
-/// its place in the album over it.
+/// its place in the album over it. A bare YouTube link shows its video's channel and title, from YouTube's oEmbed, and,
+/// with "Show YouTube thumbnails" on, the video's thumbnail drawn in the text under it. Left out: a playlist, whose
+/// thumbnail the patch takes from oEmbed's answer only at an https address, which the fake's plain HTTP isn't.
 /// </summary>
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
@@ -37,6 +40,16 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Media thread" has a comment "Here is an album" with a link to the Imgur album "Trip"
           And the post "Media thread" has a comment "One picture" with a link to the Imgur album "Single"
           And Reddit has a post "A picture in text" in r/e2e with the text "Look at this" and an image
+          And YouTube has a video "Cooking pasta at home" on the channel "@e2ekitchen"
+          And YouTube has a Short "Short clip" on the channel "@e2ekitchen"
+          And YouTube has removed its video "Gone video"
+          And Reddit has a post "YouTube thread" in r/e2e
+          And the post "YouTube thread" has a comment "Bare link" with a bare link to the YouTube video "Cooking pasta at home"
+          And the post "YouTube thread" has a comment "From a minute in" with a bare short link to the YouTube video "Cooking pasta at home" at 83 seconds
+          And the post "YouTube thread" has a comment "A Short" with a bare link to the YouTube Short "Short clip"
+          And the post "YouTube thread" has a comment "Written link" with the link "my video" to the YouTube video "Cooking pasta at home"
+          And the post "YouTube thread" has a comment "Channel link" with a bare link to the YouTube channel "@e2ekitchen"
+          And the post "YouTube thread" has a comment "Removed link" with a bare link to the YouTube video "Gone video"
           And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
@@ -136,6 +149,41 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I go back to the posts
           And I tap the post "Media thread"
           Then the comment "Here is a video" shows no video
+          When I go back to the posts
+          And I tap the post "YouTube thread"
+          Then the comment "Bare link" shows "@e2ekitchen - Cooking pasta at home"
+          And the comment "From a minute in" shows "@e2ekitchen - Cooking pasta at home (from 1:23)"
+          And the comment "A Short" shows "@e2ekitchen - Short clip [Short]"
+          # A link written with its own words keeps them.
+          And the comment "Written link" shows "my video"
+          # YouTube has no title for a channel: the patch shows its @handle.
+          And the comment "Channel link" shows "@e2ekitchen [Channel]"
+          # YouTube has no title for a removed video: the link stays as Reddit shows it.
+          And the comment "Removed link" shows the address of the YouTube video "Gone video"
+          # "Show YouTube thumbnails" is off by default.
+          And the comment "Bare link" shows no thumbnail
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Links"
+          Then the settings show "Show YouTube video titles", "Show YouTube thumbnails", "Show X posts" and "Show Bluesky posts", in this order
+          When I tap "Show YouTube thumbnails"
+          And I go back to the posts
+          And I tap the post "YouTube thread"
+          # The thumbnail is drawn in the comment's text, on its own line under the link.
+          Then the comment "Bare link" shows a thumbnail under its link
+          # Not on the screen: the fake YouTube records what BaconReader asked for.
+          And YouTube served the thumbnail of "Cooking pasta at home"
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Links"
+          And I tap "Show YouTube video titles"
+          And I go back to the posts
+          And I tap the post "YouTube thread"
+          Then the comment "Bare link" shows the address of the YouTube video "Cooking pasta at home"
         """)]
     public async Task EmbedCommentImagesShowsTheMediaOfCommentsAndPostTextsAndFollowsItsSettings(Screen screen)
     {
@@ -154,6 +202,16 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("Media thread").HasACommentWithALinkToTheImgurAlbum("Here is an album", "Trip");
         Reddit.ThePost("Media thread").HasACommentWithALinkToTheImgurAlbum("One picture", "Single");
         Reddit.HasAPostWithTheTextAndAnImage("A picture in text", "e2e", "Look at this");
+        Reddit.YouTubeHasAVideo("Cooking pasta at home", "@e2ekitchen");
+        Reddit.YouTubeHasAShort("Short clip", "@e2ekitchen");
+        Reddit.YouTubeHasRemovedItsVideo("Gone video");
+        Reddit.HasAPost("YouTube thread", "e2e");
+        Reddit.ThePost("YouTube thread").HasACommentWithABareLinkToTheYouTubeVideo("Bare link", "Cooking pasta at home");
+        Reddit.ThePost("YouTube thread").HasACommentWithABareShortLinkToTheYouTubeVideoAt("From a minute in", "Cooking pasta at home", 83);
+        Reddit.ThePost("YouTube thread").HasACommentWithABareLinkToTheYouTubeShort("A Short", "Short clip");
+        Reddit.ThePost("YouTube thread").HasACommentWithTheLinkToTheYouTubeVideo("Written link", "my video", "Cooking pasta at home");
+        Reddit.ThePost("YouTube thread").HasACommentWithABareLinkToTheYouTubeChannel("Channel link", "@e2ekitchen");
+        Reddit.ThePost("YouTube thread").HasACommentWithABareLinkToTheYouTubeVideo("Removed link", "Gone video");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
@@ -409,5 +467,91 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         var noVideo = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is a video");
         Asserting.That(noVideo).ShowsNoVideo();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("YouTube thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkShownAsync("Bare link", "@e2ekitchen - Cooking pasta at home");
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkShownAsync("From a minute in", "@e2ekitchen - Cooking pasta at home (from 1:23)");
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkShownAsync("A Short", "@e2ekitchen - Short clip [Short]");
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkTitlesLoadedAsync("Removed link");
+
+        // Then
+        var bareLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Bare link");
+        var fromAMinuteIn = await Phone.BaconReader.Detail.Comments.ReadAsync("From a minute in");
+        var aShort = await Phone.BaconReader.Detail.Comments.ReadAsync("A Short");
+        // A link written with its own words keeps them.
+        var writtenLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Written link");
+        // YouTube has no title for a channel: the patch shows its @handle.
+        var channelLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Channel link");
+        // YouTube has no title for a removed video: the link stays as Reddit shows it.
+        var removedLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Removed link");
+        var goneVideo = Reddit.ReadTheYouTubeVideo("Gone video");
+        Asserting.That(bareLink).ShowsTheLink("@e2ekitchen - Cooking pasta at home")
+            // "Show YouTube thumbnails" is off by default.
+            .ShowsNoThumbnail();
+        Asserting.That(fromAMinuteIn).ShowsTheLink("@e2ekitchen - Cooking pasta at home (from 1:23)");
+        Asserting.That(aShort).ShowsTheLink("@e2ekitchen - Short clip [Short]");
+        Asserting.That(writtenLink).ShowsTheLink("my video");
+        Asserting.That(channelLink).ShowsTheLink("@e2ekitchen [Channel]");
+        Asserting.That(removedLink).ShowsTheAddressOf(goneVideo);
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Links());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Links());
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.ShowBlueskyPosts());
+
+        // Then
+        var linkSettings = await Phone.BaconReader.PatchesSettings.ReadAsync();
+        Asserting.That(linkSettings).ShowsTheSettings(
+            new PatchSetting.ShowYouTubeVideoTitles(),
+            new PatchSetting.ShowYouTubeThumbnails(),
+            new PatchSetting.ShowXPosts(),
+            new PatchSetting.ShowBlueskyPosts());
+
+        // When
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowYouTubeThumbnails());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("YouTube thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilThumbnailInTextShownAsync("Bare link");
+        await Reddit.WaitUntilTheYouTubeThumbnailOfTheVideoIsServedAsync("Cooking pasta at home");
+
+        // Then
+        // The thumbnail is drawn in the comment's text, on its own line under the link.
+        var withThumbnail = await Phone.BaconReader.Detail.Comments.ReadAsync("Bare link");
+        // Not on the screen: the fake YouTube records what BaconReader asked for.
+        var thumbnail = Reddit.ReadRequestsForTheYouTubeThumbnailOf("Cooking pasta at home");
+        Asserting.That(withThumbnail).ShowsAThumbnailUnderItsLink();
+        Asserting.That(thumbnail).Served();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Links());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Links());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowYouTubeVideoTitles());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("YouTube thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilLinkTitlesLoadedAsync("Bare link");
+
+        // Then
+        var titleOff = await Phone.BaconReader.Detail.Comments.ReadAsync("Bare link");
+        var cookingVideo = Reddit.ReadTheYouTubeVideo("Cooking pasta at home");
+        Asserting.That(titleOff).ShowsTheAddressOf(cookingVideo);
     }
 }
