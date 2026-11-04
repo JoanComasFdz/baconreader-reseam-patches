@@ -15,8 +15,8 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Media;
 /// its first image and BaconReader's gallery indicator, and in the card list a gallery and its crosspost show the
 /// gallery's first image in their cards; spoiler thumbnails are blurred, and NSFW ones while "Show NSFW
 /// images" is off; a RedGIFs post, which Reddit sends without a thumbnail, shows its video's, which the patch asks
-/// RedGIFs for. The patch describes a thumbnail it blurs "Blurred thumbnail". Out of scope: YouTube and embed
-/// thumbnails, which come from other hosts.
+/// RedGIFs for, and a link post to a YouTube video its video's, from YouTube. The patch describes a thumbnail it blurs
+/// "Blurred thumbnail". Out of scope: embed thumbnails, which come from other hosts.
 /// </summary>
 public sealed class FixListThumbnailsTests : BaseE2E
 {
@@ -34,6 +34,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
           And Reddit has a crosspost "Shared album" in r/e2e of the post "Album"
           And Reddit has a spoiler image post "Spoiler picture" in r/e2e
           And Reddit has a RedGIFs post "Clip" in r/e2e
+          And YouTube has a video "Listed video" on the channel "@e2ekitchen"
+          And Reddit has a link post "YouTube video" in r/e2e linking to the YouTube video "Listed video"
           And BaconReader is patched with every patch
           And BaconReader is open
           And the test account is logged in
@@ -54,6 +56,10 @@ public sealed class FixListThumbnailsTests : BaseE2E
           And the post "Clip" shows a thumbnail
           # Not on the screen: the fake RedGIFs records what BaconReader asked for.
           And RedGIFs served the thumbnail of "Clip"
+          # Reddit sends no thumbnail for it: the patch takes the video's from YouTube.
+          And the post "YouTube video" shows a thumbnail
+          # Not on the screen: the fake YouTube records what BaconReader asked for.
+          And YouTube served the thumbnail of "Listed video"
           # BaconReader hides NSFW posts until "Show NSFW posts" is on.
           When I open the left menu
           And I tap "Settings"
@@ -87,6 +93,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
         Reddit.HasACrosspostOf("Shared album", "e2e", "Album");
         Reddit.HasASpoilerImagePost("Spoiler picture", "e2e");
         Reddit.HasARedGifsPost("Clip", "e2e");
+        Reddit.YouTubeHasAVideo("Listed video", "@e2ekitchen");
+        Reddit.HasALinkPostLinkingToTheYouTubeVideo("YouTube video", "e2e", "Listed video");
         await Phone.BaconReader.OpenAsync();
         await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
@@ -102,6 +110,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
         await Reddit.WaitUntilTheThumbnailOfThePostIsServedAsync("Flaky thumbnail");
         await Phone.BaconReader.Main.Posts.WaitUntilThumbnailShownAsync("Clip", PostThumbnail.Shown);
         await Reddit.WaitUntilTheRedGifsThumbnailOfThePostIsServedAsync("Clip");
+        await Phone.BaconReader.Main.Posts.WaitUntilThumbnailShownAsync("YouTube video", PostThumbnail.Shown);
+        await Reddit.WaitUntilTheYouTubeThumbnailOfTheVideoIsServedAsync("Listed video");
 
         // Then
         // Not on the screen: the fake Reddit records what BaconReader asked for. Reddit sends the signed URL with its "&" HTML-escaped, and refuses it so.
@@ -118,6 +128,10 @@ public sealed class FixListThumbnailsTests : BaseE2E
         var clip = await Phone.BaconReader.Main.Posts.ReadPostAsync("Clip");
         // Not on the screen: the fake RedGIFs records what BaconReader asked for.
         var clipThumbnail = Reddit.ReadRequestsForTheRedGifsThumbnailOf("Clip");
+        // Reddit sends no thumbnail for it: the patch takes the video's from YouTube.
+        var youTubePost = await Phone.BaconReader.Main.Posts.ReadPostAsync("YouTube video");
+        // Not on the screen: the fake YouTube records what BaconReader asked for.
+        var youTubeThumbnail = Reddit.ReadRequestsForTheYouTubeThumbnailOf("Listed video");
         Asserting.That(signed).ServedWithItsAmpersandsUnescaped();
         Asserting.That(flaky).ServedOnTheThirdRequest();
         Asserting.That(link).ShowsAThumbnail();
@@ -127,6 +141,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
         Asserting.That(spoiler).ShowsABlurredThumbnail();
         Asserting.That(clip).ShowsAThumbnail();
         Asserting.That(clipThumbnail).Served();
+        Asserting.That(youTubePost).ShowsAThumbnail();
+        Asserting.That(youTubeThumbnail).Served();
 
         // When
         // BaconReader hides NSFW posts until "Show NSFW posts" is on.
