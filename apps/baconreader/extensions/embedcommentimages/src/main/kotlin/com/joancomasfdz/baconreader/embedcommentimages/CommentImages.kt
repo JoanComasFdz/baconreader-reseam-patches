@@ -128,7 +128,10 @@ internal object CommentImages {
     fun loadOnTap(context: Context): Boolean = settings.imagesWifiOnly.value && isMetered(context)
 
     /** Images go in slots right after the TextView, so they need a vertical LinearLayout. */
-    fun embed(textView: TextView, markdown: String?) {
+    fun embed(textView: TextView, markdown: String?) = embedText(textView, emoteIds(markdown))
+
+    /** [embed], with the ids of the text's emotes, in order. */
+    private fun embedText(textView: TextView, emoteIds: List<String>) {
         // The app shows the comment again on every change (a vote, a collapsed reply...). Its
         // images are kept when they did not change: new ones would start small and make the list
         // jump.
@@ -240,7 +243,6 @@ internal object CommentImages {
                 }
             }
 
-            val emoteIds = emoteIds(markdown)
             if (emoteIds.size == emoteUrls.size) {
                 for (i in emoteUrls.indices) emoteUrls[i] = emoteUrl(emoteIds[i], emoteUrls[i])
             }
@@ -289,7 +291,7 @@ internal object CommentImages {
                     textView,
                     builder,
                     thumbnailLinks,
-                    fullWidthDefault(),
+                    fullWidthFor(textView),
                 )
             trimWhitespace(builder)
 
@@ -331,7 +333,7 @@ internal object CommentImages {
                 parent.addView(slot, index++)
                 added.add(slot)
             }
-            val fullWidth = fullWidthDefault()
+            val fullWidth = fullWidthFor(textView)
             val maxHeight =
                 (textView.resources.displayMetrics.heightPixels * EXPANDED_MAX_SCREEN_HEIGHT)
                     .toInt()
@@ -355,6 +357,261 @@ internal object CommentImages {
             ErrorDialog.report(TAG, "Could not show the images of the text", throwable)
         } finally {
             if (!keptSlots) removeSlots(previousSlots)
+        }
+    }
+
+    // The views put in a text's column in place of its bare media links: each link's media, then
+    // a copy of the TextView with the text up to the next link. Only used on the main thread.
+    private val inPlaceViews = WeakHashMap<TextView, List<View>>()
+
+    // What the views in place of a text's links show, to keep them when the same text is shown
+    // again.
+    private val inPlaceKeys = WeakHashMap<TextView, String>()
+
+    // The TextView each copy shows the rest of.
+    private val copySources = WeakHashMap<TextView, TextView>()
+
+    // The texts of posts, and their copies: their images start at full width.
+    private val postTexts = WeakHashMap<TextView, Boolean>()
+
+    // The touch listener the app gives each comment's TextView, for the TextView's copies.
+    private val touchListeners = WeakHashMap<View, View.OnTouchListener>()
+
+    /** A bare link to media in a text: where it is, and the media that replaces it. */
+    private class Anchor(val start: Int, val end: Int, val slot: (TextView) -> View)
+
+    /** Marks [textView] as a post's text, whose images start at full width. */
+    fun markPostText(textView: TextView) {
+        postTexts[textView] = true
+    }
+
+    /** Whether the images under [textView] start at full width. */
+    fun fullWidthFor(textView: TextView): Boolean =
+        postTexts.containsKey(textView) || fullWidthDefault()
+
+    /** Keeps the app's touch listener of a comment's [view], to give it to the view's copies. */
+    fun rememberTouch(view: View, listener: View.OnTouchListener?) {
+        if (listener == null) touchListeners.remove(view) else touchListeners[view] = listener
+    }
+
+    /**
+     * Shows the media of the bare links of a comment's or post's text where the links are: the text
+     * is cut at each link, the part before the first one stays in [textView], and each link's media
+     * goes under it, followed by the text up to the next link in a copy of [textView].
+     */
+    fun embedInPlace(textView: TextView, markdown: String?) {
+        try {
+            val text = fullText(textView) as? Spanned
+            val anchors =
+                if (text == null || textView is ExpandableTextView) emptyList()
+                else anchors(textView, text)
+            if (text == null || anchors.isEmpty()) {
+                removeInPlace(textView)
+                embed(textView, markdown)
+                return
+            }
+            val parent = textView.parent as LinearLayout
+            val ids = emoteIds(markdown)
+            val pieces = ArrayList<SpannableStringBuilder>()
+            pieces.add(piece(text, 0, anchors[0].start))
+            for ((i, anchor) in anchors.withIndex()) {
+                val end = if (i + 1 < anchors.size) anchors[i + 1].start else text.length
+                pieces.add(piece(text, anchor.end, end))
+            }
+            // Each piece gets the ids of its own emotes, when they add up.
+            val counts = pieces.map { emoteCount(it) }
+            val pieceIds = ArrayList<List<String>>()
+            var from = 0
+            for (count in counts) {
+                pieceIds.add(
+                    if (counts.sum() == ids.size) ids.subList(from, from + count) else emptyList()
+                )
+                from += count
+            }
+
+            textView.setText(pieces[0], TextView.BufferType.SPANNABLE)
+            embedText(textView, pieceIds[0])
+            if (textView.text.isEmpty()) textView.visibility = View.GONE
+
+            // The app shows a comment again on every change (a vote, a collapsed reply...): the
+            // media and the copies are kept when the text did not change, or the list would jump.
+            val key = text.toString() + "\u0000" + anchors.joinToString { "${it.start}" }
+            val previous = inPlaceViews[textView]
+            if (
+                key == inPlaceKeys[textView] &&
+                    previous != null &&
+                    previous.all { it.parent === parent && !removedSlots.containsKey(it) }
+            ) {
+                return
+            }
+            removeInPlace(textView)
+
+            val added = ArrayList<View>()
+            var index = parent.indexOfChild(textView) + 1 + (slots[textView]?.size ?: 0)
+            for ((i, anchor) in anchors.withIndex()) {
+                val slot = anchor.slot(textView)
+                parent.addView(slot, index++)
+                added.add(slot)
+                val rest = pieces[i + 1]
+                if (rest.isEmpty()) continue
+                val copy = copyOf(textView)
+                copy.setText(rest, TextView.BufferType.SPANNABLE)
+                parent.addView(copy, index++)
+                added.add(copy)
+                embedText(copy, pieceIds[i + 1])
+                index += slots[copy]?.size ?: 0
+            }
+            inPlaceViews[textView] = added
+            inPlaceKeys[textView] = key
+        } catch (throwable: Throwable) {
+            ErrorDialog.report(TAG, "Could not show the images of the text", throwable)
+        }
+    }
+
+    /**
+     * The bare links of [text] whose media are shown, in the order of the text, as [embed] finds
+     * them.
+     */
+    private fun anchors(textView: TextView, text: Spanned): List<Anchor> {
+        val column = textView.parent as? LinearLayout
+        if (column == null || column.orientation != LinearLayout.VERTICAL) return emptyList()
+        val imagesOn = settings.showImages.value
+        val videosOn = settings.showVideos.value
+        val plain = text.toString()
+        val result = ArrayList<Anchor>()
+        val spans = text.getSpans(0, text.length, URLSpan::class.java)
+        spans.sortBy { text.getSpanStart(it) }
+        for (span in spans) {
+            val start = text.getSpanStart(span)
+            val end = text.getSpanEnd(span)
+            if (result.isNotEmpty() && start < result.last().end) continue
+            val linkText = plain.substring(start, end)
+            val link = normalizeLink(span.url)
+            val img = IMG_TAG.matcher(linkText)
+            val giphy = imagesOn && link != null && img.find()
+            if (!giphy && !linkText.trim().startsWith("http")) continue
+            val videoId = if (videosOn) CommentVideo.videoId(link) else null
+            if (videoId != null) {
+                val loadPreviews = !loadOnTap(textView.context)
+                result.add(
+                    Anchor(start, end) {
+                        CommentVideo.createSlot(
+                            it,
+                            videoId,
+                            fullWidthFor(it),
+                            dp(it.context, IMAGE_SIZE_DP),
+                            (it.resources.displayMetrics.heightPixels * EXPANDED_MAX_SCREEN_HEIGHT)
+                                .toInt(),
+                            loadPreviews,
+                        )
+                    }
+                )
+                continue
+            }
+            val xPostsOn = settings.xPosts.value
+            val blueskyPostsOn = settings.blueskyPosts.value
+            if (SocialPosts.postKey(link, xPostsOn, blueskyPostsOn) != null) continue
+            if (YoutubeTitles.isYoutubeUrl(link)) continue
+            if (!imagesOn || link == null) continue
+            if (ImgurAlbum.isAlbum(link)) {
+                result.add(Anchor(start, end) { ImgurAlbum.createSlot(it, link) })
+                continue
+            }
+            val image =
+                if (giphy) {
+                    val preview = unescape(img.group(1)!!)
+                    ImageRef(
+                        preview,
+                        toImageUrl(link) ?: preview,
+                        width(img.group()),
+                        height(img.group()),
+                    )
+                } else {
+                    val imageUrl = toImageUrl(link) ?: continue
+                    ImageRef(imageUrl, imageUrl, 0, 0)
+                }
+            result.add(Anchor(start, end) { createImageSlot(it, image) })
+        }
+        return result
+    }
+
+    /** How many emotes, small <img> tags outside links, [text] has. */
+    private fun emoteCount(text: Spanned): Int {
+        val links = text.getSpans(0, text.length, URLSpan::class.java)
+        val img = IMG_TAG.matcher(text)
+        var count = 0
+        while (img.find()) {
+            val inLink = links.any {
+                img.start() >= text.getSpanStart(it) && img.start() < text.getSpanEnd(it)
+            }
+            if (!inLink && isEmote(width(img.group()), height(img.group()))) count++
+        }
+        return count
+    }
+
+    /** [start, end) of [text], with its spans, without the blank lines around it. */
+    private fun piece(text: Spanned, start: Int, end: Int): SpannableStringBuilder {
+        val builder = SpannableStringBuilder(text, start, end)
+        trimWhitespace(builder)
+        return builder
+    }
+
+    /**
+     * A TextView that shows text like [textView] does, in its column, and reacts to touches like
+     * it.
+     */
+    private fun copyOf(textView: TextView): TextView {
+        val context = textView.context
+        // The app's ClickableTextView handles the taps on its links itself.
+        val copy =
+            try {
+                textView.javaClass.getConstructor(Context::class.java).newInstance(context)
+            } catch (exception: Exception) {
+                Log.i(TAG, "Could not copy the post's TextView", exception)
+                TextView(context)
+            }
+        copy.setTextSize(TypedValue.COMPLEX_UNIT_PX, textView.textSize)
+        copy.setTextColor(textView.textColors)
+        textView.linkTextColors?.let { copy.setLinkTextColor(it) }
+        copy.typeface = textView.typeface
+        copy.setLineSpacing(textView.lineSpacingExtra, textView.lineSpacingMultiplier)
+        copy.setPadding(
+            textView.paddingLeft,
+            textView.paddingTop,
+            textView.paddingRight,
+            textView.paddingBottom,
+        )
+        copy.movementMethod = textView.movementMethod
+        copy.setOnTouchListener(touchListeners[textView])
+        copySources[copy] = textView
+        if (postTexts.containsKey(textView)) postTexts[copy] = true
+        val margins = textView.layoutParams as? ViewGroup.MarginLayoutParams
+        copy.layoutParams =
+            LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+                .apply {
+                    topMargin = dp(context, 8)
+                    leftMargin = margins?.leftMargin ?: 0
+                    rightMargin = margins?.rightMargin ?: 0
+                }
+        return copy
+    }
+
+    /** Removes the media and the copies [embedInPlace] put in the column of [textView]. */
+    private fun removeInPlace(textView: TextView) {
+        inPlaceKeys.remove(textView)
+        val old = inPlaceViews.remove(textView) ?: return
+        for (view in old) {
+            if (view is TextView) {
+                removeSlots(slots.remove(view))
+                slotKeys.remove(view)
+                generations.remove(view)
+                (view.parent as? ViewGroup)?.removeView(view)
+            } else {
+                removeSlots(listOf(view))
+            }
         }
     }
 
@@ -497,7 +754,7 @@ internal object CommentImages {
             ),
         )
 
-        var expanded = isExpanded(image)
+        var expanded = isExpanded(image, textView)
         var fullLoaded = false
         var loadStarted = false
         val applySize = {
@@ -606,8 +863,8 @@ internal object CommentImages {
         if (!sizeOverrides.containsKey(to.previewUrl)) sizeOverrides[to.previewUrl] = expanded
     }
 
-    private fun isExpanded(image: ImageRef): Boolean =
-        sizeOverrides[image.previewUrl] ?: fullWidthDefault()
+    private fun isExpanded(image: ImageRef, textView: TextView): Boolean =
+        sizeOverrides[image.previewUrl] ?: fullWidthFor(textView)
 
     /**
      * Collapsed: fits a 200x200dp box. Expanded: full width, keeping the aspect ratio, at most 80%
@@ -1025,12 +1282,32 @@ internal object CommentImages {
      */
     fun slotLayoutParams(textView: TextView, width: Int): LinearLayout.LayoutParams {
         val text = textView.layoutParams as? ViewGroup.MarginLayoutParams
-        val comment = textView.id == resourceId(textView.context, "commentBody")
+        val source = copySources[textView] ?: textView
+        val comment = source.id == resourceId(textView.context, "commentBody")
         return LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             topMargin = dp(textView.context, 4)
             leftMargin = text?.leftMargin ?: 0
             rightMargin = if (comment) 0 else text?.rightMargin ?: 0
         }
+    }
+
+    /**
+     * A vertical LinearLayout around [view], a list's row, to put images under it. It keeps the
+     * row's layout params; the view fills its width.
+     */
+    fun columnFor(view: View): View {
+        if (view !is TextView || view.parent != null) return view
+        val column = LinearLayout(view.context)
+        column.orientation = LinearLayout.VERTICAL
+        view.layoutParams?.let { column.layoutParams = it }
+        column.addView(
+            view,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+        return column
     }
 
     fun dp(context: Context, value: Int): Int =

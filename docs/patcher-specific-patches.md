@@ -28,7 +28,7 @@ Errors of the patches show in a dialog over the current screen, with the details
 | Page | Setting | Key | Default |
 |---|---|---|---|
 | Images and videos | Show images | `embed_comment_images.show_images` | On |
-| Images and videos | Full width by default | `embed_comment_images.images_full_width` | Off |
+| Images and videos | Full width by default | `embed_comment_images.images_full_width` | Off. Comments only: images in posts always start at full width |
 | Images and videos | Long press to download | `embed_comment_images.images_long_press_download` | On |
 | Images and videos | Load images only on Wi-Fi | `embed_comment_images.images_wifi_only` | Off |
 | Images and videos | Play videos in comments | `embed_comment_images.show_videos` | On |

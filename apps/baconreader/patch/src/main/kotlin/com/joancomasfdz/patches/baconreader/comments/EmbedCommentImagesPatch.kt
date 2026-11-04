@@ -13,6 +13,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import app.reseam.patch.redirectTo
 import app.reseam.patch.settings.gate
 import app.reseam.patch.settings.section
 import com.joancomasfdz.baconreader.embedcommentimages.bindings.EmbedCommentImages
@@ -22,6 +23,7 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.SettingsPages
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.commentBodyTouch
 import com.joancomasfdz.patches.baconreader.media.fixImgurApi
 
 private const val COMMENT_HOLDER = "com.onelouder.baconreader.adapters.CommentHolder"
@@ -82,11 +84,18 @@ val embedCommentImages =
                     param(0).field(messageBody),
                 )
             }
-            postText.after { EmbedCommentImages.embed(capture("textView")) }
-            // Card mode shows the post text in a list, one TextView per paragraph: YouTube titles
-            // and thumbnails are drawn in the text, but there is no room for images under it, so
-            // they stay links.
-            cardPostText.after { EmbedCommentImages.embed(capture("textView")) }
+            // A comment's text is cut at its bare media links too; the copies with the text after
+            // each link get the comment body's touch listener.
+            commentBodyTouch.captureArgumentAs("view", 0).captureArgumentAs("listener", 1).after {
+                EmbedCommentImages.rememberTouch(capture("view"), capture("listener"))
+            }
+            // A post's text is cut at its bare media links, which its media replace, and its
+            // images start at full width.
+            postText.after { EmbedCommentImages.embedPostText(capture("textView")) }
+            // Card mode shows the post text in a list whose rows are a TextView alone, so each
+            // row is put in a column where its images go under the text.
+            cardPostRow.redirectTo(EmbedCommentImages.inflateCardText)
+            cardPostText.after { EmbedCommentImages.embedPostText(capture("textView")) }
             // Image, GIF and video posts show their text under the media.
             mediaPostText.after { EmbedCommentImages.embed(capture("textView")) }
         }
@@ -113,6 +122,16 @@ private val postText =
     klass("com.onelouder.baconreader.adapters.DetailLinkFragment")
         .method("updateSelftext")
         .setText("postText", "android.widget.TextView")
+
+private val cardPostRow =
+    klass("com.onelouder.baconreader.adapters.SelftextAdapter").method("getView").point(
+        "cardPostRow"
+    ) {
+        invokeVirtual {
+            owner("android.view.LayoutInflater")
+            name("inflate")
+        }
+    }
 
 private val cardPostText =
     klass("com.onelouder.baconreader.adapters.SelftextAdapter")

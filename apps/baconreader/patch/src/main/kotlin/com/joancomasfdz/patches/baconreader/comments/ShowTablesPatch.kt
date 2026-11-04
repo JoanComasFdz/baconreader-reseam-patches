@@ -14,6 +14,7 @@ import com.joancomasfdz.baconreader.tables.bindings.ShowTables
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
+import com.joancomasfdz.patches.baconreader.core.commentBodyTouch
 
 private const val SPANNER_BASE = "com.onelouder.baconreader.parser.RedditSpannerBase"
 private const val COMMENT_HOLDER = "com.onelouder.baconreader.adapters.CommentHolder"
@@ -76,14 +77,5 @@ private val postTextSet =
             owner("android.widget.TextView")
             name("setText")
             params("java.lang.CharSequence")
-        }
-    }
-
-// The comment body's listener; the constructor's other touch listener is the whole row's.
-private val commentBodyTouch =
-    klass(COMMENT_HOLDER).method("<init>").point("commentBodyTouch") {
-        invokeVirtual {
-            owner("android.widget.TextView")
-            name("setOnTouchListener")
         }
     }
