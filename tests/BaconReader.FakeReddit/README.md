@@ -208,6 +208,19 @@ YouTube link's title, and it and "Fix list thumbnails" load a video's thumbnail.
   card) or `gallery`, which Bluesky sent for a post of several photos; each picture at the fake's `cdn.bsky.app` or
   `video.bsky.app`. A post Bluesky doesn't have is `400 {"error": "NotFound", …}`.
 
+## Emotes
+
+A comment's emotes are `![img](emote|<pack>|<name>)` in its body: a Snoomoji, Reddit's own (`free_emotes_pack`), or a
+subreddit's (`t5_<subreddit id>`). `CommentBuilder.WithSnoomoji(name)` and `WithSubredditEmote()` add one after the
+body's text, on its line. Reddit's API sent every emote the same way on 2026-11-05 (an r/wallstreetbets comment of 2024,
+`RedditEmotes`), and so does the fake: its placeholder, the Snoomoji `dizzy_face`, in `body_html`
+(`<img src="…/dizzy_face.gif" width="60" height="60" style="vertical-align:middle">`) and in `media_metadata` (an
+`AnimatedImage` whose `s.gif` is that GIF, `t` `sticker`). "Embed comment images" finds a Snoomoji's GIF from its name,
+at `https://www.redditstatic.com/…/free_emotes_pack/<name>.gif`, which "E2E fake Reddit" moves to
+`<base>/_media/www.redditstatic.com/`; the fake serves the placeholder and each Snoomoji a comment has. A subreddit's
+emote had its own image in `media_metadata` until 2024 (the Arctic Shift archive); now nothing Reddit sends holds it. No
+comment written since early 2025 has an emote.
+
 ## The JSON
 
 - System.Text.Json, snake_case, with a few names by hand (`over_18`), and nothing escaped that Reddit doesn't escape.
@@ -261,5 +274,4 @@ address: nothing checks their host before loading them, beyond the hook.
 - **Relative links:** `RedditSpanner` builds `//reddit.com/…` for relative links, which stays on Reddit.
 - **Reddit links in content:** BaconReader recognizes them by bare domain. Content that should open as a Reddit link
   says `https://www.reddit.com/…`: the app then fetches it through the moved API. Not `<baseUrl>/r/…`.
-- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`, `.reddit.com` cookies) and Snoomoji emotes
-  (`www.redditstatic.com`).
+- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`, `.reddit.com` cookies).

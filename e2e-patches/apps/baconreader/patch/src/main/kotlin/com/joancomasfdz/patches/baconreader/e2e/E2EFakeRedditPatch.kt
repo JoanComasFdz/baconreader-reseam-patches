@@ -23,8 +23,9 @@ private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 // Reddit detects automation, rate-limits logins and changes its content, so the e2e tests talk to
 // a fake Reddit server in the test process instead, which the phone reaches through
 // `adb reverse`. It answers the third-party services the patches fetch from too (Imgur, RedGIFs,
-// YouTube, X, Bluesky). Only full URL prefixes move: BaconReader recognizes Reddit and Imgur links
-// in posts by bare domains (reddit.com, v.redd.it, imgur.com), and those stay.
+// YouTube, X, Bluesky, Reddit's emotes). Only full URL prefixes move: BaconReader recognizes
+// Reddit and Imgur links in posts by bare domains (reddit.com, v.redd.it, imgur.com), and those
+// stay.
 val e2eFakeReddit =
     patch("E2E fake Reddit") {
         description("Test only: points BaconReader at a fake Reddit server instead of Reddit.")
@@ -126,6 +127,8 @@ private val MEDIA_HOSTS =
         "i.imgur.com",
         "i.ytimg.com",
         "pbs.twimg.com",
+        // The Snoomoji emotes, whose GIF "Embed comment images" finds from an emote's name.
+        "www.redditstatic.com",
     )
 
 // Imgur's API, which "Fix Imgur API" calls instead of BaconReader's RapidAPI proxy.
