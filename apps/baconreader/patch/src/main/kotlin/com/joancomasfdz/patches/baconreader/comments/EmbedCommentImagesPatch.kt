@@ -72,6 +72,8 @@ val embedCommentImages =
             resources.addId("baconreader_patches_image_viewer")
             resources.addId("baconreader_patches_comment_album")
             resources.addId("baconreader_patches_album_counter")
+            // The copies of a text that show what follows each of its media links.
+            resources.addId("baconreader_patches_text_after_media")
 
             // The images are shown instead of the "GIF" link the app puts in place of the <img>.
             gate(EmbedCommentImagesSettings.showImages) { handleGifLink.alwaysReturn() }

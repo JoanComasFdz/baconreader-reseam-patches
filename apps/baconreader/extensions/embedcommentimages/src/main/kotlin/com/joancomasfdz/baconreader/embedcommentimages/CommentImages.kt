@@ -636,6 +636,8 @@ internal object CommentImages {
             textView.paddingBottom,
         )
         copy.movementMethod = textView.movementMethod
+        // The e2e tests find the text after a media link by it.
+        copy.id = resourceId(context, "baconreader_patches_text_after_media")
         copy.setOnTouchListener(touchListeners[textView])
         copySources[copy] = textView
         if (postTexts.containsKey(textView)) postTexts[copy] = true

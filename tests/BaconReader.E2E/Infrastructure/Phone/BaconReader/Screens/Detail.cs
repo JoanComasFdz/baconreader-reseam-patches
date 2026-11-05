@@ -123,24 +123,39 @@ public sealed class PostText(AndroidDriver driver)
 {
     private static readonly By Text = Locate.AppId("quickSelfText");
 
-    /// <summary>Waits until the post's text shows an image, loaded: its view is empty, and so hidden, until then.</summary>
+    /// <summary>
+    /// Waits until the post's text shows an image, loaded: its view is empty, and so hidden, until then. A text that starts
+    /// with the image shows no text before it.
+    /// </summary>
     public Task WaitUntilMediaShownAsync() =>
         Waiting.UntilAsync(
-            () => driver.FindElements(Text).Any(text => text.Displayed) && Media.Images(PostImages(driver)).Count > 0,
+            () => Texts(driver).Count > 0 && Media.Images(PostViews(driver, Media.Image)).Count > 0,
             TimeSpan.FromSeconds(10),
-            "An image under the post's text loading");
+            "An image in the post's text loading");
 
-    /// <summary>What the post's text shows: its text, and how many images under it.</summary>
+    /// <summary>
+    /// What the post's text shows: its text, the parts after its media included, one per line, and how many images in
+    /// it.
+    /// </summary>
     public Task<PostTextSnapshot> ReadAsync() =>
         OnScreen.ReadAsync(driver, () => new PostTextSnapshot(
-            driver.FindElement(Text).Text.Trim(),
-            Media.Images(PostImages(driver)).Count));
+            string.Join('\n', Texts(driver).Select(text => text.Text.Trim())),
+            Media.Images(PostViews(driver, Media.Image)).Count));
+
+    /// <summary>
+    /// The pictures the images of the post's text show, to tell whether one shows twice. The views don't say which picture
+    /// they show, so this reads a screenshot (E2E-TEST-CODE-RULES.md, rule d).
+    /// </summary>
+    public Task<PicturesSnapshot> ReadPicturesAsync() =>
+        OnScreen.ReadAsync(driver, () => new PicturesSnapshot(
+            "The post's text",
+            Screenshots.Pictures(driver.GetScreenshot().AsByteArray, Media.Images(PostViews(driver, Media.Image)).Select(Media.BoundsOf))));
 
     /// <summary>Where the post's text and its first image are on the screen, in pixels.</summary>
     public Task<PostTextLayoutSnapshot> ReadLayoutAsync() =>
         OnScreen.ReadAsync(driver, () =>
         {
-            var image = Media.Images(PostImages(driver)).FirstOrDefault();
+            var image = Media.Images(PostViews(driver, Media.Image)).FirstOrDefault();
             return new PostTextLayoutSnapshot(Bounds(driver.FindElement(Text)), image is null ? null : Bounds(image));
         });
 
@@ -160,11 +175,15 @@ public sealed class PostText(AndroidDriver driver)
 
     private static Rectangle Bounds(IWebElement element) => new(element.Location, element.Size);
 
-    // The images that aren't under a comment.
-    private static IReadOnlyCollection<IWebElement> PostImages(AndroidDriver driver)
+    // The post's text, and the parts of it after its media: the post's own view is hidden when its text starts with one.
+    private static IReadOnlyCollection<IWebElement> Texts(AndroidDriver driver) =>
+        [.. driver.FindElements(Text).Concat(PostViews(driver, Media.TextAfterMedia)).Where(text => text.Displayed)];
+
+    // The views that aren't in a comment.
+    private static IReadOnlyCollection<IWebElement> PostViews(AndroidDriver driver, By by)
     {
-        var inComments = driver.FindElements(Comments.Comment).SelectMany(comment => Media.In(comment, Media.Image)).Select(Id).ToHashSet();
-        return [.. driver.FindElements(Media.Image).Where(image => !inComments.Contains(Id(image)))];
+        var inComments = driver.FindElements(Comments.Comment).SelectMany(comment => Media.In(comment, by)).Select(Id).ToHashSet();
+        return [.. driver.FindElements(by).Where(view => !inComments.Contains(Id(view)))];
     }
 
     private static string Id(IWebElement element) => ((AppiumElement)element).Id;
@@ -224,11 +243,19 @@ public sealed class Comments(AndroidDriver driver)
     /// Scrolls the comments until the comment "<paramref name="text"/>" shows whole, between the sort bar and
     /// the buttons at the bottom.
     /// </summary>
-    public async Task ScrollToCommentAsync(string text)
+    public Task ScrollToCommentAsync(string text) => ScrollToAsync(() => FindComment(text), $"The comment \"{text}\"");
+
+    /// <summary>
+    /// Scrolls the comments until the comment by u/<paramref name="author"/> shows whole, between the sort bar and the
+    /// buttons at the bottom: a comment found by its author, which shows media and no text before it.
+    /// </summary>
+    public Task ScrollToCommentByAsync(string author) => ScrollToAsync(() => FindCommentBy(author), $"The comment by u/{author}");
+
+    private async Task ScrollToAsync(Func<IWebElement?> find, string what)
     {
         for (var scrolls = 0; ; scrolls++)
         {
-            var direction = await Task.Run(() => WhereIs(text));
+            var direction = await Task.Run(() => WhereIs(find));
             if (direction is null)
             {
                 return;
@@ -236,7 +263,7 @@ public sealed class Comments(AndroidDriver driver)
 
             if (scrolls == 15)
             {
-                throw new InvalidOperationException($"The comment \"{text}\" didn't show whole after scrolling 15 times.");
+                throw new InvalidOperationException($"{what} didn't show whole after scrolling 15 times.");
             }
 
             await OnScreen.DoAsync(driver, () => driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
@@ -256,7 +283,7 @@ public sealed class Comments(AndroidDriver driver)
     public Task WaitUntilLinkShownAsync(string text, string link) =>
         Waiting.UntilAsync(
             () => FindComment(text) is { } comment
-                && (comment.FindElements(Text).FirstOrDefault()?.Text ?? "").Split('\n').Contains(link),
+                && (Media.In(comment, Text).FirstOrDefault()?.Text ?? "").Split('\n').Contains(link),
             TimeSpan.FromSeconds(30),
             $"The link \"{link}\" in the comment \"{text}\"");
 
@@ -267,7 +294,7 @@ public sealed class Comments(AndroidDriver driver)
     public Task WaitUntilLinkTitlesLoadedAsync(string text) =>
         Waiting.UntilAsync(
             () => FindComment(text) is { } comment
-                && !(comment.FindElements(Text).FirstOrDefault()?.Text ?? "").Contains(" \uFFFC", StringComparison.Ordinal),
+                && !(Media.In(comment, Text).FirstOrDefault()?.Text ?? "").Contains(" \uFFFC", StringComparison.Ordinal),
             TimeSpan.FromSeconds(30),
             $"The links of the comment \"{text}\" loading");
 
@@ -278,7 +305,7 @@ public sealed class Comments(AndroidDriver driver)
     public Task WaitUntilThumbnailInTextShownAsync(string text) =>
         Waiting.UntilAsync(
             () => FindComment(text) is { } comment
-                && (comment.FindElements(Text).FirstOrDefault()?.Text ?? "").Split('\n').Contains("\uFFFC"),
+                && (Media.In(comment, Text).FirstOrDefault()?.Text ?? "").Split('\n').Contains("\uFFFC"),
             TimeSpan.FromSeconds(30),
             $"A thumbnail in the comment \"{text}\"");
 
@@ -288,29 +315,66 @@ public sealed class Comments(AndroidDriver driver)
     /// </summary>
     public Task WaitUntilMediaShownAsync(string text) =>
         Waiting.UntilAsync(
-            () => FindComment(text) is { } comment
-                && Media.Gifs(comment).Count + Media.Images(Media.In(comment, Media.Image)).Count + Media.Videos(comment).Count > 0,
+            () => FindComment(text) is { } comment && Media.Count(comment) > 0,
             TimeSpan.FromSeconds(30),
             $"A GIF, an image or a video under the comment \"{text}\" loading");
 
+    /// <summary>Waits until the comment by u/<paramref name="author"/> shows a GIF, an image or a video, loaded.</summary>
+    public Task WaitUntilMediaShownByAsync(string author) =>
+        Waiting.UntilAsync(
+            () => FindCommentBy(author) is { } comment && Media.Count(comment) > 0,
+            TimeSpan.FromSeconds(30),
+            $"A GIF, an image or a video in the comment by u/{author} loading");
+
     /// <summary>What the comment "<paramref name="text"/>" shows: its text, its GIFs, images and videos, and its award icons.</summary>
     public Task<CommentSnapshot> ReadAsync(string text) =>
-        OnScreen.ReadAsync(driver, () =>
+        OnScreen.ReadAsync(driver, () => Read(FindCommentOrFail(text)) with
         {
-            var comment = FindCommentOrFail(text);
-            return new CommentSnapshot(
-                comment.FindElements(Text).FirstOrDefault()?.Text.Trim() ?? "",
-                Media.Gifs(comment).Count,
-                Media.Images(Media.In(comment, Media.Image)).Count,
-                Media.Videos(comment).Count)
-            {
-                AlbumCounter = Media.In(comment, Media.AlbumCounter).FirstOrDefault(counter => counter.Displayed)?.Text.Trim(),
-                Awards = driver.FindElements(Content)
-                    .Where(content => content.FindElements(Text).Any(shown => shown.Text.Trim() == text))
-                    .SelectMany(content => content.FindElements(AwardIcons))
-                    .Sum(icons => icons.FindElements(By.ClassName("android.widget.ImageView")).Count),
-            };
+            Awards = driver.FindElements(Content)
+                .Where(content => Media.In(content, Text).Any(shown => shown.Text.Trim() == text))
+                .SelectMany(content => content.FindElements(AwardIcons))
+                .Sum(icons => icons.FindElements(By.ClassName("android.widget.ImageView")).Count),
         });
+
+    /// <summary>What the comment by u/<paramref name="author"/> shows: its text, the text under its media, and its GIFs, images and videos.</summary>
+    public Task<CommentSnapshot> ReadByAsync(string author) =>
+        OnScreen.ReadAsync(driver, () => Read(FindCommentByOrFail(author)) with { Name = $"by u/{author}" });
+
+    /// <summary>
+    /// The pictures the GIFs and images of the comment "<paramref name="text"/>" show, to tell whether one shows twice.
+    /// The views don't say which picture they show, so this reads a screenshot (E2E-TEST-CODE-RULES.md, rule d).
+    /// </summary>
+    public Task<PicturesSnapshot> ReadPicturesAsync(string text) =>
+        OnScreen.ReadAsync(driver, () => ReadPictures(FindCommentOrFail(text), $"The comment \"{text}\""));
+
+    /// <summary>The pictures the GIFs and images of the comment by u/<paramref name="author"/> show (<see cref="ReadPicturesAsync"/>).</summary>
+    public Task<PicturesSnapshot> ReadPicturesByAsync(string author) =>
+        OnScreen.ReadAsync(driver, () => ReadPictures(FindCommentByOrFail(author), $"The comment by u/{author}"));
+
+    private CommentSnapshot Read(IWebElement comment)
+    {
+        var media = Media.In(comment, Media.Image).Concat(Media.In(comment, Media.Gif)).Concat(Media.In(comment, Media.Video))
+            .Select(Media.BoundsOf)
+            .ToList();
+        var mediaBottom = media.Count == 0 ? int.MaxValue : media.Min(bounds => bounds.Bottom);
+        return new CommentSnapshot(
+            Media.In(comment, Text).FirstOrDefault()?.Text.Trim() ?? "",
+            Media.Gifs(comment).Count,
+            Media.Images(Media.In(comment, Media.Image)).Count,
+            Media.Videos(comment).Count)
+        {
+            AlbumCounter = Media.In(comment, Media.AlbumCounter).FirstOrDefault(counter => counter.Displayed)?.Text.Trim(),
+            TextsUnderMedia = [.. Media.In(comment, Media.TextAfterMedia)
+                .Where(text => Media.BoundsOf(text).Top >= mediaBottom)
+                .Select(text => text.Text.Trim())],
+        };
+    }
+
+    private PicturesSnapshot ReadPictures(IWebElement comment, string shownBy)
+    {
+        var views = Media.Images(Media.In(comment, Media.Image)).Concat(Media.Gifs(comment)).Select(Media.BoundsOf).ToList();
+        return new PicturesSnapshot(shownBy, Screenshots.Pictures(driver.GetScreenshot().AsByteArray, views));
+    }
 
     /// <summary>
     /// Swipes the comment "<paramref name="text"/>" to the left, from three quarters of its width to near its left
@@ -395,7 +459,7 @@ public sealed class Comments(AndroidDriver driver)
     // The author line of the comment whose text is the given text.
     private IWebElement AuthorLineOf(string text) =>
         driver.FindElements(Content)
-            .Where(content => content.FindElements(Text).Any(shown => shown.Text.Trim() == text))
+            .Where(content => Media.In(content, Text).Any(shown => shown.Text.Trim() == text))
             .SelectMany(content => content.FindElements(Header))
             .FirstOrDefault()
         ?? throw new InvalidOperationException($"The comment \"{text}\" isn't on the screen.");
@@ -633,7 +697,7 @@ public sealed class Comments(AndroidDriver driver)
     /// </summary>
     public Task WaitUntilSpoilersShownAsync(string text) =>
         Waiting.UntilAsync(
-            () => FindComment(text) is { } comment && string.IsNullOrEmpty(comment.FindElements(Text).FirstOrDefault()?.GetAttribute("content-desc")),
+            () => FindComment(text) is { } comment && string.IsNullOrEmpty(Media.In(comment, Text).FirstOrDefault()?.GetAttribute("content-desc")),
             TimeSpan.FromSeconds(10),
             $"The spoilers of the comment \"{text}\" showing");
 
@@ -661,7 +725,7 @@ public sealed class Comments(AndroidDriver driver)
         Waiting.UntilShownAsync(driver, HiddenComments, TimeSpan.FromSeconds(10), $"The comments the comment \"{text}\" hides");
 
     private IWebElement TextOf(string text) =>
-        FindCommentOrFail(text).FindElements(Text).FirstOrDefault() ?? throw new InvalidOperationException($"The comment \"{text}\" shows no text.");
+        Media.In(FindCommentOrFail(text), Text).FirstOrDefault() ?? throw new InvalidOperationException($"The comment \"{text}\" shows no text.");
 
     // Whether the list scrolled: false at its end.
     // How long the end of the list may take to load its next comments: 50 threads, one at a time.
@@ -698,14 +762,25 @@ public sealed class Comments(AndroidDriver driver)
         }) is true;
 
     // The comment whose text is the given text, or else the one whose text starts with it: with the patch's images or
-    // videos off, a comment shows the link under its text, and an emote follows its text on its line.
+    // videos off, a comment shows the link under its text, and an emote follows its text on its line. Its text is the one
+    // inside it: a comment that shows only media has none, and a search from it finds the next comment's.
     private IWebElement? FindComment(string text)
     {
-        var shown = driver.FindElements(Comment).Select(comment => (comment, text: comment.FindElements(Text).FirstOrDefault()?.Text.Trim() ?? "")).ToList();
+        var shown = driver.FindElements(Comment).Select(comment => (comment, text: Media.In(comment, Text).FirstOrDefault()?.Text.Trim() ?? "")).ToList();
         return shown.FirstOrDefault(found => found.text == text).comment
             ?? shown.FirstOrDefault(found => found.text.StartsWith(text + "\n", StringComparison.Ordinal)).comment
             ?? shown.FirstOrDefault(found => found.text.StartsWith(text + " ￼", StringComparison.Ordinal)).comment;
     }
+
+    // The comment whose author line starts with the author's name: a comment that shows only media, or media first.
+    private IWebElement? FindCommentBy(string author) =>
+        driver.FindElements(Content)
+            .Where(content => content.FindElements(Header).FirstOrDefault()?.Text.StartsWith(author + " ", StringComparison.Ordinal) == true)
+            .SelectMany(content => content.FindElements(Comment))
+            .FirstOrDefault();
+
+    private IWebElement FindCommentByOrFail(string author) =>
+        FindCommentBy(author) ?? throw new InvalidOperationException($"The comment by u/{author} isn't on the screen.");
 
     private IWebElement FindCommentOrFail(string text) =>
         FindComment(text) ?? throw new InvalidOperationException($"The comment \"{text}\" isn't on the screen.");
@@ -716,10 +791,10 @@ public sealed class Comments(AndroidDriver driver)
 
     // Null when the comment shows whole; else the way to scroll: "down" while it's below or cut at the bottom (Android
     // gives a view only the bounds of its part on the screen), "up" while it's cut at the top.
-    private string? WhereIs(string text)
+    private string? WhereIs(Func<IWebElement?> find)
     {
         var list = Bounds(driver.FindElement(List));
-        if (FindComment(text) is not { } comment)
+        if (find() is not { } comment)
         {
             return "down";
         }
@@ -756,7 +831,19 @@ public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Vide
 
     /// <summary>How many award icons it shows, by its author's name.</summary>
     public int Awards { get; init; }
+
+    /// <summary>How a test names it: its text, quoted, or "by u/&lt;author&gt;" when it shows no text before its media.</summary>
+    public string Name { get; init; } = $"\"{Text}\"";
+
+    /// <summary>The texts it shows under its first GIF, image or video, in order: what follows a media link that starts it.</summary>
+    public ImmutableArray<string> TextsUnderMedia { get; init; } = [];
 }
+
+/// <summary>
+/// The pictures the GIFs and images of a comment or a post's text show, top to bottom, and how a test names what shows
+/// them ("The comment "Two pictures"", "The post's text").
+/// </summary>
+public sealed record PicturesSnapshot(string ShownBy, ImmutableArray<Screenshots.Picture> Pictures);
 
 /// <summary>A comment's author line: its text, and its height in pixels.</summary>
 public sealed record CommentAuthorLineSnapshot(string Comment, string Text, int Height);
@@ -785,6 +872,13 @@ internal static class Media
     public static readonly By Album = Locate.AppId("baconreader_patches_comment_album");
     public static readonly By AlbumCounter = Locate.AppId("baconreader_patches_album_counter");
 
+    // The copies of a text that show what follows each of its media links.
+    public static readonly By TextAfterMedia = Locate.AppId("baconreader_patches_text_after_media");
+
+    /// <summary>How many GIFs, images and videos <paramref name="comment"/> shows, loaded.</summary>
+    public static int Count(IWebElement comment) =>
+        Gifs(comment).Count + Images(In(comment, Image)).Count + Videos(comment).Count;
+
     public static IReadOnlyCollection<IWebElement> Gifs(IWebElement comment) =>
         [.. In(comment, Gif).Where(Loaded)];
 
@@ -812,7 +906,8 @@ internal static class Media
         return [.. found.Where(view => bounds.Contains(BoundsOf(view)))];
     }
 
-    private static Rectangle BoundsOf(IWebElement view)
+    /// <summary>Where <paramref name="view"/> is on the screen, in pixels, in one round trip: UiAutomator2's bounds.</summary>
+    public static Rectangle BoundsOf(IWebElement view)
     {
         var edges = (view.GetAttribute("bounds") ?? "").Split(['[', ']', ','], StringSplitOptions.RemoveEmptyEntries)
             .Select(edge => int.Parse(edge, System.Globalization.CultureInfo.InvariantCulture))
