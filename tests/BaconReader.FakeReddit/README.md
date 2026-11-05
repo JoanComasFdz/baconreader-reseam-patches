@@ -234,6 +234,13 @@ the patch's order, with each template's name on Imgflip.
   image it doesn't have. Its thumbnail still shows.
 - Without `AddTemplates()`, a request for a template is unhandled.
 
+## Reddit chat
+
+"Reddit chat" shows `https://www.reddit.com/chat` in a web view, which "E2E fake Reddit" moves to `<base>/chat` with the
+rest of www.reddit.com. Reddit's chat is a website behind a login, with no API, so the fake answers `/chat` and its
+pages with a plain page of its own, not Reddit's: the heading "Chats", then a link each `RedditWorld.Chat.AddLink(text,
+address)` made. A scenario gives it the links it taps, at Reddit's own addresses, as a link in the chat has them.
+
 ## The JSON
 
 - System.Text.Json, snake_case, with a few names by hand (`over_18`), and nothing escaped that Reddit doesn't escape.
@@ -287,4 +294,5 @@ address: nothing checks their host before loading them, beyond the hook.
 - **Relative links:** `RedditSpanner` builds `//reddit.com/…` for relative links, which stays on Reddit.
 - **Reddit links in content:** BaconReader recognizes them by bare domain. Content that should open as a Reddit link
   says `https://www.reddit.com/…`: the app then fetches it through the moved API. Not `<baseUrl>/r/…`.
-- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`, `.reddit.com` cookies).
+- **Out of scope:** Reddit's own chat app (`chat.reddit.com`, `accounts.reddit.com`, `.reddit.com` cookies): see
+  "Reddit chat".

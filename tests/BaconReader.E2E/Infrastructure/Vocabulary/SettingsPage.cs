@@ -12,6 +12,7 @@ public partial record SettingsPage
     public partial record ImagesAndVideos;
     public partial record Links;
     public partial record Comments;
+    public partial record Chat;
 
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
     public partial record Unlisted(string Shown);
@@ -20,7 +21,7 @@ public partial record SettingsPage
 /// <summary>What the app shows for each <see cref="SettingsPage"/>: the only place those strings live.</summary>
 public static class SettingsPageShowing
 {
-    private static readonly SettingsPage[] Listed = [new SettingsPage.ImagesAndVideos(), new SettingsPage.Links(), new SettingsPage.Comments()];
+    private static readonly SettingsPage[] Listed = [new SettingsPage.ImagesAndVideos(), new SettingsPage.Links(), new SettingsPage.Comments(), new SettingsPage.Chat()];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
     public static string ToShownText(this SettingsPage value) =>
@@ -28,6 +29,7 @@ public static class SettingsPageShowing
             imagesAndVideos => "Images and videos",
             links => "Links",
             comments => "Comments",
+            chat => "Chat",
             unlisted => unlisted.Shown);
 
     /// <summary>The case the app's <paramref name="shown"/> text names, or <see cref="SettingsPage.Unlisted"/>.</summary>

@@ -139,6 +139,24 @@ public sealed class BaconReaderApp(
     }
 
     /// <summary>
+    /// Goes back, Back after Back, until the main screen shows the chat's <paramref name="text"/>: from the settings, or
+    /// from a post a chat link opened.
+    /// </summary>
+    public async Task GoBackToTheChatAsync(string text)
+    {
+        for (var backs = 0; !(await Main.Chat.ReadAsync()).Texts.Contains(text); backs++)
+        {
+            if (backs == 8)
+            {
+                throw new InvalidOperationException($"The chat didn't show \"{text}\" after going back 8 times.");
+            }
+
+            await OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+    }
+
+    /// <summary>
     /// Goes back to the main screen's posts with Android's Back, as many times as it takes (from a post, from the
     /// settings and the left menu they were opened from), and waits until they show.
     /// </summary>

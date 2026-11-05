@@ -157,7 +157,9 @@ the test process.
 - **Unanswered requests fail the scenario.** After each scenario, BaseE2E fails it if the app asked the fake for
   something it doesn't answer (it says 404 and logs it), listing each request: the fake lacks an endpoint, or the
   scenario's Given lacks data. `UnhandledRequests.Ignored` lists the few no scenario cares about, each with why.
-- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`) stays on Reddit.
+- **Reddit's chat** (`www.reddit.com/chat`) moves with the rest of www.reddit.com: Reddit's chat is a website behind a
+  login, with no API, so the fake answers it with a plain page of its own (BaconReader.FakeReddit's README, "Reddit
+  chat"). `chat.reddit.com` and `accounts.reddit.com` stay on Reddit.
 
 ## Run and record
 
@@ -319,6 +321,11 @@ Scenarios/LoggedIn/Comments/EmbedCommentImages/EmbedCommentImagesTests.cs
 
 ## Patches without scenarios
 
+- **"Reddit chat": Reddit's chat itself.** `RedditChatTests` covers the patch's own part: the chat messages Reddit also
+  sends to the inbox, kept apart and counted next to Chat, and the chat's place in the main screen, under the toolbar's
+  "Chat", with its links. Reddit's chat app (logging in, rooms, sending, attaching images, each account's own login)
+  is Reddit's website, with no API to fake, so the fake shows a plain page instead. Left out too: a link to another
+  site, which leaves the app for the browser, and the notification of new chat messages.
 - **"Disable feedback popup".** BaconReader's own time tracking shows "Please take a few moments to provide feedback"
   only after about an hour of use, and regular use of the patched app on the owner's phone already covers it.
 

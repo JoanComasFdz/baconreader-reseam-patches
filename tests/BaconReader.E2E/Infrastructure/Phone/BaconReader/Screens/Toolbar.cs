@@ -81,10 +81,16 @@ public sealed class Toolbar(AndroidDriver driver)
     public Task WaitUntilFeedShownAsync(Feed feed) =>
         Waiting.UntilShownAsync(driver, Locate.AppIdWithText("toolbarTitle", feed.ToShownText()), TimeSpan.FromSeconds(10), $"The toolbar naming the \"{feed.ToShownText()}\" feed");
 
-    /// <summary>What the toolbar shows: the feed it names.</summary>
+    /// <summary>What the toolbar shows: the feed it names, and its buttons.</summary>
     public Task<ToolbarSnapshot> ReadAsync() =>
-        OnScreen.ReadAsync(driver, () => new ToolbarSnapshot(FeedShowing.ReadFeed(driver.FindElement(Title).Text.Trim())));
+        OnScreen.ReadAsync(driver, () => new ToolbarSnapshot(FeedShowing.ReadFeed(driver.FindElement(Title).Text.Trim()))
+        {
+            Buttons = [.. ToolbarButtonShowing.Listed.Where(button => driver.FindElements(Locate.Description(button.ToShownText())).Any(shown => shown.Displayed))],
+        });
 }
 
-/// <summary>What the toolbar shows: the feed it names.</summary>
-public sealed record ToolbarSnapshot(Feed Feed);
+/// <summary>What the toolbar shows: the feed it names, and its buttons, in its order.</summary>
+public sealed record ToolbarSnapshot(Feed Feed)
+{
+    public System.Collections.Immutable.ImmutableArray<ToolbarButton> Buttons { get; init; } = [];
+}
