@@ -155,14 +155,21 @@ internal object CommentImages {
             val thumbnailsOn = settings.youtubeThumbnails.value && !loadOnTap(context)
             val xPostsOn = settings.xPosts.value
             val blueskyPostsOn = settings.blueskyPosts.value
+            val text = fullText(textView)
+            if (text !is Spanned) return
+            // Emotes are part of the text, drawn whatever "Show images" says: BaconReader would
+            // show their <img> tags as text.
             if (
-                !imagesOn && !videosOn && !titlesOn && !thumbnailsOn && !xPostsOn && !blueskyPostsOn
+                !imagesOn &&
+                    !videosOn &&
+                    !titlesOn &&
+                    !thumbnailsOn &&
+                    !xPostsOn &&
+                    !blueskyPostsOn &&
+                    !text.toString().contains("<img")
             ) {
                 return
             }
-
-            val text = fullText(textView)
-            if (text !is Spanned) return
 
             val builder = SpannableStringBuilder(text)
             val plain = builder.toString()
@@ -227,9 +234,10 @@ internal object CommentImages {
                 if (bare) edits.add(intArrayOf(start, end, -1))
             }
 
-            // <img> tags outside links: emotes inline, anything bigger below the text.
+            // <img> tags outside links: emotes inline, always; anything bigger below the text, with
+            // "Show images" on.
             val img = IMG_TAG.matcher(plain)
-            while (imagesOn && img.find()) {
+            while (img.find()) {
                 if (isInside(edits, img.start())) continue
                 val src = unescape(img.group(1)!!)
                 val width = width(img.group())
@@ -237,7 +245,7 @@ internal object CommentImages {
                 if (isEmote(width, height)) {
                     edits.add(intArrayOf(img.start(), img.end(), emoteUrls.size))
                     emoteUrls.add(src)
-                } else {
+                } else if (imagesOn) {
                     images.add(ImageRef(src, src, width, height))
                     edits.add(intArrayOf(img.start(), img.end(), -1))
                 }

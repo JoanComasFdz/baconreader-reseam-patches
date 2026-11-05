@@ -27,7 +27,7 @@
     <!-- Embed comment images -->
     <string name="section_embed_comment_images">In comments and posts</string>
     <string name="show_images">Show images</string>
-    <string name="show_images_summary">GIFs, image links, Imgur albums and emotes are shown as images. Tap an image to switch between full width and 200×200, double tap it to open it in full screen, where you can pinch to zoom.</string>
+    <string name="show_images_summary">GIFs, image links and Imgur albums are shown as images. Emotes show in the text either way. Tap an image to switch between full width and 200×200, double tap it to open it in full screen, where you can pinch to zoom.</string>
     <string name="images_full_width">Full width by default</string>
     <string name="images_full_width_summary">Images in comments are shown at full width instead of up to 200×200. Images in posts always start at full width.</string>
     <string name="images_long_press_download">Long press to download</string>
