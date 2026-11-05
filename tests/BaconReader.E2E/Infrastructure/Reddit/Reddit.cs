@@ -464,6 +464,18 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// <summary>"… has a comment "&lt;text&gt;" with a GIF": <paramref name="text"/>, then a GIF uploaded in it.</summary>
     public void HasACommentWithAGif(string text) => world.AddComment(post, text, comment => comment.WithGif());
 
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" with the Snoomoji "&lt;name&gt;"": <paramref name="text"/>, then Reddit's emote
+    /// <paramref name="name"/> on its line, sent as Reddit sends every emote now, as its placeholder.
+    /// </summary>
+    public void HasACommentWithTheSnoomoji(string text, string name) => world.AddComment(post, text, comment => comment.WithSnoomoji(name));
+
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" with an emote of r/&lt;subreddit&gt;": <paramref name="text"/>, then an emote of
+    /// the post's subreddit on its line, sent as Reddit sends every emote now, as its placeholder.
+    /// </summary>
+    public void HasACommentWithAnEmoteOfItsSubreddit(string text) => world.AddComment(post, text, comment => comment.WithSubredditEmote());
+
     /// <summary>"… has a comment "&lt;text&gt;" with a link to an image": <paramref name="text"/>, then a bare link to a JPEG.</summary>
     public void HasACommentWithALinkToAnImage(string text) => world.AddComment(post, text, comment => comment.LinkingToAnImage());
 

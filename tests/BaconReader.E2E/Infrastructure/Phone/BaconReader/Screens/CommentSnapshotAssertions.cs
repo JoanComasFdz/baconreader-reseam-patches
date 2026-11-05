@@ -129,6 +129,20 @@ public static class CommentSnapshotAssertions
         return that;
     }
 
+    /// <summary>
+    /// The comment "<paramref name="text"/>" shows <paramref name="emotes"/> emotes after its text, on its line.
+    /// "Embed comment images" draws an emote in the text, so the screen's tree shows each as Android's object
+    /// replacement character.
+    /// </summary>
+    public static AssertingThat<CommentSnapshot> ShowsEmotesAfterItsText(this AssertingThat<CommentSnapshot> that, string text, int emotes)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.True(
+            comment.Text == $"{text} {new string('￼', emotes)}",
+            $"The comment shows the text \"{comment.Text}\", but \"{text}\" followed by {emotes} emote(s) was expected.");
+        return that;
+    }
+
     /// <summary>The comment shows no thumbnail drawn in its text.</summary>
     public static AssertingThat<CommentSnapshot> ShowsNoThumbnail(this AssertingThat<CommentSnapshot> that)
     {

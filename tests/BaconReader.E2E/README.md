@@ -108,6 +108,7 @@ the test process.
   | `https://cdn.syndication.twimg.com/` | `<baseUrl>/_x/` |
   | `https://public.api.bsky.app/` | `<baseUrl>/_bluesky/` |
   | `https://pbs.twimg.com/` | `<baseUrl>/_media/pbs.twimg.com/` |
+  | `https://www.redditstatic.com/` | `<baseUrl>/_media/www.redditstatic.com/` |
 
   A string that starts with `https://www.reddit.com/gallery` stays: BaconReader and "Fix Reddit links" know a gallery by
   Reddit's own address. Bare domains (`reddit.com`, `v.redd.it`, `amp.reddit.com`…) stay: BaconReader recognizes Reddit
@@ -118,12 +119,13 @@ the test process.
 - **Third-party services the patches fetch from** have their hosts in the same table: Imgur's API and images, which
   "Fix Imgur API" and "Embed comment images" load, and RedGIFs' API, which "Fix Redgifs API", "Fix list thumbnails"
   and "Improve post media loading" ask, YouTube's oEmbed and thumbnails, which "Embed comment images" and "Fix list
-  thumbnails" load, and X's embed service and Bluesky's public API, where "Embed comment images" finds a post. The
+  thumbnails" load, and X's embed service and Bluesky's public API, where "Embed comment images" finds a post, and the Snoomoji
+  emotes at `https://www.redditstatic.com/`, whose GIF it finds from an emote's name. The
   patch asks X for a small photo only at X's own address, `https://pbs.twimg.com/`, so that prefix moves too. "Fix Redgifs API" builds its own RedGIFs addresses from the host
   `api.redgifs.com` and the path `/v2/oauth/client`, so the patch also replaces those exact strings: the host with the
   fake's, and the path with `/_redgifs/v2/oauth/client`. RedGIFs' answers point at its videos'
   `https://media.redgifs.com/…`, which the fake gives at its own address. The fake answers them as the service does
-  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur", "RedGIFs", "YouTube", "X and Bluesky").
+  ([BaconReader.FakeReddit](../BaconReader.FakeReddit/README.md), "Imgur", "RedGIFs", "YouTube", "X and Bluesky", "Emotes").
   Content links to them keep the service's real address (`https://imgur.com/a/<id>`,
   `https://www.redgifs.com/watch/<id>`, `https://www.youtube.com/watch?v=<id>`, `https://x.com/<handle>/status/<id>`,
   `https://bsky.app/profile/<handle>/post/<key>`), as for Reddit below: BaconReader and the patches know each by it.
@@ -154,8 +156,7 @@ the test process.
 - **Unanswered requests fail the scenario.** After each scenario, BaseE2E fails it if the app asked the fake for
   something it doesn't answer (it says 404 and logs it), listing each request: the fake lacks an endpoint, or the
   scenario's Given lacks data. `UnhandledRequests.Ignored` lists the few no scenario cares about, each with why.
-- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`) and Snoomoji emotes
-  (`www.redditstatic.com`) stay on Reddit.
+- **Out of scope:** Reddit's chat (`chat.reddit.com`, `accounts.reddit.com`) stays on Reddit.
 
 ## Run and record
 
@@ -258,6 +259,7 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `x post: <name> \| @<handle> \| <text> \| none\|photo\|video`, `long x post: <name> \| @<handle> \| <start>` | an X post; ids are `1990000000000000000`, `…001`… in the order made, dated 2 October 2025 |
 | `bluesky post: <name> \| @<handle> \| <text> \| none\|images\|video\|external\|gallery` | a Bluesky post; record keys are `3e2epost00000`, `…00001`… in the order made |
 | `comment with link: <post title> \| <text> \| <link>` | a comment: the text, then the link on its own line, bare or as `[words](address)` |
+| `comment with snoomoji: <post title> \| <text> \| <name>`, `comment with subreddit emote: <post title> \| <text>` | a comment: the text, then Reddit's emote of that name, or one of the post's subreddit, as Reddit sends emotes now |
 | `phone joins another network` | the fake RedGIFs refuses each token it gave, 401 WrongSender, as RedGIFs does once the phone's address changes |
 
 **The phone and what Reddit saw:**

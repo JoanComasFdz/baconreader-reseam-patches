@@ -286,6 +286,21 @@ public sealed class CommentBuilder
     /// </summary>
     public CommentBuilder LinkingToAVideo(MediaAsset? video = null) => LinkingTo(video ?? MediaAsset.LongMp4);
 
+    /// <summary>
+    /// The Snoomoji <paramref name="name"/> (Reddit's own emote, as <c>grin</c>) after what the body says, on its line:
+    /// <c>![img](emote|free_emotes_pack|&lt;name&gt;)</c>, sent as Reddit sends every emote (<see cref="RedditEmotes"/>).
+    /// The fake serves its GIF.
+    /// </summary>
+    public CommentBuilder WithSnoomoji(string name) => WithEmote($"emote|free_emotes_pack|{name}", name);
+
+    /// <summary>
+    /// An emote of the comment's subreddit after what the body says, on its line:
+    /// <c>![img](emote|t5_&lt;subreddit id&gt;|&lt;number&gt;)</c>, sent as Reddit sends every emote
+    /// (<see cref="RedditEmotes"/>).
+    /// </summary>
+    public CommentBuilder WithSubredditEmote() =>
+        WithEmote($"emote|t5_{Comment.Post.Subreddit.Id}|{4258 + Comment.Media.Count}", null);
+
     /// <summary>Its score.</summary>
     public CommentBuilder WithScore(int score)
     {
@@ -305,6 +320,14 @@ public sealed class CommentBuilder
         var uploaded = UploadedMedia.Upload(world, asset);
         Comment.Media[uploaded.Id] = uploaded;
         return Add($"![{kind}]({uploaded.Id})");
+    }
+
+    private CommentBuilder WithEmote(string id, string? snoomoji)
+    {
+        Comment.Media[id] = RedditEmotes.Add(world, id, snoomoji);
+        var separator = Comment.Body.Length == 0 ? "" : " ";
+        Comment.Body += $"{separator}![img]({id})";
+        return this;
     }
 
     private CommentBuilder LinkingTo(MediaAsset asset) =>
