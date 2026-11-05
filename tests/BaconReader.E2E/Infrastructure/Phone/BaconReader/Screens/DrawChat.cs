@@ -16,6 +16,7 @@ public sealed class DrawChat(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By Brush = Locate.AppId("drawChatBrush");
     private static readonly OpenQA.Selenium.By Sizes = Locate.AppId("drawChatPixel");
     private static readonly OpenQA.Selenium.By Accept = Locate.Description("Accept");
+    private static readonly OpenQA.Selenium.By Camera = Locate.Description("Camera");
 
     /// <summary>Waits until the screen shows its brushes.</summary>
     public Task WaitUntilShownAsync() =>
@@ -41,4 +42,17 @@ public sealed class DrawChat(AndroidDriver driver)
 
     /// <summary>Taps "Accept", which closes the screen and puts the drawing in the reply.</summary>
     public Task ClickAcceptAsync() => OnScreen.PressAsync(driver, Accept);
+
+    /// <summary>Taps "Camera", which opens the "Choose" dialog of a background (<see cref="Background"/>).</summary>
+    public Task ClickCameraAsync() => OnScreen.PressAsync(driver, Camera);
+
+    /// <summary>The "Choose" dialog "Camera" opens: where the drawing's background comes from.</summary>
+    public Dialogs.DrawingBackgroundChoice Background { get; } = new(driver);
+
+    /// <summary>What the screen shows: whether its brushes are there.</summary>
+    public Task<DrawChatSnapshot> ReadAsync() =>
+        OnScreen.ReadAsync(driver, () => new DrawChatSnapshot(driver.FindElements(Brush).Count > 0));
 }
+
+/// <summary>The drawing screen: whether it shows, by its brushes.</summary>
+public sealed record DrawChatSnapshot(bool Shown);

@@ -66,6 +66,9 @@ public sealed class BaconReaderApp(
     /// <summary>The drawing screen (DrawChat), which "Draw" in "Attach media" opens.</summary>
     public DrawChat DrawChat { get; } = new(driver);
 
+    /// <summary>The meme templates' grid, which "Memes" in the drawing screen's "Choose" dialog opens.</summary>
+    public MemeTemplates MemeTemplates { get; } = new(driver);
+
     /// <summary>The post's screen in its "Slide Show View": a link post's page.</summary>
     public SlideShow SlideShow { get; } = new(driver);
 
