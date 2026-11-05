@@ -140,6 +140,13 @@ public sealed partial class Reddit(RedditWorld world)
     public RedditPost ThePost(string title) => new(world, PostTitled(title));
 
     /// <summary>
+    /// "Reddit's chat has a link "&lt;text&gt;" to the post "&lt;title&gt;"": the fake's chat page (Reddit's chat is a
+    /// website with no API) links the post at Reddit's own address, which a link in the chat has.
+    /// </summary>
+    public void TheChatHasALinkToThePost(string text, string title) =>
+        world.Chat.AddLink(text, "https://www.reddit.com" + PostTitled(title).Permalink);
+
+    /// <summary>
     /// "the test account has an unread message "&lt;subject&gt;" saying "&lt;body&gt;"": a private message, the newest
     /// of its inbox.
     /// </summary>

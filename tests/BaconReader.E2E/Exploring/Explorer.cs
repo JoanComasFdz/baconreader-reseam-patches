@@ -179,6 +179,7 @@ public sealed class Explorer : BaseE2E
                 case "youtube post": Reddit.HasALinkPostLinkingToTheYouTubeVideo(command.Argument(1), command.Argument(0), command.Argument(2)); break;
                 case "comment with link": Reddit.ThePost(command.Argument(0)).HasACommentWithTheLink(command.Argument(1), command.Argument(2)); break;
                 case "comment with snoomoji": Reddit.ThePost(command.Argument(0)).HasACommentWithTheSnoomoji(command.Argument(1), command.Argument(2)); break;
+                case "chat link": Reddit.TheChatHasALinkToThePost(command.Argument(0), command.Argument(1)); break;
                 case "imgflip templates": Reddit.ImgflipHasItsMemeTemplates(); break;
                 case "removed imgflip template": Reddit.ImgflipHasRemovedItsTemplate(command.Argument(0)); break;
                 case "comment with subreddit emote": Reddit.ThePost(command.Argument(0)).HasACommentWithAnEmoteOfItsSubreddit(command.Argument(1)); break;
@@ -273,7 +274,7 @@ public sealed record ExplorerCommand(string Text, string Name, IReadOnlyList<str
         "refuse posts", "drop posts", "image post", "gif post", "signed thumbnail post", "video post",
         "link post with preview", "nsfw image post", "spoiler image post", "gallery post", "crosspost",
         "link post to video", "avatar", "late media", "fail media", "fail thumbnail", "imgur album", "imgur video album", "imgur gallery post",
-        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network", "x post", "long x post", "bluesky post", "youtube video", "removed youtube video", "youtube post", "comment with link", "comment with snoomoji", "comment with subreddit emote", "imgflip templates", "removed imgflip template",
+        "imgur album post", "comment with imgur album", "redgifs post", "deleted redgifs post", "missing redgifs post", "phone joins another network", "x post", "long x post", "bluesky post", "youtube video", "removed youtube video", "youtube post", "comment with link", "comment with snoomoji", "comment with subreddit emote", "imgflip templates", "removed imgflip template", "chat link",
     ];
 
     /// <summary>Whether it makes Reddit data: from the commands file, it runs before the app opens.</summary>

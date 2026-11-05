@@ -40,6 +40,7 @@ public sealed class RedditWorld
         X = new X(this);
         Bluesky = new Bluesky(this);
         Imgflip = new Imgflip(this);
+        Chat = new ChatPage(this);
         Reset();
     }
 
@@ -63,6 +64,9 @@ public sealed class RedditWorld
 
     /// <summary>Imgflip, which "E2E fake Reddit" moves here too: the meme templates "Fix meme templates" shows.</summary>
     public Imgflip Imgflip { get; }
+
+    /// <summary>Reddit's chat, which the fake answers with a plain page of its own: its links.</summary>
+    public ChatPage Chat { get; }
 
     /// <summary>Guards the world: the server answers on its own threads while a test builds.</summary>
     internal object Sync { get; } = new();
@@ -132,6 +136,7 @@ public sealed class RedditWorld
             X.Reset();
             Bluesky.Reset();
             Imgflip.Reset();
+            Chat.Reset();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;
