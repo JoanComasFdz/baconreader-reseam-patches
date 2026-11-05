@@ -22,6 +22,7 @@ public sealed class PostList(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By List = Locate.AppId("rv_links");
     private static readonly OpenQA.Selenium.By Title = Locate.AppId("title");
     private static readonly OpenQA.Selenium.By Message = Locate.AppId("errorText");
+    private static readonly OpenQA.Selenium.By NoData = Locate.AppIdWithText("text", "No data");
     private static readonly OpenQA.Selenium.By Card = Locate.AppId("card");
     private static readonly OpenQA.Selenium.By Row = Locate.AppId("post");
     private static readonly OpenQA.Selenium.By Points = Locate.AppId("points");
@@ -44,6 +45,19 @@ public sealed class PostList(AndroidDriver driver)
     /// <summary>Waits until the list shows a post (Reddit takes a moment to answer).</summary>
     public Task WaitUntilPostsShownAsync() =>
         Waiting.UntilShownAsync(driver, Title, TimeSpan.FromSeconds(10), "A post in the main screen's list");
+
+    /// <summary>
+    /// Waits until the list shows a post, or "No data" when the feed has none, and tells whether it shows a post.
+    /// </summary>
+    public async Task<bool> WaitUntilPostsOrNoDataShownAsync()
+    {
+        var showsPosts = false;
+        await Waiting.UntilAsync(
+            () => (showsPosts = driver.FindElements(Title).Count > 0) || driver.FindElements(NoData).Count > 0,
+            TimeSpan.FromSeconds(10),
+            "A post, or \"No data\", in the main screen's list");
+        return showsPosts;
+    }
 
     /// <summary>
     /// Waits until the list shows BaconReader's message instead of posts, when the feed failed to load: "Greetings! …
