@@ -221,6 +221,19 @@ at `https://www.redditstatic.com/…/free_emotes_pack/<name>.gif`, which "E2E fa
 emote had its own image in `media_metadata` until 2024 (the Arctic Shift archive); now nothing Reddit sends holds it. No
 comment written since early 2025 has an emote.
 
+## Imgflip
+
+"E2E fake Reddit" moves `https://i.imgflip.com/` to `<base>/_media/i.imgflip.com/`: "Fix meme templates" shows Imgflip's
+100 most used templates in the drawing screen's template grid, a fixed list in the patch, as their thumbnails
+(`4/<id>.jpg`), and downloads a tapped one at full size (`<id>.jpg` or `.png`). `Imgflip.Templates` is the same list, in
+the patch's order, with each template's name on Imgflip.
+
+- `RedditWorld.Imgflip.AddTemplates()`: Imgflip serves every template, as Imgflip did on 2026-11-05: a thumbnail is a
+  JPEG, a full template a JPEG or a PNG, as its file says.
+- `RemoveTemplate(name)`: Imgflip no longer has the template at full size: `404` with an HTML page, as Imgflip answers an
+  image it doesn't have. Its thumbnail still shows.
+- Without `AddTemplates()`, a request for a template is unhandled.
+
 ## The JSON
 
 - System.Text.Json, snake_case, with a few names by hand (`over_18`), and nothing escaped that Reddit doesn't escape.
