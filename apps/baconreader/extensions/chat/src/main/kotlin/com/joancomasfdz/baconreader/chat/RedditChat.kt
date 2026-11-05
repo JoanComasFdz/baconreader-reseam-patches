@@ -228,6 +228,8 @@ fun onMainResume(activity: Activity?) {
         if (panel != null && panel.showing) {
             panel.onResume()
             ChatMessages.onChatShown(activity)
+            // Its messages are read now: Chat in the menu drops their count.
+            refreshDrawer()
         }
     } catch (exception: Exception) {
         ErrorDialog.report(TAG, "Could not resume the chat", exception)
@@ -268,6 +270,8 @@ private fun show(activity: Activity, url: String?) {
     val panel = screen.panel ?: ChatPanel(activity, views).also { screen.panel = it }
     panel.show(url)
     ChatMessages.onChatShown(activity)
+    // Its messages are read now: Chat in the menu drops their count.
+    refreshDrawer()
 }
 
 /** On the main thread: gives the chat the login of the account shown. */
