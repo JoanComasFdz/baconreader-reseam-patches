@@ -194,6 +194,13 @@ public sealed partial class Reddit(RedditWorld world)
             world.Posts.FirstOrDefault(post => post.FullName == action.Form.GetValueOrDefault("id"))?.Title ?? action.Form.GetValueOrDefault("id") ?? "",
             int.TryParse(action.Form.GetValueOrDefault("dir"), out var direction) ? direction : 0))]);
 
+    /// <summary>Waits until Reddit got <paramref name="count"/> messages marked as read: the app marks them in the background.</summary>
+    public Task WaitUntilMessagesMarkedAsReadAsync(int count) =>
+        WaitUntilAsync(
+            () => ReadMessagesMarkedAsRead().Subjects.Length >= count,
+            TimeSpan.FromSeconds(15),
+            $"Reddit didn't get {count} messages marked as read within 15 s.");
+
     /// <summary>The messages Reddit got marked as read (<c>api/read_message</c>), oldest first, by their subjects.</summary>
     public RedditReadMessagesSnapshot ReadMessagesMarkedAsRead()
     {
