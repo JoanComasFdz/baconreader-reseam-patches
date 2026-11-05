@@ -39,6 +39,7 @@ public sealed class RedditWorld
         YouTube = new YouTube(this);
         X = new X(this);
         Bluesky = new Bluesky(this);
+        Imgflip = new Imgflip(this);
         Reset();
     }
 
@@ -59,6 +60,9 @@ public sealed class RedditWorld
 
     /// <summary>Bluesky, which "E2E fake Reddit" moves here too: its posts, as its public API sends them.</summary>
     public Bluesky Bluesky { get; }
+
+    /// <summary>Imgflip, which "E2E fake Reddit" moves here too: the meme templates "Fix meme templates" shows.</summary>
+    public Imgflip Imgflip { get; }
 
     /// <summary>Guards the world: the server answers on its own threads while a test builds.</summary>
     internal object Sync { get; } = new();
@@ -127,6 +131,7 @@ public sealed class RedditWorld
             YouTube.Reset();
             X.Reset();
             Bluesky.Reset();
+            Imgflip.Reset();
             LoginPage = new LoginPageOptions();
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;
