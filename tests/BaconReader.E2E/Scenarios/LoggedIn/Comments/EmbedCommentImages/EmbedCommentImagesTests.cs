@@ -20,7 +20,8 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Comments;
 /// with "Show YouTube thumbnails" on, the video's thumbnail drawn in the text under it. Left out: a playlist, whose
 /// thumbnail the patch takes from oEmbed's answer only at an https address, which the fake's plain HTTP isn't. A bare X
 /// or Bluesky link shows the post in its place: its author, @handle and date, its text, and its first photo or video
-/// still, drawn in the text.
+/// still, drawn in the text. An emote is drawn in the text too, whatever "Show images" says: Reddit sends one placeholder
+/// for every emote, so a Snoomoji's GIF comes from its name and a subreddit's emote shows the placeholder.
 /// </summary>
 public sealed class EmbedCommentImagesTests : BaseE2E
 {
@@ -31,6 +32,8 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Scenario: Embed comment images shows the media of comments and post texts and follows its settings
           Given Reddit has a post "Weekly thread" in r/e2e
           And the post "Weekly thread" has a comment "Here is an image" with an image
+          And the post "Weekly thread" has a comment "Love it" with the Snoomoji "grin"
+          And the post "Weekly thread" has a comment "Stonks" with an emote of r/e2e
           And Reddit has a post "Media thread" in r/e2e
           And the post "Media thread" has a comment "Another image" with an image
           And the post "Media thread" has a comment "Here is a GIF" with a GIF
@@ -94,6 +97,15 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           # BaconReader shows "Downloading image…" for a moment, but UiAutomator2 doesn't see that toast: the test can't check it.
           # Not on the screen: the test reads the phone's files.
           Then Downloads/BaconReader holds the image of the comment "Here is an image"
+          When I scroll to the comment "Love it"
+          # An emote is drawn in the comment's text, on its line.
+          Then the comment "Love it" shows 1 emote after its text
+          # Reddit sends the same placeholder, "dizzy_face", for every emote: the patch finds a Snoomoji's GIF from its name.
+          # Not on the screen: the fake Reddit records what BaconReader asked for.
+          And Reddit served the Snoomoji "grin"
+          And the comment "Stonks" shows 1 emote after its text
+          # A subreddit's emote can't be found from its name: it shows Reddit's placeholder.
+          And Reddit served the Snoomoji "dizzy_face"
           When I go back to the posts
           And I tap the post "Media thread"
           And I scroll to the comment "Here is a GIF"
@@ -135,6 +147,8 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I go back to the posts
           And I tap the post "Weekly thread"
           Then the comment "Here is an image" shows no image
+          # Emotes are part of the text: they show whatever "Show images" says.
+          And the comment "Love it" shows 1 emote after its text
           When I go back to the posts
           And I open the left menu
           And I tap "Settings"
@@ -258,6 +272,8 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Given
         Reddit.HasAPost("Weekly thread", "e2e");
         Reddit.ThePost("Weekly thread").HasACommentWithAnImage("Here is an image");
+        Reddit.ThePost("Weekly thread").HasACommentWithTheSnoomoji("Love it", "grin");
+        Reddit.ThePost("Weekly thread").HasACommentWithAnEmoteOfItsSubreddit("Stonks");
         Reddit.HasAPost("Media thread", "e2e");
         Reddit.ThePost("Media thread").HasACommentWithAnImage("Another image");
         Reddit.ThePost("Media thread").HasACommentWithAGif("Here is a GIF");
@@ -354,6 +370,24 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         var downloads = await Phone.Downloads.ReadAsync();
         var commentsImage = Reddit.ReadTheImageOfTheComment("Here is an image");
         Asserting.That(downloads).HoldsTheImage(commentsImage);
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Love it");
+        await Reddit.WaitUntilTheSnoomojiIsServedAsync("grin");
+        await Reddit.WaitUntilTheSnoomojiIsServedAsync("dizzy_face");
+
+        // Then
+        // Reddit sends the same placeholder, "dizzy_face", for every emote: the patch finds a Snoomoji's GIF from its name.
+        // Not on the screen: the fake Reddit records what BaconReader asked for.
+        var loveIt = await Phone.BaconReader.Detail.Comments.ReadAsync("Love it");
+        var grin = Reddit.ReadRequestsForTheSnoomoji("grin");
+        var stonks = await Phone.BaconReader.Detail.Comments.ReadAsync("Stonks");
+        var placeholder = Reddit.ReadRequestsForTheSnoomoji("dizzy_face");
+        Asserting.That(loveIt).ShowsEmotesAfterItsText("Love it", 1);
+        Asserting.That(grin).WasServed();
+        Asserting.That(stonks).ShowsEmotesAfterItsText("Stonks", 1);
+        // A subreddit's emote can't be found from its name: it shows Reddit's placeholder.
+        Asserting.That(placeholder).WasServed();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();
@@ -473,7 +507,10 @@ public sealed class EmbedCommentImagesTests : BaseE2E
 
         // Then
         var noImage = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        var emoteWithoutImages = await Phone.BaconReader.Detail.Comments.ReadAsync("Love it");
         Asserting.That(noImage).ShowsNoImage();
+        // Emotes are part of the text: they show whatever "Show images" says.
+        Asserting.That(emoteWithoutImages).ShowsEmotesAfterItsText("Love it", 1);
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();

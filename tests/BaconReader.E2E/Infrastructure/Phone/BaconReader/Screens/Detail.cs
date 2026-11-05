@@ -698,12 +698,13 @@ public sealed class Comments(AndroidDriver driver)
         }) is true;
 
     // The comment whose text is the given text, or else the one whose text starts with it: with the patch's images or
-    // videos off, a comment shows the link under its text.
+    // videos off, a comment shows the link under its text, and an emote follows its text on its line.
     private IWebElement? FindComment(string text)
     {
         var shown = driver.FindElements(Comment).Select(comment => (comment, text: comment.FindElements(Text).FirstOrDefault()?.Text.Trim() ?? "")).ToList();
         return shown.FirstOrDefault(found => found.text == text).comment
-            ?? shown.FirstOrDefault(found => found.text.StartsWith(text + "\n", StringComparison.Ordinal)).comment;
+            ?? shown.FirstOrDefault(found => found.text.StartsWith(text + "\n", StringComparison.Ordinal)).comment
+            ?? shown.FirstOrDefault(found => found.text.StartsWith(text + " ￼", StringComparison.Ordinal)).comment;
     }
 
     private IWebElement FindCommentOrFail(string text) =>
