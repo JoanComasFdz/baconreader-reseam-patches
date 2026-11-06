@@ -15,7 +15,7 @@ public static class CommentSnapshotAssertions
         var comment = that.InstanceToAssert;
         Assert.True(
             comment.Images == images,
-            $"The comment \"{comment.Text}\" shows {Media(comment)}, but {images} images were expected.");
+            $"The comment {comment.Name} shows {Media(comment)}, but {images} images were expected.");
         return that;
     }
 
@@ -25,7 +25,7 @@ public static class CommentSnapshotAssertions
         var comment = that.InstanceToAssert;
         Assert.True(
             comment.Gifs == gifs,
-            $"The comment \"{comment.Text}\" shows {Media(comment)}, but {gifs} GIFs were expected.");
+            $"The comment {comment.Name} shows {Media(comment)}, but {gifs} GIFs were expected.");
         return that;
     }
 
@@ -35,7 +35,7 @@ public static class CommentSnapshotAssertions
         var comment = that.InstanceToAssert;
         Assert.True(
             comment.Images == 0 && comment.Gifs == 0,
-            $"The comment \"{comment.Text}\" shows {Media(comment)}, but no image was expected.");
+            $"The comment {comment.Name} shows {Media(comment)}, but no image was expected.");
         return that;
     }
 
@@ -55,7 +55,7 @@ public static class CommentSnapshotAssertions
         var comment = that.InstanceToAssert;
         Assert.True(
             comment.Videos == 1,
-            $"The comment \"{comment.Text}\" shows {Media(comment)}, but one video was expected.");
+            $"The comment {comment.Name} shows {Media(comment)}, but one video was expected.");
         return that;
     }
 
@@ -65,7 +65,7 @@ public static class CommentSnapshotAssertions
         var comment = that.InstanceToAssert;
         Assert.True(
             comment.Videos == 0,
-            $"The comment \"{comment.Text}\" shows {Media(comment)}, but no video was expected.");
+            $"The comment {comment.Name} shows {Media(comment)}, but no video was expected.");
         return that;
     }
 
@@ -73,7 +73,17 @@ public static class CommentSnapshotAssertions
     public static AssertingThat<CommentSnapshot> ShowsNoAward(this AssertingThat<CommentSnapshot> that)
     {
         var comment = that.InstanceToAssert;
-        Assert.True(comment.Awards == 0, $"The comment \"{comment.Text}\" shows {comment.Awards} award icons, but none was expected.");
+        Assert.True(comment.Awards == 0, $"The comment {comment.Name} shows {comment.Awards} award icons, but none was expected.");
+        return that;
+    }
+
+    /// <summary>The comment shows <paramref name="text"/> under its first GIF, image or video: what follows the media link that starts it.</summary>
+    public static AssertingThat<CommentSnapshot> ShowsUnderItsMedia(this AssertingThat<CommentSnapshot> that, string text)
+    {
+        var comment = that.InstanceToAssert;
+        Assert.True(
+            comment.TextsUnderMedia.Contains(text),
+            $"The comment {comment.Name} shows [{string.Join(", ", comment.TextsUnderMedia.Select(shown => $"\"{shown}\""))}] under its media, but \"{text}\" was expected there.");
         return that;
     }
 

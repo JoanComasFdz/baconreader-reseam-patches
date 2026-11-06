@@ -75,6 +75,10 @@ internal object CommentImages {
     // <img> tags up to this size, in Reddit's width and height attributes, are emotes.
     private const val EMOTE_MAX_SIZE = 64
 
+    // i.redd.it/<id>.<ext> and preview.redd.it/<id>.<ext>?width=..., also under the e2e tests'
+    // fake Reddit, which serves them at <fake>/_media/<host>/.
+    private val REDDIT_MEDIA_ID =
+        Pattern.compile("(?i)/(?:i|preview)\\.redd\\.it/([a-z0-9]+)\\.[a-z0-9]+(?:[?#]|$)")
     private val IMG_TAG = Pattern.compile("<img\\b[^>]*?\\bsrc=\"([^\"]+)\"[^>]*>")
     private val WIDTH_ATTR = Pattern.compile("\\bwidth=\"(\\d+)\"")
     private val HEIGHT_ATTR = Pattern.compile("\\bheight=\"(\\d+)\"")
@@ -130,8 +134,15 @@ internal object CommentImages {
     /** Images go in slots right after the TextView, so they need a vertical LinearLayout. */
     fun embed(textView: TextView, markdown: String?) = embedText(textView, emoteIds(markdown))
 
-    /** [embed], with the ids of the text's emotes, in order. */
-    private fun embedText(textView: TextView, emoteIds: List<String>) {
+    /**
+     * [embed], with the ids of the text's emotes, in order. Media whose [mediaKey] is in [shown],
+     * or that the text shows earlier, are not added again.
+     */
+    private fun embedText(
+        textView: TextView,
+        emoteIds: List<String>,
+        shown: Set<String> = emptySet(),
+    ) {
         // The app shows the comment again on every change (a vote, a collapsed reply...). Its
         // images are kept when they did not change: new ones would start small and make the list
         // jump.
@@ -183,6 +194,7 @@ internal object CommentImages {
             val postLinks = ArrayList<URLSpan>()
             val videoIds = ArrayList<String>()
             val albums = ArrayList<String>()
+            val keys = HashSet(shown)
 
             // Links either wrap an <img> tag (Giphy comments) or point straight at an image.
             for (span in builder.getSpans(0, builder.length, URLSpan::class.java)) {
@@ -194,7 +206,7 @@ internal object CommentImages {
                 val bare = linkText.trim().startsWith("http")
                 val videoId = if (videosOn) CommentVideo.videoId(link) else null
                 if (videoId != null) {
-                    videoIds.add(videoId)
+                    if (keys.add(videoKey(videoId))) videoIds.add(videoId)
                     if (bare) edits.add(intArrayOf(start, end, -1))
                     continue
                 }
@@ -212,7 +224,7 @@ internal object CommentImages {
                 if (!imagesOn || link == null) continue
 
                 if (ImgurAlbum.isAlbum(link)) {
-                    albums.add(link)
+                    if (keys.add(albumKey(link))) albums.add(link)
                     if (bare) edits.add(intArrayOf(start, end, -1))
                     continue
                 }
@@ -221,16 +233,16 @@ internal object CommentImages {
                 if (img.find()) {
                     // Giphy comments: the <img> is a small preview, the link is the full GIF.
                     val preview = unescape(img.group(1)!!)
-                    val full = toImageUrl(link)
-                    images.add(
-                        ImageRef(preview, full ?: preview, width(img.group()), height(img.group()))
-                    )
+                    val full = toImageUrl(link) ?: preview
+                    if (keys.add(mediaKey(full))) {
+                        images.add(ImageRef(preview, full, width(img.group()), height(img.group())))
+                    }
                     edits.add(intArrayOf(start, end, -1))
                     continue
                 }
 
                 val imageUrl = toImageUrl(link) ?: continue
-                images.add(ImageRef(imageUrl, imageUrl, 0, 0))
+                if (keys.add(mediaKey(imageUrl))) images.add(ImageRef(imageUrl, imageUrl, 0, 0))
                 if (bare) edits.add(intArrayOf(start, end, -1))
             }
 
@@ -246,7 +258,7 @@ internal object CommentImages {
                     edits.add(intArrayOf(img.start(), img.end(), emoteUrls.size))
                     emoteUrls.add(src)
                 } else if (imagesOn) {
-                    images.add(ImageRef(src, src, width, height))
+                    if (keys.add(mediaKey(src))) images.add(ImageRef(src, src, width, height))
                     edits.add(intArrayOf(img.start(), img.end(), -1))
                 }
             }
@@ -385,8 +397,16 @@ internal object CommentImages {
     // The touch listener the app gives each comment's TextView, for the TextView's copies.
     private val touchListeners = WeakHashMap<View, View.OnTouchListener>()
 
-    /** A bare link to media in a text: where it is, and the media that replaces it. */
-    private class Anchor(val start: Int, val end: Int, val slot: (TextView) -> View)
+    /**
+     * A bare link to media in a text: where it is, its media's [mediaKey], and the view that shows
+     * the media in its place, or null when an earlier link of the text shows the same media.
+     */
+    private class Anchor(
+        val start: Int,
+        val end: Int,
+        val key: String,
+        val slot: ((TextView) -> View)?,
+    )
 
     /** Marks [textView] as a post's text, whose images start at full width. */
     fun markPostText(textView: TextView) {
@@ -437,8 +457,10 @@ internal object CommentImages {
                 from += count
             }
 
+            // The media shown in place of the links are not added again under the pieces.
+            val shown = anchors.mapTo(HashSet()) { it.key }
             textView.setText(pieces[0], TextView.BufferType.SPANNABLE)
-            embedText(textView, pieceIds[0])
+            embedText(textView, pieceIds[0], shown)
             if (textView.text.isEmpty()) textView.visibility = View.GONE
 
             // The app shows a comment again on every change (a vote, a collapsed reply...): the
@@ -457,16 +479,18 @@ internal object CommentImages {
             val added = ArrayList<View>()
             var index = parent.indexOfChild(textView) + 1 + (slots[textView]?.size ?: 0)
             for ((i, anchor) in anchors.withIndex()) {
-                val slot = anchor.slot(textView)
-                parent.addView(slot, index++)
-                added.add(slot)
+                val slot = anchor.slot?.invoke(textView)
+                if (slot != null) {
+                    parent.addView(slot, index++)
+                    added.add(slot)
+                }
                 val rest = pieces[i + 1]
                 if (rest.isEmpty()) continue
                 val copy = copyOf(textView)
                 copy.setText(rest, TextView.BufferType.SPANNABLE)
                 parent.addView(copy, index++)
                 added.add(copy)
-                embedText(copy, pieceIds[i + 1])
+                embedText(copy, pieceIds[i + 1], shown)
                 index += slots[copy]?.size ?: 0
             }
             inPlaceViews[textView] = added
@@ -487,6 +511,11 @@ internal object CommentImages {
         val videosOn = settings.showVideos.value
         val plain = text.toString()
         val result = ArrayList<Anchor>()
+        val keys = HashSet<String>()
+        // A media a link of the text already shows: its link is cut, and nothing takes its place.
+        fun add(start: Int, end: Int, key: String, slot: (TextView) -> View) {
+            result.add(Anchor(start, end, key, if (keys.add(key)) slot else null))
+        }
         val spans = text.getSpans(0, text.length, URLSpan::class.java)
         spans.sortBy { text.getSpanStart(it) }
         for (span in spans) {
@@ -501,19 +530,17 @@ internal object CommentImages {
             val videoId = if (videosOn) CommentVideo.videoId(link) else null
             if (videoId != null) {
                 val loadPreviews = !loadOnTap(textView.context)
-                result.add(
-                    Anchor(start, end) {
-                        CommentVideo.createSlot(
-                            it,
-                            videoId,
-                            fullWidthFor(it),
-                            dp(it.context, IMAGE_SIZE_DP),
-                            (it.resources.displayMetrics.heightPixels * EXPANDED_MAX_SCREEN_HEIGHT)
-                                .toInt(),
-                            loadPreviews,
-                        )
-                    }
-                )
+                add(start, end, videoKey(videoId)) {
+                    CommentVideo.createSlot(
+                        it,
+                        videoId,
+                        fullWidthFor(it),
+                        dp(it.context, IMAGE_SIZE_DP),
+                        (it.resources.displayMetrics.heightPixels * EXPANDED_MAX_SCREEN_HEIGHT)
+                            .toInt(),
+                        loadPreviews,
+                    )
+                }
                 continue
             }
             val xPostsOn = settings.xPosts.value
@@ -522,7 +549,7 @@ internal object CommentImages {
             if (YoutubeTitles.isYoutubeUrl(link)) continue
             if (!imagesOn || link == null) continue
             if (ImgurAlbum.isAlbum(link)) {
-                result.add(Anchor(start, end) { ImgurAlbum.createSlot(it, link) })
+                add(start, end, albumKey(link)) { ImgurAlbum.createSlot(it, link) }
                 continue
             }
             val image =
@@ -538,7 +565,7 @@ internal object CommentImages {
                     val imageUrl = toImageUrl(link) ?: continue
                     ImageRef(imageUrl, imageUrl, 0, 0)
                 }
-            result.add(Anchor(start, end) { createImageSlot(it, image) })
+            add(start, end, mediaKey(image.fullUrl)) { createImageSlot(it, image) }
         }
         return result
     }
@@ -560,9 +587,28 @@ internal object CommentImages {
     /** [start, end) of [text], with its spans, without the blank lines around it. */
     private fun piece(text: Spanned, start: Int, end: Int): SpannableStringBuilder {
         val builder = SpannableStringBuilder(text, start, end)
+        // An empty range keeps the spans that touch it, emptied: a link at the start of the text
+        // would be in the piece before it, with no text, and its media would show twice.
+        for (link in builder.getSpans(0, builder.length, URLSpan::class.java)) {
+            if (builder.getSpanStart(link) == builder.getSpanEnd(link)) builder.removeSpan(link)
+        }
         trimWhitespace(builder)
         return builder
     }
+
+    /**
+     * What names a media across the links and tags of a text: Reddit's id of an uploaded image or
+     * GIF, which its i.redd.it and preview.redd.it addresses and its media_metadata entry share, or
+     * else its address.
+     */
+    private fun mediaKey(url: String): String {
+        val id = REDDIT_MEDIA_ID.matcher(url)
+        return if (id.find()) "reddit:" + id.group(1)!!.lowercase(Locale.ROOT) else url
+    }
+
+    private fun videoKey(videoId: String) = "video:" + videoId
+
+    private fun albumKey(link: String) = "album:" + link
 
     /**
      * A TextView that shows text like [textView] does, in its column, and reacts to touches like
@@ -590,6 +636,8 @@ internal object CommentImages {
             textView.paddingBottom,
         )
         copy.movementMethod = textView.movementMethod
+        // The e2e tests find the text after a media link by it.
+        copy.id = resourceId(context, "baconreader_patches_text_after_media")
         copy.setOnTouchListener(touchListeners[textView])
         copySources[copy] = textView
         if (postTexts.containsKey(textView)) postTexts[copy] = true

@@ -173,6 +173,18 @@ public sealed class PostBuilder
         return WithText($"{markdown}\n\n{RedditMarkdown.UploadedImageUrl(world.BaseUrl, uploaded)}");
     }
 
+    /// <summary>
+    /// A text post that starts with an image uploaded in it, as Reddit sends one (<see cref="WithTextAndImage"/>), and then
+    /// says <paramref name="markdown"/>: its preview's bare link is the first thing in its text. A PNG unless
+    /// <paramref name="image"/> says otherwise.
+    /// </summary>
+    public PostBuilder WithImageAndThenText(string markdown, MediaAsset? image = null)
+    {
+        var uploaded = UploadedMedia.Upload(world, image ?? MediaAsset.Png);
+        Post.Media[uploaded.Id] = uploaded;
+        return WithText($"{RedditMarkdown.UploadedImageUrl(world.BaseUrl, uploaded)}\n\n{markdown}");
+    }
+
     /// <summary>Its score: upvotes less downvotes.</summary>
     public PostBuilder WithScore(int score)
     {
@@ -279,6 +291,12 @@ public sealed class CommentBuilder
     /// its own line: a JPEG unless <paramref name="image"/> says otherwise.
     /// </summary>
     public CommentBuilder LinkingToAnImage(MediaAsset? image = null) => LinkingTo(image ?? MediaAsset.Jpeg);
+
+    /// <summary>
+    /// <paramref name="markdown"/>, in a paragraph of its own after what the body says already: the text after an image
+    /// or a GIF, when the comment starts with it.
+    /// </summary>
+    public CommentBuilder ThenSaying(string markdown) => Add(markdown);
 
     /// <summary>
     /// A bare link to a video file the fake serves, <c>&lt;baseUrl&gt;/_media/example.com/&lt;id&gt;.mp4</c>, posted on

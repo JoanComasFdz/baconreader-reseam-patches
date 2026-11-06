@@ -88,6 +88,13 @@ public sealed partial class Reddit(RedditWorld world)
         world.AddPost(subreddit, title, post => post.WithTextAndImage(text));
 
     /// <summary>
+    /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with an image and then the text "&lt;text&gt;"": a text
+    /// post whose text starts with an image uploaded in it, then says <paramref name="text"/>.
+    /// </summary>
+    public void HasAPostWithAnImageAndThenTheText(string title, string subreddit, string text) =>
+        world.AddPost(subreddit, title, post => post.WithImageAndThenText(text));
+
+    /// <summary>
     /// "Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;"": a text post whose text is
     /// the Markdown <paramref name="markdown"/>.
     /// </summary>
@@ -501,6 +508,50 @@ public sealed class RedditPost(RedditWorld world, Post post)
     /// seconds long.
     /// </summary>
     public void HasACommentWithALinkToAVideo(string text) => world.AddComment(post, text, comment => comment.LinkingToAVideo());
+
+    /// <summary>
+    /// "… has a comment by u/&lt;author&gt; with only an image": an image uploaded in it and nothing else, as most come:
+    /// its preview's bare link alone in its body, and its entry in <c>media_metadata</c>.
+    /// </summary>
+    public void HasACommentByWithOnlyAnImage(string author) => world.AddComment(post, "", comment => comment.By(author).WithImage());
+
+    /// <summary>
+    /// "… has a comment by u/&lt;author&gt; with an image and then the text "&lt;text&gt;"": an image uploaded in it first,
+    /// then <paramref name="text"/>.
+    /// </summary>
+    public void HasACommentByWithAnImageAndThenTheText(string author, string text) =>
+        world.AddComment(post, "", comment => comment.By(author).WithImage().ThenSaying(text));
+
+    /// <summary>"… has a comment by u/&lt;author&gt; with only a GIF": a GIF uploaded in it and nothing else.</summary>
+    public void HasACommentByWithOnlyAGif(string author) => world.AddComment(post, "", comment => comment.By(author).WithGif());
+
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" with &lt;count&gt; different images": <paramref name="text"/>, then that many
+    /// images uploaded in it, each a different picture (a PNG, then a JPEG).
+    /// </summary>
+    public void HasACommentWithDifferentImages(string text, int count)
+    {
+        MediaAsset[] pictures = [MediaAsset.Png, MediaAsset.Jpeg];
+        if (count > pictures.Length)
+        {
+            throw new InvalidOperationException($"The fake has {pictures.Length} different pictures, not {count}.");
+        }
+
+        world.AddComment(post, text, comment =>
+        {
+            foreach (var picture in pictures.Take(count))
+            {
+                comment.WithImage(picture);
+            }
+        });
+    }
+
+    /// <summary>
+    /// "… has a comment "&lt;text&gt;" with an image and a link to another image": <paramref name="text"/>, then a PNG
+    /// uploaded in it, then a bare link to a JPEG.
+    /// </summary>
+    public void HasACommentWithAnImageAndALinkToAnotherImage(string text) =>
+        world.AddComment(post, text, comment => comment.WithImage(MediaAsset.Png).LinkingToAnImage(MediaAsset.Jpeg));
 }
 
 /// <summary>A comment of the scenario's Reddit, which a Given line adds replies to.</summary>

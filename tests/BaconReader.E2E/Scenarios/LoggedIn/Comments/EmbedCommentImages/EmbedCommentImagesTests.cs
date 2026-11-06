@@ -38,6 +38,11 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Media thread" has a comment "Another image" with an image
           And the post "Media thread" has a comment "Here is a GIF" with a GIF
           And the post "Media thread" has a comment "Here is an image link" with a link to an image
+          And the post "Media thread" has a comment by u/e2e_snapper with only an image
+          And the post "Media thread" has a comment by u/e2e_captioner with an image and then the text "Look above"
+          And the post "Media thread" has a comment by u/e2e_gifster with only a GIF
+          And the post "Media thread" has a comment "Two pictures" with 2 different images
+          And the post "Media thread" has a comment "Mine and a link" with an image and a link to another image
           And the post "Media thread" has a comment "Here is a video" with a video
           And the post "Media thread" has a comment "Here is a video link" with a link to a video
           And the post "Media thread" has a comment "Just text"
@@ -46,6 +51,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Media thread" has a comment "Here is an album" with a link to the Imgur album "Trip"
           And the post "Media thread" has a comment "One picture" with a link to the Imgur album "Single"
           And Reddit has a post "A picture in text" in r/e2e with the text "Look at this" and an image
+          And Reddit has a post "A picture first" in r/e2e with an image and then the text "Above is my photo"
           And YouTube has a video "Cooking pasta at home" on the channel "@e2ekitchen"
           And YouTube has a Short "Short clip" on the channel "@e2ekitchen"
           And YouTube has removed its video "Gone video"
@@ -84,6 +90,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the test account is logged in
           When I tap the post "Weekly thread"
           Then the comment "Here is an image" shows 1 image
+          And the comment "Here is an image" shows no picture twice
           # "Full width by default" is off: an image starts at up to 200×200.
           And the image of the comment "Here is an image" fits in 200×200
           When I tap the image of the comment "Here is an image"
@@ -114,6 +121,22 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           # The image takes the bare link's place: the link is dropped from the text.
           Then the comment "Here is an image link" shows 1 image
           And the comment "Here is an image link" shows no link
+          When I scroll to the comment by u/e2e_snapper
+          # Reddit sends an image uploaded in a comment twice over: a bare preview.redd.it link in its text, and an entry in its media_metadata. It shows once.
+          Then the comment by u/e2e_snapper shows 1 image
+          And the comment by u/e2e_snapper shows no picture twice
+          When I scroll to the comment by u/e2e_captioner
+          Then the comment by u/e2e_captioner shows 1 image
+          And the comment by u/e2e_captioner shows "Look above" under its image
+          When I scroll to the comment by u/e2e_gifster
+          Then the comment by u/e2e_gifster shows 1 GIF
+          When I scroll to the comment "Two pictures"
+          Then the comment "Two pictures" shows 2 images
+          And the comment "Two pictures" shows no picture twice
+          When I scroll to the comment "Mine and a link"
+          # Both show, once each: the image uploaded in the comment and the image the link points to.
+          Then the comment "Mine and a link" shows 2 images
+          And the comment "Mine and a link" shows no picture twice
           When I scroll to the comment "Here is a video"
           Then the comment "Here is a video" shows a video
           When I tap the video of the comment "Here is a video"
@@ -137,6 +160,10 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I tap the post "A picture in text"
           Then the post's text "Look at this" shows 1 image
           And the image starts where the post's text starts
+          When I go back to the posts
+          And I tap the post "A picture first"
+          Then the post's text "Above is my photo" shows 1 image
+          And the post's text "Above is my photo" shows no picture twice
           When I go back to the posts
           And I open the left menu
           And I tap "Settings"
@@ -278,6 +305,11 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("Media thread").HasACommentWithAnImage("Another image");
         Reddit.ThePost("Media thread").HasACommentWithAGif("Here is a GIF");
         Reddit.ThePost("Media thread").HasACommentWithALinkToAnImage("Here is an image link");
+        Reddit.ThePost("Media thread").HasACommentByWithOnlyAnImage("e2e_snapper");
+        Reddit.ThePost("Media thread").HasACommentByWithAnImageAndThenTheText("e2e_captioner", "Look above");
+        Reddit.ThePost("Media thread").HasACommentByWithOnlyAGif("e2e_gifster");
+        Reddit.ThePost("Media thread").HasACommentWithDifferentImages("Two pictures", 2);
+        Reddit.ThePost("Media thread").HasACommentWithAnImageAndALinkToAnotherImage("Mine and a link");
         Reddit.ThePost("Media thread").HasACommentWithAVideo("Here is a video");
         Reddit.ThePost("Media thread").HasACommentWithALinkToAVideo("Here is a video link");
         Reddit.ThePost("Media thread").HasAComment("Just text");
@@ -286,6 +318,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("Media thread").HasACommentWithALinkToTheImgurAlbum("Here is an album", "Trip");
         Reddit.ThePost("Media thread").HasACommentWithALinkToTheImgurAlbum("One picture", "Single");
         Reddit.HasAPostWithTheTextAndAnImage("A picture in text", "e2e", "Look at this");
+        Reddit.HasAPostWithAnImageAndThenTheText("A picture first", "e2e", "Above is my photo");
         Reddit.YouTubeHasAVideo("Cooking pasta at home", "@e2ekitchen");
         Reddit.YouTubeHasAShort("Short clip", "@e2ekitchen");
         Reddit.YouTubeHasRemovedItsVideo("Gone video");
@@ -330,8 +363,10 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         // "Full width by default" is off: an image starts at up to 200×200.
         var image = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        var imagePictures = await Phone.BaconReader.Detail.Comments.ReadPicturesAsync("Here is an image");
         var small = await Phone.BaconReader.Detail.Comments.ReadLayoutAsync("Here is an image");
         Asserting.That(image).ShowsImages(1);
+        Asserting.That(imagePictures).ShowsNoPictureTwice();
         Asserting.That(small).TheImageFitsIn200By200();
 
         // When
@@ -410,6 +445,54 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Asserting.That(imageLink).ShowsImages(1).ShowsNoLink();
 
         // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentByAsync("e2e_snapper");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownByAsync("e2e_snapper");
+
+        // Then
+        // Reddit sends an image uploaded in a comment twice over: a bare preview.redd.it link in its text, and an entry in its media_metadata. It shows once.
+        var onlyAnImage = await Phone.BaconReader.Detail.Comments.ReadByAsync("e2e_snapper");
+        var onlyAnImagePictures = await Phone.BaconReader.Detail.Comments.ReadPicturesByAsync("e2e_snapper");
+        Asserting.That(onlyAnImage).ShowsImages(1);
+        Asserting.That(onlyAnImagePictures).ShowsNoPictureTwice();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentByAsync("e2e_captioner");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownByAsync("e2e_captioner");
+
+        // Then
+        var imageFirst = await Phone.BaconReader.Detail.Comments.ReadByAsync("e2e_captioner");
+        Asserting.That(imageFirst).ShowsImages(1).ShowsUnderItsMedia("Look above");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentByAsync("e2e_gifster");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownByAsync("e2e_gifster");
+
+        // Then
+        var onlyAGif = await Phone.BaconReader.Detail.Comments.ReadByAsync("e2e_gifster");
+        Asserting.That(onlyAGif).ShowsGifs(1);
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Two pictures");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Two pictures");
+
+        // Then
+        var twoPictures = await Phone.BaconReader.Detail.Comments.ReadAsync("Two pictures");
+        var twoPicturesShown = await Phone.BaconReader.Detail.Comments.ReadPicturesAsync("Two pictures");
+        Asserting.That(twoPictures).ShowsImages(2);
+        Asserting.That(twoPicturesShown).ShowsNoPictureTwice();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Mine and a link");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Mine and a link");
+
+        // Then
+        // Both show, once each: the image uploaded in the comment and the image the link points to.
+        var mineAndALink = await Phone.BaconReader.Detail.Comments.ReadAsync("Mine and a link");
+        var mineAndALinkPictures = await Phone.BaconReader.Detail.Comments.ReadPicturesAsync("Mine and a link");
+        Asserting.That(mineAndALink).ShowsImages(2);
+        Asserting.That(mineAndALinkPictures).ShowsNoPictureTwice();
+
+        // When
         await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is a video");
         await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is a video");
 
@@ -478,6 +561,17 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         var postTextLayout = await Phone.BaconReader.Detail.PostText.ReadLayoutAsync();
         Asserting.That(postText).ShowsTheTextWithImages("Look at this", 1);
         Asserting.That(postTextLayout).TheImageStartsWhereTheTextStarts();
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("A picture first");
+        await Phone.BaconReader.Detail.PostText.WaitUntilMediaShownAsync();
+
+        // Then
+        var pictureFirst = await Phone.BaconReader.Detail.PostText.ReadAsync();
+        var pictureFirstPictures = await Phone.BaconReader.Detail.PostText.ReadPicturesAsync();
+        Asserting.That(pictureFirst).ShowsTheTextWithImages("Above is my photo", 1);
+        Asserting.That(pictureFirstPictures).ShowsNoPictureTwice();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();
