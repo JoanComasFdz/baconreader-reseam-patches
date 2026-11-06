@@ -40,7 +40,7 @@ public sealed class SelectTextTests : BaseE2E
           And I tap "Copy" in the selection's toolbar
           # Not on the screen: Android's clipboard.
           Then the clipboard holds "Bread"
-          When I tap "Close"
+          When I tap "CLOSE"
           And I tap "More options" in the toolbar
           And I tap "List View"
           And I swipe the post "Bread recipe" to its action bar
@@ -48,7 +48,7 @@ public sealed class SelectTextTests : BaseE2E
           Then the menu offers "Select text" right after "Copy"
           When I tap "Select text"
           Then the dialog shows "Bread recipe", then "Mix the flour with water. Bake for 20 minutes."
-          When I tap "Close"
+          When I tap "CLOSE"
           # The row shows its action bar until Back.
           And I tap Back
           And I tap the post "Bread recipe"
@@ -56,7 +56,7 @@ public sealed class SelectTextTests : BaseE2E
           Then the menu offers "Select text" right after "Copy"
           When I tap "Select text"
           Then the dialog shows "Bread recipe", then "Mix the flour with water. Bake for 20 minutes."
-          When I tap "Close"
+          When I tap "CLOSE"
           And I swipe the comment "Rye flour, not wheat." to its action bar
           And I tap "More options" in the comment's action bar
           Then the menu offers "Select text" right after "Copy"
@@ -66,13 +66,13 @@ public sealed class SelectTextTests : BaseE2E
           And I tap "Copy" in the selection's toolbar
           # Not on the screen: Android's clipboard.
           Then the clipboard holds "Rye"
-          When I tap "Close"
+          When I tap "CLOSE"
           And I swipe the comment "Proportions" to its action bar
           And I tap "More options" in the comment's action bar
           And I tap "Select text"
           # Show tables draws the table as a grid; here it is text, one line a row.
           Then the dialog shows "Proportions", then "Flour | Water\n500 g | 300 ml"
-          When I tap "Close"
+          When I tap "CLOSE"
           And I swipe the comment "the crust burns" to its action bar
           And I tap "More options" in the comment's action bar
           And I tap "Select text"

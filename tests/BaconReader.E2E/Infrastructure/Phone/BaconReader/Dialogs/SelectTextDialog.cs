@@ -9,13 +9,13 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 
 /// <summary>
 /// The dialog "Select text" opens from a post's or a comment's menu: the post's title and text, or the comment's text,
-/// which a long press selects, and "Close". The selection's toolbar is Android's own, with "Copy".
+/// which a long press selects, and "CLOSE". The selection's toolbar is Android's own, with "Copy".
 /// </summary>
 public sealed class SelectTextDialog(AndroidDriver driver)
 {
     // The dialog's text is made in code; "Select text" gives it this id.
     private static readonly By Text = Locate.AppId("baconreader_patches_selected_text");
-    private static readonly By Close = Locate.AndroidIdWithText("button1", "Close");
+    private static readonly By Close = Locate.AndroidIdWithText("button1", "CLOSE");
     private static readonly By Copy = Locate.Text("Copy");
 
     // The dialog's text starts 24 dp in from its view's left and top edges.
@@ -51,14 +51,30 @@ public sealed class SelectTextDialog(AndroidDriver driver)
             });
         });
 
-    /// <summary>Waits until Android's selection toolbar offers "Copy".</summary>
-    public Task WaitUntilSelectionShownAsync() =>
-        Waiting.UntilShownAsync(driver, Copy, TimeSpan.FromSeconds(10), "Android's selection toolbar, with \"Copy\"");
+    /// <summary>
+    /// Waits until Android's selection toolbar offers "Copy". The toolbar floats in a window of its own, which UiAutomator
+    /// shows only with its windows setting on, until <see cref="ClickCopyAsync"/> turns it off again.
+    /// </summary>
+    public Task WaitUntilSelectionShownAsync()
+    {
+        driver.SetSetting("enableMultiWindows", true);
+        return Waiting.UntilShownAsync(driver, Copy, TimeSpan.FromSeconds(10), "Android's selection toolbar, with \"Copy\"");
+    }
 
     /// <summary>Taps "Copy" in Android's selection toolbar, which copies the selection to the clipboard.</summary>
-    public Task ClickCopyAsync() => OnScreen.PressAsync(driver, Copy);
+    public async Task ClickCopyAsync()
+    {
+        try
+        {
+            await OnScreen.PressAsync(driver, Copy);
+        }
+        finally
+        {
+            driver.SetSetting("enableMultiWindows", false);
+        }
+    }
 
-    /// <summary>Taps "Close", which closes the dialog.</summary>
+    /// <summary>Taps "CLOSE", which closes the dialog.</summary>
     public Task ClickCloseAsync() => OnScreen.PressAsync(driver, Close);
 
     private double Density() =>
