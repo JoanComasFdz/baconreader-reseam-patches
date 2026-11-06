@@ -37,7 +37,8 @@ public sealed class SelectTextTests : BaseE2E
           When I tap "Select text"
           Then the dialog shows "Bread recipe", then "Mix the flour with water. Bake for 20 minutes."
           When I long press "Bread", the first word of the dialog's text
-          And I tap "Copy" in the selection's toolbar
+          # Android's own "Copy" floats over the selection, where UiAutomator can't tap it: the test copies with Ctrl+C.
+          And I copy the selection
           # Not on the screen: Android's clipboard.
           Then the clipboard holds "Bread"
           When I tap "CLOSE"
@@ -63,7 +64,8 @@ public sealed class SelectTextTests : BaseE2E
           When I tap "Select text"
           Then the dialog shows "Rye flour, not wheat."
           When I long press "Rye", the first word of the dialog's text
-          And I tap "Copy" in the selection's toolbar
+          # Android's own "Copy" floats over the selection, where UiAutomator can't tap it: the test copies with Ctrl+C.
+          And I copy the selection
           # Not on the screen: Android's clipboard.
           Then the clipboard holds "Rye"
           When I tap "CLOSE"
@@ -114,8 +116,8 @@ public sealed class SelectTextTests : BaseE2E
 
         // When
         await Phone.BaconReader.SelectText.LongClickFirstWordAsync();
-        await Phone.BaconReader.SelectText.WaitUntilSelectionShownAsync();
-        await Phone.BaconReader.SelectText.ClickCopyAsync();
+        // Android's own "Copy" floats over the selection, where UiAutomator can't tap it: the test copies with Ctrl+C.
+        await Phone.BaconReader.SelectText.CopySelectionAsync();
 
         // Then
         // Not on the screen: Android's clipboard.
@@ -190,8 +192,8 @@ public sealed class SelectTextTests : BaseE2E
 
         // When
         await Phone.BaconReader.SelectText.LongClickFirstWordAsync();
-        await Phone.BaconReader.SelectText.WaitUntilSelectionShownAsync();
-        await Phone.BaconReader.SelectText.ClickCopyAsync();
+        // Android's own "Copy" floats over the selection, where UiAutomator can't tap it: the test copies with Ctrl+C.
+        await Phone.BaconReader.SelectText.CopySelectionAsync();
 
         // Then
         // Not on the screen: Android's clipboard.
