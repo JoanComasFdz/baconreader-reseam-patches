@@ -381,13 +381,14 @@ public sealed class Comments(AndroidDriver driver)
 
     /// <summary>
     /// Swipes the comment "<paramref name="text"/>" to the left, from three quarters of its width to near its left
-    /// edge: it turns into its action bar.
+    /// edge, along its first line: it turns into its action bar. Lower, a table of "Show tables" would take the drag,
+    /// to scroll sideways.
     /// </summary>
     public Task SwipeToActionBarAsync(string text) =>
         OnScreen.TouchAsync(driver, () => FindCommentOrFail(text), comment =>
         {
             var bounds = Bounds(comment);
-            var y = bounds.Top + (bounds.Height / 2);
+            var y = bounds.Top + Math.Min(bounds.Height / 2, (int)Math.Round(12 * Density()));
             var finger = new PointerInputDevice(PointerKind.Touch, "finger");
             var swipe = new ActionSequence(finger, 0);
             swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, bounds.Left + (bounds.Width * 3 / 4), y, TimeSpan.Zero));

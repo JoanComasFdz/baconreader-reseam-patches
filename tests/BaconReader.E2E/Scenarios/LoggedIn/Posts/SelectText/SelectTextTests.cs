@@ -69,16 +69,19 @@ public sealed class SelectTextTests : BaseE2E
           # Not on the screen: Android's clipboard.
           Then the clipboard holds "Rye"
           When I tap "CLOSE"
+          # The comment shows its action bar until Back.
+          And I tap Back
           And I swipe the comment "Proportions" to its action bar
           And I tap "More options" in the comment's action bar
           And I tap "Select text"
           # Show tables draws the table as a grid; here it is text, one line a row.
           Then the dialog shows "Proportions", then "Flour | Water\n500 g | 300 ml"
           When I tap "CLOSE"
+          And I tap Back
           And I swipe the comment "the crust burns" to its action bar
           And I tap "More options" in the comment's action bar
           And I tap "Select text"
-          # The spoiler shows in plain sight, on its box, without a tap.
+          # The spoiler shows as plain text, without its box or a tap.
           Then the dialog shows "the crust burns"
         """)]
     public async Task SelectTextShowsAPostsOrCommentsTextToSelectAndCopyAPartOfIt(Screen screen)
@@ -203,6 +206,7 @@ public sealed class SelectTextTests : BaseE2E
         // When
         await Phone.BaconReader.SelectText.ClickCloseAsync();
         await Phone.BaconReader.SelectText.WaitUntilClosedAsync();
+        await Phone.GoBackAsync();
         await Phone.BaconReader.Detail.Comments.SwipeToActionBarAsync("Proportions");
         await Phone.BaconReader.Detail.Comments.WaitUntilActionBarShownAsync();
         await Phone.BaconReader.Detail.Comments.ClickActionBarMoreOptionsAsync();
@@ -218,6 +222,7 @@ public sealed class SelectTextTests : BaseE2E
         // When
         await Phone.BaconReader.SelectText.ClickCloseAsync();
         await Phone.BaconReader.SelectText.WaitUntilClosedAsync();
+        await Phone.GoBackAsync();
         await Phone.BaconReader.Detail.Comments.SwipeToActionBarAsync("the crust burns");
         await Phone.BaconReader.Detail.Comments.WaitUntilActionBarShownAsync();
         await Phone.BaconReader.Detail.Comments.ClickActionBarMoreOptionsAsync();
@@ -226,7 +231,7 @@ public sealed class SelectTextTests : BaseE2E
         await Phone.BaconReader.SelectText.WaitUntilShownAsync();
 
         // Then
-        // The spoiler shows in plain sight, on its box, without a tap.
+        // The spoiler shows as plain text, without its box or a tap.
         var spoiler = await Phone.BaconReader.SelectText.ReadAsync();
         Asserting.That(spoiler).ShowsTheText("the crust burns");
     }
