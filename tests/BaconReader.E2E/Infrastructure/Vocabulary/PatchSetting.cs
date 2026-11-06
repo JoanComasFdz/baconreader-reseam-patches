@@ -35,6 +35,9 @@ public partial record PatchSetting
     /// <summary>"Reddit chat" keeps Reddit's copies of chat messages out of the inbox and counts them next to Chat.</summary>
     public partial record ChatMessagesApartFromTheInbox;
 
+    /// <summary>"Account colors"' one setting, in its section of the same title: the circles and the line.</summary>
+    public partial record AccountColors;
+
     /// <summary>What the app shows that no case names yet: a failing assertion names it as the app shows it.</summary>
     public partial record Unlisted(string Shown);
 }
@@ -64,6 +67,7 @@ public static class PatchSettingShowing
         new PatchSetting.ShowXPosts(),
         new PatchSetting.ShowBlueskyPosts(),
         new PatchSetting.ChatMessagesApartFromTheInbox(),
+        new PatchSetting.AccountColors(),
     ];
 
     /// <summary>What the app shows for <paramref name="value"/>.</summary>
@@ -88,6 +92,7 @@ public static class PatchSettingShowing
             showXPosts => "Show X posts",
             showBlueskyPosts => "Show Bluesky posts",
             chatMessagesApartFromTheInbox => "Chat messages apart from the inbox",
+            accountColors => "Account colors",
             unlisted => unlisted.Shown);
 
     /// <summary>The case the app's <paramref name="shown"/> text names, or <see cref="PatchSetting.Unlisted"/>.</summary>

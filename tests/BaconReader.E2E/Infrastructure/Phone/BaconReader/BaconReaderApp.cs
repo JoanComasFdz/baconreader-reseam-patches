@@ -48,6 +48,9 @@ public sealed class BaconReaderApp(
     /// <summary>"Show posts with flair", which the button of "Flair filter" in the sort bar opens.</summary>
     public FlairFilter FlairFilter { get; } = new(driver);
 
+    /// <summary>"Color for &lt;user name&gt;", which an account's circle in the left menu opens ("Account colors").</summary>
+    public AccountColorPicker AccountColorPicker { get; } = new(driver);
+
     /// <summary>The menu a message of the inbox opens when tapped.</summary>
     public MessageMenu MessageMenu { get; } = new(driver);
 
