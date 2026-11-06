@@ -465,6 +465,15 @@ internal class TableSpan(private val table: Table) : ReplacementSpan() {
     private fun label(): String =
         if (isExpanded) BaconReaderStrings.tablesFitToScreen else BaconReaderStrings.tablesExpand
 
+    /**
+     * The table as text, one line a row, its cells separated by " | ". "Select text" shows it
+     * instead of the grid, which copies as the one character it's drawn over.
+     */
+    override fun toString(): String =
+        (listOf(table.header).filter { it.isNotEmpty() } + table.rows).joinToString("\n") { row ->
+            row.joinToString(" | ")
+        }
+
     fun dp(value: Int): Int = (value * density).roundToInt()
 
     companion object {
