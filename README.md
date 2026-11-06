@@ -86,6 +86,7 @@ Settings live in BaconReader → **Settings → Patches**.
 |---|---|
 | Remove awards | No more dead award icons and buttons |
 | Remove Random feeds | Drops Random and My Random, which no longer load |
+| Remove Log out | No "Log out" of every account at once; each account's ✕ stays |
 | Disable unavailable sidebar | Greys out "View Sidebar" where there's none |
 | Disable feedback popup | No feedback nag |
 | Disable final release announcement | No goodbye popup |
