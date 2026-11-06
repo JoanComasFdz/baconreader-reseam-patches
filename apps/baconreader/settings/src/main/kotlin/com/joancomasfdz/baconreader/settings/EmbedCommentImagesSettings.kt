@@ -13,6 +13,7 @@ object EmbedCommentImagesSettings : SettingsGroup(BaconReaderStrings) {
     val imagesLongPressDownload by
         toggle(default = true, key = "embed_comment_images.images_long_press_download")
     val imagesWifiOnly by toggle(default = false, key = "embed_comment_images.images_wifi_only")
+    val imagesTapToLoad by toggle(default = false, key = "embed_comment_images.images_tap_to_load")
     val showVideos by toggle(default = true, key = "embed_comment_images.show_videos")
     val youtubeTitles by toggle(default = true, key = "embed_comment_images.youtube_titles")
     val youtubeThumbnails by

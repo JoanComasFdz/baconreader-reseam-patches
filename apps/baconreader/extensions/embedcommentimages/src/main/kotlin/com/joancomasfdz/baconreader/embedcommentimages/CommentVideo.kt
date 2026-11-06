@@ -105,8 +105,8 @@ internal object CommentVideo {
     /**
      * A box with the first frame of the video and a play button. Tapping it plays the video in
      * place. With [fullWidth], the video is as wide as the comment, else at most [boxSize] wide and
-     * high. [loadPreview] is whether the first frame and size can load now, not on mobile data with
-     * "Load images only on Wi-Fi".
+     * high. [loadPreview] is whether the first frame can load now, not where images load on tap:
+     * there the box still takes the video's size and duration from its playlist.
      */
     fun createSlot(
         textView: TextView,
@@ -193,9 +193,9 @@ internal object CommentVideo {
         )
 
         if (loadPreview) loadInfo(box, preview, duration, id)
+        else loadSize(box, preview, duration, id)
 
         box.setOnClickListener {
-            if (!loadPreview) loadInfo(box, preview, duration, id)
             startPlayer(box, id)
             play.visibility = View.GONE
             duration.visibility = View.GONE
@@ -227,6 +227,37 @@ internal object CommentVideo {
         val player = box.tag as? SimpleExoPlayer ?: return
         box.tag = null
         releasePlayer(player)
+    }
+
+    /**
+     * The size and duration from the video's DASH playlist, a small text, without the first frame,
+     * where images load on tap: the box has the video's shape before the tap, so it doesn't change
+     * size while the video plays. A video file has no playlist: the player fits it in the box.
+     */
+    private fun loadSize(
+        box: AspectRatioFrameLayout,
+        preview: ImageView,
+        duration: TextView,
+        id: String,
+    ) {
+        val cached = infos.get(id)
+        if (cached != null) {
+            showInfo(cached, box, preview, duration)
+            return
+        }
+        if (isFile(id)) return
+
+        loader.execute {
+            try {
+                val playlist =
+                    Playlist.parse(fetchTextWithRetry(videoUrl(id) + "/DASHPlaylist.mpd"))
+                val info = Info(playlist.size, playlist.seconds)
+                infos.put(id, info)
+                main.post { showInfo(info, box, preview, duration) }
+            } catch (exception: Exception) {
+                Log.i(TAG, "Could not load the video size of $id", exception)
+            }
+        }
     }
 
     /**
@@ -412,8 +443,10 @@ internal object CommentVideo {
         if (currentPlayer === player) currentPlayer = null
     }
 
-    /** What a Reddit video's DASH playlist says: its smallest video file and its duration. */
-    private class Playlist(val smallest: String, val seconds: Long) {
+    /**
+     * What a Reddit video's DASH playlist says: its smallest video file, its duration and its size.
+     */
+    private class Playlist(val smallest: String, val seconds: Long, val size: IntArray?) {
         companion object {
             fun parse(mpd: String): Playlist {
                 val parser = Xml.newPullParser()
@@ -422,6 +455,7 @@ internal object CommentVideo {
                 var smallest: String? = null
                 var smallestBandwidth = Long.MAX_VALUE
                 var bandwidth = Long.MAX_VALUE
+                var size: IntArray? = null
                 var video = false
                 var event = parser.eventType
                 while (event != XmlPullParser.END_DOCUMENT) {
@@ -435,6 +469,18 @@ internal object CommentVideo {
                             "Representation" -> {
                                 // Audio renditions have no height.
                                 video = parser.getAttributeValue(null, "height") != null
+                                // Every rendition has the same ratio: the first video one's size.
+                                val width = parser.getAttributeValue(null, "width")?.toIntOrNull()
+                                val height = parser.getAttributeValue(null, "height")?.toIntOrNull()
+                                if (
+                                    size == null &&
+                                        width != null &&
+                                        height != null &&
+                                        width > 0 &&
+                                        height > 0
+                                ) {
+                                    size = intArrayOf(width, height)
+                                }
                                 bandwidth =
                                     parser.getAttributeValue(null, "bandwidth")?.toLong()
                                         ?: Long.MAX_VALUE
@@ -451,6 +497,7 @@ internal object CommentVideo {
                 return Playlist(
                     smallest ?: throw IllegalStateException("No video in the playlist"),
                     seconds,
+                    size,
                 )
             }
 

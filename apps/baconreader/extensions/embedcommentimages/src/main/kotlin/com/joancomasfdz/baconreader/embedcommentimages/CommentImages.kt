@@ -127,9 +127,11 @@ internal object CommentImages {
     private fun longPressDownload(): Boolean = settings.imagesLongPressDownload.value
 
     /**
-     * Whether images and previews wait for a tap, on mobile data with "Load images only on Wi-Fi".
+     * Whether images and previews wait for a tap: always with "Load images only when tapped", on
+     * mobile data with "Load images only on Wi-Fi".
      */
-    fun loadOnTap(context: Context): Boolean = settings.imagesWifiOnly.value && isMetered(context)
+    fun loadOnTap(context: Context): Boolean =
+        settings.imagesTapToLoad.value || (settings.imagesWifiOnly.value && isMetered(context))
 
     /** Images go in slots right after the TextView, so they need a vertical LinearLayout. */
     fun embed(textView: TextView, markdown: String?) = embedText(textView, emoteIds(markdown))
@@ -301,7 +303,7 @@ internal object CommentImages {
                 }
             }
             val pendingTitles = YoutubeTitles.prepare(textView, builder, youtubeLinks)
-            // The photos of X and Bluesky posts wait like images where they load only on Wi-Fi.
+            // The photos of X and Bluesky posts wait like images where those load on tap.
             val postPhotosOn = !loadOnTap(context)
             val postImages = ArrayList<SocialPosts.Image>()
             val pendingPosts =
