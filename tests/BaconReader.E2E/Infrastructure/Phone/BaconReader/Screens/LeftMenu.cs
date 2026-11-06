@@ -20,7 +20,9 @@ public sealed class LeftMenu(AndroidDriver driver)
     private const string EnvelopeLabel = ", orange envelope";
     private static readonly OpenQA.Selenium.By Menu = Locate.AppId("drawerView");
     private static readonly OpenQA.Selenium.By Entry = Locate.AppId("text");
-    // The arrow at the end of a row that opens what it holds: the header's opens the accounts list.
+    // An entry's icon: before an entry of the menu, after one of the accounts (its ✕, "Add account"'s +).
+    private static readonly OpenQA.Selenium.By Icon = Locate.AppId("icon");
+    // The arrow at the end of a row that opens what it holds: the user name's opens the accounts.
     private static readonly OpenQA.Selenium.By Arrow = Locate.AppId("expand");
     // "Show user avatars" draws an account's avatar over an object replacement character before its name.
     private const string Avatar = "\uFFFC ";
@@ -64,6 +66,72 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// </summary>
     public Task ClickAsync(MenuEntry entry) => OnScreen.PressAsync(driver, Locate.AppIdWithText("text", entry.ToShownText()));
 
+    /// <summary>
+    /// Taps the test account's user name at the top of the menu (<see cref="TestAccount"/>), which opens the accounts under
+    /// it, or closes them.
+    /// </summary>
+    public Task ClickTheTestAccountsUserNameAsync() =>
+        OnScreen.PressAsync(driver, () => driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text.Trim(), TestAccount.UserName)));
+
+    /// <summary>
+    /// Taps the arrow next to the account <paramref name="user"/> at the top of the menu (the arrow has no label), which
+    /// opens the accounts under it, or closes them. It is the arrow on the same row as the account's name; the
+    /// account's row among the accounts has none.
+    /// </summary>
+    public Task ClickArrowNextToAsync(string user) =>
+        OnScreen.PressAsync(driver, () =>
+        {
+            var name = driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text.Trim(), user) && ArrowOnRowOf(entry) is not null);
+            return ArrowOnRowOf(name)!;
+        });
+
+    /// <summary>Waits until the accounts show under the user name: their last row, "Add account", is there.</summary>
+    public Task WaitUntilAccountsShownAsync() =>
+        Waiting.UntilAsync(
+            () => Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
+            TimeSpan.FromSeconds(10),
+            "The left menu's accounts under the user name");
+
+    /// <summary>Waits until the accounts under the user name are closed: "Add account" is no longer there.</summary>
+    public Task WaitUntilAccountsClosedAsync() =>
+        Waiting.UntilAsync(
+            () => !Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
+            TimeSpan.FromSeconds(10),
+            "The left menu's accounts under the user name closing");
+
+    /// <summary>
+    /// What the menu shows of the accounts: the user name at its top, and the accounts under it, top to bottom (none
+    /// while they are closed).
+    /// </summary>
+    public Task<LeftMenuAccountsSnapshot> ReadAccountsAsync() =>
+        OnScreen.ReadAsync(driver, () => new LeftMenuAccountsSnapshot(
+            driver.FindElement(Menu).FindElements(Entry).First().Text.Trim(),
+            [.. Accounts().Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
+
+    // Whether a row's text names user, with or without the avatar "Show user avatars" draws before it.
+    private static bool Named(string text, string user) => text == user || text == Avatar + user;
+
+    // The arrow whose row is the entry's: the one that spans the entry's middle, up and down.
+    private OpenQA.Selenium.IWebElement? ArrowOnRowOf(OpenQA.Selenium.IWebElement entry)
+    {
+        var middle = entry.Location.Y + entry.Size.Height / 2;
+        return driver.FindElement(Menu).FindElements(Arrow)
+            .FirstOrDefault(arrow => arrow.Displayed && arrow.Location.Y <= middle && middle <= arrow.Location.Y + arrow.Size.Height);
+    }
+
+    // The accounts' rows: each shows its icon after its text, where the menu's entries show it before.
+    private IEnumerable<OpenQA.Selenium.IWebElement> Accounts()
+    {
+        var menu = driver.FindElements(Menu).FirstOrDefault(shown => shown.Displayed);
+        if (menu is null) return [];
+        var icons = menu.FindElements(Icon).Select(icon => new System.Drawing.Rectangle(icon.Location, icon.Size)).ToList();
+        return menu.FindElements(Entry).Where(entry =>
+        {
+            var text = new System.Drawing.Rectangle(entry.Location, entry.Size);
+            return icons.Any(icon => icon.Left >= text.Right && icon.Top < text.Bottom && icon.Bottom > text.Top);
+        }).ToList();
+    }
+
     /// <summary>Closes the menu, as Android's Back does.</summary>
     public Task CloseAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
 
@@ -89,52 +157,6 @@ public sealed class LeftMenu(AndroidDriver driver)
             return new LeftMenuFooterSnapshot(version?.Text, version is not null && version.Location.Y >= lowestEntry);
         });
 
-    /// <summary>
-    /// Taps the arrow next to the account <paramref name="user"/> in the menu's header (the arrow has no label), which
-    /// opens or closes the accounts list. The header's arrow is the one on the same row as the account's name; the
-    /// account's row in the list has none.
-    /// </summary>
-    public Task ClickArrowNextToAsync(string user) =>
-        OnScreen.PressAsync(driver, () =>
-        {
-            var name = driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text, user) && ArrowOnRowOf(entry) is not null);
-            return ArrowOnRowOf(name)!;
-        });
-
-    /// <summary>Waits until the accounts list shows under the header: its last row, "Add account", shows.</summary>
-    public Task WaitUntilAccountsListShownAsync() =>
-        Waiting.UntilShownAsync(driver, Locate.AppIdWithText("text", new MenuEntry.AddAccount().ToShownText()), TimeSpan.FromSeconds(10), "The left menu's accounts list");
-
-    /// <summary>Waits until the accounts list is closed: "Add account" no longer shows under the header.</summary>
-    public Task WaitUntilAccountsListClosedAsync() =>
-        Waiting.UntilAsync(
-            () => driver.FindElements(Locate.AppIdWithText("text", new MenuEntry.AddAccount().ToShownText())).Count == 0,
-            TimeSpan.FromSeconds(10),
-            "The left menu's accounts list closing");
-
-    /// <summary>
-    /// What the menu shows of the accounts: its header (the logged-in account's name) and, while it is open, the
-    /// accounts list under it, down to its last row, "Add account".
-    /// </summary>
-    public Task<LeftMenuAccountsSnapshot> ReadAccountsAsync() =>
-        OnScreen.ReadAsync(driver, () =>
-        {
-            var entries = driver.FindElement(Menu).FindElements(Entry).Select(entry => entry.Text.Trim()).ToList();
-            var end = entries.IndexOf(new MenuEntry.AddAccount().ToShownText());
-            return new LeftMenuAccountsSnapshot(entries[0], end > 0 ? [.. entries.Skip(1).Take(end)] : []);
-        });
-
-    // Whether a row's text names user, with or without the avatar before it.
-    private static bool Named(string? text, string user) => text == user || text == Avatar + user;
-
-    // The arrow whose row is the entry's: the one that spans the entry's middle, up and down.
-    private OpenQA.Selenium.IWebElement? ArrowOnRowOf(OpenQA.Selenium.IWebElement entry)
-    {
-        var middle = entry.Location.Y + entry.Size.Height / 2;
-        return driver.FindElement(Menu).FindElements(Arrow)
-            .FirstOrDefault(arrow => arrow.Displayed && arrow.Location.Y <= middle && middle <= arrow.Location.Y + arrow.Size.Height);
-    }
-
     /// <summary>What the menu shows: its entries, top to bottom.</summary>
     public Task<LeftMenuSnapshot> ReadAsync() =>
         OnScreen.ReadAsync(driver, () => new LeftMenuSnapshot(
@@ -144,14 +166,15 @@ public sealed class LeftMenu(AndroidDriver driver)
 /// <summary>What the toolbar's button that opens the left menu shows: the orange envelope of unread messages, or the menu icon.</summary>
 public sealed record LeftMenuButtonSnapshot(bool ShowsTheOrangeEnvelope);
 
-/// <summary>
-/// What the left menu shows of the accounts: its header, the logged-in account's name ("￼ e2e_user" with its avatar),
-/// and the rows of the accounts list, top to bottom ("Log out", the accounts, "Add account"), empty while it is closed.
-/// </summary>
-public sealed record LeftMenuAccountsSnapshot(string Header, ImmutableArray<string> AccountsList);
-
 /// <summary>What the left menu shows: its entries, top to bottom.</summary>
 public sealed record LeftMenuSnapshot(ImmutableArray<MenuEntry> Entries);
+
+/// <summary>
+/// What the left menu shows of the accounts: the user name at its top ("￼ e2e_user", with the avatar "Show user avatars"
+/// draws before it), and the rows of the accounts under it, top to bottom (the accounts, "Add account"), empty while
+/// they are closed.
+/// </summary>
+public sealed record LeftMenuAccountsSnapshot(string UserName, ImmutableArray<MenuEntry> Rows);
 
 /// <summary>
 /// What the drawer shows at its bottom: the patches' version ("Patches unknown (Reseam 0.35.1)"; null when none shows),

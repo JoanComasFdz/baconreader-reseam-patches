@@ -169,7 +169,7 @@ public sealed class ShowUserAvatarsTests : BaseE2E
 
         // When
         await Phone.BaconReader.Main.LeftMenu.ClickArrowNextToAsync("e2e_user");
-        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsListShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsShownAsync();
 
         // Then
         var accounts = await Phone.BaconReader.Main.LeftMenu.ReadAccountsAsync();
@@ -179,7 +179,7 @@ public sealed class ShowUserAvatarsTests : BaseE2E
 
         // When
         await Phone.BaconReader.Main.LeftMenu.ClickArrowNextToAsync("e2e_user");
-        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsListClosedAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsClosedAsync();
         await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
         await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
         await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
@@ -332,7 +332,7 @@ public sealed class ShowUserAvatarsTests : BaseE2E
         await Phone.BaconReader.Main.LeftMenu.OpenAsync();
         await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
         await Phone.BaconReader.Main.LeftMenu.ClickArrowNextToAsync("e2e_user");
-        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsListShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsShownAsync();
         await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.AddAccount());
         await Phone.BaconReader.LogIn.WaitUntilShownAsync();
         await Phone.BaconReader.LogIn.TypeUserNameAsync("e2e_second");
@@ -353,7 +353,7 @@ public sealed class ShowUserAvatarsTests : BaseE2E
 
         // When
         await Phone.BaconReader.Main.LeftMenu.ClickArrowNextToAsync("e2e_second");
-        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsListShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilAccountsShownAsync();
 
         // Then
         var both = await Phone.BaconReader.Main.LeftMenu.ReadAccountsAsync();
