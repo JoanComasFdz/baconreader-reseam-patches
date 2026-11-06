@@ -90,6 +90,16 @@ On the Chat page, in the Reddit chat section:
 |---|---|---|
 | Chat messages apart from the inbox | `reddit_chat.check_chat_messages` | On |
 
+### Account colors settings
+
+In the Account colors section, on the screen itself rather than on a page:
+
+| Setting | Key | Default |
+|---|---|---|
+| Account colors | `account_colors.account_colors` | On |
+
+The accounts' colors aren't settings: they're kept in the app's `baconreader_patches` preferences, as `account_colors.color.<user name in lower case>`.
+
 ## Spoof client options
 
 | Key | Default | Empty value |
