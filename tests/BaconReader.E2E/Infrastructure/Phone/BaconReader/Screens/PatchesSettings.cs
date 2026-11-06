@@ -36,6 +36,37 @@ public sealed class PatchesSettings(AndroidDriver driver)
     public Task ScrollToAsync(PatchSetting setting) =>
         OnScreen.ScrollToAsync(driver, Locate.UpDownList(), Titled(setting.ToShownText()), $"The setting \"{setting.ToShownText()}\"");
 
+    /// <summary>
+    /// Scrolls the page until the titles of <paramref name="first"/> through <paramref name="last"/>, settings that fit
+    /// on the screen together, all show: down a little while <paramref name="last"/> is below the screen, up a little
+    /// while <paramref name="first"/> is above it. A page can be longer than the screen, so a scroll to the last can
+    /// leave the first above it.
+    /// </summary>
+    public async Task ScrollToAsync(PatchSetting first, PatchSetting last)
+    {
+        await ScrollToAsync(last);
+        for (var scrolls = 0; scrolls < 10; scrolls++)
+        {
+            var direction = await Task.Run(() =>
+                !driver.FindElements(Titled(last.ToShownText())).Any(title => title.Displayed) ? "down"
+                : !driver.FindElements(Titled(first.ToShownText())).Any(title => title.Displayed) ? "up"
+                : null);
+            if (direction is null)
+            {
+                return;
+            }
+
+            await OnScreen.DoAsync(driver, () => driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
+            {
+                ["elementId"] = ((OpenQA.Selenium.Appium.AppiumElement)driver.FindElement(Locate.UpDownList())).Id,
+                ["direction"] = direction,
+                ["percent"] = 0.2,
+            }));
+        }
+
+        throw new InvalidOperationException($"\"{first.ToShownText()}\" through \"{last.ToShownText()}\" didn't show together after 10 scrolls.");
+    }
+
     /// <summary>Taps <paramref name="setting"/>'s title, which switches it.</summary>
     public Task TickAsync(PatchSetting setting) => OnScreen.PressAsync(driver, Titled(setting.ToShownText()));
 

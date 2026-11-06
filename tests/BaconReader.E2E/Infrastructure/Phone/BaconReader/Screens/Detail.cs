@@ -367,6 +367,7 @@ public sealed class Comments(AndroidDriver driver)
             Media.Videos(comment).Count)
         {
             AlbumCounter = Media.In(comment, Media.AlbumCounter).FirstOrDefault(counter => counter.Displayed)?.Text.Trim(),
+            Prompts = [.. Media.Prompts(comment).Select(prompt => MediaPromptShowing.ReadMediaPrompt(prompt.Text.Trim()))],
             TextsUnderMedia = [.. Media.In(comment, Media.TextAfterMedia)
                 .Where(text => Media.BoundsOf(text).Top >= mediaBottom)
                 .Select(text => text.Text.Trim())],
@@ -562,7 +563,9 @@ public sealed class Comments(AndroidDriver driver)
             () => FindComment(text) is { } comment
                 && comment.FindElements(Position).FirstOrDefault()?.Text is { Length: > 0 } position
                 && position == comment.FindElements(Duration).FirstOrDefault()?.Text,
-            TimeSpan.FromSeconds(30),
+            // A 10 s video over the phone's slow link: while recording, one run took more than 30 s from the tap
+            // to the video's end.
+            TimeSpan.FromSeconds(60),
             $"The video of the comment \"{text}\" playing to its end");
 
     /// <summary>What the player of the comment "<paramref name="text"/>" shows: its position and its length.</summary>
@@ -639,6 +642,19 @@ public sealed class Comments(AndroidDriver driver)
         OnScreen.PressAsync(driver, () =>
             Tables.Buttons(TextOf(text)).FirstOrDefault(found => found.Text == button.ToShownText())
             ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no \"{button.ToShownText()}\"."));
+
+    /// <summary>Taps <paramref name="prompt"/> in the media of the comment "<paramref name="text"/>", which loads it.</summary>
+    public Task ClickMediaPromptAsync(string text, MediaPrompt prompt) =>
+        OnScreen.PressAsync(driver, () =>
+            Media.Prompts(FindCommentOrFail(text)).FirstOrDefault(found => found.Text.Trim() == prompt.ToShownText())
+            ?? throw new InvalidOperationException($"The comment \"{text}\" shows no \"{prompt.ToShownText()}\"."));
+
+    /// <summary>Waits until the media of the comment "<paramref name="text"/>" shows <paramref name="prompt"/>.</summary>
+    public Task WaitUntilMediaPromptShownAsync(string text, MediaPrompt prompt) =>
+        Waiting.UntilAsync(
+            () => FindComment(text) is { } comment && Media.Prompts(comment).Any(found => found.Text.Trim() == prompt.ToShownText()),
+            TimeSpan.FromSeconds(10),
+            $"\"{prompt.ToShownText()}\" in the comment \"{text}\"");
 
     /// <summary>Waits until the table of the comment "<paramref name="text"/>" shows <paramref name="button"/>.</summary>
     public Task WaitUntilTableButtonShownAsync(string text, TableButton button) =>
@@ -840,6 +856,9 @@ public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Vide
 
     /// <summary>The texts it shows under its first GIF, image or video, in order: what follows a media link that starts it.</summary>
     public ImmutableArray<string> TextsUnderMedia { get; init; } = [];
+
+    /// <summary>What its media show while they wait for a tap to load, such as "Tap to load image".</summary>
+    public ImmutableArray<MediaPrompt> Prompts { get; init; } = [];
 }
 
 /// <summary>
@@ -877,6 +896,13 @@ internal static class Media
 
     // The copies of a text that show what follows each of its media links.
     public static readonly By TextAfterMedia = Locate.AppId("baconreader_patches_text_after_media");
+
+    /// <summary>
+    /// The prompts <paramref name="comment"/>'s media show while they wait for a tap ("Load images only when tapped"):
+    /// texts the patch draws without an id, found by what they say.
+    /// </summary>
+    public static IReadOnlyCollection<IWebElement> Prompts(IWebElement comment) =>
+        [.. MediaPromptShowing.Listed.SelectMany(prompt => In(comment, Locate.Text(prompt.ToShownText()))).Where(prompt => prompt.Displayed)];
 
     /// <summary>How many GIFs, images and videos <paramref name="comment"/> shows, loaded.</summary>
     public static int Count(IWebElement comment) =>

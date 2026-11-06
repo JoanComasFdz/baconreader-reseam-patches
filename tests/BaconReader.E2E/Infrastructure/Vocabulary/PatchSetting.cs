@@ -17,6 +17,8 @@ public partial record PatchSetting
 
     public partial record LoadImagesOnlyOnWiFi;
 
+    public partial record LoadImagesOnlyWhenTapped;
+
     public partial record PlayVideosInComments;
     public partial record CommentsToLoad;
     public partial record AutoLoadLoadMoreComments;
@@ -53,6 +55,7 @@ public static class PatchSettingShowing
         new PatchSetting.FullWidthByDefault(),
         new PatchSetting.LongPressToDownload(),
         new PatchSetting.LoadImagesOnlyOnWiFi(),
+        new PatchSetting.LoadImagesOnlyWhenTapped(),
         new PatchSetting.PlayVideosInComments(),
         new PatchSetting.CommentsToLoad(),
         new PatchSetting.AutoLoadLoadMoreComments(),
@@ -79,6 +82,7 @@ public static class PatchSettingShowing
             fullWidthByDefault => "Full width by default",
             longPressToDownload => "Long press to download",
             loadImagesOnlyOnWiFi => "Load images only on Wi-Fi",
+            loadImagesOnlyWhenTapped => "Load images only when tapped",
             playVideosInComments => "Play videos in comments",
             commentsToLoad => "Comments to load",
             autoLoadLoadMoreComments => "Auto-load \"load more comments\"",
