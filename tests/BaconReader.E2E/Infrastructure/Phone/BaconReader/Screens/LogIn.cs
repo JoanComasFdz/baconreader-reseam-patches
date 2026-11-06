@@ -29,6 +29,12 @@ public sealed class LogIn(AndroidDriver driver)
     /// <summary>Types the test account's password (<see cref="TestAccount"/>) in "Password".</summary>
     public Task TypeTheTestAccountsPasswordAsync() => TypeAsync(Password, TestAccount.Password);
 
+    /// <summary>Types <paramref name="user"/>, a second account's user name, in "Email or username".</summary>
+    public Task TypeUserNameAsync(string user) => TypeAsync(UserName, user);
+
+    /// <summary>Types the password of the second account <paramref name="user"/> (<see cref="SecondAccount"/>) in "Password".</summary>
+    public Task TypePasswordOfAsync(string user) => TypeAsync(Password, SecondAccount.PasswordOf(user));
+
     /// <summary>Taps "Log In" (the button, not the title above the form).</summary>
     public Task ClickLogInAsync() => OnScreen.PressAsync(driver, LogInButton);
 

@@ -30,7 +30,7 @@ private const val MESSAGE = "com.onelouder.baconreader.reddit.Message"
 val userAvatars =
     patch("Show user avatars") {
         description(
-            "Adds an option to show the author's avatar before the name in comments, as on Reddit's website."
+            "Adds an option to show the author's avatar before the name in comments, as on Reddit's website, and always shows each account's avatar before its name in the drawer."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
@@ -64,6 +64,7 @@ val userAvatars =
             inboxLabelSet.after {
                 UserAvatars.inboxAvatar(thisObject.field(inboxMessage), capture("view"))
             }
+            drawerRowSet.after { UserAvatars.drawerAvatar(param(0), thisObject.field(drawerText)) }
         }
     }
 
@@ -92,6 +93,13 @@ private val inboxLabelSet =
         .setTextOf("labelView")
 
 private val inboxMessage = klass("com.onelouder.baconreader.adapters.InboxHolder").field("message")
+
+private const val DRAWER_HOLDER = "com.onelouder.baconreader.adapters.DrawerAdapter\$Holder"
+
+// Shows a row of the drawer: the header with the active account, the accounts list, the menu.
+private val drawerRowSet = klass(DRAWER_HOLDER).method("updateView")
+
+private val drawerText = klass(DRAWER_HOLDER).field("textView")
 
 /** The setText(CharSequence) on the TextView read from [fieldName], with the view captured. */
 private fun MethodTarget.setTextOf(fieldName: String) =

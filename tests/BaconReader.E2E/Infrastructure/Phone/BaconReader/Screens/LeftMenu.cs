@@ -22,6 +22,10 @@ public sealed class LeftMenu(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By Entry = Locate.AppId("text");
     // An entry's icon: before an entry of the menu, after one of the accounts (its ✕, "Add account"'s +).
     private static readonly OpenQA.Selenium.By Icon = Locate.AppId("icon");
+    // The arrow at the end of a row that opens what it holds: the user name's opens the accounts.
+    private static readonly OpenQA.Selenium.By Arrow = Locate.AppId("expand");
+    // "Show user avatars" draws an account's avatar over an object replacement character before its name.
+    private const string Avatar = "\uFFFC ";
     // "Patches entry in settings"'s line at the bottom of the drawer, under the menu: "Patches <version> (<patcher>)".
     private static readonly OpenQA.Selenium.By PatchesVersion = Locate.TextStartingWith("Patches ");
 
@@ -67,7 +71,19 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// it, or closes them.
     /// </summary>
     public Task ClickTheTestAccountsUserNameAsync() =>
-        OnScreen.PressAsync(driver, () => driver.FindElement(Menu).FindElements(Entry).First(entry => entry.Text.Trim() == TestAccount.UserName));
+        OnScreen.PressAsync(driver, () => driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text.Trim(), TestAccount.UserName)));
+
+    /// <summary>
+    /// Taps the arrow next to the account <paramref name="user"/> at the top of the menu (the arrow has no label), which
+    /// opens the accounts under it, or closes them. It is the arrow on the same row as the account's name; the
+    /// account's row among the accounts has none.
+    /// </summary>
+    public Task ClickArrowNextToAsync(string user) =>
+        OnScreen.PressAsync(driver, () =>
+        {
+            var name = driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text.Trim(), user) && ArrowOnRowOf(entry) is not null);
+            return ArrowOnRowOf(name)!;
+        });
 
     /// <summary>Waits until the accounts show under the user name: their last row, "Add account", is there.</summary>
     public Task WaitUntilAccountsShownAsync() =>
@@ -76,10 +92,32 @@ public sealed class LeftMenu(AndroidDriver driver)
             TimeSpan.FromSeconds(10),
             "The left menu's accounts under the user name");
 
-    /// <summary>What the menu's accounts show, under the user name: their rows, top to bottom.</summary>
+    /// <summary>Waits until the accounts under the user name are closed: "Add account" is no longer there.</summary>
+    public Task WaitUntilAccountsClosedAsync() =>
+        Waiting.UntilAsync(
+            () => !Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
+            TimeSpan.FromSeconds(10),
+            "The left menu's accounts under the user name closing");
+
+    /// <summary>
+    /// What the menu shows of the accounts: the user name at its top, and the accounts under it, top to bottom (none
+    /// while they are closed).
+    /// </summary>
     public Task<LeftMenuAccountsSnapshot> ReadAccountsAsync() =>
         OnScreen.ReadAsync(driver, () => new LeftMenuAccountsSnapshot(
+            driver.FindElement(Menu).FindElements(Entry).First().Text.Trim(),
             [.. Accounts().Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
+
+    // Whether a row's text names user, with or without the avatar "Show user avatars" draws before it.
+    private static bool Named(string text, string user) => text == user || text == Avatar + user;
+
+    // The arrow whose row is the entry's: the one that spans the entry's middle, up and down.
+    private OpenQA.Selenium.IWebElement? ArrowOnRowOf(OpenQA.Selenium.IWebElement entry)
+    {
+        var middle = entry.Location.Y + entry.Size.Height / 2;
+        return driver.FindElement(Menu).FindElements(Arrow)
+            .FirstOrDefault(arrow => arrow.Displayed && arrow.Location.Y <= middle && middle <= arrow.Location.Y + arrow.Size.Height);
+    }
 
     // The accounts' rows: each shows its icon after its text, where the menu's entries show it before.
     private IEnumerable<OpenQA.Selenium.IWebElement> Accounts()
@@ -131,8 +169,12 @@ public sealed record LeftMenuButtonSnapshot(bool ShowsTheOrangeEnvelope);
 /// <summary>What the left menu shows: its entries, top to bottom.</summary>
 public sealed record LeftMenuSnapshot(ImmutableArray<MenuEntry> Entries);
 
-/// <summary>What the left menu's accounts show, under the user name: their rows, top to bottom (the accounts, "Add account").</summary>
-public sealed record LeftMenuAccountsSnapshot(ImmutableArray<MenuEntry> Rows);
+/// <summary>
+/// What the left menu shows of the accounts: the user name at its top ("￼ e2e_user", with the avatar "Show user avatars"
+/// draws before it), and the rows of the accounts under it, top to bottom (the accounts, "Add account"), empty while
+/// they are closed.
+/// </summary>
+public sealed record LeftMenuAccountsSnapshot(string UserName, ImmutableArray<MenuEntry> Rows);
 
 /// <summary>
 /// What the drawer shows at its bottom: the patches' version ("Patches unknown (Reseam 0.35.1)"; null when none shows),

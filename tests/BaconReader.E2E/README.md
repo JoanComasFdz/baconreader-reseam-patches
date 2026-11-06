@@ -250,6 +250,7 @@ arguments: a Markdown table is `Scores\n\n¦ Player ¦ Score ¦\n¦---¦---¦\n�
 | `crosspost: <subreddit> \| <title> \| <shared post title>` | a crosspost of that post |
 | `link post to video: <subreddit> \| <title> \| <video post title>` | a link post to that post's video, on v.redd.it |
 | `avatar: <user>` | the user's avatar, for "Show user avatars" |
+| `second account: <name>` | an account besides the test account, which logs in with `SecondAccount.PasswordOf(<name>)` |
 | `late media: <post title> \| <seconds>` | the post's image or GIF answered that late |
 | `fail media: <post title> \| <status>` | the post's image or GIF answered with that status |
 | `fail thumbnail: <post title> \| <status> \| <times>` | the post's thumbnail answered with that status the first times |

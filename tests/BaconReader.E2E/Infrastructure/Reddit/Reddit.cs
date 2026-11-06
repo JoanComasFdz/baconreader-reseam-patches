@@ -218,6 +218,12 @@ public sealed partial class Reddit(RedditWorld world)
             .Select(id => messages.FirstOrDefault(message => message.FullName == id)?.Subject ?? id)]);
     }
 
+    /// <summary>
+    /// "Reddit has a second account "&lt;name&gt;"": an account besides the test account, which logs in with
+    /// <see cref="SecondAccount.PasswordOf"/>.
+    /// </summary>
+    public void HasASecondAccount(string name) => world.AddAccount(name, SecondAccount.PasswordOf(name));
+
     /// <summary>"the test account is subscribed to r/&lt;subreddit&gt;".</summary>
     public void TheTestAccountIsSubscribedTo(string subreddit) =>
         world.Subscribe(world.Accounts.Single(account => account.Name == TestAccount.UserName), subreddit);
