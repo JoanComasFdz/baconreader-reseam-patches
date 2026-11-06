@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import android.text.style.BackgroundColorSpan
 import android.text.style.ClickableSpan
 import android.text.style.ReplacementSpan
 import android.text.style.StyleSpan
@@ -38,7 +39,10 @@ private const val MENU_ITEM = "baconreader_patches_select_text"
 /** The id the patch adds for the dialog's text. */
 private const val SELECTED_TEXT = "baconreader_patches_selected_text"
 
-/** The app's spoiler: it paints its text the color of the box behind it, until tapped. */
+/**
+ * The app's spoiler: over a box (a BackgroundColorSpan) of the same range, it paints its text the
+ * box's color until tapped.
+ */
 private const val SPOILER_SPAN = "com.onelouder.baconreader.parser.SpoilerClickableSpan"
 
 /** "Show tables" draws a table as this span over one character, which copies as that character. */
@@ -176,10 +180,16 @@ private fun body(html: String?, subreddit: String?): CharSequence? {
         text.removeSpan(table)
         text.replace(start, end, table.toString())
     }
-    // Spoilers show in plain sight, on their box: the text is shown to be selected. A link inside
-    // one opens with the first tap, which the spoiler took.
+    // Spoilers show as plain text, without their box: the text is shown to be selected. A link
+    // inside one opens with the first tap, which the spoiler took.
     for (spoiler in text.getSpans(0, text.length, ClickableSpan::class.java)) {
-        if (spoiler.javaClass.name == SPOILER_SPAN) text.removeSpan(spoiler)
+        if (spoiler.javaClass.name != SPOILER_SPAN) continue
+        val start = text.getSpanStart(spoiler)
+        val end = text.getSpanEnd(spoiler)
+        text.removeSpan(spoiler)
+        for (box in text.getSpans(start, end, BackgroundColorSpan::class.java)) {
+            if (text.getSpanStart(box) == start && text.getSpanEnd(box) == end) text.removeSpan(box)
+        }
     }
     return text.trim()
 }
