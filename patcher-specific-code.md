@@ -90,7 +90,7 @@ What the patches share. Use these names; don't add a second of any.
 
   | Page | Title | Order | What goes there |
   |---|---|---|---|
-  | `SettingsPages.Images` | Images and videos | 10 | Embed comment images: images, full width, long press, Wi-Fi only, videos |
+  | `SettingsPages.Images` | Images and videos | 10 | Embed comment images: images, full width, long press, Wi-Fi only, videos. Video autoplay in detail view. Improve post media loading: the preview while loading |
   | `SettingsPages.Links` | Links | 20 | Embed comment images: YouTube titles and thumbnails, X and Bluesky posts. Improve post media loading: JavaScript and its site lists. Prompt to open Reddit links |
   | `SettingsPages.Comments` | Comments | 30 | Show user avatars, Load more comments |
   | `SettingsPages.Chat` | Chat | 40 | Reddit chat: the check for new chat messages |

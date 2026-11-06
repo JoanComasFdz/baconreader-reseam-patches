@@ -44,8 +44,8 @@ import java.util.concurrent.Executors
 import retrofit2.Response
 
 /*
- * While post media loads, an overlay on the media area shows a dimmed still preview, a progress bar
- * and, once a size is known, a label ("GIF · 80.6 MB", or "12.3 / 80.6 MB"). GIFs load through the
+ * While post media loads, an overlay on the media area shows a dimmed still preview (unless "Preview
+ * while loading" is off), a progress bar and, once a size is known, a label ("GIF · 80.6 MB", or "12.3 / 80.6 MB"). GIFs load through the
  * app's own cache loader, which reports the download progress.
  *
  * The overlay is drawn in the ViewOverlay of the media's ViewFlipper, so it floats above whichever
@@ -89,7 +89,7 @@ fun onStart(
     try {
         val overlay =
             overlays.getOrPut(handler) { LoadingOverlay(flipper, WeakReference(videoHandler)) }
-        overlay.show(stillPreviewUrl(link))
+        overlay.show(if (PostMediaSettings.loadingPreview.value) stillPreviewUrl(link) else null)
 
         val gif = gifUrl(link)
         // Reddit videos (DASH) have no single file size: the bar alone shows they are loading.

@@ -34,11 +34,16 @@ private const val IMAGE_HELPER = "com.onelouder.baconreader.imageutils.ImageHelp
 val improvePostMediaLoading =
     patch("Improve post media loading") {
         description(
-            "Shows a still preview with a progress bar and the downloaded size while post media and gallery images load, uses small previews for the thumbnails of galleries, shows a message instead of a broken page when a RedGIFs video was deleted, and adds settings for which link post pages run JavaScript."
+            "Shows a progress bar, the downloaded size and, by a setting, a still preview while post media and gallery images load, uses small previews for the thumbnails of galleries, shows a message instead of a broken page when a RedGIFs video was deleted, and adds settings for which link post pages run JavaScript."
         )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
             baconReaderSettings,
+            section(
+                SettingsPages.Images,
+                BaconReaderStrings.sectionPostMediaLoading,
+                PostMediaSettings.loadingPreview,
+            ),
             section(
                 SettingsPages.Links,
                 BaconReaderStrings.sectionPostMedia,

@@ -41,6 +41,12 @@ Tap an image to switch between full width and 200×200, double tap it to open it
 
 ### Improve post media loading settings
 
+On the Images and videos page, under Post media:
+
+| Setting | Key | Default |
+|---|---|---|
+| Preview while loading | `post_media.loading_preview` | On: post media shows a dimmed still preview (Reddit's largest preview resolution), and a gallery image its preview, behind the progress bar until it loads. Off: only the progress bar and the size, over BaconReader's loading page |
+
 On the Links page, under Link posts:
 
 | Setting | Key | Default |
