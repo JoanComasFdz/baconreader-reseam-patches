@@ -71,6 +71,8 @@ On the Comments page, in the User avatars section:
 | Avatar size: Normal, Medium, Large or Extra large | `user_avatars.user_avatar_size` | Normal (`0`) |
 | Avatar background | `user_avatars.user_avatar_background` | On |
 
+The avatars of the drawer's accounts show whether Show user avatars is on or off; Avatar size and Avatar background apply to them too. The drawer has no setting of its own.
+
 ### Load more comments settings
 
 On the Comments page, in the Load more comments section:

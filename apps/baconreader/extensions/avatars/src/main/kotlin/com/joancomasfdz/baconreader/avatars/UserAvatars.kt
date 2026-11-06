@@ -31,6 +31,7 @@ import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.settings.UserAvatarsSettings
 import com.onelouder.baconreader.RequestMethod
+import com.onelouder.baconreader.adapters.DrawerAdapter
 import com.onelouder.baconreader.data.SessionManager
 import com.onelouder.baconreader.data.SessionToken
 import com.onelouder.baconreader.reddit.Comment
@@ -193,6 +194,42 @@ fun inboxAvatar(message: Message?, label: TextView?) {
         }
     } catch (ex: Exception) {
         Log.i(Avatars.TAG, "Could not add the avatar to the inbox", ex)
+    }
+}
+
+/** DrawerItem.type of the drawer's header, the row with the active account's name. */
+private const val DRAWER_HEADER = 1
+
+/** DrawerItem.tagString of the header when an account is logged in. */
+private const val DRAWER_HEADER_ACCOUNT = "account"
+
+/** DrawerItem.type of the rows of the expanded accounts list. */
+private const val DRAWER_ACCOUNT = 2
+
+/** DrawerItem.tag of an account's row, not of "Log out" (100) or "Add account" (101). */
+private const val DRAWER_ACCOUNT_TAG = 110
+
+/**
+ * Puts the account's avatar before its name in the drawer, after a row sets its text: the header
+ * with the active account and each account of the expanded accounts list. Not "Logged out", "Log
+ * out" or "Add account". Always on: a user's own accounts, unlike authors, don't depend on the
+ * "Show user avatars" setting. Avatar size and Avatar background still apply.
+ */
+@Export
+fun drawerAvatar(item: DrawerAdapter.DrawerItem?, textView: TextView?) {
+    try {
+        if (item == null || textView == null) return
+        val name =
+            when {
+                item.type == DRAWER_HEADER && item.tagString == DRAWER_HEADER_ACCOUNT -> item.text
+                item.type == DRAWER_ACCOUNT && item.tag == DRAWER_ACCOUNT_TAG -> item.tagString
+                else -> null
+            }
+        if (name.isNullOrEmpty() || textView.text.toString() != name) return
+        remember(textView.context)
+        insertAvatar(textView, 0, name, null)
+    } catch (ex: Exception) {
+        Log.i(Avatars.TAG, "Could not add the avatar to the drawer", ex)
     }
 }
 
