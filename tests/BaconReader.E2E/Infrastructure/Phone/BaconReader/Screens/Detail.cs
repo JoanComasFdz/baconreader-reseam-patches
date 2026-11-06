@@ -47,6 +47,9 @@ public sealed class Detail(AndroidDriver driver)
     public Task WaitUntilShownAsync() =>
         Waiting.UntilShownAsync(driver, Header, TimeSpan.FromSeconds(10), "The post over its comments");
 
+    /// <summary>Whether the post's toolbar, over the post, shows "Account colors"' line along its bottom.</summary>
+    public Task<ToolbarLineSnapshot> ReadToolbarLineAsync() => ToolbarLine.ReadAsync(driver);
+
     /// <summary>What the post shows over its comments: its title, and how many award icons.</summary>
     public Task<DetailPostSnapshot> ReadPostAsync() =>
         OnScreen.ReadAsync(driver, () => new DetailPostSnapshot(

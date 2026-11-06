@@ -79,6 +79,7 @@ Settings live in BaconReader → **Settings → Patches**.
 | Text post icon | A page icon instead of a play button on text posts |
 | Prompt to open Reddit links | Reddit links open in BaconReader |
 | Video autoplay in detail view | A setting to show a preview with a play button instead of autoplaying videos |
+| Account colors | A color for each account, shown under the toolbars |
 
 **🧹 Cleanups**
 

@@ -152,4 +152,23 @@
     <string name="chat_notification_many"><xliff:g id="count">%1$s</xliff:g> new chat messages</string>
     <string name="chat_notification_text">Tap to open Reddit chat</string>
     <string name="chat_notification_channel">Reddit chat</string>
+    <!-- Account colors -->
+    <string name="section_account_colors">Account colors</string>
+    <string name="account_colors">Account colors</string>
+    <string name="account_colors_summary">Shows a circle next to each account in the menu, which picks a color for it, and the color of the account in use as a line under the toolbars</string>
+    <string name="account_color_title">Color for <xliff:g id="user">%1$s</xliff:g></string>
+    <string name="account_color_none">No color</string>
+    <string name="account_color_red">Red</string>
+    <string name="account_color_pink">Pink</string>
+    <string name="account_color_purple">Purple</string>
+    <string name="account_color_indigo">Indigo</string>
+    <string name="account_color_blue">Blue</string>
+    <string name="account_color_cyan">Cyan</string>
+    <string name="account_color_teal">Teal</string>
+    <string name="account_color_green">Green</string>
+    <string name="account_color_lime">Lime</string>
+    <string name="account_color_yellow">Yellow</string>
+    <string name="account_color_orange">Orange</string>
+    <string name="account_color_brown">Brown</string>
+    <string name="account_color_description">Color of <xliff:g id="user">%1$s</xliff:g></string>
 </resources>

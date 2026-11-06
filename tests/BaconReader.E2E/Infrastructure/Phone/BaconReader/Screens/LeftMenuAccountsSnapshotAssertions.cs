@@ -37,6 +37,17 @@ public static class LeftMenuAccountsSnapshotAssertions
         return that;
     }
 
+    /// <summary>
+    /// The top of the menu shows the account <paramref name="user"/>: the account in use, with or without the avatar "Show
+    /// user avatars" draws before its name.
+    /// </summary>
+    public static AssertingThat<LeftMenuAccountsSnapshot> ShowsAtTheTop(this AssertingThat<LeftMenuAccountsSnapshot> that, string user)
+    {
+        var userName = that.InstanceToAssert.UserName;
+        Assert.True(userName == user || userName == Avatar + user, $"The left menu shows \"{userName}\" at the top, but \"{user}\" was expected.");
+        return that;
+    }
+
     /// <summary>The top of the menu shows "<paramref name="shown"/>" with the avatar of "<paramref name="user"/>" before the name.</summary>
     public static AssertingThat<LeftMenuAccountsSnapshot> ShowsWithAnAvatarBefore(this AssertingThat<LeftMenuAccountsSnapshot> that, string shown, string user)
     {
