@@ -45,6 +45,9 @@ public sealed class BaconReaderApp(
     /// <summary>The menu a post's or a comment's ⋮ opens.</summary>
     public PostMenu PostMenu { get; } = new(driver);
 
+    /// <summary>The dialog "Select text" opens from a post's or a comment's menu.</summary>
+    public SelectTextDialog SelectText { get; } = new(driver);
+
     /// <summary>"Show posts with flair", which the button of "Flair filter" in the sort bar opens.</summary>
     public FlairFilter FlairFilter { get; } = new(driver);
 
