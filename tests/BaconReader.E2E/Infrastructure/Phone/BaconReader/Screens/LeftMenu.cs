@@ -20,6 +20,8 @@ public sealed class LeftMenu(AndroidDriver driver)
     private const string EnvelopeLabel = ", orange envelope";
     private static readonly OpenQA.Selenium.By Menu = Locate.AppId("drawerView");
     private static readonly OpenQA.Selenium.By Entry = Locate.AppId("text");
+    // An entry's icon: before an entry of the menu, after one of the accounts (its ✕, "Add account"'s +).
+    private static readonly OpenQA.Selenium.By Icon = Locate.AppId("icon");
     // "Patches entry in settings"'s line at the bottom of the drawer, under the menu: "Patches <version> (<patcher>)".
     private static readonly OpenQA.Selenium.By PatchesVersion = Locate.TextStartingWith("Patches ");
 
@@ -60,6 +62,38 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// </summary>
     public Task ClickAsync(MenuEntry entry) => OnScreen.PressAsync(driver, Locate.AppIdWithText("text", entry.ToShownText()));
 
+    /// <summary>
+    /// Taps the test account's user name at the top of the menu (<see cref="TestAccount"/>), which opens the accounts under
+    /// it, or closes them.
+    /// </summary>
+    public Task ClickTheTestAccountsUserNameAsync() =>
+        OnScreen.PressAsync(driver, () => driver.FindElement(Menu).FindElements(Entry).First(entry => entry.Text.Trim() == TestAccount.UserName));
+
+    /// <summary>Waits until the accounts show under the user name: their last row, "Add account", is there.</summary>
+    public Task WaitUntilAccountsShownAsync() =>
+        Waiting.UntilAsync(
+            () => Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
+            TimeSpan.FromSeconds(10),
+            "The left menu's accounts under the user name");
+
+    /// <summary>What the menu's accounts show, under the user name: their rows, top to bottom.</summary>
+    public Task<LeftMenuAccountsSnapshot> ReadAccountsAsync() =>
+        OnScreen.ReadAsync(driver, () => new LeftMenuAccountsSnapshot(
+            [.. Accounts().Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
+
+    // The accounts' rows: each shows its icon after its text, where the menu's entries show it before.
+    private IEnumerable<OpenQA.Selenium.IWebElement> Accounts()
+    {
+        var menu = driver.FindElements(Menu).FirstOrDefault(shown => shown.Displayed);
+        if (menu is null) return [];
+        var icons = menu.FindElements(Icon).Select(icon => new System.Drawing.Rectangle(icon.Location, icon.Size)).ToList();
+        return menu.FindElements(Entry).Where(entry =>
+        {
+            var text = new System.Drawing.Rectangle(entry.Location, entry.Size);
+            return icons.Any(icon => icon.Left >= text.Right && icon.Top < text.Bottom && icon.Bottom > text.Top);
+        }).ToList();
+    }
+
     /// <summary>Closes the menu, as Android's Back does.</summary>
     public Task CloseAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
 
@@ -96,6 +130,9 @@ public sealed record LeftMenuButtonSnapshot(bool ShowsTheOrangeEnvelope);
 
 /// <summary>What the left menu shows: its entries, top to bottom.</summary>
 public sealed record LeftMenuSnapshot(ImmutableArray<MenuEntry> Entries);
+
+/// <summary>What the left menu's accounts show, under the user name: their rows, top to bottom (the accounts, "Add account").</summary>
+public sealed record LeftMenuAccountsSnapshot(ImmutableArray<MenuEntry> Rows);
 
 /// <summary>
 /// What the drawer shows at its bottom: the patches' version ("Patches unknown (Reseam 0.35.1)"; null when none shows),
