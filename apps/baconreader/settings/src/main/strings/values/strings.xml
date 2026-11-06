@@ -171,4 +171,7 @@
     <string name="account_color_orange">Orange</string>
     <string name="account_color_brown">Brown</string>
     <string name="account_color_description">Color of <xliff:g id="user">%1$s</xliff:g></string>
+    <!-- Select text -->
+    <string name="select_text">Select text</string>
+    <string name="select_text_close">Close</string>
 </resources>
