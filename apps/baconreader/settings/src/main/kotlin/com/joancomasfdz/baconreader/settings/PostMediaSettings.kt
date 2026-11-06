@@ -9,6 +9,8 @@ import app.reseam.patch.settings.text
 import app.reseam.patch.settings.toggle
 
 object PostMediaSettings : SettingsGroup(BaconReaderStrings) {
+    val loadingPreview by toggle(default = true, key = "post_media.loading_preview")
+
     val linkPreviewJavascript by toggle(default = true, key = "post_media.link_preview_javascript")
     val linkPreviewJavascriptBlocked by
         text(default = "", multiline = true, key = "post_media.link_preview_javascript_blocked")

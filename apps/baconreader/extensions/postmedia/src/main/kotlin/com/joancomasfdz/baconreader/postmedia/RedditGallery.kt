@@ -18,6 +18,7 @@ import com.joancomasfdz.baconreader.common.DownloadProgress
 import com.joancomasfdz.baconreader.common.ErrorDialog
 import com.joancomasfdz.baconreader.common.GlideUtils
 import com.joancomasfdz.baconreader.common.ImageDownloader
+import com.joancomasfdz.baconreader.settings.PostMediaSettings
 import com.onelouder.baconreader.reddit_gallery.RedditImage
 import com.onelouder.baconreader.reddit_gallery.RedditImagePreview
 import java.io.File
@@ -28,7 +29,7 @@ import java.util.WeakHashMap
  * ("preview.redd.it" to "i.redd.it", as the previews' "&amp;" are not unescaped), so every
  * thumbnail downloads a full image, often a big GIF, and the image shown waits for them. The strip
  * uses the previews instead, and the image shown is downloaded with a progress bar, with its
- * preview shown until it is loaded.
+ * preview shown until it is loaded unless "Preview while loading" is off.
  */
 
 private const val GALLERY_TAG = "RedditGallery"
@@ -93,7 +94,7 @@ fun loadImage(
         if (url == null || !url.startsWith("http")) return null
 
         val context = imageView.context
-        val preview = thumbnail(image)
+        val preview = if (PostMediaSettings.loadingPreview.value) thumbnail(image) else null
         val progress = progress(viewer, flipper)
         shown[viewer] = url
 
