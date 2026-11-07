@@ -61,6 +61,7 @@ public static class Waiting
             var found = await Task.Run(() => FindShown(driver, shown, ref stale));
             if (found is not null)
             {
+                OnScreen.HandOver(driver, shown, found);
                 Note(what, took.Elapsed, timeout, seen: true, stale);
                 return found;
             }
