@@ -14,7 +14,11 @@ namespace BaconReader.FakeReddit.Endpoints;
 /// works only with the User-Agent it was given to: another one is refused, <c>401 WrongSender</c>, as RedGIFs refuses
 /// one used from another address. Every answer is RedGIFs' own of 2026-11-03: a video it never had is
 /// <c>404 GifNotFound</c>, a deleted one <c>410 GifDeleted</c>, a request without a token
-/// <c>401 AuthorizationHeaderMissing</c>, one with a token it never gave <c>401 Unauthorized</c>.
+/// <c>401 AuthorizationHeaderMissing</c>, one with a token it never gave <c>401 Unauthorized</c>. BaconReader without
+/// "Fix Redgifs API" asks for a token once when it starts, at <c>POST v2/oauth/client</c> with its own client ID and
+/// secret, and saves none when it is refused: the fake has no client, so it answers as RedGIFs answered a client it
+/// doesn't know on 2026-11-07, <c>401 Unauthorized</c> "client not found", or <c>400 FormValueNotSet</c> for a form
+/// without <c>grant_type</c> or <c>client_id</c>. "Fix Redgifs API" answers that request itself.
 /// </summary>
 internal static class RedGifsApi
 {
@@ -35,6 +39,16 @@ internal static class RedGifsApi
                     rtfm = "https://github.com/Redgifs/api/wiki/Temporary-tokens",
                 });
             }
+        });
+
+        app.MapPost("/_redgifs/v2/oauth/client", async (HttpContext context) =>
+        {
+            var form = await Answers.ReadFormAsync(context.Request);
+            var missing = new[] { "grant_type", "client_id" }.FirstOrDefault(field => !form.ContainsKey(field));
+            var (status, answer) = missing is not null
+                ? (400, Error("FormValueNotSet", $"request parameter \"{missing}\" is missing", 400))
+                : (401, ClientNotFound());
+            return Results.Text(RedditJson.Serialize(answer), "application/json; charset=utf-8", statusCode: status);
         });
 
         app.MapGet("/_redgifs/v2/gifs/{id}", (HttpContext context, string id) =>
@@ -61,7 +75,7 @@ internal static class RedGifsApi
         });
     }
 
-    // RedGIFs' error: {"error": {"code": …, "description": …}}, with its status when it is 401.
+    // RedGIFs' error: {"error": {"code": …, "description": …}}, or with a message and its status for a 401 or 400.
     private static Dictionary<string, object?> Error(string code, string description, int? status)
     {
         var error = new Dictionary<string, object?> { ["code"] = code, [status is null ? "description" : "message"] = description };
@@ -72,6 +86,19 @@ internal static class RedGifsApi
 
         return new() { ["error"] = error };
     }
+
+    // RedGIFs' answer to an OAuth client it doesn't know, with the page on API access twice.
+    private static Dictionary<string, object?> ClientNotFound() => new()
+    {
+        ["error"] = new Dictionary<string, object?>
+        {
+            ["code"] = "Unauthorized",
+            ["message"] = "client not found",
+            ["status"] = 401,
+            ["rtfm"] = "https://github.com/Redgifs/api/wiki/API-access",
+        },
+        ["docs"] = "https://github.com/Redgifs/api/wiki/API-access",
+    };
 
     // A video's information, every field in RedGIFs' order of 2026-11-03 (gif equatorialgrubbynoctilio). BaconReader
     // reads only gif.urls: hd to play, thumbnail or poster for the list.
