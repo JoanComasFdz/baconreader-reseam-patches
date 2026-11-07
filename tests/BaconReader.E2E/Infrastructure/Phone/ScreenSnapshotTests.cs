@@ -65,6 +65,19 @@ public sealed class ScreenSnapshotTests
     }
 
     [Fact]
+    public void FirstWithAppIdFrom_FindsTheViewInsideTheViewFirst_ElseTheNextAfterIt()
+    {
+        var screen = ScreenSnapshot.Parse(Source);
+        var firstText = screen.WithAppId("commentBody").First();
+        var firstComment = screen.WithAppId("commentBodyContainer").First();
+
+        // The first comment's text has no image inside it: the next image in the tree is its comment's.
+        Assert.Equal(Rectangle.FromLTRB(26, 840, 526, 1224), screen.FirstWithAppIdFrom(firstText, "baconreader_patches_comment_image")!.Bounds);
+        Assert.Equal("Another image", screen.FirstWithAppIdFrom(firstComment, "commentBody")!.Text);
+        Assert.Null(screen.FirstWithAppIdFrom(screen.WithAppId("baconreader_patches_comment_image").Last(), "commentBody"));
+    }
+
+    [Fact]
     public void Ancestors_GoFromTheParentUpToTheRoot()
     {
         var text = ScreenSnapshot.Parse(Source).WithAppId("commentBody").First();

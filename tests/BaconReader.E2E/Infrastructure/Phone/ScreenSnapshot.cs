@@ -29,6 +29,14 @@ public sealed class ScreenSnapshot
     /// <summary>The views of a page source.</summary>
     public static ScreenSnapshot Parse(string pageSource) => new(ScreenNode.From(XDocument.Parse(pageSource).Root!, parent: null));
 
+    /// <summary>
+    /// The first view with the app's id <paramref name="id"/> inside <paramref name="view"/>, or else the first after it
+    /// in the tree: what UiAutomator2's search from an element finds first.
+    /// </summary>
+    public ScreenNode? FirstWithAppIdFrom(ScreenNode view, string id) =>
+        view.WithAppId(id).FirstOrDefault()
+        ?? Root.Descendants().SkipWhile(node => node != view).Skip(1).FirstOrDefault(node => node.HasAppId(id));
+
     /// <summary>Every view of the screen with the app's id <paramref name="id"/>, in the order they are drawn in the tree.</summary>
     public IEnumerable<ScreenNode> WithAppId(string id) => Root.Descendants().Where(node => node.HasAppId(id));
 }

@@ -172,18 +172,21 @@ public sealed class PostText(AndroidDriver driver)
         });
 
     /// <summary>What the tables of the post's text show.</summary>
-    public Task<TableSnapshot> ReadTableAsync() => OnScreen.ReadAsync(driver, () => Tables.Read(driver.FindElement(Locate.AppId(Text))));
+    public Task<TableSnapshot> ReadTableAsync() => OnScreen.ReadAsync(driver, () => Tables.Read(TextNode(ScreenSnapshot.Take(driver))));
 
     /// <summary>Where the cells of the post's table show.</summary>
     public Task<TableLayoutSnapshot> ReadTableLayoutAsync() =>
-        OnScreen.ReadAsync(driver, () => Tables.ReadLayout(driver.FindElement(Locate.AppId(Text)), driver.Manage().Window.Size.Width));
+        OnScreen.ReadAsync(driver, () => Tables.ReadLayout(TextNode(ScreenSnapshot.Take(driver)), driver.Manage().Window.Size.Width));
 
     /// <summary>Waits until the post's text shows a table's cells.</summary>
     public Task WaitUntilTableShownAsync() =>
         Waiting.UntilAsync(
-            () => driver.FindElements(Locate.AppId(Text)).FirstOrDefault() is { } text && Tables.HasCells(text),
+            () => ScreenSnapshot.Take(driver).WithAppId(Text).FirstOrDefault() is { } text && Tables.HasCells(text),
             TimeSpan.FromSeconds(10),
             "A table in the post's text");
+
+    private static ScreenNode TextNode(ScreenSnapshot screen) =>
+        screen.WithAppId(Text).FirstOrDefault() ?? throw new InvalidOperationException("The post shows no text.");
 
     // The post's text, and the parts of it after its media: the post's own view is hidden when its text starts with one.
     private static IReadOnlyList<ScreenNode> Texts(ScreenSnapshot screen) =>
@@ -210,8 +213,7 @@ public sealed record PostTextLayoutSnapshot(Rectangle Text, Rectangle? Image);
 /// in ExoPlayer's player, whose controls show when it ends.
 /// <para>
 /// A comment is found and read in a <see cref="ScreenSnapshot"/>, one round trip for the whole screen, and tapped at
-/// the snapshot's coordinates. Only a table's cells and a hidden spoiler, virtual views of the comment's text that only
-/// the text's element answers, are still read from the element.
+/// the snapshot's coordinates: a table's cells and buttons too, views of the comment's text that are inside its node.
 /// </para>
 /// </summary>
 public sealed class Comments(AndroidDriver driver)
@@ -621,23 +623,23 @@ public sealed class Comments(AndroidDriver driver)
     /// <summary>Waits until the comment "<paramref name="text"/>" shows a table's cells.</summary>
     public Task WaitUntilTableShownAsync(string text) =>
         Waiting.UntilAsync(
-            () => TextElementOrNull(text) is { } body && Tables.HasCells(body),
+            () => TextNodeOrNull(Screen(), text) is { } body && Tables.HasCells(body),
             TimeSpan.FromSeconds(10),
             $"A table in the comment \"{text}\"");
 
     /// <summary>What the tables of the comment "<paramref name="text"/>" show.</summary>
     public Task<TableSnapshot> ReadTableAsync(string text) =>
-        OnScreen.ReadAsync(driver, () => Tables.Read(TextElementOf(text)));
+        OnScreen.ReadAsync(driver, () => Tables.Read(TextNodeOf(Screen(), text)));
 
     /// <summary>Where the cells of the table of the comment "<paramref name="text"/>" show.</summary>
     public Task<TableLayoutSnapshot> ReadTableLayoutAsync(string text) =>
-        OnScreen.ReadAsync(driver, () => Tables.ReadLayout(TextElementOf(text), driver.Manage().Window.Size.Width));
+        OnScreen.ReadAsync(driver, () => Tables.ReadLayout(TextNodeOf(Screen(), text), driver.Manage().Window.Size.Width));
 
     /// <summary>Taps <paramref name="button"/> under the table of the comment "<paramref name="text"/>".</summary>
     public Task ClickTableButtonAsync(string text, TableButton button) =>
-        OnScreen.PressAsync(driver, () =>
-            Tables.Buttons(TextElementOf(text)).FirstOrDefault(found => found.Text == button.ToShownText())
-            ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no \"{button.ToShownText()}\"."));
+        OnScreen.PressAtAsync(driver, () =>
+            (Tables.Buttons(TextNodeOf(Screen(), text)).FirstOrDefault(found => found.Text == button.ToShownText())
+            ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no \"{button.ToShownText()}\".")).Center);
 
     /// <summary>Taps <paramref name="prompt"/> in the media of the comment "<paramref name="text"/>", which loads it.</summary>
     public Task ClickMediaPromptAsync(string text, MediaPrompt prompt) =>
@@ -655,7 +657,7 @@ public sealed class Comments(AndroidDriver driver)
     /// <summary>Waits until the table of the comment "<paramref name="text"/>" shows <paramref name="button"/>.</summary>
     public Task WaitUntilTableButtonShownAsync(string text, TableButton button) =>
         Waiting.UntilAsync(
-            () => TextElementOrNull(text) is { } body && Tables.Buttons(body).Any(found => found.Text == button.ToShownText()),
+            () => TextNodeOrNull(Screen(), text) is { } body && Tables.Buttons(body).Any(found => found.Text == button.ToShownText()),
             TimeSpan.FromSeconds(10),
             $"\"{button.ToShownText()}\" under the table of the comment \"{text}\"");
 
@@ -663,26 +665,32 @@ public sealed class Comments(AndroidDriver driver)
     /// Swipes the table of the comment "<paramref name="text"/>" to the left, from near its right edge to near its left
     /// one, along its first row: an expanded table scrolls sideways.
     /// </summary>
-    public Task SwipeTableLeftAsync(string text) =>
-        OnScreen.TouchAsync(driver, () => Tables.FirstCell(TextElementOf(text)) ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no cell."), cell =>
-        {
-            var row = Bounds(cell);
-            var table = Bounds(TextElementOf(text));
-            var y = row.Top + (row.Height / 2);
-            Swipe(new Point(table.Right - 40, y), new Point(table.Left + 40, y), [TimeSpan.FromMilliseconds(600)]);
-        });
+    public Task SwipeTableLeftAsync(string text)
+    {
+        var table = Rectangle.Empty;
+        return OnScreen.TouchAtAsync(
+            driver,
+            () =>
+            {
+                var body = TextNodeOf(Screen(), text);
+                var row = (Tables.FirstCell(body) ?? throw new InvalidOperationException($"The table of the comment \"{text}\" shows no cell.")).Bounds;
+                table = body.Bounds;
+                return new Point(table.Right - 40, row.Top + (row.Height / 2));
+            },
+            from => Swipe(from, new Point(table.Left + 40, from.Y), [TimeSpan.FromMilliseconds(600)]));
+    }
 
     /// <summary>Waits until the table of the comment "<paramref name="text"/>" shows the cell "<paramref name="cell"/>" whole.</summary>
     public Task WaitUntilTableCellShownAsync(string text, string cell) =>
         Waiting.UntilAsync(
-            () => TextElementOrNull(text) is { } body && Tables.FindCell(body, cell) is { } found && Bounds(found).Right < Bounds(body).Right,
+            () => TextNodeOrNull(Screen(), text) is { } body && Tables.FindCell(body, cell) is { } found && found.Bounds.Right < body.Bounds.Right,
             TimeSpan.FromSeconds(10),
             $"The cell \"{cell}\" of the table of the comment \"{text}\"");
 
     /// <summary>Taps the link "<paramref name="link"/>" in a cell of the table of the comment "<paramref name="text"/>".</summary>
     public Task ClickTableLinkAsync(string text, string link) =>
-        OnScreen.PressAsync(driver, () => Tables.FindCell(TextElementOf(text), link)
-            ?? throw new InvalidOperationException($"The table of the comment \"{text}\" has no cell \"{link}\"."));
+        OnScreen.PressAtAsync(driver, () => (Tables.FindCell(TextNodeOf(Screen(), text), link)
+            ?? throw new InvalidOperationException($"The table of the comment \"{text}\" has no cell \"{link}\".")).Center);
 
     /// <summary>Taps the link "<paramref name="link"/>", a comment whose whole text is that link, at its start.</summary>
     public Task ClickLinkAsync(string link) => ClickTextAsync(link);
@@ -730,13 +738,11 @@ public sealed class Comments(AndroidDriver driver)
 
     private ScreenSnapshot Screen() => ScreenSnapshot.Take(driver);
 
-    // The text view of the comment "text" as an element: "Show tables" draws a table's cells and buttons as virtual views
-    // of the text, which only the element reads. Found among the comments' texts, as FindComment matches them.
-    private IWebElement TextElementOf(string text) =>
-        TextElementOrNull(text) ?? throw new InvalidOperationException($"The comment \"{text}\" isn't on the screen.");
+    // The text view of the comment "text": "Show tables" draws a table's cells and buttons as views inside it.
+    private static ScreenNode TextNodeOf(ScreenSnapshot screen, string text) =>
+        TextNodeOrNull(screen, text) ?? throw new InvalidOperationException($"The comment \"{text}\" isn't on the screen.");
 
-    private IWebElement? TextElementOrNull(string text) =>
-        Matching(driver.FindElements(Locate.AppId(Text)).Select(body => (body, body.Text.Trim())).ToList(), text);
+    private static ScreenNode? TextNodeOrNull(ScreenSnapshot screen, string text) => FindComment(screen, text)?.WithAppId(Text).FirstOrDefault();
 
     // How long the end of the list may take to load its next comments: 50 threads, one at a time.
     private static readonly TimeSpan EndLoad = TimeSpan.FromSeconds(60);
@@ -839,8 +845,6 @@ public sealed class Comments(AndroidDriver driver)
         density ??= driver.ExecuteScript("mobile: deviceInfo") is IDictionary<string, object> info
             ? Convert.ToDouble(info["displayDensity"], System.Globalization.CultureInfo.InvariantCulture) / 160
             : throw new InvalidOperationException("Appium's mobile: deviceInfo didn't answer the screen's density.");
-
-    private static Rectangle Bounds(IWebElement element) => new(element.Location, element.Size);
 }
 
 /// <summary>A comment on the screen, or a "load more comments" among them: its text, and how far it is indented, in pixels.</summary>

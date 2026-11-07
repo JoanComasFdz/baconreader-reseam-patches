@@ -12,7 +12,7 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 /// </summary>
 internal static class ToolbarLine
 {
-    private static readonly OpenQA.Selenium.By ToolbarView = Locate.AppId("toolbar");
+    private const string ToolbarView = "toolbar";
 
     // The spot: a little of the toolbar's bottom, a bit right of its middle, where neither the title nor the buttons
     // reach. Twice as tall as the line (3 dp, 11 px on the Pixel 6 Pro), so its top-left pixel is the toolbar's own color.
@@ -23,8 +23,7 @@ internal static class ToolbarLine
     public static Task<ToolbarLineSnapshot> ReadAsync(AndroidDriver driver) =>
         OnScreen.ReadAsync(driver, () =>
         {
-            var toolbar = driver.FindElements(ToolbarView).First(shown => shown.Displayed);
-            var bounds = new Rectangle(toolbar.Location, toolbar.Size);
+            var bounds = ScreenSnapshot.Take(driver).WithAppId(ToolbarView).First(shown => shown.Displayed).Bounds;
             var spot = new Rectangle(bounds.Left + (bounds.Width * 55 / 100), bounds.Bottom - SpotHeight, SpotWidth, SpotHeight);
             return new ToolbarLineSnapshot(Screenshots.Differs(driver.GetScreenshot().AsByteArray, spot));
         });
