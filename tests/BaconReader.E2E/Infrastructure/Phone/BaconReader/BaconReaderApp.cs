@@ -179,11 +179,13 @@ public sealed class BaconReaderApp(
 
     /// <summary>
     /// Goes back to the main screen's posts with Android's Back, as many times as it takes (from a post, from the
-    /// settings and the left menu they were opened from), and waits until they show.
+    /// settings and the left menu they were opened from), and waits until they show. It looks once before the first
+    /// Back, without waiting: on a post's comments, waiting there for the posts only ran out its 3 s, 63 times in a run
+    /// of Embed comment images.
     /// </summary>
     public async Task GoBackToThePostsAsync()
     {
-        for (var backs = 0; !await Main.ShowsThePostsAsync(); backs++)
+        for (var backs = 0; !(backs == 0 ? await Main.ShowsThePostsNowAsync() : await Main.ShowsThePostsAsync()); backs++)
         {
             if (backs == 8)
             {

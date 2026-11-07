@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using BaconReader.E2E.Infrastructure.Device;
 using OpenQA.Selenium;
@@ -66,6 +67,40 @@ public static class OnScreen
         else
         {
             await Task.Run(() => touch(element));
+        }
+
+        NoteStepEnded(driver);
+    }
+
+    /// <summary>
+    /// Taps at the point <paramref name="find"/> returns (the center of a view of a <see cref="ScreenSnapshot"/>), as
+    /// <see cref="PressAsync(AndroidDriver, By)"/> does: no round trip to find the view, and none to ask its bounds.
+    /// </summary>
+    public static Task PressAtAsync(AndroidDriver driver, Func<Point> find) =>
+        TouchAtAsync(driver, find, point => driver.ExecuteScript("mobile: clickGesture", new Dictionary<string, object>
+        {
+            ["x"] = point.X,
+            ["y"] = point.Y,
+        }));
+
+    /// <summary>
+    /// Touches at the point <paramref name="find"/> returns with <paramref name="touch"/> (a long press, a swipe from
+    /// there), after the recording has shown where for <see cref="TapShown"/>: its ring stays until the touch ends.
+    /// </summary>
+    public static async Task TouchAtAsync(AndroidDriver driver, Func<Point> find, Action<Point> touch)
+    {
+        await WaitForActionGapAsync(driver);
+        var point = await Task.Run(find);
+        if (TapsDrawnOn.TryGetValue(driver, out var recording))
+        {
+            var shown = Stopwatch.GetTimestamp();
+            await Task.Delay(TapShown);
+            await Task.Run(() => touch(point));
+            recording.NoteTap(point.X, point.Y, shown, Stopwatch.GetTimestamp());
+        }
+        else
+        {
+            await Task.Run(() => touch(point));
         }
 
         NoteStepEnded(driver);
