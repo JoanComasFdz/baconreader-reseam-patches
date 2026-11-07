@@ -183,9 +183,16 @@ public static class OnScreen
         act(driver.FindElement(target));
     }
 
+    /// <summary>
+    /// Whether two locators find the same views: the same kind and the same text. Appium's own locators don't compare
+    /// what they look for: two UiSelectors were Equal, and a tap on "Not now" tapped the dialog's title a wait had found.
+    /// </summary>
+    internal static bool SameLocator(By one, By other) =>
+        one.GetType() == other.GetType() && one.ToString() == other.ToString();
+
     private static IWebElement? TakeHandedOver(AndroidDriver driver, By target)
     {
-        var handed = HandedOver.TryGetValue(driver, out var found) && found.Target.Equals(target) ? found.View : null;
+        var handed = HandedOver.TryGetValue(driver, out var found) && SameLocator(found.Target, target) ? found.View : null;
         HandedOver.Remove(driver);
         return handed;
     }
