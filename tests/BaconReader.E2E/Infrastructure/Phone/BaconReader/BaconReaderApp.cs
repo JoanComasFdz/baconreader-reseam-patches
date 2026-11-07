@@ -181,15 +181,19 @@ public sealed class BaconReaderApp(
     /// Goes back to the main screen's posts with Android's Back, as many times as it takes (from a post, from the
     /// settings and the left menu they were opened from), and waits until they show. It looks once before the first
     /// Back, without waiting: on a post's comments, waiting there for the posts only ran out its 3 s, 63 times in a run
-    /// of Embed comment images.
+    /// of Embed comment images. From a patches' settings page it takes 5 Backs (the patches' settings, BaconReader's
+    /// settings with its "Restart to apply changes?" dialog, the dialog, the main screen with the left menu open, the
+    /// menu), and the phone can let a Back go by while a screen changes: once, 8 Backs didn't get there (2026-11-07).
+    /// It looks before each Back, so the Backs it has to spare never go past the posts.
     /// </summary>
     public async Task GoBackToThePostsAsync()
     {
+        const int MostBacks = 12;
         for (var backs = 0; !(backs == 0 ? await Main.ShowsThePostsNowAsync() : await Main.ShowsThePostsAsync()); backs++)
         {
-            if (backs == 8)
+            if (backs == MostBacks)
             {
-                throw new InvalidOperationException("The main screen's posts didn't show after going back 8 times.");
+                throw new InvalidOperationException($"The main screen's posts didn't show after going back {MostBacks} times.");
             }
 
             await OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
