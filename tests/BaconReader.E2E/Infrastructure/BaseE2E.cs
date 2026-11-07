@@ -225,11 +225,6 @@ public abstract class BaseE2E : IAsyncLifetime
         // UiAutomator2 waits for the app to go idle before each command, up to 10 s, and BaconReader's dialogs never
         // do: each lookup on one stood still for those 10 s, on screen. The scenarios wait for what they need themselves.
         options.AddAdditionalAppiumOption("waitForIdleTimeout", 0);
-        // The page source and the lookups leave out the views that only lay others out: a screen's source halves (the
-        // main screen with the left menu open: 52 KB in ~0.6 s, 30 KB in ~0.38 s, 2026-11-07), and the page sources were
-        // ~30% of a run of the LoggedIn scenarios. A view another view covers is left out too (the posts behind the
-        // open left menu): it isn't shown.
-        options.AddAdditionalAppiumOption("settings[ignoreUnimportantViews]", true);
         if (Environment.GetEnvironmentVariable("E2E_APPIUM_INSTALL_HELPERS") is not "1")
         {
             options.AddAdditionalAppiumOption("skipServerInstallation", true);
