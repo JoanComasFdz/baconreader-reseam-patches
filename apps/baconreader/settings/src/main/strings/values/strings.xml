@@ -58,6 +58,9 @@
     <string name="embed_image_download_failed">Could not download image</string>
     <!-- Improve post media loading -->
     <string name="section_post_media">Link posts</string>
+    <string name="section_post_media_loading">Post media</string>
+    <string name="loading_preview">Preview while loading</string>
+    <string name="loading_preview_summary">A still preview of post media and gallery images shows behind the progress bar until they load. Off: only the progress bar</string>
     <string name="link_preview_javascript">JavaScript in link posts</string>
     <string name="link_preview_javascript_summary">All sites run JavaScript in the page of a link post, except the blocked ones. Off: only the allowed sites run it</string>
     <string name="link_preview_javascript_blocked">Blocked sites</string>

@@ -27,6 +27,7 @@ public partial record PatchSetting
     public partial record AvatarSize;
     public partial record AvatarBackground;
     public partial record AutoplayVideosInDetailView;
+    public partial record PreviewWhileLoading;
     public partial record ShowYouTubeVideoTitles;
     public partial record ShowYouTubeThumbnails;
     public partial record ShowXPosts;
@@ -62,6 +63,7 @@ public static class PatchSettingShowing
         new PatchSetting.AvatarSize(),
         new PatchSetting.AvatarBackground(),
         new PatchSetting.AutoplayVideosInDetailView(),
+        new PatchSetting.PreviewWhileLoading(),
         new PatchSetting.ShowYouTubeVideoTitles(),
         new PatchSetting.ShowYouTubeThumbnails(),
         new PatchSetting.ShowXPosts(),
@@ -87,6 +89,7 @@ public static class PatchSettingShowing
             avatarSize => "Avatar size",
             avatarBackground => "Avatar background",
             autoplayVideosInDetailView => "Autoplay videos in Detail View",
+            previewWhileLoading => "Preview while loading",
             showYouTubeVideoTitles => "Show YouTube video titles",
             showYouTubeThumbnails => "Show YouTube thumbnails",
             showXPosts => "Show X posts",
