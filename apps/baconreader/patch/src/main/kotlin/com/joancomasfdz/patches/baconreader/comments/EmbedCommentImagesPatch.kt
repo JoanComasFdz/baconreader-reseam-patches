@@ -49,6 +49,7 @@ val embedCommentImages =
                 EmbedCommentImagesSettings.imagesFullWidth,
                 EmbedCommentImagesSettings.imagesLongPressDownload,
                 EmbedCommentImagesSettings.imagesWifiOnly,
+                EmbedCommentImagesSettings.imagesTapToLoad,
                 EmbedCommentImagesSettings.showVideos,
             ),
             section(

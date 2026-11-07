@@ -169,7 +169,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I tap "Settings"
           And I tap "Patches"
           And I tap "Images and videos"
-          Then the settings show "Show images", "Full width by default", "Long press to download", "Load images only on Wi-Fi" and "Play videos in comments", in this order
+          Then the settings show "Show images", "Full width by default", "Long press to download", "Load images only on Wi-Fi", "Load images only when tapped" and "Play videos in comments", in this order
           When I tap "Show images"
           And I go back to the posts
           And I tap the post "Weekly thread"
@@ -212,6 +212,30 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I tap "Settings"
           And I tap "Patches"
           And I tap "Images and videos"
+          And I tap "Load images only when tapped"
+          And I go back to the posts
+          And I tap the post "Weekly thread"
+          # The phone is on Wi-Fi: with "Load images only when tapped", an image waits for a tap there too.
+          Then the comment "Here is an image" shows "Tap to load image"
+          And the comment "Here is an image" shows no image
+          # Emotes are part of the text: they load without a tap.
+          And the comment "Love it" shows 1 emote after its text
+          When I tap "Tap to load image" in the comment "Here is an image"
+          Then the comment "Here is an image" shows 1 image
+          When I go back to the posts
+          And I tap the post "Media thread"
+          And I scroll to the comment "Here is a video"
+          # A video's first frame waits for the tap too: it shows its play button.
+          Then the comment "Here is a video" shows a video
+          When I tap the video of the comment "Here is a video"
+          Then the video of the comment "Here is a video" played to "00:10" of "00:10"
+          When I go back to the posts
+          And I open the left menu
+          And I tap "Settings"
+          And I tap "Patches"
+          And I tap "Images and videos"
+          # Off again: the next rounds load images without a tap.
+          And I tap "Load images only when tapped"
           And I tap "Play videos in comments"
           And I go back to the posts
           And I tap the post "Media thread"
@@ -583,6 +607,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
         await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
         await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.ShowImages(), new PatchSetting.PlayVideosInComments());
 
         // Then
         var settings = await Phone.BaconReader.PatchesSettings.ReadAsync();
@@ -591,6 +616,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
             new PatchSetting.FullWidthByDefault(),
             new PatchSetting.LongPressToDownload(),
             new PatchSetting.LoadImagesOnlyOnWiFi(),
+            new PatchSetting.LoadImagesOnlyWhenTapped(),
             new PatchSetting.PlayVideosInComments());
 
         // When
@@ -680,6 +706,64 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
         await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
         await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.LoadImagesOnlyWhenTapped());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.LoadImagesOnlyWhenTapped());
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaPromptShownAsync("Here is an image", new MediaPrompt.TapToLoadImage());
+
+        // Then
+        // The phone is on Wi-Fi: with "Load images only when tapped", an image waits for a tap there too.
+        var waitingForATap = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        var emoteWithoutATap = await Phone.BaconReader.Detail.Comments.ReadAsync("Love it");
+        Asserting.That(waitingForATap).ShowsTheMediaPrompt(new MediaPrompt.TapToLoadImage());
+        Asserting.That(waitingForATap).ShowsNoImage();
+        // Emotes are part of the text: they load without a tap.
+        Asserting.That(emoteWithoutATap).ShowsEmotesAfterItsText("Love it", 1);
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ClickMediaPromptAsync("Here is an image", new MediaPrompt.TapToLoadImage());
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is an image");
+
+        // Then
+        var loadedByATap = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image");
+        Asserting.That(loadedByATap).ShowsImages(1);
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.Posts.ClickPostAsync("Media thread");
+        await Phone.BaconReader.Detail.Comments.WaitUntilShownAsync();
+        await Phone.BaconReader.Detail.Comments.ScrollToCommentAsync("Here is a video");
+        await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownAsync("Here is a video");
+
+        // Then
+        // A video's first frame waits for the tap too: it shows its play button.
+        var videoWaitingForATap = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is a video");
+        Asserting.That(videoWaitingForATap).ShowsAVideo();
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ClickVideoAsync("Here is a video");
+        await Phone.BaconReader.Detail.Comments.WaitUntilVideoEndedAsync("Here is a video");
+
+        // Then
+        var playedAfterATap = await Phone.BaconReader.Detail.Comments.ReadVideoAsync("Here is a video");
+        Asserting.That(playedAfterATap).PlayedTo("00:10", "00:10");
+
+        // When
+        await Phone.BaconReader.GoBackToThePostsAsync();
+        await Phone.BaconReader.Main.LeftMenu.OpenAsync();
+        await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
+        await Phone.BaconReader.Main.LeftMenu.ClickAsync(new MenuEntry.Settings());
+        await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.ImagesAndVideos());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.ImagesAndVideos());
+        // Off again: the next rounds load images without a tap.
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.LoadImagesOnlyWhenTapped());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.LoadImagesOnlyWhenTapped());
+        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.PlayVideosInComments());
         await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.PlayVideosInComments());
         await Phone.BaconReader.GoBackToThePostsAsync();
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Media thread");
