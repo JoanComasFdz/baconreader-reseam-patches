@@ -591,21 +591,22 @@ public sealed class Comments(AndroidDriver driver)
         });
 
     /// <summary>
-    /// Scrolls the comments to their end, a fling at a time, until they move no more: the list loads the comments it
+    /// Scrolls the comments to their end, a flick at a time, until they move no more: the list loads the comments it
     /// hasn't yet as it gets there, showing "Loading..." at its end meanwhile, which takes seconds when they come
     /// from their threads.
     /// </summary>
     public Task ScrollToTheEndAsync() =>
         OnScreen.DoAsync(driver, () =>
         {
-            var flings = 0;
+            var flicks = 0;
+            var shown = Screen();
             do
             {
-                while (FlingDown())
+                while (FlickDown(ref shown))
                 {
-                    if (++flings == 200)
+                    if (++flicks == 200)
                     {
-                        throw new InvalidOperationException("The comments didn't reach their end after 200 flings.");
+                        throw new InvalidOperationException("The comments didn't reach their end after 200 flicks.");
                     }
                 }
             }
@@ -769,14 +770,22 @@ public sealed class Comments(AndroidDriver driver)
         return true;
     }
 
-    // Whether the list scrolled: false at its end.
-    private bool FlingDown() =>
-        driver.ExecuteScript("mobile: flingGesture", new Dictionary<string, object>
-        {
-            ["elementId"] = ((AppiumElement)driver.FindElement(Locate.AppId(List))).Id,
-            ["direction"] = "down",
-            ["speed"] = 7500,
-        }) is true;
+    // Flicks the list up (a quick swipe, which flings it), and whether it moved: false at its end. shown is the screen
+    // before, and becomes the screen after. Appium's flingGesture waited ~5.6 s after each fling that didn't reach the
+    // end (53 in a run of the LoggedIn scenarios, 2026-11-07); the swipe comes back at once, and the screen tells
+    // whether the list moved: the comments and "load more comments" rows shown, and where.
+    private bool FlickDown(ref ScreenSnapshot shown)
+    {
+        var list = shown.WithAppId(List).First(view => view.Displayed).Bounds;
+        var x = list.Left + (list.Width / 2);
+        Swipe(new Point(x, list.Bottom - (list.Height / 6)), new Point(x, list.Top + (list.Height / 6)), [.. Enumerable.Repeat(TimeSpan.FromMilliseconds(10), 5)]);
+        var before = ListedOn(shown);
+        shown = Screen();
+        return ListedOn(shown) != before;
+    }
+
+    private static string ListedOn(ScreenSnapshot screen) =>
+        string.Join('\n', screen.WithAppId(Text).Concat(screen.WithAppId(LoadMore)).Select(view => $"{view.Bounds.Y} {view.Text}"));
 
     // A swipe from a point to another, in moves of the given lengths, all along the same line.
     private void Swipe(Point from, Point to, IReadOnlyList<TimeSpan> moves)
