@@ -180,9 +180,9 @@ Nothing in `common` is `@Export`ed except `ErrorDialog.init`. Patches call the f
 
 - BaconReader's own classes go in each extension's `src/stubs/java`, with the app's package. Stubs aren't shared between modules: a module that needs `Tasks` stubs it too.
 - Declare only the members the extension uses, with the app's exact modifiers and types. Abstract methods or empty bodies, no logic. SPDX headers like any file.
-- Check each one against the smali: a wrong descriptor compiles and fails in the app. `verify.sh`'s last step lists calls that don't resolve.
+- Check each one against the smali: a wrong descriptor compiles and fails in the app. `tools/verify.sh <patched APK>` lists every app or library member an extension uses that doesn't exist with that descriptor.
 - Library classes BaconReader bundles (okhttp 4.10.0, Glide 4.14.2) come from `compileOnly`, not stubs.
-- **Only public classes and members.** Extension code lives outside BaconReader's packages, so Android throws `IllegalAccessError` when it uses a class or member that isn't public (or protected and inherited). A stub can't show that: it compiles whatever it declares. Either make the class or member public at patch time (`setAccessFlags`, like `core/ThreadAccess.kt`, as a dependency of every patch that needs it), or use reflection as ReVanced does. `verify.sh` lists every one it finds.
+- **Only public classes and members.** Extension code lives outside BaconReader's packages, so Android throws `IllegalAccessError` when it uses a class or member that isn't public (or protected and inherited). A stub can't show that: it compiles whatever it declares. Either make the class or member public at patch time (`setAccessFlags`, like `core/ThreadAccess.kt`, as a dependency of every patch that needs it), or use reflection as ReVanced does. `tools/verify.sh` lists every one it finds.
 
 ## Formatting
 

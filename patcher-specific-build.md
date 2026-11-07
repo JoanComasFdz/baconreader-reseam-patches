@@ -42,6 +42,14 @@ reseam patch <BaconReader 6.1.4 APK> \
 - Signing the APK: without `--key`/`--cert`, reseam makes a key and leaves it next to the output (`<name>.pk8`, `<name>.der`). Pass them back with `--key`/`--cert` so each build installs over the last.
 - Another BaconReader version: `--ignore-versions`.
 
+## Extension calls and access
+
+```shell
+tools/verify.sh patched.apk
+```
+
+It disassembles the APK with apktool and prints each app or library class, method and field the extensions (`com/joancomasfdz/**`) use that is missing or isn't public (or protected and inherited), with the classes that use it. The last line counts them; it exits 0 when there are none. Android's own classes and reflection aren't checked.
+
 ## The e2e bundle
 
 Test-only patches, "E2E fake Reddit" and "E2E inbox envelope label", which the e2e tests use ([tests/BaconReader.E2E/README.md](tests/BaconReader.E2E/README.md)), live in `e2e-patches/`, a workspace of its own: a Reseam workspace builds one bundle, and `release.yml` builds and publishes only the root's. It takes its Reseam version from the root's `settings.gradle.kts`.
