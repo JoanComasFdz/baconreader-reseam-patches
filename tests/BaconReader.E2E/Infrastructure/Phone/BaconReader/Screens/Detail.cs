@@ -748,12 +748,23 @@ public sealed class Comments(AndroidDriver driver)
     // How long the end of the list may take to load its next comments: 50 threads, one at a time.
     private static readonly TimeSpan EndLoad = TimeSpan.FromSeconds(60);
 
+    // How long the end of the list may take to start loading ("Loading..."), once the list stops. One look was enough
+    // from a cloud session (~0.23 s a command); next to the phone (the NAS's runner, ~0.1 s a command) the scroll
+    // ended at "Comment 501", 59 comments short (2026-11-08): the list can stop before "Loading..." shows.
+    private static readonly TimeSpan EndStarts = TimeSpan.FromSeconds(3);
+
     // Whether the list was loading comments at its end ("Loading..."): then it waits until they are in.
     private bool LoadedItsEnd()
     {
-        if (driver.FindElements(Loading).Count == 0)
+        var starts = DateTimeOffset.UtcNow + EndStarts;
+        while (driver.FindElements(Loading).Count == 0)
         {
-            return false;
+            if (DateTimeOffset.UtcNow > starts)
+            {
+                return false;
+            }
+
+            Thread.Sleep(250);
         }
 
         var until = DateTimeOffset.UtcNow + EndLoad;
