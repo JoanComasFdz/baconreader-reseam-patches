@@ -10,6 +10,8 @@ services:
     image: baconreader-e2e-runner
     init: true
     restart: unless-stopped
+    # Time for each runner to sign out of GitHub on docker stop (runner.sh), instead of Docker's 10 s.
+    stop_grace_period: 60s
     mem_limit: ${E2E_RUNNER_MEMORY:-3g}
     cap_drop: [ALL]
     # Docker's default seccomp profile, plus fchmodat2 answering ENOSYS: the NAS's kernel answers it with EFAULT, which
