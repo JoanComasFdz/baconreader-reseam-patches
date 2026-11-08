@@ -35,6 +35,11 @@ the scenarios joins the phone, starts Appium in the session and exports what the
 | `E2E_ACTION_GAP` | `0.4` | least seconds between two recorded steps |
 | `E2E_APPIUM_INSTALL_HELPERS` | unset | `1`: let Appium install its helper apps (a phone just reset) |
 
+The NAS the phone is plugged into has a GitHub Actions runner that plays the scenarios next to it, where each Appium
+command takes milliseconds: the "E2E on the phone" workflow, for long runs ([tools/e2e/nas](../../tools/e2e/nas/README.md)).
+It connects with the same script over the phone stack's network (`E2E_PHONE_LAN`), and shares the phone's lease with
+the cloud sessions.
+
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the
 phone, so a session starts without reinstalling them; a reset phone needs one run with
 `E2E_APPIUM_INSTALL_HELPERS=1` (the connection script sets it when they're missing).

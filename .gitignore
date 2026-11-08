@@ -27,3 +27,6 @@ Thumbs.db
 
 # VS Code for the web's runner (tests/BaconReader.VsCodeExtension.E2E/vscode-web: npm ci)
 node_modules/
+
+# The NAS runner's settings (tools/e2e/nas/.env.example)
+tools/e2e/nas/.env
