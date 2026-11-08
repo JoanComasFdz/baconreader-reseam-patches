@@ -482,6 +482,11 @@ public sealed class RedditPost(RedditWorld world, Post post)
         new(world, Flatten(post.Comments).SingleOrDefault(comment => comment.Body == text)
             ?? throw new InvalidOperationException($"The post \"{post.Title}\" has no comment \"{text}\": a Given line makes it first."));
 
+    /// <summary>"… the comment by u/&lt;author&gt; …": a comment of this post a Given line made, by its author.</summary>
+    public RedditComment TheCommentBy(string author) =>
+        new(world, Flatten(post.Comments).SingleOrDefault(comment => comment.Author == author)
+            ?? throw new InvalidOperationException($"The post \"{post.Title}\" has no comment by u/{author}: a Given line makes it first."));
+
     private static IEnumerable<Comment> Flatten(IEnumerable<Comment> comments) =>
         comments.SelectMany(comment => Flatten(comment.Replies).Prepend(comment));
 
