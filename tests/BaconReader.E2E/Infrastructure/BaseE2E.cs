@@ -166,15 +166,16 @@ public abstract class BaseE2E : IAsyncLifetime
         }
     }
 
-    // The run's session, if it still answers (one round trip), or a new one. Scenarios play one after another
-    // (xunit.runner.json), so one session at a time.
+    // The run's session, if it still answers, or a new one. Scenarios play one after another (xunit.runner.json), so
+    // one session at a time. Asking the screen's orientation is one round trip to UiAutomator2 on the phone (~0.19 s);
+    // asking whether the keyboard shows ran a system query there and took ~4.4 s (2026-11-08).
     private static AndroidDriver OpenOrReuseSession()
     {
         if (session is not null)
         {
             try
             {
-                _ = session.IsKeyboardShown();
+                _ = session.Orientation;
                 return session;
             }
             catch (WebDriverException)
