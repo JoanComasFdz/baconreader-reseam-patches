@@ -270,10 +270,12 @@ scenario never relies on that order: it only keeps the phone from switching APKs
 5. Write the scenario (rules a–f, and rule h for the translation).
 6. Grow `Infrastructure/` only by what this scenario needs: the page-object members, vocabulary cases and assertions it
    calls. A missing content description goes into the patch, in the same PR.
-7. Run it unrecorded while you work: `tools/e2e/record.sh --no-video <its class>` (`--no-bundle` when the patches
-   didn't change).
-8. Record it once, right before the push, never between pushes: `tools/e2e/record.sh --changed-since origin/main`. Each
-   GIF shows what the Gherkin says. Right after the push, `tools/e2e/push-gifs.sh` posts the GIFs on the PR.
+7. Push the branch, open the PR, and play it on the NAS, recorded: the "E2E on the phone" workflow with
+   `--changed-since origin/main`, `video` and the PR. A run that passes posts the GIFs on the PR; each GIF shows what the
+   Gherkin says. A run that fails says why in its job's log; fix it, push, and start it again.
+8. Play it from the session (`tools/e2e/record.sh --no-video <its class>`) only when a failure on the NAS can't be
+   understood from its log, and record from the session (`tools/e2e/record.sh --changed-since origin/main`, then
+   `tools/e2e/push-gifs.sh`) only when the NAS is down ([AGENTS.md](../../AGENTS.md), "End-to-end tests").
 
 ## h. From a Gherkin to a scenario
 
