@@ -121,35 +121,21 @@ public sealed class BaconReaderApp(
     }
 
     /// <summary>
-    /// Logs the test account in from the main screen, as a scenario's "Given the test account is logged in" says: "Add
-    /// account" in the left menu, Reddit's "Log In" with the test account, "Accept", then closes the left menu BaconReader
-    /// comes back with, and waits until the feed shows its posts.
+    /// Waits until the test account is logged in, as a scenario's "Given the test account is logged in" says: a LoggedIn
+    /// scenario's app starts logged in, as the fake Reddit hands it the login at its start (BaseE2E, "E2E fake Reddit"),
+    /// what logging in through "Add account" and Reddit's "Log In" leaves: the session and the user name. Logging in
+    /// through those screens took ~11 s of each scenario (2026-11-07); Spoof client's Startup scenario still does.
+    /// It waits until the feed shows its posts.
     /// <para>
-    /// Right after the login BaconReader loads the Front Page and, as the test account has no subscriptions, subscribes it
-    /// to every default subreddit, both at once. A Front Page loaded after the first subscription and before the one of the
-    /// scenario's subreddit shows "No data": Reddit shows an account with subscriptions only theirs. On the Pixel 6 Pro
-    /// that happened in 3 runs of 31 of Markdown editor's (2026-11-05), and every subscription was answered within 0.4 s
-    /// of the Front Page's request, 2 s before the left menu closes. So on "No data" it taps "Refresh", as the user would,
-    /// and the Front Page loads with every subscription.
+    /// Logged in at its start, BaconReader loads the Front Page and, as the test account has no subscriptions, subscribes
+    /// it to every default subreddit, both at once. A Front Page loaded after the first subscription and before the one of
+    /// the scenario's subreddit shows "No data": Reddit shows an account with subscriptions only theirs. On the Pixel 6 Pro
+    /// that happened in 3 runs of 31 of Markdown editor's (2026-11-05), after a login through the screens. So on "No data"
+    /// it taps "Refresh", as the user would, and the Front Page loads with every subscription.
     /// </para>
-    /// On the emulator the login screen at times closed by
-    /// itself while its fields were filled in, and it started again from "Add account"; on the Pixel 6 Pro it never did
-    /// in 4 runs of every scenario (2026-10-31), so it logs in once.
     /// </summary>
     public async Task LogInWithTheTestAccountAsync()
     {
-        await Main.LeftMenu.OpenAsync();
-        await Main.LeftMenu.WaitUntilShownAsync();
-        await Main.LeftMenu.ClickAsync(new MenuEntry.AddAccount());
-        await LogIn.WaitUntilShownAsync();
-        await LogIn.TypeTheTestAccountsUserNameAsync();
-        await LogIn.TypeTheTestAccountsPasswordAsync();
-        await LogIn.ClickLogInAsync();
-        await LogIn.WaitUntilConnectShownAsync();
-        await LogIn.ClickAcceptAsync();
-        await Main.WaitUntilShownAsync();
-        await Main.LeftMenu.WaitUntilShownAsync();
-        await Main.LeftMenu.CloseAsync();
         if (!await Main.Posts.WaitUntilPostsOrNoDataShownAsync())
         {
             RunLog.RetryFired("Log in: \"Refresh\" on the Front Page", 1, "it loaded while BaconReader subscribed the test account to the default subreddits, and shows \"No data\"");

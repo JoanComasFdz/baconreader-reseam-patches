@@ -164,7 +164,10 @@ public sealed class SpoofClientTests : BaseE2E
   An APK is patched once per set of patches and bundle, signed with one test key, and sent to the phone only when it
   isn't the one installed (sending one takes 1–3 minutes over the slow link): the LoggedIn scenarios share one;
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
-  as just installed, but with its notifications denied (`Device/PatchedApps`): Android doesn't ask, on any device;
+  as just installed, but with its notifications denied (`Device/PatchedApps`): Android doesn't ask, on any device. A
+  LoggedIn scenario's app starts logged in with the test account: the fake Reddit hands it the login at its start
+  (`LogInAtStart`, "E2E fake Reddit"), so `LogInWithTheTestAccountAsync` waits for the posts instead of going through
+  the login screens (~11 s a scenario); Spoof client's Startup scenario still logs in through them;
 - **the screen:** one Appium session on the phone, its UiAutomator2 helpers already installed
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   phone was reset), that never launches or resets the app itself: the scenario opens it;
