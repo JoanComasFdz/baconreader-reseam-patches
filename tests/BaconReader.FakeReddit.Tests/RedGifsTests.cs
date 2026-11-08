@@ -96,6 +96,35 @@ public sealed class RedGifsTests(FakeRedditFixture fixture) : FakeRedditTest(fix
         await AssertErrorAsync(missing, HttpStatusCode.NotFound, "GifNotFound");
     }
 
+    [Fact]
+    public async Task BaconReaders_own_token_request_is_401_client_not_found_and_one_without_its_fields_400()
+    {
+        using var baconReaders = await RequestOAuthTokenAsync(new()
+        {
+            ["grant_type"] = "client_credentials",
+            ["client_id"] = "182fead4604-0d50-626a-0005-14c54fc45b2f",
+            ["client_secret"] = "c7bc32e63583502f24760ba1949039f3",
+        });
+        using var withoutGrantType = await RequestOAuthTokenAsync([]);
+        using var withoutClientId = await RequestOAuthTokenAsync(new() { ["grant_type"] = "client_credentials" });
+
+        await AssertErrorAsync(baconReaders, HttpStatusCode.Unauthorized, "Unauthorized");
+        var refused = await ReadJsonAsync(baconReaders);
+        Assert.Equal("client not found", refused.GetProperty("error").GetProperty("message").GetString());
+        await AssertErrorAsync(withoutGrantType, HttpStatusCode.BadRequest, "FormValueNotSet");
+        await AssertErrorAsync(withoutClientId, HttpStatusCode.BadRequest, "FormValueNotSet");
+        var missingClientId = (await ReadJsonAsync(withoutClientId)).GetProperty("error").GetProperty("message").GetString();
+        Assert.Equal("request parameter \"client_id\" is missing", missingClientId);
+        Assert.Empty(World.Unhandled);
+    }
+
+    // BaconReader's own token request: a form POST, which its interceptor sends with no token or User-Agent.
+    private async Task<HttpResponseMessage> RequestOAuthTokenAsync(Dictionary<string, string> form)
+    {
+        using var content = new FormUrlEncodedContent(form);
+        return await Client.PostAsync("/_redgifs/v2/oauth/client", content, TestContext.Current.CancellationToken);
+    }
+
     private async Task<string> TemporaryTokenAsync()
     {
         using var response = await SendRedGifsAsync("/_redgifs/v2/auth/temporary", null, UserAgent);
