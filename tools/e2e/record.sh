@@ -246,16 +246,14 @@ fi
 
 rm -rf "$raw" "$results"
 failed=0
-# The console logger at normal verbosity prints each run's result as it ends ("Passed …", "Failed …"), so a long run's
-# log, the NAS job's live log included, shows how far it got.
 for project in "${!filters[@]}"; do
   echo "Playing $(basename "$project" .csproj): ${filters[$project]}"
   if [ $video -eq 1 ]; then
     E2E_VSCODE_URL="$vscode_url" E2E_VIDEO_DIR="$raw" E2E_ACTION_GAP="$action_gap" dotnet test "$project" --filter "${filters[$project]}" \
-      --logger "trx;LogFileName=$(basename "$project" .csproj).trx" --logger "console;verbosity=normal" --results-directory "$results" || failed=1
+      --logger "trx;LogFileName=$(basename "$project" .csproj).trx" --results-directory "$results" || failed=1
   else
     env -u E2E_VIDEO_DIR E2E_VSCODE_URL="$vscode_url" dotnet test "$project" --filter "${filters[$project]}" \
-      --logger "trx;LogFileName=$(basename "$project" .csproj).trx" --logger "console;verbosity=normal" --results-directory "$results" || failed=1
+      --logger "trx;LogFileName=$(basename "$project" .csproj).trx" --results-directory "$results" || failed=1
   fi
 done
 
