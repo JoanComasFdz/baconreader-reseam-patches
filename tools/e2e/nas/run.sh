@@ -38,5 +38,6 @@ done
 
 tools/e2e/lease.sh keep "$E2E_ADB_SERIAL" "$E2E_LEASE_ID" &
 keeper=$!
-trap 'kill $keeper 2> /dev/null; tools/e2e/connect.sh --down' EXIT
+# The C# compiler's server (VBCSCompiler) would outlive the job by about 10 minutes, holding ~300 MB.
+trap 'kill $keeper 2> /dev/null; wait $keeper 2> /dev/null; tools/e2e/connect.sh --down; dotnet build-server shutdown > /dev/null 2>&1' EXIT
 tools/e2e/record.sh --no-bundle "$@"

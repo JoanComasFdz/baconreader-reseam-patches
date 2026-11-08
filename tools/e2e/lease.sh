@@ -39,7 +39,13 @@ echo \"busy \$held\"; else echo \"$holder \$((now + $minutes * 60))\" > $FILE &&
 case "$action" in
   take) take ;;
   keep)
-    while sleep 600; do
+    # The sleep runs in the background and the loop waits for it, so a kill stops the sleep too: left behind, it would
+    # hold the caller's output (a pipe to tee) open for up to 10 minutes.
+    trap 'kill "$nap" 2> /dev/null; exit 0' TERM INT
+    while true; do
+      sleep 600 &
+      nap=$!
+      wait "$nap"
       take > /dev/null || echo "lease.sh: couldn't renew the lease of $holder" >&2
     done
     ;;
