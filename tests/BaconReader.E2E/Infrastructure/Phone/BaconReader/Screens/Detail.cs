@@ -162,13 +162,20 @@ public sealed class PostText(AndroidDriver driver)
             return new PicturesSnapshot("The post's text", Screenshots.Pictures(driver.GetScreenshot().AsByteArray, images));
         });
 
-    /// <summary>Where the post's text and its first image are on the screen, in pixels.</summary>
+    /// <summary>
+    /// Where the post's text and its first image are on the screen, in pixels, and each part of the text: the text before
+    /// its first media link, or with none the first part after one, and the parts after its media.
+    /// </summary>
     public Task<PostTextLayoutSnapshot> ReadLayoutAsync() =>
         OnScreen.ReadAsync(driver, () =>
         {
             var screen = ScreenSnapshot.Take(driver);
-            var text = screen.WithAppId(Text).FirstOrDefault() ?? throw new InvalidOperationException("The post shows no text.");
-            return new PostTextLayoutSnapshot(text.Bounds, Images(screen).FirstOrDefault()?.Bounds);
+            var texts = Texts(screen);
+            var text = texts.FirstOrDefault() ?? throw new InvalidOperationException("The post shows no text.");
+            return new PostTextLayoutSnapshot(text.Bounds, Images(screen).FirstOrDefault()?.Bounds)
+            {
+                Parts = [.. texts.Select(part => new PostTextPart(part.Text.Trim(), part.Bounds))],
+            };
         });
 
     /// <summary>What the tables of the post's text show.</summary>
@@ -203,7 +210,14 @@ public sealed class PostText(AndroidDriver driver)
 public sealed record PostTextSnapshot(string Text, int Images);
 
 /// <summary>Where a post's text and its first image (null without one) are on the screen, in pixels.</summary>
-public sealed record PostTextLayoutSnapshot(Rectangle Text, Rectangle? Image);
+public sealed record PostTextLayoutSnapshot(Rectangle Text, Rectangle? Image)
+{
+    /// <summary>The parts of the text, in order: what each says, and where it is.</summary>
+    public ImmutableArray<PostTextPart> Parts { get; init; } = [];
+}
+
+/// <summary>A part of a post's text, before or after its media: what it says, and where it is on the screen.</summary>
+public sealed record PostTextPart(string Text, Rectangle Bounds);
 
 /// <summary>
 /// The comments of the post shown, each named by its text (what it says before its media, which shows under it), and with "Embed comment images" the GIFs, images and videos
@@ -727,11 +741,44 @@ public sealed class Comments(AndroidDriver driver)
         OnScreen.ReadAsync(driver, () =>
         {
             var screen = Screen();
-            var comment = FindCommentOrFail(screen, text).Bounds;
-            var next = screen.WithAppId(Header).Select(header => header.Bounds.Top).Where(top => top > comment.Bottom).DefaultIfEmpty(int.MaxValue).Min();
-            var hidden = screen.WithAppId(HiddenComments).FirstOrDefault(row => row.Bounds.Top >= comment.Bottom - 10 && row.Bounds.Top < next);
-            return new CollapsedCommentSnapshot(text, hidden?.Text.Trim());
+            return new CollapsedCommentSnapshot(text, HiddenUnder(screen, FindCommentOrFail(screen, text)));
         });
+
+    /// <summary>What the comment by u/<paramref name="author"/> shows under it when collapsed: "1 hidden comment", or null.</summary>
+    public Task<CollapsedCommentSnapshot> ReadCollapsedByAsync(string author) =>
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var screen = Screen();
+            return new CollapsedCommentSnapshot("", HiddenUnder(screen, FindCommentByOrFail(screen, author))) { Name = $"by u/{author}" };
+        });
+
+    /// <summary>Waits until the comment by u/<paramref name="author"/> shows how many comments it hides.</summary>
+    public Task WaitUntilCollapsedByAsync(string author) =>
+        Waiting.UntilAsync(
+            () => FindCommentBy(Screen(), author) is { } comment && HiddenUnder(Screen(), comment) is not null,
+            TimeSpan.FromSeconds(10),
+            $"The comments the comment by u/{author} hides");
+
+    /// <summary>Waits until the comment by u/<paramref name="author"/> hides no comment.</summary>
+    public Task WaitUntilExpandedByAsync(string author) =>
+        Waiting.UntilAsync(
+            () => FindCommentBy(Screen(), author) is { } comment && HiddenUnder(Screen(), comment) is null,
+            TimeSpan.FromSeconds(10),
+            $"The comment by u/{author} showing its replies");
+
+    /// <summary>Taps "<paramref name="text"/>", which the comment by u/<paramref name="author"/> shows under its media.</summary>
+    public Task ClickTextUnderMediaByAsync(string author, string text) =>
+        OnScreen.PressAtAsync(driver, () =>
+            Media.In(FindCommentByOrFail(Screen(), author), Media.TextAfterMedia).FirstOrDefault(view => view.Displayed && view.Text.Trim() == text)?.Center
+            ?? throw new InvalidOperationException($"The comment by u/{author} shows no \"{text}\" under its media."));
+
+    // The "1 hidden comment" row under the comment, before the next comment's header, or null.
+    private static string? HiddenUnder(ScreenSnapshot screen, ScreenNode comment)
+    {
+        var bounds = comment.Bounds;
+        var next = screen.WithAppId(Header).Select(header => header.Bounds.Top).Where(top => top > bounds.Bottom).DefaultIfEmpty(int.MaxValue).Min();
+        return screen.WithAppId(HiddenComments).FirstOrDefault(row => row.Bounds.Top >= bounds.Bottom - 10 && row.Bounds.Top < next)?.Text.Trim();
+    }
 
     /// <summary>Waits until the comment "<paramref name="text"/>" shows how many comments it hides.</summary>
     public Task WaitUntilCollapsedAsync(string text) =>
@@ -877,7 +924,11 @@ public sealed record CommentsSnapshot(ImmutableArray<ShownComment> Comments);
 public sealed record CommentReadingSnapshot(string Text, string ReadAs);
 
 /// <summary>What the collapsed comment "<paramref name="Text"/>" shows under it: "1 hidden comment", or null.</summary>
-public sealed record CollapsedCommentSnapshot(string Text, string? Hidden);
+public sealed record CollapsedCommentSnapshot(string Text, string? Hidden)
+{
+    /// <summary>How a test names it: its text, quoted, or "by u/&lt;author&gt;".</summary>
+    public string Name { get; init; } = $"\"{Text}\"";
+}
 
 /// <summary>What a comment shows: its text, and the GIFs, images and videos under it.</summary>
 public sealed record CommentSnapshot(string Text, int Gifs, int Images, int Videos)

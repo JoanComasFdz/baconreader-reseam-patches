@@ -40,6 +40,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Media thread" has a comment "Here is an image link" with a link to an image
           And the post "Media thread" has a comment by u/e2e_snapper with only an image
           And the post "Media thread" has a comment by u/e2e_captioner with an image and then the text "Look above"
+          And the comment by u/e2e_captioner has a reply "Nice photo"
           And the post "Media thread" has a comment by u/e2e_gifster with only a GIF
           And the post "Media thread" has a comment "Two pictures" with 2 different images
           And the post "Media thread" has a comment "Mine and a link" with an image and a link to another image
@@ -128,6 +129,11 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           When I scroll to the comment by u/e2e_captioner
           Then the comment by u/e2e_captioner shows 1 image
           And the comment by u/e2e_captioner shows "Look above" under its image
+          When I tap "Look above" in the comment by u/e2e_captioner
+          # A tap on the text after the image collapses the comment, as a tap anywhere on it does.
+          Then the comment by u/e2e_captioner shows "1 hidden comment"
+          When I tap "Look above" in the comment by u/e2e_captioner
+          Then the comment by u/e2e_captioner hides no comment
           When I scroll to the comment by u/e2e_gifster
           Then the comment by u/e2e_gifster shows 1 GIF
           When I scroll to the comment "Two pictures"
@@ -164,7 +170,16 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I tap the post "A picture first"
           Then the post's text "Above is my photo" shows 1 image
           And the post's text "Above is my photo" shows no picture twice
-          When I go back to the posts
+          # The image takes its link's place: the text after the link shows under it.
+          And the post's text "Above is my photo" shows under its image
+          # "Full width by default" is off, but an image in a post starts at full width.
+          And the image of the post's text fills the text's width
+          When I tap "Slide Show View" in the toolbar
+          # The slide show shows a text post's text in a card, with its media in the same places.
+          Then the post's text "Above is my photo" shows 1 image
+          And the post's text "Above is my photo" shows under its image
+          When I tap "Detail View" in the toolbar
+          And I go back to the posts
           And I open the left menu
           And I tap "Settings"
           And I tap "Patches"
@@ -331,6 +346,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("Media thread").HasACommentWithALinkToAnImage("Here is an image link");
         Reddit.ThePost("Media thread").HasACommentByWithOnlyAnImage("e2e_snapper");
         Reddit.ThePost("Media thread").HasACommentByWithAnImageAndThenTheText("e2e_captioner", "Look above");
+        Reddit.ThePost("Media thread").TheCommentBy("e2e_captioner").HasAReply("Nice photo");
         Reddit.ThePost("Media thread").HasACommentByWithOnlyAGif("e2e_gifster");
         Reddit.ThePost("Media thread").HasACommentWithDifferentImages("Two pictures", 2);
         Reddit.ThePost("Media thread").HasACommentWithAnImageAndALinkToAnotherImage("Mine and a link");
@@ -488,6 +504,23 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Asserting.That(imageFirst).ShowsImages(1).ShowsUnderItsMedia("Look above");
 
         // When
+        await Phone.BaconReader.Detail.Comments.ClickTextUnderMediaByAsync("e2e_captioner", "Look above");
+        await Phone.BaconReader.Detail.Comments.WaitUntilCollapsedByAsync("e2e_captioner");
+
+        // Then
+        // A tap on the text after the image collapses the comment, as a tap anywhere on it does.
+        var captionerCollapsed = await Phone.BaconReader.Detail.Comments.ReadCollapsedByAsync("e2e_captioner");
+        Asserting.That(captionerCollapsed).ShowsHidden("1 hidden comment");
+
+        // When
+        await Phone.BaconReader.Detail.Comments.ClickTextUnderMediaByAsync("e2e_captioner", "Look above");
+        await Phone.BaconReader.Detail.Comments.WaitUntilExpandedByAsync("e2e_captioner");
+
+        // Then
+        var captionerExpanded = await Phone.BaconReader.Detail.Comments.ReadCollapsedByAsync("e2e_captioner");
+        Asserting.That(captionerExpanded).HidesNoComment();
+
+        // When
         await Phone.BaconReader.Detail.Comments.ScrollToCommentByAsync("e2e_gifster");
         await Phone.BaconReader.Detail.Comments.WaitUntilMediaShownByAsync("e2e_gifster");
 
@@ -594,10 +627,28 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         var pictureFirst = await Phone.BaconReader.Detail.PostText.ReadAsync();
         var pictureFirstPictures = await Phone.BaconReader.Detail.PostText.ReadPicturesAsync();
+        var pictureFirstLayout = await Phone.BaconReader.Detail.PostText.ReadLayoutAsync();
         Asserting.That(pictureFirst).ShowsTheTextWithImages("Above is my photo", 1);
         Asserting.That(pictureFirstPictures).ShowsNoPictureTwice();
+        // The image takes its link's place: the text after the link shows under it.
+        // "Full width by default" is off, but an image in a post starts at full width.
+        Asserting.That(pictureFirstLayout).ShowsUnderItsImage("Above is my photo").TheImageFillsTheTextsWidth();
 
         // When
+        await Phone.BaconReader.SlideShow.ClickSlideShowViewAsync();
+        await Phone.BaconReader.SlideShow.WaitUntilSlideShowShownAsync();
+        await Phone.BaconReader.Detail.PostText.WaitUntilMediaShownAsync();
+
+        // Then
+        // The slide show shows a text post's text in a card, with its media in the same places.
+        var slideShowText = await Phone.BaconReader.Detail.PostText.ReadAsync();
+        var slideShowLayout = await Phone.BaconReader.Detail.PostText.ReadLayoutAsync();
+        Asserting.That(slideShowText).ShowsTheTextWithImages("Above is my photo", 1);
+        Asserting.That(slideShowLayout).ShowsUnderItsImage("Above is my photo");
+
+        // When
+        await Phone.BaconReader.SlideShow.ClickDetailViewAsync();
+        await Phone.BaconReader.SlideShow.WaitUntilDetailViewShownAsync();
         await Phone.BaconReader.GoBackToThePostsAsync();
         await Phone.BaconReader.Main.LeftMenu.OpenAsync();
         await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
