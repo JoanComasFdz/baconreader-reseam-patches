@@ -28,7 +28,9 @@ private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 // and those stay.
 val e2eFakeReddit =
     patch("E2E fake Reddit") {
-        description("Test only: points BaconReader at a fake Reddit server instead of Reddit.")
+        description(
+            "Test only: points BaconReader at a fake Reddit server instead of Reddit, and starts it logged in when the fake hands it a login."
+        )
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         val baseUrl =
@@ -50,6 +52,10 @@ val e2eFakeReddit =
                 whenTrue(E2EFakeReddit.isMovedRedditVideo(param(0))) { returnTrue() }
             }
             savedVideoUrl.after { returnValue(E2EFakeReddit.keepFakeScheme(param(0), result)) }
+            // A LoggedIn scenario starts logged in, as the fake hands the app the login: logging in through the
+            // screens took ~11 s of each scenario. Right after the app's first step, before SessionManager reads
+            // the sessions.
+            applicationSet.after { E2EFakeReddit.logInAtStart() }
         }
 
         // After every patch's execute, of every loaded bundle: the extensions they merged hold
@@ -91,6 +97,10 @@ val e2eFakeReddit =
             log.info("Pointed $strings strings and $fields fields at the fake Reddit server")
         }
     }
+
+// BaconReader.onCreate's first step: it keeps the app, which Preferences and the database read.
+private val applicationSet =
+    klass("com.onelouder.baconreader.BaconReader\$Companion").method("setApplication")
 
 // Whether a URL is a v.redd.it video: its host is v.redd.it.
 private val redditVideoUrl =

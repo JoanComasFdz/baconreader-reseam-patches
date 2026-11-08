@@ -18,16 +18,16 @@ public sealed class LeftMenu(AndroidDriver driver)
     // the test-only "E2E inbox envelope label").
     private static readonly OpenQA.Selenium.By MenuButton = Locate.DescriptionStartingWith("Navigate up");
     private const string EnvelopeLabel = ", orange envelope";
-    private static readonly OpenQA.Selenium.By Menu = Locate.AppId("drawerView");
-    private static readonly OpenQA.Selenium.By Entry = Locate.AppId("text");
+    private const string Menu = "drawerView";
+    private const string Entry = "text";
     // An entry's icon: before an entry of the menu, after one of the accounts (its ✕, "Add account"'s +).
-    private static readonly OpenQA.Selenium.By Icon = Locate.AppId("icon");
+    private const string Icon = "icon";
     // The arrow at the end of a row that opens what it holds: the user name's opens the accounts.
-    private static readonly OpenQA.Selenium.By Arrow = Locate.AppId("expand");
+    private const string Arrow = "expand";
     // "Show user avatars" draws an account's avatar over an object replacement character before its name.
     private const string Avatar = "\uFFFC ";
     // "Patches entry in settings"'s line at the bottom of the drawer, under the menu: "Patches <version> (<patcher>)".
-    private static readonly OpenQA.Selenium.By PatchesVersion = Locate.TextStartingWith("Patches ");
+    private const string PatchesVersion = "Patches ";
     // The circle "Account colors" puts between an account's name and its ✕: "Color of <user name>".
     private const string CirclePrefix = "Color of ";
 
@@ -51,8 +51,7 @@ public sealed class LeftMenu(AndroidDriver driver)
         return Waiting.UntilAsync(
             () =>
             {
-                var shown = driver.FindElements(Menu).FirstOrDefault(menu => menu.Displayed);
-                var now = shown is null ? (System.Drawing.Rectangle?)null : new System.Drawing.Rectangle(shown.Location, shown.Size);
+                var now = ShownMenu(Screen())?.Bounds;
                 var settled = now is not null && now == last;
                 last = now;
                 return settled;
@@ -66,14 +65,17 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// the tap, and a tap again 20 s later opened it; on the Pixel 6 Pro no tap was ignored in 4 runs of every scenario
     /// (2026-10-31), so it taps once.
     /// </summary>
-    public Task ClickAsync(MenuEntry entry) => OnScreen.PressAsync(driver, Locate.AppIdWithText("text", entry.ToShownText()));
+    public Task ClickAsync(MenuEntry entry) =>
+        OnScreen.PressAtAsync(driver, () =>
+            (Entries(Screen()).FirstOrDefault(found => found.Text == entry.ToShownText())
+            ?? throw new InvalidOperationException($"The left menu shows no \"{entry.ToShownText()}\".")).Center);
 
     /// <summary>
     /// Taps the test account's user name at the top of the menu (<see cref="TestAccount"/>), which opens the accounts under
     /// it, or closes them.
     /// </summary>
     public Task ClickTheTestAccountsUserNameAsync() =>
-        OnScreen.PressAsync(driver, () => driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text.Trim(), TestAccount.UserName)));
+        OnScreen.PressAtAsync(driver, () => Entries(Screen()).First(entry => Named(entry.Text.Trim(), TestAccount.UserName)).Center);
 
     /// <summary>
     /// Taps the arrow next to the account <paramref name="user"/> at the top of the menu (the arrow has no label), which
@@ -81,23 +83,24 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// account's row among the accounts has none.
     /// </summary>
     public Task ClickArrowNextToAsync(string user) =>
-        OnScreen.PressAsync(driver, () =>
+        OnScreen.PressAtAsync(driver, () =>
         {
-            var name = driver.FindElement(Menu).FindElements(Entry).First(entry => Named(entry.Text.Trim(), user) && ArrowOnRowOf(entry) is not null);
-            return ArrowOnRowOf(name)!;
+            var screen = Screen();
+            return Entries(screen).Select(entry => (entry, arrow: ArrowOnRowOf(screen, entry)))
+                .First(found => Named(found.entry.Text.Trim(), user) && found.arrow is not null).arrow!.Center;
         });
 
     /// <summary>Waits until the accounts show under the user name: their last row, "Add account", is there.</summary>
     public Task WaitUntilAccountsShownAsync() =>
         Waiting.UntilAsync(
-            () => Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
+            () => Accounts(Screen()).Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
             TimeSpan.FromSeconds(10),
             "The left menu's accounts under the user name");
 
     /// <summary>Waits until the accounts under the user name are closed: "Add account" is no longer there.</summary>
     public Task WaitUntilAccountsClosedAsync() =>
         Waiting.UntilAsync(
-            () => !Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
+            () => !Accounts(Screen()).Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText()),
             TimeSpan.FromSeconds(10),
             "The left menu's accounts under the user name closing");
 
@@ -106,32 +109,36 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// while they are closed).
     /// </summary>
     public Task<LeftMenuAccountsSnapshot> ReadAccountsAsync() =>
-        OnScreen.ReadAsync(driver, () => new LeftMenuAccountsSnapshot(
-            driver.FindElement(Menu).FindElements(Entry).First().Text.Trim(),
-            [.. Accounts().Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
+        OnScreen.ReadAsync(driver, () =>
+        {
+            var screen = Screen();
+            return new LeftMenuAccountsSnapshot(
+                Entries(screen).First().Text.Trim(),
+                [.. Accounts(screen).Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]);
+        });
 
     // Whether a row's text names user, with or without the avatar "Show user avatars" draws before it.
     private static bool Named(string text, string user) => text == user || text == Avatar + user;
 
     // The arrow whose row is the entry's: the one that spans the entry's middle, up and down.
-    private OpenQA.Selenium.IWebElement? ArrowOnRowOf(OpenQA.Selenium.IWebElement entry)
+    private static ScreenNode? ArrowOnRowOf(ScreenSnapshot screen, ScreenNode entry)
     {
-        var middle = entry.Location.Y + entry.Size.Height / 2;
-        return driver.FindElement(Menu).FindElements(Arrow)
-            .FirstOrDefault(arrow => arrow.Displayed && arrow.Location.Y <= middle && middle <= arrow.Location.Y + arrow.Size.Height);
+        var middle = entry.Bounds.Top + (entry.Bounds.Height / 2);
+        return ShownMenu(screen)?.WithAppId(Arrow)
+            .FirstOrDefault(arrow => arrow.Displayed && arrow.Bounds.Top <= middle && middle <= arrow.Bounds.Bottom);
     }
 
     // The accounts' rows: each shows its icon after its text, where the menu's entries show it before.
-    private IEnumerable<OpenQA.Selenium.IWebElement> Accounts()
+    private static List<ScreenNode> Accounts(ScreenSnapshot screen)
     {
-        var menu = driver.FindElements(Menu).FirstOrDefault(shown => shown.Displayed);
-        if (menu is null) return [];
-        var icons = menu.FindElements(Icon).Select(icon => new System.Drawing.Rectangle(icon.Location, icon.Size)).ToList();
-        return menu.FindElements(Entry).Where(entry =>
+        if (ShownMenu(screen) is not { } menu)
         {
-            var text = new System.Drawing.Rectangle(entry.Location, entry.Size);
-            return icons.Any(icon => icon.Left >= text.Right && icon.Top < text.Bottom && icon.Bottom > text.Top);
-        }).ToList();
+            return [];
+        }
+
+        var icons = menu.WithAppId(Icon).Where(icon => icon.Displayed).Select(icon => icon.Bounds).ToList();
+        return [.. Entries(screen).Where(entry =>
+            icons.Any(icon => icon.Left >= entry.Bounds.Right && icon.Top < entry.Bounds.Bottom && icon.Bottom > entry.Bounds.Top))];
     }
 
     /// <summary>
@@ -141,13 +148,12 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// </summary>
     public async Task OpenTheAccountsAsync()
     {
-        if (await Task.Run(() => Accounts().Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText())))
+        if (await Task.Run(() => Accounts(Screen()).Any(entry => entry.Text.Trim() == new MenuEntry.AddAccount().ToShownText())))
         {
             return;
         }
 
-        await OnScreen.PressAsync(driver, () => driver.FindElements(Menu).SelectMany(menu => menu.FindElements(Entry))
-            .Where(entry => entry.Displayed).OrderBy(entry => entry.Location.Y).First());
+        await OnScreen.PressAtAsync(driver, () => Entries(Screen()).First().Center);
     }
 
     /// <summary>
@@ -155,22 +161,27 @@ public sealed class LeftMenu(AndroidDriver driver)
     /// menu's texts with that name, the one at the top being the account in use.
     /// </summary>
     public Task ClickTheAccountAsync(string userName) =>
-        OnScreen.PressAsync(driver, () => AccountNames(userName).OrderBy(name => name.Location.Y).Last());
+        OnScreen.PressAtAsync(driver, () => Entries(Screen()).Where(entry => Named(entry.Text.Trim(), userName)).Last().Center);
 
     /// <summary>Waits until the user name at the top of the menu is <paramref name="userName"/>: the account in use.</summary>
     public Task WaitUntilAccountInUseAsync(string userName) =>
         Waiting.UntilAsync(
-            () => driver.FindElements(Menu).SelectMany(menu => menu.FindElements(Entry)).Where(entry => entry.Displayed)
-                .OrderBy(entry => entry.Location.Y).FirstOrDefault() is { } top && Named(top.Text.Trim(), userName),
+            () => Entries(Screen()).FirstOrDefault() is { } top && Named(top.Text.Trim(), userName),
             TimeSpan.FromSeconds(15),
             $"The left menu naming \"{userName}\" at the top");
 
     /// <summary>Taps the circle <paramref name="circle"/>, such as "Color of e2e_user", which opens the color picker.</summary>
-    public Task ClickTheCircleAsync(string circle) => OnScreen.PressAsync(driver, Locate.Description(circle));
+    public Task ClickTheCircleAsync(string circle) =>
+        OnScreen.PressAtAsync(driver, () =>
+            (Screen().Root.Descendants().FirstOrDefault(found => found.Displayed && found.Description == circle)
+            ?? throw new InvalidOperationException($"The left menu shows no \"{circle}\".")).Center);
 
     /// <summary>Waits until the menu shows the circle <paramref name="circle"/>, such as "Color of e2e_user".</summary>
     public Task WaitUntilCircleShownAsync(string circle) =>
-        Waiting.UntilShownAsync(driver, Locate.Description(circle), TimeSpan.FromSeconds(10), $"The circle \"{circle}\" in the left menu");
+        Waiting.UntilAsync(
+            () => Screen().Root.Descendants().Any(found => found.Displayed && found.Description == circle),
+            TimeSpan.FromSeconds(10),
+            $"The circle \"{circle}\" in the left menu");
 
     /// <summary>
     /// What the rows of the menu show, top to bottom: each row's text, and on its line "Account colors"' circle, if any,
@@ -180,34 +191,37 @@ public sealed class LeftMenu(AndroidDriver driver)
     public Task<LeftMenuRowsSnapshot> ReadRowsAsync() =>
         OnScreen.ReadAsync(driver, () =>
         {
-            var circles = driver.FindElements(Locate.DescriptionStartingWith(CirclePrefix)).Where(circle => circle.Displayed).ToList();
-            var icons = driver.FindElements(Menu).SelectMany(menu => menu.FindElements(Icon)).Where(icon => icon.Displayed).ToList();
+            var screen = Screen();
+            var circles = screen.Root.Descendants().Where(circle => circle.Displayed && circle.Description.StartsWith(CirclePrefix, StringComparison.Ordinal)).ToList();
+            var icons = screen.WithAppId(Menu).SelectMany(menu => menu.WithAppId(Icon)).Where(icon => icon.Displayed).ToList();
             var png = circles.Count > 0 ? driver.GetScreenshot().AsByteArray : [];
             return new LeftMenuRowsSnapshot(
             [
-                .. driver.FindElements(Menu).SelectMany(menu => menu.FindElements(Entry)).Where(entry => entry.Displayed)
-                    .OrderBy(entry => entry.Location.Y)
-                    .Select(entry =>
+                .. Entries(screen).Select(entry =>
+                {
+                    var text = entry.Bounds;
+                    var circle = circles.FirstOrDefault(found => OnTheLineOf(found.Bounds, text));
+                    var icon = icons.Where(found => OnTheLineOf(found.Bounds, text) && found.Bounds.Left > text.Left)
+                        .OrderBy(found => found.Bounds.X).LastOrDefault();
+                    return new LeftMenuRow(entry.Text.Trim(), text)
                     {
-                        var text = Bounds(entry);
-                        var circle = circles.FirstOrDefault(found => OnTheLineOf(Bounds(found), text));
-                        var icon = icons.Where(found => OnTheLineOf(Bounds(found), text) && Bounds(found).Left > text.Left)
-                            .OrderBy(found => found.Location.X).LastOrDefault();
-                        return new LeftMenuRow(entry.Text.Trim(), text)
-                        {
-                            Circle = circle?.GetAttribute("content-desc"),
-                            CircleBounds = circle is null ? null : Bounds(circle),
-                            CircleFilled = circle is null ? null : Filled(png, Bounds(circle)),
-                            IconBounds = icon is null ? null : Bounds(icon),
-                        };
-                    }),
+                        Circle = circle?.Description,
+                        CircleBounds = circle?.Bounds,
+                        CircleFilled = circle is null ? null : Filled(png, circle.Bounds),
+                        IconBounds = icon?.Bounds,
+                    };
+                }),
             ]);
         });
 
-    private IEnumerable<OpenQA.Selenium.IWebElement> AccountNames(string userName) =>
-        driver.FindElements(Menu).SelectMany(menu => menu.FindElements(Entry)).Where(entry => entry.Displayed && Named(entry.Text.Trim(), userName));
+    private ScreenSnapshot Screen() => ScreenSnapshot.Take(driver);
 
-    private static System.Drawing.Rectangle Bounds(OpenQA.Selenium.IWebElement element) => new(element.Location, element.Size);
+    // The menu while it shows.
+    private static ScreenNode? ShownMenu(ScreenSnapshot screen) => screen.WithAppId(Menu).FirstOrDefault(menu => menu.Displayed);
+
+    // The texts of the menu's rows that show, top to bottom.
+    private static List<ScreenNode> Entries(ScreenSnapshot screen) =>
+        [.. screen.WithAppId(Menu).SelectMany(menu => menu.WithAppId(Entry)).Where(entry => entry.Displayed).OrderBy(entry => entry.Bounds.Y)];
 
     // Whether a view's middle is on the line of a row's text: the row's views are centered on it.
     private static bool OnTheLineOf(System.Drawing.Rectangle view, System.Drawing.Rectangle text)
@@ -243,16 +257,15 @@ public sealed class LeftMenu(AndroidDriver driver)
     public Task<LeftMenuFooterSnapshot> ReadFooterAsync() =>
         OnScreen.ReadAsync(driver, () =>
         {
-            var version = driver.FindElements(PatchesVersion).FirstOrDefault(line => line.Displayed);
-            var lowestEntry = driver.FindElements(Menu).SelectMany(menu => menu.FindElements(Entry)).Where(entry => entry.Displayed)
-                .Select(entry => entry.Location.Y + entry.Size.Height).DefaultIfEmpty(0).Max();
-            return new LeftMenuFooterSnapshot(version?.Text, version is not null && version.Location.Y >= lowestEntry);
+            var screen = Screen();
+            var version = screen.Root.Descendants().FirstOrDefault(line => line.Displayed && line.Text.StartsWith(PatchesVersion, StringComparison.Ordinal));
+            var lowestEntry = Entries(screen).Select(entry => entry.Bounds.Bottom).DefaultIfEmpty(0).Max();
+            return new LeftMenuFooterSnapshot(version?.Text, version is not null && version.Bounds.Top >= lowestEntry);
         });
 
     /// <summary>What the menu shows: its entries, top to bottom.</summary>
     public Task<LeftMenuSnapshot> ReadAsync() =>
-        OnScreen.ReadAsync(driver, () => new LeftMenuSnapshot(
-            [.. driver.FindElement(Menu).FindElements(Entry).Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
+        OnScreen.ReadAsync(driver, () => new LeftMenuSnapshot([.. Entries(Screen()).Select(entry => MenuEntryShowing.ReadMenuEntry(entry.Text.Trim()))]));
 }
 
 /// <summary>What the rows of the left menu show, top to bottom.</summary>
