@@ -75,4 +75,9 @@ themselves.
   `build/`: the first scenario uninstalls the app signed with the last run's key. Over USB that takes seconds.
 - **Memory:** a run holds the .NET test process with the fake Reddit, Appium, adb and the patcher. Measure it with
   `docker stats` during a first LoggedIn run and set `E2E_RUNNER_MEMORY` from that.
+- **The NAS's kernel and tar:** QNAP's 5.10 kernel answers the `fchmodat2` syscall with `EFAULT` instead of `ENOSYS`,
+  so glibc 2.39 and later (Ubuntu 24.04) never fall back to `fchmodat`, and `tar` fails on every directory ("Cannot
+  change mode … Bad address"). `seccomp.json` is Docker 27.1.2's default profile with one rule more, `fchmodat2`
+  answering `ENOSYS`, so the container's `tar` (the runner's self-update) works. A build can't take a seccomp profile:
+  the Dockerfile's two tarballs tolerate only those errors.
 - **No emulator:** the NAS's containers have no `/dev/kvm`, and one emulator overloaded the NAS (2026-10-30).
