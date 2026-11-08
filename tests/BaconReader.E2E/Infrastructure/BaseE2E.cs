@@ -57,6 +57,7 @@ public abstract class BaseE2E : IAsyncLifetime
     private PatchSet patches = new PatchSet.Only([]);
     private Screen screen;
     private readonly Stopwatch sinceRecording = new();
+    private readonly Stopwatch playing = new();
     private double? appShownAt;
 
     /// <summary>The phone as the user holds it: Android's screens and BaconReader on it.</summary>
@@ -83,6 +84,8 @@ public abstract class BaseE2E : IAsyncLifetime
         Assert.SkipWhen(
             E2EDevice.AppiumUrl is null,
             "E2E_APPIUM_URL isn't set: end-to-end tests need the phone (README, \"The phone\").");
+        RunLog.Started();
+        playing.Start();
 
         var fake = await StartFakeRedditAsync();
         fake.World.Reset();
@@ -125,7 +128,12 @@ public abstract class BaseE2E : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         var unhandled = fakeReddit is null ? [] : UnhandledRequests.Of(fakeReddit.World);
-        await CloseAsync(TestContext.Current.TestState?.Result == TestResult.Passed && unhandled.IsEmpty);
+        var passed = TestContext.Current.TestState?.Result == TestResult.Passed && unhandled.IsEmpty;
+        await CloseAsync(passed);
+        if (playing.IsRunning)
+        {
+            RunLog.Ended(passed, playing.Elapsed);
+        }
         GC.SuppressFinalize(this);
         if (!unhandled.IsEmpty)
         {
