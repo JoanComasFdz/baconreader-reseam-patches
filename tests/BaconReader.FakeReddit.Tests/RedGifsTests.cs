@@ -97,19 +97,34 @@ public sealed class RedGifsTests(FakeRedditFixture fixture) : FakeRedditTest(fix
     }
 
     [Fact]
-    public async Task BaconReaders_own_token_request_is_401_client_not_found_and_one_without_its_fields_400()
+    public async Task BaconReaders_own_client_gets_a_token_another_401_client_not_found_and_one_without_its_fields_400()
     {
+        var gif = World.RedGifs.AddGif();
         using var baconReaders = await RequestOAuthTokenAsync(new()
         {
             ["grant_type"] = "client_credentials",
             ["client_id"] = "182fead4604-0d50-626a-0005-14c54fc45b2f",
             ["client_secret"] = "c7bc32e63583502f24760ba1949039f3",
         });
+        using var another = await RequestOAuthTokenAsync(new()
+        {
+            ["grant_type"] = "client_credentials",
+            ["client_id"] = "another-client",
+            ["client_secret"] = "another-secret",
+        });
         using var withoutGrantType = await RequestOAuthTokenAsync([]);
         using var withoutClientId = await RequestOAuthTokenAsync(new() { ["grant_type"] = "client_credentials" });
 
-        await AssertErrorAsync(baconReaders, HttpStatusCode.Unauthorized, "Unauthorized");
-        var refused = await ReadJsonAsync(baconReaders);
+        Assert.Equal(HttpStatusCode.OK, baconReaders.StatusCode);
+        var given = await ReadJsonAsync(baconReaders);
+        Assert.Equal("Bearer", given.GetProperty("token_type").GetString());
+        Assert.Equal(2419200, given.GetProperty("expires_in").GetInt32());
+        Assert.Equal("read", given.GetProperty("scope").GetString());
+        var token = given.GetProperty("access_token").GetString();
+        using var lookup = await SendRedGifsAsync($"/_redgifs/v2/gifs/{gif.Id}", token, "another User-Agent");
+        Assert.Equal(HttpStatusCode.OK, lookup.StatusCode);
+        await AssertErrorAsync(another, HttpStatusCode.Unauthorized, "Unauthorized");
+        var refused = await ReadJsonAsync(another);
         Assert.Equal("client not found", refused.GetProperty("error").GetProperty("message").GetString());
         await AssertErrorAsync(withoutGrantType, HttpStatusCode.BadRequest, "FormValueNotSet");
         await AssertErrorAsync(withoutClientId, HttpStatusCode.BadRequest, "FormValueNotSet");
