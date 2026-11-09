@@ -69,7 +69,8 @@ scenario's code.
   from there; the line the video is at highlighted, one at a time; a failed line in red, and the lines it never
   reached dimmed. A bar under the video marks each line's time in white (red where it failed), and a click on it seeks
   there. The scenarios stand still 0.8 s on each Then line, so each shows highlighted in turn (E2E-TEST-CODE-RULES.md,
-  rule b, "the Gherkin marks"). The VS Code extension's recordings carry their Gherkin without marks.
+  rule b, "the Gherkin marks"). The VS Code extension's "Open in e2e player ↗" carries the scenario's Gherkin,
+  read from its file, without marks (in uncompressed deflate blocks: the extension doesn't wait to compress).
 - **Naming:** `pr-<PR number>-v<version>-<run>.gif`, and the same name ending in `.mp4` for its MP4, e.g.
   `pr-12-v1-baconreader-patched-with-spoof-client-opens-phone.gif`.
   - `pr-<n>-` first, so a PR's assets sit together and its cleanup finds them (the dash after the number keeps `pr-7-`
