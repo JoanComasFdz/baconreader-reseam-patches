@@ -61,7 +61,7 @@ jobs:
             if exists "$HEAD_REF"; then refs+=("$HEAD_REF"); else refs+=("$base"); fi
           else
             refs+=("$base")
-            merged=$(gh api "repos/$REPO/commits/$GITHUB_SHA/pulls" --jq '.[0].head.ref // empty' 2> /dev/null || true)
+            merged=$(gh api "repos/$REPO/commits/$GITHUB_SHA/pulls" --jq 'map(select(.merged_at != null)) | .[0].head.ref // empty' 2> /dev/null || true)
             if [ -n "$merged" ] && [ "$merged" != "$base" ] && exists "$merged"; then refs+=("$merged"); fi
           fi
           for ref in "${refs[@]}"; do
