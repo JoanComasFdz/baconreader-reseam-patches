@@ -3,10 +3,12 @@
 
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using BaconReader.E2E.Infrastructure.Device;
 using BaconReader.E2E.Infrastructure.Phone;
 using BaconReader.E2E.Infrastructure.Reddit;
+using BaconReader.E2E.Infrastructure.Steps;
 using BaconReader.E2E.Infrastructure.Vocabulary;
 using BaconReader.FakeReddit;
 using OpenQA.Selenium;
@@ -54,17 +56,46 @@ public abstract class BaseE2E : IAsyncLifetime
 
     private AndroidDriver? driver;
     private ScreenRecording? recording;
+    private GherkinMarking? marking;
+    private Phone.Phone phone = null!;
+    private Reddit.Reddit reddit = null!;
     private PatchSet patches = new PatchSet.Only([]);
     private Screen screen;
     private readonly Stopwatch sinceRecording = new();
     private readonly Stopwatch playing = new();
     private double? appShownAt;
 
-    /// <summary>The phone as the user holds it: Android's screens and BaconReader on it.</summary>
-    protected Phone.Phone Phone { get; private set; } = null!;
+    /// <summary>
+    /// The phone as the user holds it: Android's screens and BaconReader on it. Asking for it starts a statement of the
+    /// scenario, which the recording marks (<see cref="GherkinMarking"/>).
+    /// </summary>
+    protected Phone.Phone Phone
+    {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        get
+        {
+            marking?.NoteCaller();
+            return phone;
+        }
 
-    /// <summary>The fake Reddit the app talks to: a Given builds the scenario's Reddit data here.</summary>
-    protected Reddit.Reddit Reddit { get; private set; } = null!;
+        private set => phone = value;
+    }
+
+    /// <summary>
+    /// The fake Reddit the app talks to: a Given builds the scenario's Reddit data here. Asking for it starts a statement,
+    /// as <see cref="Phone"/> does.
+    /// </summary>
+    protected Reddit.Reddit Reddit
+    {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        get
+        {
+            marking?.NoteCaller();
+            return reddit;
+        }
+
+        private set => reddit = value;
+    }
 
     /// <summary>
     /// The Appium session itself, for the explorer only (<c>Exploring/</c>), which taps whatever a command names. A
@@ -116,6 +147,7 @@ public abstract class BaseE2E : IAsyncLifetime
                 recording = await ScreenRecording.StartAsync();
                 sinceRecording.Start();
                 OnScreen.DrawTapsOn(driver, recording);
+                marking = StartMarking(recording);
             }
             catch (Exception)
             {
@@ -165,6 +197,13 @@ public abstract class BaseE2E : IAsyncLifetime
         {
             var stopping = recording;
             recording = null;
+            if (marking is not null)
+            {
+                var ending = marking;
+                marking = null;
+                await ending.EndAsync(passed, TestContext.Current.TestState?.ExceptionStackTraces ?? []);
+            }
+
             await SaveRecordingAsync(stopping, passed);
         }
 
@@ -277,6 +316,27 @@ public abstract class BaseE2E : IAsyncLifetime
     private MethodInfo? ReadMethod() =>
         TestContext.Current.TestMethod?.MethodName is { } name ? GetType().GetMethod(name) : null;
 
+    // Marks the Gherkin's lines in the recording as the scenario plays them; none when its code doesn't follow its Gherkin
+    // line for line (ScenarioStepsTests says where), or for the explorer, which has no Gherkin.
+    private GherkinMarking? StartMarking(ScreenRecording started)
+    {
+        var at = Stopwatch.GetTimestamp();
+        var method = ReadMethod();
+        var gherkin = method?.GetCustomAttribute<TestDescriptionAttribute>()?.Gherkin;
+        if (method is null || gherkin is null)
+        {
+            return null;
+        }
+
+        return ScenarioSteps.Read(method, Gherkin.Read(gherkin).Text).Match<GherkinMarking?>(
+            read => new GherkinMarking(read.Steps, started, GetType(), at),
+            failed =>
+            {
+                TestContext.Current.SendDiagnosticMessage($"{GetType().Name}.{method.Name}: no Gherkin marks: {failed.Why}");
+                return null;
+            });
+    }
+
     private async Task SaveRecordingAsync(ScreenRecording stopping, bool passed)
     {
         var videos = E2EDevice.VideoDirectory!;
@@ -285,7 +345,7 @@ public abstract class BaseE2E : IAsyncLifetime
         var domain = ScenarioNaming.ToDomainFolder(GetType());
         var gifName = ScenarioNaming.ToGifName(method, screen);
         var folder = Path.Combine(videos, domain);
-        await stopping.StopAsync(Path.Combine(folder, gifName + ".mp4"));
+        var marks = await stopping.StopAsync(Path.Combine(folder, gifName + ".mp4"));
         var record = new ScenarioRecording(
             domain,
             GetType().Name,
@@ -296,7 +356,8 @@ public abstract class BaseE2E : IAsyncLifetime
             gifName,
             patches.ToShownText(),
             appShownAt,
-            passed);
+            passed,
+            marks);
         await File.WriteAllTextAsync(Path.Combine(folder, gifName + ".json"), JsonSerializer.Serialize(record, RecordingJson));
         TestContext.Current.SendDiagnosticMessage($"{GetType().Name}.{method}: recorded {sinceRecording.Elapsed.TotalSeconds:0} s");
     }

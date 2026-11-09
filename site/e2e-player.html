@@ -11,10 +11,14 @@
     <!-- Plays one e2e recording MP4 with the browser's own video controls: …/e2e-player.html?v=pr-<n>-v<k>-<run>.mp4
          from the prs-resources release. GitHub shows no player for a video it didn't store itself, so the PR comments
          link here (docs/hosting.md, "E2E videos on pull requests"). The video's URL is built from v alone, which must be
-         such a name, so the page never plays a URL someone else chose. Plain HTML,
-         styles and script inline: nothing here can meet a cached copy of another deploy. -->
+         such a name, so the page never plays a URL someone else chose. The link's fragment, #s=<data>, carries the
+         scenario's Gherkin and when each line played in the video (the e2e tool's PlayerLinking: deflated JSON in
+         base64url; GitHub's downloads let no other site read a file, so it can't come from the release): the page shows
+         the Gherkin left of the video, each line's time a button that plays the video from there, highlights the line
+         the video is at, and marks each line's time on a bar under the video. Plain HTML, styles and script inline:
+         nothing here can meet a cached copy of another deploy. -->
     <style>
-        :root { --bg: #0a0d13; --panel: #111620; --line: #263046; --text: #e7eaf0; --muted: #8a94a8; --arc: #6fe3ff; --warn: #ffcf5a; }
+        :root { --bg: #0a0d13; --panel: #111620; --line: #263046; --text: #e7eaf0; --muted: #8a94a8; --arc: #6fe3ff; --warn: #ffcf5a; --fail: #ff6b6b; --now: #1b3346; }
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
         main { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
@@ -22,7 +26,32 @@
         h1 { margin: 0; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
         .meta { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
         a { color: var(--arc); }
-        video { display: block; max-width: 100%; max-height: calc(100vh - 140px); background: #000; border: 1px solid var(--line); border-radius: 8px; }
+        .stage { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .player { order: -1; display: flex; flex-direction: column; gap: 8px; max-width: 100%; }
+        video { display: block; max-width: 100%; max-height: calc(100vh - 160px); background: #000; border: 1px solid var(--line); border-radius: 8px; }
+        .bar { position: relative; height: 14px; border-radius: 7px; background: var(--panel); border: 1px solid var(--line); cursor: pointer; touch-action: none; }
+        .bar .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 7px; background: #2a4a63; pointer-events: none; }
+        .bar .tick { position: absolute; top: 1px; bottom: 1px; width: 2px; margin-left: -1px; background: #fff; border-radius: 1px; pointer-events: none; }
+        .bar .tick.failed { background: var(--fail); }
+        .gherkin { width: 100%; margin: 0; padding: 8px 0; list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+            font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow: auto; }
+        .gherkin li { display: flex; gap: 8px; padding: 1px 12px 1px 8px; border-left: 3px solid transparent; }
+        .gherkin li.now { background: var(--now); border-left-color: var(--arc); }
+        .gherkin li.failed { border-left-color: var(--fail); }
+        .gherkin li.failed .text { color: var(--fail); }
+        .gherkin .time { flex: none; width: 5ch; padding: 0; border: 0; background: none; color: var(--arc); font: inherit; text-align: right; cursor: pointer; }
+        .gherkin .time:hover, .gherkin .time:focus-visible { text-decoration: underline; outline: none; }
+        .gherkin .spacer { flex: none; width: 5ch; }
+        .gherkin .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+        .gherkin .keyword { color: var(--arc); font-weight: 600; }
+        .gherkin .comment, .gherkin .tag { color: var(--muted); font-style: italic; }
+        .gherkin .title { font-weight: 600; }
+        .gherkin li.unreached .text { opacity: 0.55; }
+        @media (min-width: 900px) {
+            .stage.with-gherkin { flex-direction: row; align-items: flex-start; justify-content: center; }
+            .stage.with-gherkin .gherkin { flex: 1 1 0; min-width: 320px; max-height: calc(100vh - 110px); }
+            .stage.with-gherkin .player { order: 0; flex: none; }
+        }
         .note { width: 100%; margin: 0; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--warn); }
         .note code { color: var(--text); overflow-wrap: anywhere; }
         [hidden] { display: none !important; }
@@ -35,7 +64,15 @@
             <h1 id="title">E2E recording</h1>
             <p class="meta" id="meta"></p>
         </header>
-        <video id="video" controls playsinline preload="metadata" hidden></video>
+        <div class="stage" id="stage">
+            <ol class="gherkin" id="gherkin" aria-label="Gherkin" hidden></ol>
+            <div class="player">
+                <video id="video" controls playsinline preload="metadata" hidden></video>
+                <div class="bar" id="bar" role="slider" aria-label="Seek" aria-valuemin="0" tabindex="-1" hidden>
+                    <div class="fill" id="fill"></div>
+                </div>
+            </div>
+        </div>
         <p class="note" id="note" hidden></p>
     </main>
     <script>
@@ -88,6 +125,201 @@
             });
             video.src = "https://github.com/" + repo + "/releases/download/" + release + "/" + asset;
             video.hidden = false;
+            readSteps(location.hash).then(showSteps, function () { });
+
+            // The scenario's Gherkin and marks from the link's fragment: {"g": Gherkin, "m": [[line, seconds, failed], …]}.
+            function readSteps(hash) {
+                var data = /^#s=([A-Za-z0-9_-]+)$/.exec(hash);
+                if (!data || typeof DecompressionStream === "undefined") {
+                    return Promise.reject();
+                }
+
+                var base64 = data[1].replace(/-/g, "+").replace(/_/g, "/");
+                var bytes = Uint8Array.from(atob(base64 + "===".slice((base64.length + 3) % 4)), function (c) { return c.charCodeAt(0); });
+                var inflated = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+                return new Response(inflated).text().then(function (text) {
+                    var steps = JSON.parse(text);
+                    if (typeof steps.g !== "string" || !Array.isArray(steps.m)) {
+                        throw new Error("not a scenario's steps");
+                    }
+
+                    return {
+                        lines: steps.g.split("\n"),
+                        marks: steps.m
+                            .filter(function (m) { return Array.isArray(m) && isFinite(m[0]) && isFinite(m[1]); })
+                            .map(function (m) { return { line: m[0], seconds: m[1], failed: m[2] === 1 }; })
+                            .sort(function (a, b) { return a.seconds - b.seconds; })
+                    };
+                });
+            }
+
+            function showSteps(steps) {
+                var list = document.getElementById("gherkin");
+                var bar = document.getElementById("bar");
+                var fill = document.getElementById("fill");
+                var items = steps.lines.map(function (text, index) {
+                    var item = document.createElement("li");
+                    var mark = steps.marks.filter(function (m) { return m.line === index; })[0];
+                    if (mark) {
+                        var time = document.createElement("button");
+                        time.type = "button";
+                        time.className = "time";
+                        time.textContent = clock(mark.seconds);
+                        time.title = "Play from " + clock(mark.seconds);
+                        time.addEventListener("click", function () { playFrom(mark.seconds); });
+                        item.append(time);
+                    } else {
+                        var spacer = document.createElement("span");
+                        spacer.className = "spacer";
+                        item.append(spacer);
+                    }
+
+                    item.append(describe(text));
+                    if (steps.marks.length > 0 && !mark && /^\s*(Given|When|Then|And|But) /.test(text)) {
+                        item.classList.add("unreached");
+                    }
+
+                    if (steps.marks.some(function (m) { return m.line === index && m.failed; })) {
+                        item.classList.add("failed");
+                    }
+
+                    list.append(item);
+                    return item;
+                });
+                list.hidden = false;
+                document.getElementById("stage").classList.add("with-gherkin");
+                if (steps.marks.length === 0) {
+                    return;
+                }
+
+                var shown = -1;
+                function follow() {
+                    var at = video.currentTime;
+                    fill.style.width = (video.duration ? Math.min(100, at / video.duration * 100) : 0) + "%";
+                    var now = -1;
+                    steps.marks.forEach(function (m) {
+                        if (m.seconds <= at + 0.05) {
+                            now = m.line;
+                        }
+                    });
+                    if (now === shown) {
+                        return;
+                    }
+
+                    if (shown >= 0) {
+                        items[shown].classList.remove("now");
+                    }
+
+                    shown = now;
+                    if (now >= 0) {
+                        items[now].classList.add("now");
+                        keepInView(list, items[now]);
+                    }
+                }
+
+                function ticks() {
+                    if (!video.duration) {
+                        return;
+                    }
+
+                    bar.querySelectorAll(".tick").forEach(function (tick) { tick.remove(); });
+                    steps.marks.forEach(function (m) {
+                        var tick = document.createElement("span");
+                        tick.className = "tick" + (m.failed ? " failed" : "");
+                        tick.style.left = Math.min(100, m.seconds / video.duration * 100) + "%";
+                        bar.append(tick);
+                    });
+                    bar.setAttribute("aria-valuemax", String(Math.round(video.duration)));
+                    bar.hidden = false;
+                }
+
+                function seek(event) {
+                    var box = bar.getBoundingClientRect();
+                    if (video.duration && box.width > 0) {
+                        video.currentTime = Math.max(0, Math.min(1, (event.clientX - box.left) / box.width)) * video.duration;
+                    }
+                }
+
+                bar.addEventListener("pointerdown", function (event) {
+                    bar.setPointerCapture(event.pointerId);
+                    seek(event);
+                });
+                bar.addEventListener("pointermove", function (event) {
+                    if (bar.hasPointerCapture(event.pointerId)) {
+                        seek(event);
+                    }
+                });
+                video.addEventListener("loadedmetadata", ticks);
+                video.addEventListener("durationchange", ticks);
+                ["timeupdate", "seeked", "seeking", "play"].forEach(function (name) { video.addEventListener(name, follow); });
+                if ("requestVideoFrameCallback" in video) {
+                    var onFrame = function () {
+                        follow();
+                        video.requestVideoFrameCallback(onFrame);
+                    };
+                    video.requestVideoFrameCallback(onFrame);
+                }
+
+                ticks();
+                follow();
+            }
+
+            function playFrom(seconds) {
+                video.currentTime = seconds;
+                var playing = video.play();
+                if (playing && playing.catch) {
+                    playing.catch(function () { });
+                }
+            }
+
+            // A Gherkin line, its keyword, tags, comment or title set apart.
+            function describe(text) {
+                var line = document.createElement("span");
+                line.className = "text";
+                var step = /^(\s*)(Given|When|Then|And|But)( .*)$/.exec(text);
+                var title = /^(\s*)(Scenario:)(.*)$/.exec(text);
+                if (step || title) {
+                    var parts = step || title;
+                    var keyword = document.createElement("span");
+                    keyword.className = "keyword";
+                    keyword.textContent = parts[2];
+                    line.append(parts[1], keyword);
+                    if (title) {
+                        var name = document.createElement("span");
+                        name.className = "title";
+                        name.textContent = parts[3];
+                        line.append(name);
+                    } else {
+                        line.append(parts[3]);
+                    }
+                } else {
+                    line.textContent = text;
+                    if (/^\s*#/.test(text)) {
+                        line.classList.add("comment");
+                    } else if (/^\s*@/.test(text)) {
+                        line.classList.add("tag");
+                    }
+                }
+
+                return line;
+            }
+
+            // Scrolls the list, not the page, so the line shows.
+            function keepInView(list, item) {
+                if (list.scrollHeight <= list.clientHeight) {
+                    return;
+                }
+
+                var top = item.offsetTop - list.offsetTop;
+                if (top < list.scrollTop + 24 || top + item.offsetHeight > list.scrollTop + list.clientHeight - 24) {
+                    list.scrollTop = top - list.clientHeight / 3;
+                }
+            }
+
+            function clock(seconds) {
+                var whole = Math.floor(seconds);
+                return Math.floor(whole / 60) + ":" + String(whole % 60).padStart(2, "0");
+            }
         })();
     </script>
 </body>

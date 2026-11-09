@@ -177,9 +177,8 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
         // Not on the screen: the fake Reddit records what BaconReader asked for.
         var gallery = Reddit.ReadRequestsForTheGalleryOf("Album");
         var shown = await Phone.BaconReader.MediaViewer.ReadAsync();
-        Asserting.That(gallery).ServedItsThumbnailsAsPreviews(3, 216);
+        Asserting.That(gallery).ServedItsThumbnailsAsPreviews(3, 216).ServedTheFirstImageWhole();
         Asserting.That(shown).ShowsTheGalleryWith(3);
-        Asserting.That(gallery).ServedTheFirstImageWhole();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();

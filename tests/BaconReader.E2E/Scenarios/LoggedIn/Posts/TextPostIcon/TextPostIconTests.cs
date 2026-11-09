@@ -59,7 +59,9 @@ public sealed class TextPostIconTests : BaseE2E
         // Then
         // BaconReader starts in the card view. The icon's description says what tapping it does.
         var cardClosed = await Phone.BaconReader.Main.Posts.ReadPostAsync("Read me");
-        Asserting.That(cardClosed).ShowsTheTextButton(new TextPostButton.ShowPostText()).ShowsNoText();
+        Asserting.That(cardClosed)
+            .ShowsNoText()
+            .ShowsTheTextButton(new TextPostButton.ShowPostText());
 
         // When
         await Phone.BaconReader.Main.Posts.ClickTextButtonAsync("Read me", new TextPostButton.ShowPostText());
@@ -67,7 +69,9 @@ public sealed class TextPostIconTests : BaseE2E
 
         // Then
         var cardOpen = await Phone.BaconReader.Main.Posts.ReadPostAsync("Read me");
-        Asserting.That(cardOpen).ShowsTheText("The hidden text").ShowsTheTextButton(new TextPostButton.HidePostText());
+        Asserting.That(cardOpen)
+            .ShowsTheText("The hidden text")
+            .ShowsTheTextButton(new TextPostButton.HidePostText());
 
         // When
         await Phone.BaconReader.Main.Posts.ClickTextButtonAsync("Read me", new TextPostButton.HidePostText());
@@ -75,7 +79,9 @@ public sealed class TextPostIconTests : BaseE2E
 
         // Then
         var cardClosedAgain = await Phone.BaconReader.Main.Posts.ReadPostAsync("Read me");
-        Asserting.That(cardClosedAgain).ShowsNoText().ShowsTheTextButton(new TextPostButton.ShowPostText());
+        Asserting.That(cardClosedAgain)
+            .ShowsNoText()
+            .ShowsTheTextButton(new TextPostButton.ShowPostText());
 
         // When
         await Phone.BaconReader.Main.Toolbar.ClickMoreOptionsAsync();
@@ -93,7 +99,9 @@ public sealed class TextPostIconTests : BaseE2E
 
         // Then
         var rowOpen = await Phone.BaconReader.Main.Posts.ReadPostAsync("Read me");
-        Asserting.That(rowOpen).ShowsTheText("The hidden text").ShowsTheTextButton(new TextPostButton.HidePostText());
+        Asserting.That(rowOpen)
+            .ShowsTheText("The hidden text")
+            .ShowsTheTextButton(new TextPostButton.HidePostText());
 
         // When
         await Phone.BaconReader.Main.Posts.ClickTextButtonAsync("Read me", new TextPostButton.HidePostText());
@@ -101,6 +109,8 @@ public sealed class TextPostIconTests : BaseE2E
 
         // Then
         var rowClosedAgain = await Phone.BaconReader.Main.Posts.ReadPostAsync("Read me");
-        Asserting.That(rowClosedAgain).ShowsNoText().ShowsTheTextButton(new TextPostButton.ShowPostText());
+        Asserting.That(rowClosedAgain)
+            .ShowsNoText()
+            .ShowsTheTextButton(new TextPostButton.ShowPostText());
     }
 }

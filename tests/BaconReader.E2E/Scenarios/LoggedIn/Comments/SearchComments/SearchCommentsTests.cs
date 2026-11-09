@@ -172,7 +172,9 @@ public sealed class SearchCommentsTests : BaseE2E
         // Then
         // Its replies are behind "load more comments (3 replies)", not loaded yet.
         var notLoaded = await Phone.BaconReader.Detail.CommentSearch.ReadAsync();
-        Asserting.That(notLoaded).ShowsTheCount("0/0").OffersSearchAll();
+        Asserting.That(notLoaded)
+            .ShowsTheCount("0/0")
+            .OffersSearchAll();
 
         // When
         await Phone.BaconReader.Detail.CommentSearch.ClickSearchAllAsync();

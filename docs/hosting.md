@@ -62,7 +62,14 @@ scenario's code.
   `https://github.com/JoanComasFdz/baconreader-reseam-patches/releases/download/prs-resources/<v>`, so it never plays a URL someone
   else chose, and any other `v` shows a short message. Above the video: the scenario's name from `<run>`, a link to PR
   #n, the version, the screen and the release. An asset that can't be loaded shows a message: an older version
-  is deleted when its PR closes.
+  is deleted when its PR closes. The link's fragment, `#s=<data>`, carries the scenario's Gherkin and when each line
+  played in the video (`PlayerLinking` in the e2e tool: `{"g": Gherkin, "m": [[line, seconds, failed], …]}`, deflated,
+  in base64url; the page can't read a file from the release, whose downloads no other site may read). With it, the
+  page shows the Gherkin left of the video (under it on a phone): each line its time, a button that plays the video
+  from there; the line the video is at highlighted, one at a time; a failed line in red, and the lines it never
+  reached dimmed. A bar under the video marks each line's time in white (red where it failed), and a click on it seeks
+  there. The scenarios stand still 0.8 s on each Then line, so each shows highlighted in turn (E2E-TEST-CODE-RULES.md,
+  rule b, "the Gherkin marks"). The VS Code extension's recordings carry their Gherkin without marks.
 - **Naming:** `pr-<PR number>-v<version>-<run>.gif`, and the same name ending in `.mp4` for its MP4, e.g.
   `pr-12-v1-baconreader-patched-with-spoof-client-opens-phone.gif`.
   - `pr-<n>-` first, so a PR's assets sit together and its cleanup finds them (the dash after the number keeps `pr-7-`

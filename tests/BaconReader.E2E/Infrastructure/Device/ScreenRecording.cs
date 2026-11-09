@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -20,6 +21,10 @@ namespace BaconReader.E2E.Infrastructure.Device;
 /// its encoder starts (<c>screenrecord --verbose</c> says "Content area is…" right before), and
 /// <see cref="StartAsync"/> measures how far the device's uptime is from this machine's clock (to within half an adb
 /// round trip, ~0.1 s).
+/// </para>
+/// <para>
+/// <see cref="StopAsync"/> also gives when each Gherkin line <see cref="NoteLine"/> was told of played, in the video's
+/// seconds, for the site's player.
 /// </para>
 /// </summary>
 public sealed class ScreenRecording
@@ -68,6 +73,7 @@ public sealed class ScreenRecording
     private readonly int screenWidth;
     private readonly int screenHeight;
     private readonly List<Tap> taps = [];
+    private readonly List<(int Line, double Played, bool Failed)> lines = [];
 
     private ScreenRecording(double deviceAheadSeconds, int screenWidth, int screenHeight)
     {
@@ -135,10 +141,23 @@ public sealed class ScreenRecording
     }
 
     /// <summary>
-    /// Stops recording and writes the video to <paramref name="target"/> (an MP4), with a ring at each tap and an arrow at
-    /// each Back.
+    /// Notes that the Gherkin line <paramref name="line"/> (an index in its text's lines) played at
+    /// <paramref name="at"/> (a <see cref="Stopwatch.GetTimestamp"/>), or <paramref name="failed"/> there.
     /// </summary>
-    public async Task StopAsync(string target)
+    public void NoteLine(int line, long at, bool failed)
+    {
+        lock (lines)
+        {
+            lines.Add((line, ToDeviceUptime(at), failed));
+        }
+    }
+
+    /// <summary>
+    /// Stops recording and writes the video to <paramref name="target"/> (an MP4), with a ring at each tap and an arrow at
+    /// each Back. Gives the Gherkin lines <see cref="NoteLine"/> was told of, in the video's seconds, in the order they
+    /// played; none when there is no video.
+    /// </summary>
+    public async Task<ImmutableArray<GherkinMark>> StopAsync(string target)
     {
         await Commands.ShellAsync($"touch {StopFile}; pkill -2 screenrecord || true");
         // screenrecord finishes its file after SIGINT; the loop sees the stop file and ends.
@@ -165,7 +184,7 @@ public sealed class ScreenRecording
             await Commands.ShellAsync($"rm -rf {Folder} {StopFile}");
             if (parts.Length == 0)
             {
-                return;
+                return [];
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
@@ -181,7 +200,8 @@ public sealed class ScreenRecording
                 await Commands.RunOrFailAsync("ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", joined);
             }
 
-            var drawn = DrawnTaps(await ReadTimelineAsync(local, parts, starts));
+            var timeline = await ReadTimelineAsync(local, parts, starts);
+            var drawn = DrawnTaps(timeline);
             if (drawn.Count == 0)
             {
                 File.Copy(joined, target, overwrite: true);
@@ -190,6 +210,8 @@ public sealed class ScreenRecording
             {
                 await DrawRingsAsync(joined, drawn, target);
             }
+
+            return MarkedLines(timeline);
         }
         finally
         {
@@ -272,6 +294,22 @@ public sealed class ScreenRecording
         }
 
         return timeline;
+    }
+
+    // Each Gherkin line in the video's seconds, in the part it played in, in the order they played; none when no part's
+    // start is known.
+    private ImmutableArray<GherkinMark> MarkedLines(List<(double VideoAt, double DeviceAt)> timeline)
+    {
+        lock (lines)
+        {
+            return timeline.Count == 0 ? [] : [.. lines
+                .Select(line =>
+                {
+                    var part = timeline.LastOrDefault(part => part.DeviceAt <= line.Played, timeline[0]);
+                    return new GherkinMark(line.Line, Math.Round(Math.Max(0, part.VideoAt + line.Played - part.DeviceAt), 2), line.Failed);
+                })
+                .OrderBy(mark => mark.Seconds)];
+        }
     }
 
     // Each tap in the video's seconds, in the part the tap was shown in; none when no part's start is known.

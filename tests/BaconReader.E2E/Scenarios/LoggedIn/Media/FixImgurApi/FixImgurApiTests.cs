@@ -137,7 +137,9 @@ public sealed class FixImgurApiTests : BaseE2E
 
         // Then
         var clips = await Phone.BaconReader.ImgurGalleryViewer.ReadAsync();
-        Asserting.That(clips).PlaysItsVideo().MarksItsThumbnailAsAVideo();
+        Asserting.That(clips)
+            .PlaysItsVideo()
+            .MarksItsThumbnailAsAVideo();
 
         // When
         await Phone.BaconReader.ImgurGalleryViewer.ClickBackAsync();
