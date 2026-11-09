@@ -414,7 +414,21 @@ public static class OnScreen
     }
 
     private static IWebElement? ShownOnScreen(AndroidDriver driver, By target) =>
-        driver.FindElements(target).FirstOrDefault(element => element.Displayed && element.Size.Height > 0);
+        driver.FindElements(target).FirstOrDefault(IsShown);
+
+    // A view that goes stale while it's read (the list redrew its rows: Fix Reddit links coming back to its posts,
+    // 2026-11-09) isn't on the screen yet: the scroll looks again.
+    private static bool IsShown(IWebElement element)
+    {
+        try
+        {
+            return element.Displayed && element.Size.Height > 0;
+        }
+        catch (StaleElementReferenceException)
+        {
+            return false;
+        }
+    }
 
     private static void NoteStepEnded(AndroidDriver driver) => SinceLastStep.AddOrUpdate(driver, Stopwatch.StartNew());
 }
