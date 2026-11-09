@@ -15,7 +15,7 @@ namespace BaconReader.E2E.Infrastructure.Device;
 /// Android draws no touch of its own for Appium's taps (<c>show_touches</c> shows only a real touchscreen's, and as a
 /// faint dot), so <see cref="StopAsync"/> draws a ring onto the video at each tap <see cref="NoteTap"/> was told of, from
 /// before the tap until <see cref="RingAfterTap"/> after it was sent, and an arrow pointing left, at the screen's right
-/// side, at each Back <see cref="NoteBack"/> was told of, as long. The video's time comes from the device's: each part notes the device's uptime when
+/// side, at each Back <see cref="NoteBack"/> was told of, until <see cref="ArrowAfterBack"/> after it was sent. The video's time comes from the device's: each part notes the device's uptime when
 /// its encoder starts (<c>screenrecord --verbose</c> says "Content area is…" right before), and
 /// <see cref="StartAsync"/> measures how far the device's uptime is from this machine's clock (to within half an adb
 /// round trip, ~0.1 s).
@@ -43,7 +43,10 @@ public sealed class ScreenRecording
     // Where the Back arrow shows: its right end at this fraction of the video's width, at mid-height, sliding left by
     // this fraction of the width while it shows, as a swipe from the screen's right edge does.
     private const double ArrowRight = 0.94;
-    private const double ArrowSlide = 0.2;
+    private const double ArrowSlide = 0.1;
+
+    // The Back arrow goes soon after Back: a quick swipe, not a tap's wait for the screen to change.
+    private const double ArrowAfterBack = 0.15;
 
     // The video's width, a multiple of 16 as video encoders want.
     private const int VideoWidth = 576;
@@ -255,7 +258,7 @@ public sealed class ScreenRecording
             {
                 var part = timeline.LastOrDefault(part => part.DeviceAt <= tap.Shown, timeline[0]);
                 var from = Math.Max(0, part.VideoAt + tap.Shown - part.DeviceAt);
-                return (tap, from, Math.Max(from, part.VideoAt + tap.Sent - part.DeviceAt) + RingAfterTap);
+                return (tap, from, Math.Max(from, part.VideoAt + tap.Sent - part.DeviceAt) + (tap.IsBack ? ArrowAfterBack : RingAfterTap));
             })];
         }
     }
