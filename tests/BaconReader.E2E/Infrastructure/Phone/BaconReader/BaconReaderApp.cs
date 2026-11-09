@@ -158,7 +158,7 @@ public sealed class BaconReaderApp(
                 throw new InvalidOperationException($"The chat didn't show \"{text}\" after going back 8 times.");
             }
 
-            await OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
+            await OnScreen.PressBackAsync(driver);
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
     }
@@ -182,7 +182,7 @@ public sealed class BaconReaderApp(
                 throw new InvalidOperationException($"The main screen's posts didn't show after going back {MostBacks} times.");
             }
 
-            await OnScreen.DoAsync(driver, () => driver.PressKeyCode(AndroidKeyCode.Back));
+            await OnScreen.PressBackAsync(driver);
         }
 
         await Main.Posts.WaitUntilPostsShownAsync();

@@ -105,7 +105,7 @@ public sealed class Detail(AndroidDriver driver)
         OnScreen.PressAsync(driver, () => driver.FindElement(Header).FindElement(HeaderThumbnail));
 
     /// <summary>Taps Android's Back, which closes the post and goes back to where it was opened from.</summary>
-    public Task ClickBackAsync() => OnScreen.DoAsync(driver, () => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));
+    public Task ClickBackAsync() => OnScreen.PressBackAsync(driver);
 
     private async Task VoteWhileTheCommentsLoadAsync(By arrow, string vote)
     {

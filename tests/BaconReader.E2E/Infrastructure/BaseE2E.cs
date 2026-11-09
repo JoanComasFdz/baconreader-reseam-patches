@@ -104,6 +104,7 @@ public abstract class BaseE2E : IAsyncLifetime
         await PatchedApps.InstallAsync(apk);
         await FakeRedditLink.EnsureAsync();
         await PatchedApps.ResetAsync();
+        await HomeScreen.ShowAsync();
         await Commands.ShellAsync($"rm -rf {DownloadsFolder}");
         driver = await Task.Run(OpenOrReuseSession);
         Phone = new Phone.Phone(driver, patches, NoteAppShown);

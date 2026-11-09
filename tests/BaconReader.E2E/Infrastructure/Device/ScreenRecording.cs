@@ -14,7 +14,8 @@ namespace BaconReader.E2E.Infrastructure.Device;
 /// <para>
 /// Android draws no touch of its own for Appium's taps (<c>show_touches</c> shows only a real touchscreen's, and as a
 /// faint dot), so <see cref="StopAsync"/> draws a ring onto the video at each tap <see cref="NoteTap"/> was told of, from
-/// before the tap until <see cref="RingAfterTap"/> after it was sent. The video's time comes from the device's: each part notes the device's uptime when
+/// before the tap until <see cref="RingAfterTap"/> after it was sent, and an arrow pointing left, at the screen's right
+/// side, at each Back <see cref="NoteBack"/> was told of, until <see cref="ArrowAfterBack"/> after it was sent. The video's time comes from the device's: each part notes the device's uptime when
 /// its encoder starts (<c>screenrecord --verbose</c> says "Content area is…" right before), and
 /// <see cref="StartAsync"/> measures how far the device's uptime is from this machine's clock (to within half an adb
 /// round trip, ~0.1 s).
@@ -30,6 +31,24 @@ public sealed class ScreenRecording
     private const int RingSize = 64;
     private const string Ring =
         "geq=r=255:g=61:b=127:a='if(between(hypot(X-32,Y-32),22,27),255,if(between(hypot(X-32,Y-32),27,31),90,0))'";
+
+    // The Back arrow, in the ring's color and glow: a shaft 5 px thick and a head, pointing left, its tip at (6, 32), drawn
+    // on a 160×64 image, then shown at 3/4 of that size.
+    private const int ArrowWidth = 160;
+    private const int ArrowHeight = 64;
+    private const string ArrowShown = "scale=120:48";
+    private const string Arrow =
+        "geq=r=255:g=61:b=127:a='if(between(X,10,154)*lte(abs(Y-32),2.5)+between(X,6,40)*lte(abs(abs(Y-32)-(X-6)*0.8),3.2),255,"
+        + "if(between(X,8,157)*lte(abs(Y-32),6)+between(X,3,43)*lte(abs(abs(Y-32)-(X-6)*0.8),7),90,0))'";
+
+    // Where the Back arrow shows: its right end at this fraction of the video's width, its middle at this fraction of the
+    // height, sliding left by this fraction of the width while it shows, as a swipe from the screen's right edge does.
+    private const double ArrowRight = 0.94;
+    private const double ArrowMiddle = 0.35;
+    private const double ArrowSlide = 0.1;
+
+    // The Back arrow goes soon after Back: a quick swipe, not a tap's wait for the screen to change.
+    private const double ArrowAfterBack = 0.15;
 
     // The video's width, a multiple of 16 as video encoders want.
     private const int VideoWidth = 576;
@@ -80,7 +99,22 @@ public sealed class ScreenRecording
         }
     }
 
-    /// <summary>Stops recording and writes the video to <paramref name="target"/> (an MP4), with a ring at each tap.</summary>
+    /// <summary>
+    /// Notes a Back, to be drawn as an arrow from <paramref name="shown"/> to <paramref name="sent"/>
+    /// (<see cref="Stopwatch.GetTimestamp"/>s).
+    /// </summary>
+    public void NoteBack(long shown, long sent)
+    {
+        lock (taps)
+        {
+            taps.Add(new Tap(0, 0, ToDeviceUptime(shown), ToDeviceUptime(sent)) { IsBack = true });
+        }
+    }
+
+    /// <summary>
+    /// Stops recording and writes the video to <paramref name="target"/> (an MP4), with a ring at each tap and an arrow at
+    /// each Back.
+    /// </summary>
     public async Task StopAsync(string target)
     {
         await Commands.ShellAsync($"touch {StopFile}; pkill -2 screenrecord || true");
@@ -226,7 +260,7 @@ public sealed class ScreenRecording
             {
                 var part = timeline.LastOrDefault(part => part.DeviceAt <= tap.Shown, timeline[0]);
                 var from = Math.Max(0, part.VideoAt + tap.Shown - part.DeviceAt);
-                return (tap, from, Math.Max(from, part.VideoAt + tap.Sent - part.DeviceAt) + RingAfterTap);
+                return (tap, from, Math.Max(from, part.VideoAt + tap.Sent - part.DeviceAt) + (tap.IsBack ? ArrowAfterBack : RingAfterTap));
             })];
         }
     }
@@ -235,37 +269,60 @@ public sealed class ScreenRecording
     // With an overlay filter for each tap, every frame went through all of them: a 25-minute scenario with ~100 taps took
     // ~24 minutes to draw. Here the rings go in lanes, a new lane only when a ring would show while the lane's last one
     // still does, and each lane is one overlay that moves to its ring showing, or off the video. Same frames, in 18 s
-    // instead of 170 s for 3 minutes of a recording with 100 rings.
+    // instead of 170 s for 3 minutes of a recording with 100 rings. The Back arrows have lanes of their own.
     private static Task DrawRingsAsync(string video, List<(Tap Tap, double From, double To)> drawn, string target)
     {
-        var lanes = new List<List<(Tap Tap, double From, double To)>>();
-        foreach (var ring in drawn.OrderBy(ring => ring.From))
+        var rings = Lanes(drawn.Where(mark => !mark.Tap.IsBack));
+        var arrows = Lanes(drawn.Where(mark => mark.Tap.IsBack));
+        var graph = new List<string> { "[0:v]fps=30[v0]" };
+        if (rings.Count > 0)
         {
-            var lane = lanes.FirstOrDefault(lane => lane[^1].To < ring.From);
+            graph.Add($"color=c=black@0:s={RingSize}x{RingSize},format=rgba,{Ring},split={rings.Count}"
+                + string.Concat(Enumerable.Range(0, rings.Count).Select(lane => $"[r{lane}]")));
+        }
+
+        if (arrows.Count > 0)
+        {
+            graph.Add($"color=c=black@0:s={ArrowWidth}x{ArrowHeight},format=rgba,{Arrow},{ArrowShown},split={arrows.Count}"
+                + string.Concat(Enumerable.Range(0, arrows.Count).Select(lane => $"[a{lane}]")));
+        }
+
+        var overlays = 0;
+        for (var lane = 0; lane < rings.Count; lane++, overlays++)
+        {
+            graph.Add(
+                $"[v{overlays}][r{lane}]overlay=eval=frame:shortest=1:x='{Position(rings[lane], "W", ring => ring.Tap.X)}'"
+                + $":y='{Position(rings[lane], "H", ring => ring.Tap.Y)}'[v{overlays + 1}]");
+        }
+
+        for (var lane = 0; lane < arrows.Count; lane++, overlays++)
+        {
+            graph.Add(
+                $"[v{overlays}][a{lane}]overlay=eval=frame:shortest=1:x='{ArrowX(arrows[lane])}'"
+                + $":y='{Position(arrows[lane], "H", _ => ArrowMiddle)}'[v{overlays + 1}]");
+        }
+
+        return Commands.RunOrFailAsync(
+            "ffmpeg", "-v", "error", "-y", "-i", video, "-filter_complex", string.Join(';', graph), "-map", $"[v{overlays}]",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", target);
+    }
+
+    // The marks in lanes: a new lane only when a mark would show while the lane's last one still does.
+    private static List<List<(Tap Tap, double From, double To)>> Lanes(IEnumerable<(Tap Tap, double From, double To)> marks)
+    {
+        var lanes = new List<List<(Tap Tap, double From, double To)>>();
+        foreach (var mark in marks.OrderBy(mark => mark.From))
+        {
+            var lane = lanes.FirstOrDefault(lane => lane[^1].To < mark.From);
             if (lane is null)
             {
                 lanes.Add(lane = []);
             }
 
-            lane.Add(ring);
+            lane.Add(mark);
         }
 
-        var graph = new List<string>
-        {
-            "[0:v]fps=30[v0]",
-            $"color=c=black@0:s={RingSize}x{RingSize},format=rgba,{Ring},split={lanes.Count}"
-                + string.Concat(Enumerable.Range(0, lanes.Count).Select(lane => $"[r{lane}]")),
-        };
-        for (var lane = 0; lane < lanes.Count; lane++)
-        {
-            graph.Add(
-                $"[v{lane}][r{lane}]overlay=eval=frame:shortest=1:x='{Position(lanes[lane], "W", ring => ring.Tap.X)}'"
-                + $":y='{Position(lanes[lane], "H", ring => ring.Tap.Y)}'[v{lane + 1}]");
-        }
-
-        return Commands.RunOrFailAsync(
-            "ffmpeg", "-v", "error", "-y", "-i", video, "-filter_complex", string.Join(';', graph), "-map", $"[v{lanes.Count}]",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", target);
+        return lanes;
     }
 
     // Where a lane's ring is on one axis of the video (W or H) at each frame: centered on the tap it shows, else far off
@@ -275,6 +332,12 @@ public sealed class ScreenRecording
         $"{OffVideo}" + string.Concat(lane.Select(ring => FormattableString.Invariant(
             $"+between(t,{ring.From:0.###},{ring.To:0.###})*({size}*{at(ring):0.####}-{char.ToLowerInvariant(size[0])}/2-({OffVideo}))")));
 
+    // Where a lane's Back arrow is across the video at each frame: its right end at ArrowRight of the width, sliding left
+    // by ArrowSlide of it while it shows, else far off the video.
+    private static string ArrowX(List<(Tap Tap, double From, double To)> lane) =>
+        $"{OffVideo}" + string.Concat(lane.Select(arrow => FormattableString.Invariant(
+            $"+between(t,{arrow.From:0.###},{arrow.To:0.###})*(W*{ArrowRight:0.###}-w-W*{ArrowSlide:0.###}*(t-{arrow.From:0.###})/{Math.Max(arrow.To - arrow.From, 0.001):0.###}-({OffVideo}))")));
+
     private double ToDeviceUptime(long timestamp) => Seconds(timestamp) + deviceAheadSeconds;
 
     private static double Seconds(long timestamp) => (double)timestamp / Stopwatch.Frequency;
@@ -282,6 +345,9 @@ public sealed class ScreenRecording
     // /proc/uptime: "<seconds up> <seconds idle>".
     private static double ParseUptime(string uptime) => double.Parse(uptime.Split(' ')[0], CultureInfo.InvariantCulture);
 
-    // A tap at (X, Y), fractions of the screen's width and height, shown and sent at those device uptimes.
-    private sealed record Tap(double X, double Y, double Shown, double Sent);
+    // A tap at (X, Y), fractions of the screen's width and height, shown and sent at those device uptimes; or a Back.
+    private sealed record Tap(double X, double Y, double Shown, double Sent)
+    {
+        public bool IsBack { get; init; }
+    }
 }

@@ -137,6 +137,28 @@ public static class OnScreen
         NoteStepEnded(driver);
     }
 
+    /// <summary>
+    /// Presses Android's Back, after the recording has shown it for <see cref="TapShown"/>: an arrow pointing left, at the
+    /// screen's right side, as the swipe from its edge that goes back (<see cref="ScreenRecording.NoteBack"/>).
+    /// </summary>
+    public static async Task PressBackAsync(AndroidDriver driver)
+    {
+        await WaitForActionGapAsync(driver);
+        if (TapsDrawnOn.TryGetValue(driver, out var recording))
+        {
+            var shown = Stopwatch.GetTimestamp();
+            await Task.Delay(TapShown);
+            await Task.Run(() => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));
+            recording.NoteBack(shown, Stopwatch.GetTimestamp());
+        }
+        else
+        {
+            await Task.Run(() => driver.PressKeyCode(OpenQA.Selenium.Appium.Android.Enums.AndroidKeyCode.Back));
+        }
+
+        NoteStepEnded(driver);
+    }
+
     /// <summary>Does <paramref name="act"/> on the one element <paramref name="target"/> finds.</summary>
     public static async Task ActAsync(AndroidDriver driver, By target, Action<IWebElement> act)
     {
