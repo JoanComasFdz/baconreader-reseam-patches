@@ -32,17 +32,19 @@ public sealed class ScreenRecording
     private const string Ring =
         "geq=r=255:g=61:b=127:a='if(between(hypot(X-32,Y-32),22,27),255,if(between(hypot(X-32,Y-32),27,31),90,0))'";
 
-    // The Back arrow, in the ring's color and glow: a shaft 5 px thick and a head, pointing left, its tip at (6, 32), on a
-    // 160×64 image.
+    // The Back arrow, in the ring's color and glow: a shaft 5 px thick and a head, pointing left, its tip at (6, 32), drawn
+    // on a 160×64 image, then shown at 3/4 of that size.
     private const int ArrowWidth = 160;
     private const int ArrowHeight = 64;
+    private const string ArrowShown = "scale=120:48";
     private const string Arrow =
         "geq=r=255:g=61:b=127:a='if(between(X,10,154)*lte(abs(Y-32),2.5)+between(X,6,40)*lte(abs(abs(Y-32)-(X-6)*0.8),3.2),255,"
         + "if(between(X,8,157)*lte(abs(Y-32),6)+between(X,3,43)*lte(abs(abs(Y-32)-(X-6)*0.8),7),90,0))'";
 
-    // Where the Back arrow shows: its right end at this fraction of the video's width, at mid-height, sliding left by
-    // this fraction of the width while it shows, as a swipe from the screen's right edge does.
+    // Where the Back arrow shows: its right end at this fraction of the video's width, its middle at this fraction of the
+    // height, sliding left by this fraction of the width while it shows, as a swipe from the screen's right edge does.
     private const double ArrowRight = 0.94;
+    private const double ArrowMiddle = 0.35;
     private const double ArrowSlide = 0.1;
 
     // The Back arrow goes soon after Back: a quick swipe, not a tap's wait for the screen to change.
@@ -281,7 +283,7 @@ public sealed class ScreenRecording
 
         if (arrows.Count > 0)
         {
-            graph.Add($"color=c=black@0:s={ArrowWidth}x{ArrowHeight},format=rgba,{Arrow},split={arrows.Count}"
+            graph.Add($"color=c=black@0:s={ArrowWidth}x{ArrowHeight},format=rgba,{Arrow},{ArrowShown},split={arrows.Count}"
                 + string.Concat(Enumerable.Range(0, arrows.Count).Select(lane => $"[a{lane}]")));
         }
 
@@ -297,7 +299,7 @@ public sealed class ScreenRecording
         {
             graph.Add(
                 $"[v{overlays}][a{lane}]overlay=eval=frame:shortest=1:x='{ArrowX(arrows[lane])}'"
-                + $":y='{Position(arrows[lane], "H", _ => 0.5)}'[v{overlays + 1}]");
+                + $":y='{Position(arrows[lane], "H", _ => ArrowMiddle)}'[v{overlays + 1}]");
         }
 
         return Commands.RunOrFailAsync(
