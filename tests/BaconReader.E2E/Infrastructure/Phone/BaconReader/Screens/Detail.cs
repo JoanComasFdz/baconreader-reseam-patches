@@ -294,12 +294,7 @@ public sealed class Comments(AndroidDriver driver)
                 throw new InvalidOperationException($"{what} didn't show whole after scrolling 15 times.");
             }
 
-            await OnScreen.DoAsync(driver, () => driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
-            {
-                ["elementId"] = ((AppiumElement)driver.FindElement(Locate.AppId(List))).Id,
-                ["direction"] = direction,
-                ["percent"] = 0.3,
-            }));
+            await OnScreen.DoAsync(driver, () => OnScreen.ScrollGesture(driver, driver.FindElement(Locate.AppId(List)), direction, 0.3));
         }
     }
 
@@ -859,7 +854,7 @@ public sealed class Comments(AndroidDriver driver)
         }
 
         swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
-        driver.PerformActions([swipe]);
+        OnScreen.PerformSwipe(driver, swipe, from, to);
     }
 
     // The comment whose text is the given text, or else the one whose text starts with it: with the patch's images or

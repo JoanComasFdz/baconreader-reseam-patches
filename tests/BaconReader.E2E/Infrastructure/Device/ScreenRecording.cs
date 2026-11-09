@@ -15,7 +15,8 @@ namespace BaconReader.E2E.Infrastructure.Device;
 /// Android draws no touch of its own for Appium's taps (<c>show_touches</c> shows only a real touchscreen's, and as a
 /// faint dot), so <see cref="StopAsync"/> draws a ring onto the video at each tap <see cref="NoteTap"/> was told of, from
 /// before the tap until <see cref="RingAfterTap"/> after it was sent, and an arrow pointing left, at the screen's right
-/// side, at each Back <see cref="NoteBack"/> was told of, until <see cref="ArrowAfterBack"/> after it was sent. The video's time comes from the device's: each part notes the device's uptime when
+/// side, at each Back <see cref="NoteBack"/> was told of, until <see cref="ArrowAfterBack"/> after it was sent. A swipe
+/// or a scroll <see cref="NoteSwipe"/> was told of has its ring follow the finger, from where it lands to where it lifts. The video's time comes from the device's: each part notes the device's uptime when
 /// its encoder starts (<c>screenrecord --verbose</c> says "Content area is…" right before), and
 /// <see cref="StartAsync"/> measures how far the device's uptime is from this machine's clock (to within half an adb
 /// round trip, ~0.1 s).
@@ -57,6 +58,9 @@ public sealed class ScreenRecording
     // screen starts changing.
     private const double RingAfterTap = 0.5;
 
+    // A swipe's ring stays where the finger lifted this long: the list it moved settles in about as long.
+    private const double RingAfterSwipe = 0.2;
+
     // Where a lane's ring waits while it shows no tap: off the video.
     private const int OffVideo = -1000;
 
@@ -96,6 +100,25 @@ public sealed class ScreenRecording
         lock (taps)
         {
             taps.Add(new Tap((double)x / screenWidth, (double)y / screenHeight, ToDeviceUptime(shown), ToDeviceUptime(sent)));
+        }
+    }
+
+    /// <summary>
+    /// Notes a swipe or a scroll from (<paramref name="fromX"/>, <paramref name="fromY"/>) to (<paramref name="toX"/>,
+    /// <paramref name="toY"/>), in the screen's pixels: its ring shows at the start from <paramref name="shown"/>, follows
+    /// the finger from <paramref name="moved"/> until <paramref name="lifted"/>, and stays at the end a moment
+    /// (<see cref="Stopwatch.GetTimestamp"/>s).
+    /// </summary>
+    public void NoteSwipe(int fromX, int fromY, int toX, int toY, long shown, long moved, long lifted)
+    {
+        lock (taps)
+        {
+            taps.Add(new Tap((double)fromX / screenWidth, (double)fromY / screenHeight, ToDeviceUptime(shown), ToDeviceUptime(lifted))
+            {
+                EndX = (double)toX / screenWidth,
+                EndY = (double)toY / screenHeight,
+                Moved = ToDeviceUptime(moved),
+            });
         }
     }
 
@@ -260,7 +283,10 @@ public sealed class ScreenRecording
             {
                 var part = timeline.LastOrDefault(part => part.DeviceAt <= tap.Shown, timeline[0]);
                 var from = Math.Max(0, part.VideoAt + tap.Shown - part.DeviceAt);
-                return (tap, from, Math.Max(from, part.VideoAt + tap.Sent - part.DeviceAt) + (tap.IsBack ? ArrowAfterBack : RingAfterTap));
+                var after = tap.IsBack ? ArrowAfterBack : tap.EndX is not null ? RingAfterSwipe : RingAfterTap;
+                // Its Moved and Sent in the video's seconds, for a swipe's ring to follow the finger.
+                var drawn = tap with { Moved = tap.Moved is { } moved ? part.VideoAt + moved - part.DeviceAt : null, Sent = part.VideoAt + tap.Sent - part.DeviceAt };
+                return (drawn, from, Math.Max(from, drawn.Sent) + after);
             })];
         }
     }
@@ -291,8 +317,8 @@ public sealed class ScreenRecording
         for (var lane = 0; lane < rings.Count; lane++, overlays++)
         {
             graph.Add(
-                $"[v{overlays}][r{lane}]overlay=eval=frame:shortest=1:x='{Position(rings[lane], "W", ring => ring.Tap.X)}'"
-                + $":y='{Position(rings[lane], "H", ring => ring.Tap.Y)}'[v{overlays + 1}]");
+                $"[v{overlays}][r{lane}]overlay=eval=frame:shortest=1:x='{RingPosition(rings[lane], "W", tap => (tap.X, tap.EndX))}'"
+                + $":y='{RingPosition(rings[lane], "H", tap => (tap.Y, tap.EndY))}'[v{overlays + 1}]");
         }
 
         for (var lane = 0; lane < arrows.Count; lane++, overlays++)
@@ -332,6 +358,19 @@ public sealed class ScreenRecording
         $"{OffVideo}" + string.Concat(lane.Select(ring => FormattableString.Invariant(
             $"+between(t,{ring.From:0.###},{ring.To:0.###})*({size}*{at(ring):0.####}-{char.ToLowerInvariant(size[0])}/2-({OffVideo}))")));
 
+    // Where a lane's ring is on one axis of the video at each frame, as Position, but a swipe's ring moves from its start
+    // to its end while the finger does, in the video's seconds Moved to Sent.
+    private static string RingPosition(List<(Tap Tap, double From, double To)> lane, string size, Func<Tap, (double Start, double? End)> at) =>
+        $"{OffVideo}" + string.Concat(lane.Select(ring =>
+        {
+            var (start, end) = at(ring.Tap);
+            var where = end is { } stop && ring.Tap.Moved is { } moved
+                ? FormattableString.Invariant($"({start:0.####}+({stop - start:0.####})*clip((t-{moved:0.###})/{Math.Max(ring.Tap.Sent - moved, 0.001):0.###},0,1))")
+                : FormattableString.Invariant($"{start:0.####}");
+            return FormattableString.Invariant(
+                $"+between(t,{ring.From:0.###},{ring.To:0.###})*({size}*{where}-{char.ToLowerInvariant(size[0])}/2-({OffVideo}))");
+        }));
+
     // Where a lane's Back arrow is across the video at each frame: its right end at ArrowRight of the width, sliding left
     // by ArrowSlide of it while it shows, else far off the video.
     private static string ArrowX(List<(Tap Tap, double From, double To)> lane) =>
@@ -345,9 +384,16 @@ public sealed class ScreenRecording
     // /proc/uptime: "<seconds up> <seconds idle>".
     private static double ParseUptime(string uptime) => double.Parse(uptime.Split(' ')[0], CultureInfo.InvariantCulture);
 
-    // A tap at (X, Y), fractions of the screen's width and height, shown and sent at those device uptimes; or a Back.
+    // A tap at (X, Y), fractions of the screen's width and height, shown and sent at those device uptimes; a Back; or a
+    // swipe, which moves from (X, Y) at Moved to (EndX, EndY) at Sent.
     private sealed record Tap(double X, double Y, double Shown, double Sent)
     {
         public bool IsBack { get; init; }
+
+        public double? EndX { get; init; }
+
+        public double? EndY { get; init; }
+
+        public double? Moved { get; init; }
     }
 }

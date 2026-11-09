@@ -56,12 +56,7 @@ public sealed class PatchesSettings(AndroidDriver driver)
                 return;
             }
 
-            await OnScreen.DoAsync(driver, () => driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
-            {
-                ["elementId"] = ((OpenQA.Selenium.Appium.AppiumElement)driver.FindElement(Locate.UpDownList())).Id,
-                ["direction"] = direction,
-                ["percent"] = 0.2,
-            }));
+            await OnScreen.DoAsync(driver, () => OnScreen.ScrollGesture(driver, driver.FindElement(Locate.UpDownList()), direction, 0.2));
         }
 
         throw new InvalidOperationException($"\"{first.ToShownText()}\" through \"{last.ToShownText()}\" didn't show together after 10 scrolls.");
@@ -147,12 +142,7 @@ public sealed class PatchesSettings(AndroidDriver driver)
                 throw new InvalidOperationException($"\"{setting.ToShownText()}\" didn't show under \"{section.ToShownText()}\" after 10 scrolls.");
             }
 
-            await OnScreen.DoAsync(driver, () => driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
-            {
-                ["elementId"] = ((OpenQA.Selenium.Appium.AppiumElement)driver.FindElement(Locate.UpDownList())).Id,
-                ["direction"] = "down",
-                ["percent"] = 0.2,
-            }));
+            await OnScreen.DoAsync(driver, () => OnScreen.ScrollGesture(driver, driver.FindElement(Locate.UpDownList()), "down", 0.2));
         }
     }
 
