@@ -23,9 +23,6 @@
         .meta { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
         a { color: var(--arc); }
         video { display: block; max-width: 100%; max-height: calc(100vh - 140px); background: #000; border: 1px solid var(--line); border-radius: 8px; }
-        .speed { display: flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--muted); font-size: 14px; }
-        .speed select { padding: 6px 10px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 14px; cursor: pointer; }
-        .speed select:hover { border-color: var(--muted); }
         .note { width: 100%; margin: 0; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--warn); }
         .note code { color: var(--text); overflow-wrap: anywhere; }
         [hidden] { display: none !important; }
@@ -39,7 +36,6 @@
             <p class="meta" id="meta"></p>
         </header>
         <video id="video" controls playsinline preload="metadata" hidden></video>
-        <label class="speed" id="speed" hidden>Speed <select id="rate"></select></label>
         <p class="note" id="note" hidden></p>
     </main>
     <script>
@@ -92,36 +88,6 @@
             });
             video.src = "https://github.com/" + repo + "/releases/download/" + release + "/" + asset;
             video.hidden = false;
-
-            // Playback speed: a menu, 1× unless this browser chose another before.
-            var rates = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-            var menu = document.getElementById("rate");
-            var saved = 1;
-            try {
-                saved = Number(localStorage.getItem("e2e-player-rate")) || 1;
-            } catch (e) { }
-            if (rates.indexOf(saved) < 0) saved = 1;
-            rates.forEach(function (rate) {
-                var option = document.createElement("option");
-                option.value = String(rate);
-                option.textContent = rate + "×";
-                menu.append(option);
-            });
-            menu.value = String(saved);
-            menu.addEventListener("change", function () {
-                video.playbackRate = Number(menu.value);
-                try {
-                    localStorage.setItem("e2e-player-rate", menu.value);
-                } catch (e) { }
-            });
-            // Also when the browser's own controls change it, and after loading, which sets it back to the default.
-            video.addEventListener("ratechange", function () {
-                if (rates.indexOf(video.playbackRate) >= 0) menu.value = String(video.playbackRate);
-            });
-            video.addEventListener("loadedmetadata", function () {
-                video.playbackRate = Number(menu.value);
-            });
-            document.getElementById("speed").hidden = false;
         })();
     </script>
 </body>
