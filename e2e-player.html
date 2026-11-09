@@ -120,8 +120,8 @@
 
             video.addEventListener("error", function () {
                 video.hidden = true;
-                say("This recording can't be loaded. Closing a pull request keeps only its newest version's recordings, so an older "
-                    + "version's are gone:", asset);
+                say("This recording can't be loaded. Closing a pull request keeps only each scenario's newest recording, so this one, "
+                    + "recorded again later, is gone:", asset);
             });
             video.src = "https://github.com/" + repo + "/releases/download/" + release + "/" + asset;
             video.hidden = false;
