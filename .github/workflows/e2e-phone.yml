@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       scenarios:
-        description: "What to play: record.sh's arguments (LoggedIn, Startup/Account, SpoofClientTests, all, --changed-since origin/main)"
+        description: "What to play: record.sh's arguments (LoggedIn, Startup/Account, SpoofClientTests, all, --changed-since origin/main); the app's scenarios only, the VS Code extension's play in a session"
         required: true
         default: LoggedIn
       video:
