@@ -185,16 +185,12 @@ public sealed class FixListThumbnailsTests : BaseE2E
         await Phone.BaconReader.Main.Toolbar.MoreOptions.WaitUntilShownAsync();
         await Phone.BaconReader.Main.Toolbar.MoreOptions.ClickAsync(new OverflowMenuEntry.CardView());
         await Phone.BaconReader.Main.Posts.WaitUntilCardImageShownAsync("Album");
-
-        // Then
-        var album = await Phone.BaconReader.Main.Posts.ReadPostAsync("Album");
-        Asserting.That(album).ShowsAnImageInItsCard();
-
-        // When
         await Phone.BaconReader.Main.Posts.WaitUntilCardImageShownAsync("Shared album");
 
         // Then
+        var album = await Phone.BaconReader.Main.Posts.ReadPostAsync("Album");
         var sharedAlbum = await Phone.BaconReader.Main.Posts.ReadPostAsync("Shared album");
+        Asserting.That(album).ShowsAnImageInItsCard();
         Asserting.That(sharedAlbum).ShowsAnImageInItsCard();
     }
 }

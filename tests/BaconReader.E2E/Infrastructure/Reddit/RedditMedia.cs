@@ -117,10 +117,6 @@ public sealed partial class Reddit
     public RedditMediaFileRequestsSnapshot ReadRequestsForThePreviewOf(string title) =>
         RequestsFor($"the preview of \"{title}\"", MediaPath(PostTitled(title).PreviewImages.FirstOrDefault()));
 
-    /// <summary>"Reddit served the avatar of "&lt;user&gt;"": the requests for the avatar the Given gave the user.</summary>
-    public RedditMediaFileRequestsSnapshot ReadRequestsForTheAvatarOf(string user) =>
-        RequestsFor($"the avatar of \"{user}\"", "/_media/" + avatars[user]);
-
     /// <summary>
     /// "Reddit served the gallery's thumbnails …": for each image of the gallery post "&lt;title&gt;", in order, the widths
     /// of the previews Reddit served for it, and whether it served the full image.

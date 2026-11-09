@@ -128,7 +128,7 @@ public sealed partial class ScenarioShapeTests
     private static MethodInfo Find(string scenario) =>
         FindScenarios().Single(method => $"{method.DeclaringType!.Name}.{method.Name}" == scenario);
 
-    private static IEnumerable<MethodInfo> FindScenarios() =>
+    internal static IEnumerable<MethodInfo> FindScenarios() =>
         typeof(BaseE2E).Assembly.GetTypes()
             // The explorer sets the app up as a scenario does, but is a tool (README, "Exploring the app before writing a Gherkin").
             .Where(type => type.IsSubclassOf(typeof(BaseE2E)) && !type.IsAbstract && type != typeof(Exploring.Explorer))

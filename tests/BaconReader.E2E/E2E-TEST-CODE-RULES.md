@@ -177,7 +177,14 @@ public sealed class SpoofClientTests : BaseE2E
   with a ring drawn onto the video where each tap lands, before it, and an arrow pointing left, at the screen's right
   side, at each Back (`Device/ScreenRecording`); it saves the video
   (record.sh holds its last frame 3 s), also when the scenario fails, with its record next to it (title, Gherkin,
-  screen, patches, GIF name, domain folder, when the main screen first showed, whether it passed);
+  screen, patches, GIF name, domain folder, when the main screen first showed, whether it passed, and when each Gherkin
+  line played in the video);
+- **the Gherkin marks** (`Steps/GherkinMarking`): while the run records, each statement of the scenario starts when it
+  asks for `Phone` or `Reddit`, and the recording marks the Gherkin line it plays (rule h, read from the scenario's own
+  source, embedded in the assembly: `Steps/ScenarioSteps`). An assertion asks for neither: its Then line is marked once
+  the scenario has gone past it, and the scenario stands still 0.8 s on each Then line, so the site's player
+  highlights one line at a time. When the scenario fails, the assertion its stack trace names, or else the line its
+  last statement played, is marked as failed;
 - the `Phone` property.
 
 A scenario never repeats any of that.
@@ -307,3 +314,14 @@ Line for line, in the Gherkin's order:
 | A `#` line (why it surprises) | Stays in the Gherkin; a `//` line above the read it explains, when it explains a check |
 
 A Gherkin line with no page-object member or assertion yet gets one (rule g, step 5), named in the same words.
+
+`ScenarioStepsTests` checks every scenario against this table, without the phone, since the recording marks each
+Gherkin line by it (rule b, "the Gherkin marks"):
+- A `// When` (and the `// Given`) plays a line a statement, but for the statements that only get the next one ready:
+  in the first of these that matches the lines, a wait (`WaitUntil…`), a read or a scroll (`ScrollTo…`, bringing a
+  setting into view) plays none; then a wait or a read ("And I wait until the comment shows" is a `WaitUntil…`); then
+  every statement plays one. `BaconReader is patched with …` and `BaconReader is installed` are BaseE2E's.
+- A `// Then` plays a line a source line of its `Asserting.That(…)` chains: each line that starts with a call, and the
+  first line when calls follow `That(…)` on it. `.AsksToConnect(…).WithTheTestAccount()` on one line checks one
+  Then line; two Then lines are two source lines, in the Gherkin's order. A check that only repeats the wait before it
+  (Reddit served what the wait waited for) is left out.

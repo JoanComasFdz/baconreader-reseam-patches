@@ -482,7 +482,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         // The image takes the bare link's place: the link is dropped from the text.
         var imageLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an image link");
-        Asserting.That(imageLink).ShowsImages(1).ShowsNoLink();
+        Asserting.That(imageLink)
+            .ShowsImages(1)
+            .ShowsNoLink();
 
         // When
         await Phone.BaconReader.Detail.Comments.ScrollToCommentByAsync("e2e_snapper");
@@ -501,7 +503,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
 
         // Then
         var imageFirst = await Phone.BaconReader.Detail.Comments.ReadByAsync("e2e_captioner");
-        Asserting.That(imageFirst).ShowsImages(1).ShowsUnderItsMedia("Look above");
+        Asserting.That(imageFirst)
+            .ShowsImages(1)
+            .ShowsUnderItsMedia("Look above");
 
         // When
         await Phone.BaconReader.Detail.Comments.ClickTextUnderMediaByAsync("e2e_captioner", "Look above");
@@ -590,7 +594,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         // An Imgur album shows one image at a time, with its place in the album over it.
         var album = await Phone.BaconReader.Detail.Comments.ReadAsync("Here is an album");
-        Asserting.That(album).ShowsImages(1).ShowsTheAlbumCounter("1 / 3");
+        Asserting.That(album)
+            .ShowsImages(1)
+            .ShowsTheAlbumCounter("1 / 3");
 
         // When
         await Phone.BaconReader.Detail.Comments.SwipeAlbumAsync("Here is an album");
@@ -606,7 +612,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
 
         // Then
         var onePicture = await Phone.BaconReader.Detail.Comments.ReadAsync("One picture");
-        Asserting.That(onePicture).ShowsImages(1).ShowsNoAlbumCounter();
+        Asserting.That(onePicture)
+            .ShowsImages(1)
+            .ShowsNoAlbumCounter();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();
@@ -632,7 +640,9 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Asserting.That(pictureFirstPictures).ShowsNoPictureTwice();
         // The image takes its link's place: the text after the link shows under it.
         // "Full width by default" is off, but an image in a post starts at full width.
-        Asserting.That(pictureFirstLayout).ShowsUnderItsImage("Above is my photo").TheImageFillsTheTextsWidth();
+        Asserting.That(pictureFirstLayout)
+            .ShowsUnderItsImage("Above is my photo")
+            .TheImageFillsTheTextsWidth();
 
         // When
         await Phone.BaconReader.SlideShow.ClickSlideShowViewAsync();
@@ -845,14 +855,14 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // YouTube has no title for a removed video: the link stays as Reddit shows it.
         var removedLink = await Phone.BaconReader.Detail.Comments.ReadAsync("Removed link");
         var goneVideo = Reddit.ReadTheYouTubeVideo("Gone video");
-        Asserting.That(bareLink).ShowsTheLink("@e2ekitchen - Cooking pasta at home")
-            // "Show YouTube thumbnails" is off by default.
-            .ShowsNoThumbnail();
+        Asserting.That(bareLink).ShowsTheLink("@e2ekitchen - Cooking pasta at home");
         Asserting.That(fromAMinuteIn).ShowsTheLink("@e2ekitchen - Cooking pasta at home (from 1:23)");
         Asserting.That(aShort).ShowsTheLink("@e2ekitchen - Short clip [Short]");
         Asserting.That(writtenLink).ShowsTheLink("my video");
         Asserting.That(channelLink).ShowsTheLink("@e2ekitchen [Channel]");
         Asserting.That(removedLink).ShowsTheAddressOf(goneVideo);
+        // "Show YouTube thumbnails" is off by default.
+        Asserting.That(bareLink).ShowsNoThumbnail();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();

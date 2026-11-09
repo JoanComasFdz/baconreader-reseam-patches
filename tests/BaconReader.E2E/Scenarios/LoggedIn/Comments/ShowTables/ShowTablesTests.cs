@@ -101,7 +101,9 @@ public sealed class ShowTablesTests : BaseE2E
         // Too wide for the text: its cells wrap until it's expanded.
         var wideLayout = await Phone.BaconReader.Detail.Comments.ReadTableLayoutAsync("Wide");
         Asserting.That(scores).ShowsTheRows("Player, Score", "Ann, 12", "Bob, 7");
-        Asserting.That(scoresLayout).ColumnsDontOverlap().FitsInsideTheScreen();
+        Asserting.That(scoresLayout)
+            .ColumnsDontOverlap()
+            .FitsInsideTheScreen();
         Asserting.That(scores).ShowsNoButton(new TableButton.Expand());
         Asserting.That(wide).ShowsTheRows(
             "Player, Team, Position, Goals, Assists, Minutes played",
@@ -115,7 +117,9 @@ public sealed class ShowTablesTests : BaseE2E
 
         // Then
         var expanded = await Phone.BaconReader.Detail.Comments.ReadTableLayoutAsync("Wide");
-        Asserting.That(expanded).HidesTheColumnPastItsRightEdge("Minutes played").ColumnsDontOverlap();
+        Asserting.That(expanded)
+            .HidesTheColumnPastItsRightEdge("Minutes played")
+            .ColumnsDontOverlap();
 
         // When
         await Phone.BaconReader.Detail.Comments.SwipeTableLeftAsync("Wide");
