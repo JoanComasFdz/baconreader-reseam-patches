@@ -57,7 +57,8 @@ scenario's code.
   one for an MP4 in a release. The site has a page that plays one:
   **`https://joancomasfdz.github.io/baconreader-reseam-patches/e2e-player.html?v=<asset>`** (`site/e2e-player.html`,
   published to the `gh-pages` branch by `.github/workflows/pages.yml` on every push to main that changes `site/`), with
-  the browser's own controls. `v` is an asset's name only,
+  the browser's own controls and a row of playback speeds, 0.25× to 2× (1× first; the browser remembers the last one
+  chosen). `v` is an asset's name only,
   `pr-<n>-v<k>-<run>.mp4` (letters, digits and `-` in `<run>`); the page builds the URL itself,
   `https://github.com/JoanComasFdz/baconreader-reseam-patches/releases/download/prs-resources/<v>`, so it never plays a URL someone
   else chose, and any other `v` shows a short message. Above the video: the scenario's name from `<run>`, a link to PR
