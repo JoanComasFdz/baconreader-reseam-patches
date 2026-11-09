@@ -12,6 +12,13 @@ public sealed partial class Reddit
     /// <summary>"Reddit has an image post "&lt;title&gt;" in r/&lt;subreddit&gt;": a JPEG uploaded to i.redd.it.</summary>
     public void HasAnImagePost(string title, string subreddit) => world.AddPost(subreddit, title, post => post.WithImage());
 
+    /// <summary>
+    /// "Reddit has an image post "&lt;title&gt;" in r/&lt;subreddit&gt; with the text "&lt;text&gt;"": a JPEG uploaded to
+    /// i.redd.it, and <paramref name="markdown"/> as its body.
+    /// </summary>
+    public void HasAnImagePostWithTheText(string title, string subreddit, string markdown) =>
+        world.AddPost(subreddit, title, post => post.WithImage().Saying(markdown));
+
     /// <summary>"Reddit has a GIF post "&lt;title&gt;" in r/&lt;subreddit&gt;": a GIF uploaded to i.redd.it.</summary>
     public void HasAGifPost(string title, string subreddit) => world.AddPost(subreddit, title, post => post.WithGif());
 
