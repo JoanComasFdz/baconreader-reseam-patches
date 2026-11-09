@@ -96,8 +96,9 @@ scenario's code.
   `### Added or changed by this PR`). Every post ends with `---` and `_Recorded by the e2e workflow · Claude Code_`. The
   workflow never touches the PR's description. `tools/e2e/BaconReader.E2ETools.Tests` tests the layout.
 - **Earlier versions collapse and are hidden as Outdated:** once a new post is up, the tool edits each earlier post
-  still open into a closed `<details>` holding it unchanged, summary **Scenarios (V1)** · 12 scenarios · replaced by V2,
-  then hides every earlier post as Outdated (GraphQL's `minimizeComment`, with the workflow's token; a session gets 403
+  still open into a closed `<details>` holding it unchanged, summary **Scenarios (V1)** · 12 scenarios · replaced by V2
+  when the later posts recorded all its scenarios again, "partly replaced by V2" when some, and "followed by V2" when
+  none (a run of other scenarios: re-recording many scenarios in batches, one run each on the same PR), then hides every earlier post as Outdated (GraphQL's `minimizeComment`, with the workflow's token; a session gets 403
   from GraphQL). An edit or a hide GitHub refuses is a warning in the run's log, never a red run. `--dry-run` prints
   each edit and hide.
 - **Failures:** a failing scenario still gets its GIF and its ❌ (the session fixes it before pushing, so it shouldn't
@@ -108,14 +109,14 @@ scenario's code.
   skipped (its branch is deleted all the same), so push the GIFs once per round.
 - **Cleanup:** when the PR is closed or merged, the workflow deletes any `e2e-gifs/pr-<n>-…` branch left behind, then
   runs main's e2e tool, `post --closed` (with `--merged` for a merged PR; both are cleaned alike):
-  - `prs-resources` keeps every GIF and MP4 of the PR's newest version and deletes its older versions'
-    (`pr-<n>-v1-…` to `pr-<n>-v<N-1>-…`), so the PR's last post keeps showing its GIFs and playing its MP4s for good.
-    The newest version is the highest `v<N>`, read as a number. Only names `pr-<n>-v<N>-…` of that PR are ever deleted:
-    the owner's own assets and other PRs' are never touched. The job's log names each deleted asset and how many assets
-    the release holds.
-  - The PR's older posts would open onto broken images, so each is shrunk to one line: **Scenarios (V1)** · 12
-    scenarios · replaced by V2 · recordings deleted when the PR closed (its footer kept as a hidden comment, its version
-    still counted).
+  - `prs-resources` keeps each run's newest recording (its GIF and MP4 of the highest `v<N>` that recorded it, read as a
+    number) and deletes the older ones, so the newest post that shows a scenario keeps showing its GIF and playing its
+    MP4 for good, and the batches of a PR that re-recorded its scenarios a few at a time all keep theirs. Only names
+    `pr-<n>-v<N>-…` of that PR are ever deleted: the owner's own assets and other PRs' are never touched. The job's log
+    names each deleted asset and how many assets the release holds.
+  - An older post whose scenarios were all recorded again later would open onto broken images, so it is shrunk to one
+    line: **Scenarios (V1)** · 12 scenarios · replaced by V2 · recordings deleted when the PR closed (its footer kept as
+    a hidden comment, its version still counted). The other older posts keep their recordings, collapsed as they are.
 - **The release's limit:** a release holds at most 1,000 assets (a run takes two). The cleanup's log warns above 900.
   Near the limit, the owner creates a new pre-release (e.g. `prs-resources-2`) and points `PrsRelease` in
   `tools/e2e/BaconReader.E2ETools.Core/ReleaseNaming.cs` and `release` in `site/e2e-player.html` at it (or lets the
