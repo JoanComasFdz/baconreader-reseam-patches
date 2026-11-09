@@ -59,7 +59,7 @@ public static class ScenarioPosting
             return notPosted;
         }
 
-        var collapses = PostVersioning.PlanCollapses(comments, version);   // pure
+        var collapses = PostVersioning.PlanCollapses(comments, version, PostVersioning.ReadRuns(post));   // pure
         PostEditing.EditComments(options, collapses);   // impure
         var toCheck = PostVersioning.PlanHides(comments, version, ImmutableHashSet<string>.Empty);   // pure
         var hidden = ReadHidden(options, toCheck);   // impure
