@@ -207,7 +207,9 @@ A scenario never repeats any of that.
   (through `OnScreen`, when a scenario first needs it). `PressAsync` shows where it taps before it taps: the recording
   draws a ring there from 0.4 s before the tap until just after it (Android draws no touch for Appium's taps);
   `TouchAsync` does the same for any other touch (a double tap, a long press), and `PressBackAsync` for Android's Back,
-  with an arrow at the screen's right side. Waits don't go through it (`Waiting`).
+  with an arrow at the screen's right side. A swipe goes through `OnScreen.PerformSwipe`, and a scroll through
+  `OnScreen.ScrollGesture`, never straight to `PerformActions` or `mobile: scrollGesture`: the ring then follows the
+  finger, from where it lands to where it lifts. Waits don't go through it (`Waiting`).
 - Snapshots don't retry: a scenario waits for what it expects before it reads.
 - Locators are private to their class and use only `Locate`: a resource id (`Locate.AppId("toolbarTitle")`, Android's
   own `Locate.AndroidId("button1")`), a content description, or the exact text. Never XPath or a position. A view a patch
