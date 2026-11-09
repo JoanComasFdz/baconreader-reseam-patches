@@ -24,6 +24,7 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.SettingsPages
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
 import com.joancomasfdz.patches.baconreader.core.commentBodyTouch
+import com.joancomasfdz.patches.baconreader.core.postMediaText
 import com.joancomasfdz.patches.baconreader.media.fixImgurApi
 
 private const val COMMENT_HOLDER = "com.onelouder.baconreader.adapters.CommentHolder"
@@ -100,7 +101,7 @@ val embedCommentImages =
             cardPostRow.redirectTo(EmbedCommentImages.inflateCardText)
             cardPostText.after { EmbedCommentImages.embedPostText(capture("textView")) }
             // Image, GIF and video posts show their text under the media.
-            mediaPostText.after { EmbedCommentImages.embed(capture("textView")) }
+            postMediaText.after { EmbedCommentImages.embed(capture("textView")) }
         }
     }
 
@@ -140,12 +141,6 @@ private val cardPostText =
     klass("com.onelouder.baconreader.adapters.SelftextAdapter")
         .method("getView")
         .setText("cardPostText", "android.widget.TextView")
-
-// The post's text is an ExpandableTextView; the other setText call shows load errors.
-private val mediaPostText =
-    klass("com.onelouder.baconreader.PostMediaHandler")
-        .method("<init>")
-        .setText("mediaPostText", "com.onelouder.baconreader.ExpandableTextView")
 
 /**
  * The method's TextView.setText(CharSequence) call on a [textView] class, with the view captured.
