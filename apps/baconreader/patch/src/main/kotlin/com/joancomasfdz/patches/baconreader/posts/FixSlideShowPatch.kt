@@ -26,6 +26,9 @@ val fixSlideShow =
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {
+            // The scroll view the text goes in is made in code: this id names it, so the e2e tests
+            // find it.
+            resources.addId("baconreader_patches_post_text_scroll")
             pageLayoutParams.after {
                 returnValue(FixSlideShow.pageLayoutParams(thisObject, result))
             }

@@ -48,6 +48,12 @@ internal object SlideShowText {
                 },
         )
         val scroll = EdgeScrollView(context)
+        scroll.id =
+            context.resources.getIdentifier(
+                "baconreader_patches_post_text_scroll",
+                "id",
+                context.packageName,
+            )
         scroll.addView(
             column,
             FrameLayout.LayoutParams(
