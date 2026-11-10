@@ -32,9 +32,18 @@ public sealed partial class Reddit(RedditWorld world)
 
         var name = read.StartsWith("Read", StringComparison.Ordinal) ? read["Read".Length..] : read;
         var title = name.Length == 0 ? read : char.ToUpperInvariant(name[0]) + SplitWords().Replace(name[1..], " $1").ToLowerInvariant();
+        foreach (var (words, brand) in Brands)
+        {
+            title = title.Replace(words, brand, StringComparison.OrdinalIgnoreCase);
+        }
+
         world.NoteOnSetupPage(about is null ? title : $"{title} \"{about}\"", JsonSerializer.Serialize<object>(snapshot, SetupJson));
         return snapshot;
     }
+
+    // The sites' names, as the title's words split them: "RedGifs" is "red gifs".
+    private static readonly (string Words, string Brand)[] Brands =
+        [("red gifs", "RedGIFs"), ("you tube", "YouTube"), ("imgur", "Imgur"), ("imgflip", "Imgflip"), ("snoomoji", "Snoomoji"), ("bluesky", "Bluesky")];
 
     private static readonly JsonSerializerOptions SetupJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 

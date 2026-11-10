@@ -34,7 +34,9 @@ public sealed partial class Reddit
     {
         tokensBeforeTheNetworkChanged = world.RedGifs.Requests.Count(request => request.Kind == RedGifsRequestKind.TemporaryToken);
         world.RedGifs.ForgetTokens();
-        world.NoteOnSetupPage($"The phone joined another network: RedGIFs refuses the {tokensBeforeTheNetworkChanged} temporary tokens it gave");
+        world.NoteOnSetupPage(tokensBeforeTheNetworkChanged == 1
+            ? "The phone joined another network: RedGIFs refuses the temporary token it gave"
+            : $"The phone joined another network: RedGIFs refuses the {tokensBeforeTheNetworkChanged} temporary tokens it gave");
     }
 
     /// <summary>
