@@ -6,7 +6,9 @@
 //   each patch's page (docs/patches/<patch>.md), what it does only with this repository's patcher
 //   (docs/patcher-specific-patches/<patch>.md, if any), and the newest recording of each e2e scenario its page names,
 //   played by the e2e player beside its Gherkin and its marks; a patch with no scenario shows its page alone;
-// - site/'s other pages (e2e-player.html), and its images (favicon.png, preview.jpg), as they are.
+//   With site/update.json (a video of updating BaconReader with the patcher's manager, site/update.mp4, and its steps,
+//   each with when it starts), the guide starts with "How to update", played by the same player beside its steps;
+// - site/'s other pages (e2e-player.html), and its other files (favicon.png, preview.jpg, update.mp4), as they are.
 // Each page gets e2e-player.css and e2e-player.js inlined where its "include" comments are, so a published page is one
 // file. The recordings are prs-resources' assets; a scenario's newest is the highest PR, then its highest version (the
 // VS Code extension's findRecordings). Its Gherkin and marks come from the player link in that PR's post, whose
@@ -190,11 +192,32 @@ ${only}${scenarios}
 </section>`;
 }
 
-/** The guide: its sidebar, the groups' patches as links, and its content, each patch's section in the sidebar's order. */
-function renderGuide(repository, groups) {
-  const nav = groups.map((group) => `<h2>${renderInline(group.title)}</h2>\n<ul>${group.pages
+/**
+ * "How to update", from site/update.json: its summary and bullets, and its video, `video` beside its steps, numbered,
+ * each marked when it starts (`seconds`), for the player to highlight it and play from it.
+ */
+function renderUpdate(update) {
+  const data = { g: update.steps.map((step, at) => `${at + 1}. ${step.text}`).join('\n'), m: update.steps.map((step, at) => [at, step.seconds, 0]) };
+  return `<section id="update">
+<h2>${escapeHtml(update.title)}</h2>
+<p class="summary">${renderInline(update.summary)}</p>
+${renderMarkdown(update.body ?? '')}
+<figure class="scenario">
+<figcaption><h3>${escapeHtml(update.caption)}</h3><p class="meta">${renderInline(update.recorded ?? '')}</p></figcaption>
+<div class="recording" data-src="${escapeHtml(update.video)}"><script type="application/json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script></div>
+</figure>
+</section>`;
+}
+
+/**
+ * The guide: its sidebar, the groups' patches as links, and its content, each patch's section in the sidebar's order;
+ * "How to update" first, under "Start here", when there is one.
+ */
+function renderGuide(repository, groups, update = null) {
+  const start = update ? `<h2>Start here</h2>\n<ul><li><a href="#update">${escapeHtml(update.title)}</a></li></ul>\n` : '';
+  const nav = start + groups.map((group) => `<h2>${renderInline(group.title)}</h2>\n<ul>${group.pages
     .map((page) => `<li><a href="#${toAnchor(page.file)}">${escapeHtml(page.name)}</a></li>`).join('')}</ul>`).join('\n');
-  const sections = groups.flatMap((group) => group.pages.map((page) => renderPatch(repository, page))).join('\n');
+  const sections = (update ? renderUpdate(update) + '\n' : '') + groups.flatMap((group) => group.pages.map((page) => renderPatch(repository, page))).join('\n');
   return { nav, sections };
 }
 
@@ -304,7 +327,9 @@ async function build(root, out, repository, offline) {
 
     let text = fs.readFileSync(path.join(site, name), 'utf8');
     if (name === 'index.html') {
-      const guide = renderGuide(repository, groupPages(readGroups(index), pages));
+      const updateFile = path.join(site, 'update.json');
+      const update = fs.existsSync(updateFile) ? JSON.parse(fs.readFileSync(updateFile, 'utf8')) : null;
+      const guide = renderGuide(repository, groupPages(readGroups(index), pages), update);
       text = text.replace('<!-- guide-nav -->', () => guide.nav).replace('<!-- guide -->', () => guide.sections);
     }
     fs.writeFileSync(path.join(out, name), inline(text, includes));
@@ -329,4 +354,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { readPage, orderPages, readGroups, groupPages, toPatcher, renderInline, renderMarkdown, toAnchor, readPlayerData, pickNewest, renderScenario, renderPatch, renderGuide, inline };
+module.exports = { readPage, orderPages, readGroups, groupPages, toPatcher, renderInline, renderMarkdown, toAnchor, readPlayerData, pickNewest, renderScenario, renderPatch, renderUpdate, renderGuide, inline };
