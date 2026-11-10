@@ -18,6 +18,7 @@ import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaMetadataRetriever
@@ -281,6 +282,13 @@ internal object CommentVideo {
             size.contentDescription =
                 if (expanded) BaconReaderStrings.embedVideoShrink
                 else BaconReaderStrings.embedVideoEnlarge
+            // Grown, the video can reach below the screen, controls and all: the list scrolls to
+            // show it whole. Posted after the layout the new size asks for.
+            if (expanded) {
+                box.post {
+                    box.requestRectangleOnScreen(Rect(0, 0, box.width, box.height), false)
+                }
+            }
         }
         applySize()
         size.setOnClickListener {
