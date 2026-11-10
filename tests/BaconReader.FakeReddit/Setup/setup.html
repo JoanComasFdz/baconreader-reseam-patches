@@ -50,7 +50,7 @@
             "use strict";
             var shown = null;
             // How many words this scenario's page has shown as new: the recording holds to read them.
-            var words = 0;
+            var wordsShown = 0;
             var scenario = null;
             var version = "";
             var seen = {};
@@ -114,7 +114,7 @@
                     scenario = data.scenario;
                     seen = {};
                     shown = null;
-                    words = 0;
+                    wordsShown = 0;
                 }
                 var first = shown === null;
                 var fresh = [];
@@ -157,7 +157,7 @@
                 // The words of what is new, each counted once: a new post's new comments are in its box.
                 fresh.forEach(function (element) {
                     if (!fresh.some(function (other) { return other !== element && other.contains(element); })) {
-                        words += element.textContent.split(/\s+/).filter(Boolean).length;
+                        wordsShown += element.textContent.split(/\s+/).filter(Boolean).length;
                     }
                 });
                 // The newest thing: an event is the first of "Now", at the top; else the last of the others.
@@ -167,7 +167,7 @@
 
             function read() {
                 // Says which version it shows, so a recording waits until it shows what the scenario made.
-                fetch("setup.json?shown=" + encodeURIComponent(version) + "&words=" + words, { cache: "no-store" })
+                fetch("setup.json?shown=" + encodeURIComponent(version) + "&words=" + wordsShown, { cache: "no-store" })
                     .then(function (response) { return response.text(); })
                     .then(function (text) {
                         if (text !== shown) {
@@ -177,7 +177,7 @@
                             version = data.version;
                         }
                     })
-                    .catch(function () { })
+                    .catch(function (error) { console.error("setup page:", error); })
                     .finally(function () { setTimeout(read, 250); });
             }
 
