@@ -16,7 +16,10 @@ of its e2e scenarios played beside its Gherkin and its marks.
   - every page gets the player, `site/e2e-player.css` and `site/e2e-player.js`, inlined where its `include` comments
     are, so a published page is one file and never meets a cached copy of another deploy's player;
   - `E2EPlayer.mount(element, { src, steps, lazy })` puts a recording in any element; the guide's load only when they
-    come near the screen.
+    come near the screen;
+  - `site/favicon.png` is BaconReader's icon, from its APK (`res/mipmap-xxxhdpi/ic_launcher.png`); `site/preview.jpg`
+    (1200 × 630) is the preview a shared link to the guide shows, through `index.html`'s Open Graph tags. Both are
+    copied as they are.
 - **Which recording:** a scenario's newest in `prs-resources`, the highest PR, then its highest version, as the VS Code
   extension picks it (the builder uses its code). Its Gherkin and marks come from the player link in that PR's post,
   whose fragment carries them, since no page can read a file from the release. A scenario with no recording shows its

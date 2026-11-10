@@ -6,7 +6,7 @@
 //   each patch's page (docs/patches/<patch>.md), what it does only with this repository's patcher
 //   (docs/patcher-specific-patches/<patch>.md, if any), and the newest recording of each e2e scenario its page names,
 //   played by the e2e player beside its Gherkin and its marks; a patch with no scenario shows its page alone;
-// - site/'s other pages (e2e-player.html), as they are.
+// - site/'s other pages (e2e-player.html), and its images (favicon.png, preview.jpg), as they are.
 // Each page gets e2e-player.css and e2e-player.js inlined where its "include" comments are, so a published page is one
 // file. The recordings are prs-resources' assets; a scenario's newest is the highest PR, then its highest version (the
 // VS Code extension's findRecordings). Its Gherkin and marks come from the player link in that PR's post, whose
@@ -297,12 +297,17 @@ async function build(root, out, repository, offline) {
   fs.mkdirSync(out, { recursive: true });
   for (const name of fs.readdirSync(site)) {
     if (name in includes) continue;
+    if (!name.endsWith('.html')) {
+      fs.copyFileSync(path.join(site, name), path.join(out, name));
+      continue;
+    }
+
     let text = fs.readFileSync(path.join(site, name), 'utf8');
     if (name === 'index.html') {
       const guide = renderGuide(repository, groupPages(readGroups(index), pages));
       text = text.replace('<!-- guide-nav -->', () => guide.nav).replace('<!-- guide -->', () => guide.sections);
     }
-    fs.writeFileSync(path.join(out, name), name.endsWith('.html') ? inline(text, includes) : text);
+    fs.writeFileSync(path.join(out, name), inline(text, includes));
   }
   return pages;
 }
