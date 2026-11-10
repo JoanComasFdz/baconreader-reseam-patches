@@ -22,15 +22,17 @@ internal static class Setup
     {
         var page = ReadPage();
         app.MapGet("/_fake/setup", () => Results.Content(page, "text/html; charset=utf-8"));
-        app.MapGet("/_fake/setup.json", (HttpContext context, string? shown) =>
+        app.MapGet("/_fake/setup.json", (HttpContext context, string? shown, int? words) =>
         {
             context.Response.Headers.CacheControl = "no-store";
             lock (world.Sync)
             {
                 // The page says which version it shows, for a recording to wait until it shows what the scenario made.
+                // And how many words it has shown as new in all, for the recording to hold long enough to read them.
                 if (shown is not null)
                 {
                     world.SetupShown = shown;
+                    world.SetupWordsShown = words ?? 0;
                 }
 
                 return Results.Text(Read(world), "application/json");

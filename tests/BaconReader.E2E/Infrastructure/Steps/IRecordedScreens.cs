@@ -15,6 +15,9 @@ public interface IRecordedScreens
     /// <summary>Brings the app back in front of the setup page, as it was.</summary>
     void ShowApp();
 
-    /// <summary>Waits until the setup page shows what the fake has now, or gives up after a while and says so.</summary>
-    void WaitUntilSetupPageShowsTheFake();
+    /// <summary>
+    /// Waits until the setup page shows what the fake has now, or gives up after a while and says so, and says how long
+    /// to hold on it to read what it shows as new (<see cref="GherkinMarking.ReadingTime"/>).
+    /// </summary>
+    TimeSpan WaitUntilSetupPageShowsTheFake();
 }

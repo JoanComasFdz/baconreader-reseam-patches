@@ -145,6 +145,9 @@ public sealed class RedditWorld
             accountsBeforeScenario = 0;
             setupEvents.Clear();
             scenario++;
+            SetupShown = null;
+            SetupWordsShown = 0;
+            setupWordsRead = 0;
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;
             // Reddit's ids are base 36; starting at 36^4 makes them five characters, like an old post's.
@@ -455,12 +458,19 @@ public sealed class RedditWorld
     /// <summary>The version of what the fake has that the setup page last said it shows (Endpoints/Setup.cs).</summary>
     internal string? SetupShown { get; set; }
 
+    /// <summary>How many words the setup page has shown as new, in all, this scenario, as it last said.</summary>
+    internal int SetupWordsShown { get; set; }
+
+    // SetupWordsShown when WaitUntilSetupShown last returned: the words since are the new ones to read.
+    private int setupWordsRead;
+
     /// <summary>
     /// Waits until the phone's setup page (<c>/_fake/setup</c>) shows what the fake has now, up to
-    /// <paramref name="timeout"/>: a recording holds on a Given line only once its result is on the screen. False when
-    /// it didn't in time (no page open, or a slow link).
+    /// <paramref name="timeout"/>: a recording holds on a line only once its result is on the screen. Gives how many
+    /// words the page showed as new since the last time it was waited for, for the recording to hold long enough to read
+    /// them; null when it didn't show it in time (no page open, or a slow link).
     /// </summary>
-    public bool WaitUntilSetupShown(TimeSpan timeout)
+    public int? WaitUntilSetupShown(TimeSpan timeout)
     {
         var until = DateTime.UtcNow + timeout;
         do
@@ -469,14 +479,16 @@ public sealed class RedditWorld
             {
                 if (SetupShown == Endpoints.Setup.Version(this))
                 {
-                    return true;
+                    var words = Math.Max(0, SetupWordsShown - setupWordsRead);
+                    setupWordsRead = SetupWordsShown;
+                    return words;
                 }
             }
 
             Thread.Sleep(50);
         }
         while (DateTime.UtcNow < until);
-        return false;
+        return null;
     }
 
     /// <summary>The accounts the app is logged in with: each one a token was given to, or handed the app at its start.</summary>

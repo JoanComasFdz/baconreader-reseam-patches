@@ -37,7 +37,14 @@ public sealed partial class Reddit(RedditWorld world)
             title = title.Replace(words, brand, StringComparison.OrdinalIgnoreCase);
         }
 
-        world.NoteOnSetupPage(about is null ? title : $"{title} \"{about}\"", JsonSerializer.Serialize<object>(snapshot, SetupJson));
+        // A field that only repeats what the title names (the post's title) is left out.
+        var json = JsonSerializer.SerializeToNode(snapshot, snapshot.GetType(), SetupJson)!.AsObject();
+        foreach (var repeated in json.Where(field => about is not null && field.Value?.GetValueKind() == JsonValueKind.String && field.Value.GetValue<string>() == about).Select(field => field.Key).ToList())
+        {
+            json.Remove(repeated);
+        }
+
+        world.NoteOnSetupPage(about is null ? title : $"{title} \"{about}\"", json.ToJsonString());
         return snapshot;
     }
 

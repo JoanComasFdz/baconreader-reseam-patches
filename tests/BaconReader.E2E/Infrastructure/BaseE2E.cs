@@ -305,14 +305,25 @@ public abstract class BaseE2E : IAsyncLifetime
 
         public void ShowApp() => Task.Run(SetupPage.ShowAppAsync).GetAwaiter().GetResult();
 
-        // Says so in the log when the page doesn't show it in time: the recording then goes on without it.
-        public void WaitUntilSetupPageShowsTheFake()
+        // Says in the log how long it holds for how many new words, to tune GherkinMarking.ReadingTime, and when the page
+        // doesn't show it in time: the recording then goes on without it.
+        public TimeSpan WaitUntilSetupPageShowsTheFake()
         {
-            if (fakeReddit is { } fake && !fake.World.WaitUntilSetupShown(SetupPage.ShowingTimeout))
+            if (fakeReddit is not { } fake)
+            {
+                return GherkinMarking.SetupHold;
+            }
+
+            if (fake.World.WaitUntilSetupShown(SetupPage.ShowingTimeout) is not { } words)
             {
                 TestContext.Current.SendDiagnosticMessage(
                     $"{scenario.GetType().Name}: the setup page didn't show the fake's setup within {SetupPage.ShowingTimeout.TotalSeconds:0} s.");
+                return GherkinMarking.SetupHold;
             }
+
+            var hold = GherkinMarking.ReadingTime(words);
+            TestContext.Current.SendDiagnosticMessage($"{scenario.GetType().Name}: setup page: {words} new words, held {hold.TotalSeconds:0.0} s.");
+            return hold;
         }
     }
 

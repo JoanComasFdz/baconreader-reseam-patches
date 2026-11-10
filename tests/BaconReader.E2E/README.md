@@ -197,13 +197,17 @@ in, its posts and comments) and, under "Now", what a step changed in it and what
 `Reddit.Read…` returns that a Then line checks). It reads the fake 4 times a second and says which version it shows, so
 the test waits until it shows what a line did (`Device/SetupPage`, `Steps/GherkinMarking`):
 
-- the recording starts on the page, in Chrome: each Given line that sets up the fake holds 1 s once the page shows it,
+- the recording starts on the page, in Chrome: each Given line that sets up the fake holds once the page shows it,
   then the app opens over it;
 - once the app is open, a When line that changes the fake, and each Then line that checks what it saw
   (`Steps/FakeChecks`: its assertion is one of `Infrastructure/Reddit`'s), bring the page in front for the line, and
   the app comes back, as it was, for the next line on it.
 
-Only a recording opens Chrome; a run that doesn't record never does, and plays as fast. If the page doesn't show a
+Each hold on the page lasts as long as reading what it shows as new takes (`GherkinMarking.ReadingTime`): the page
+counts the words of what it adds (a post, a check's card), and the recording holds 1 s and 0.2 s a word, from 1.5 s to
+6 s; the run's log says each hold's words and seconds. A check's card leaves out a field that only repeats its title.
+When the scenario ends, Back on the page closes its tab. Only a recording opens Chrome; a run that doesn't record never
+does, and plays as fast. If the page doesn't show a
 line's result within 5 s, the run says so in its log and goes on. Chrome needs its first run done once on the phone
 ("The phone").
 

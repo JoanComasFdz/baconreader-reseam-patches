@@ -29,10 +29,17 @@ public sealed partial class GherkinMarking
     public static readonly TimeSpan Hold = TimeSpan.FromMilliseconds(800);
 
     /// <summary>
-    /// How long the recording stays on each Given line that sets up the fake Reddit before the app opens, for the setup
-    /// page (<see cref="SetupPage"/>) to show what it made: it reads the fake 4 times a second.
+    /// How long the recording stays on each line the setup page shows (<see cref="SetupPage"/>) when it can't say how much
+    /// is new on it: the least <see cref="ReadingTime"/>.
     /// </summary>
-    public static readonly TimeSpan SetupHold = TimeSpan.FromMilliseconds(1000);
+    public static readonly TimeSpan SetupHold = TimeSpan.FromMilliseconds(1500);
+
+    /// <summary>
+    /// How long the recording stays on the setup page for its <paramref name="words"/> new words to be read: 1 s and
+    /// 0.2 s a word, from <see cref="SetupHold"/> to 6 s.
+    /// </summary>
+    public static TimeSpan ReadingTime(int words) =>
+        TimeSpan.FromSeconds(Math.Clamp(1 + 0.2 * words, SetupHold.TotalSeconds, 6));
 
     private readonly ScenarioSteps steps;
     private readonly ScreenRecording recording;
@@ -92,8 +99,7 @@ public sealed partial class GherkinMarking
 
         if (settingUp || showingChange)
         {
-            screens?.WaitUntilSetupPageShowsTheFake();
-            Thread.Sleep(SetupHold);
+            Thread.Sleep(screens?.WaitUntilSetupPageShowsTheFake() ?? SetupHold);
         }
 
         Thread.Sleep(HoldOnPassed(AssertionsSince(index)));
@@ -161,9 +167,9 @@ public sealed partial class GherkinMarking
         {
             foreach (var assertion in passed)
             {
-                ShowTheScreenOf(assertion);
+                var hold = ShowTheScreenOf(assertion);
                 recording.NoteLine(assertion.Line, Stopwatch.GetTimestamp(), failed: false);
-                Thread.Sleep(Hold);
+                Thread.Sleep(hold);
             }
 
             return TimeSpan.Zero;
@@ -178,18 +184,18 @@ public sealed partial class GherkinMarking
         return Hold * passed.Count;
     }
 
-    // A Then line about the fake on the setup page, once it shows what the scenario read; another on the app.
-    private void ShowTheScreenOf(Assertion assertion)
+    // A Then line about the fake on the setup page, once it shows what the scenario read, and how long to read it;
+    // another on the app, Hold.
+    private TimeSpan ShowTheScreenOf(Assertion assertion)
     {
         if (FakeChecks.IsAboutTheFake(assertion) && appOpened)
         {
             ShowSetupPage();
-            screens!.WaitUntilSetupPageShowsTheFake();
+            return screens!.WaitUntilSetupPageShowsTheFake();
         }
-        else
-        {
-            ShowApp();
-        }
+
+        ShowApp();
+        return Hold;
     }
 
     private void ShowSetupPage()
