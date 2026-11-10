@@ -426,6 +426,10 @@ public sealed class RedditWorld
 
     internal IReadOnlyList<Post> PostsUnlocked => posts;
 
+    /// <summary>The accounts the app is logged in with: each one a token was given to, or handed the app at its start.</summary>
+    internal IEnumerable<Account> LoggedInUnlocked =>
+        tokens.Values.Concat(loginAtStart is { } handed ? [handed] : []).Distinct();
+
     /// <summary>
     /// A user's fullname, <c>t2_&lt;id&gt;</c>, as the JSON sends it in <c>author_fullname</c>: an account's own, or for
     /// an author without an account (most of them), a stable one made from the name.

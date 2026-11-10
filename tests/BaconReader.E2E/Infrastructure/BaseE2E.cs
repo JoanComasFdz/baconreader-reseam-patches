@@ -90,7 +90,7 @@ public abstract class BaseE2E : IAsyncLifetime
         [MethodImpl(MethodImplOptions.NoInlining)]
         get
         {
-            marking?.NoteCaller();
+            marking?.NoteCaller(reddit: true);
             return reddit;
         }
 
@@ -144,6 +144,7 @@ public abstract class BaseE2E : IAsyncLifetime
         {
             try
             {
+                await SetupPage.ShowAsync();
                 recording = await ScreenRecording.StartAsync();
                 sinceRecording.Start();
                 OnScreen.DrawTapsOn(driver, recording);
@@ -212,6 +213,10 @@ public abstract class BaseE2E : IAsyncLifetime
             // Stopped over adb, not with Appium's TerminateApp: after a recording of minutes, the "dumpsys activity
             // processes" it runs first timed out at Appium's 20 s over the slow link, and failed a scenario that passed.
             await Commands.ShellAsync($"am force-stop {E2EDevice.Package}");
+            if (E2EDevice.VideoDirectory is not null)
+            {
+                await SetupPage.CloseAsync();
+            }
             OnScreen.ForgetScenarioOn(closing);
             if (!passed)
             {

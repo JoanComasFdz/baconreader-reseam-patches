@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- SPDX-FileCopyrightText: 2026 JoanComasFdz -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- What the fake Reddit has for the scenario (Endpoints/Setup.cs): its accounts and posts, from /_fake/setup.json, read
+     a few times a second; each new thing glows as it comes and is scrolled to. -->
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test setup</title>
+    <style>
+        body { margin: 0; background: #0a0d13; color: #e7eaf0; font: 17px/1.4 system-ui, -apple-system, Roboto, sans-serif; }
+        header { padding: 20px 18px 12px; border-bottom: 1px solid #263046; background: #111620; }
+        header h1 { margin: 0; font-size: 22px; }
+        header p { margin: 4px 0 0; color: #8a94a8; font-size: 14px; }
+        h2 { margin: 18px 18px 6px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #8a94a8; }
+        .box { margin: 8px 14px; padding: 12px 14px; background: #111620; border: 1px solid #263046; border-radius: 10px; }
+        .account { display: flex; align-items: center; gap: 10px; }
+        .account .name { flex: 1; font-weight: 600; }
+        .sub { color: #8a94a8; font-size: 13px; }
+        .title { font-weight: 600; }
+        .tag { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 10px; background: #263046; color: #cdd5e3; font-size: 12px; }
+        .tag.on { background: #1f4a2e; color: #9fe6b4; }
+        .comment { margin: 8px 0 0; padding: 6px 0 0 10px; border-left: 2px solid #263046; font-size: 15px; }
+        .comment .who { color: #8a94a8; font-size: 13px; }
+        .more { margin-top: 8px; color: #8a94a8; font-size: 13px; }
+        .empty { margin: 8px 18px; color: #8a94a8; }
+        .new { animation: arrive 1.2s ease-out; }
+        @keyframes arrive { from { background: #2a5a3a; } to { background: #111620; } }
+        .comment.new { animation: arrive-line 1.2s ease-out; }
+        @keyframes arrive-line { from { background: #2a5a3a; } to { background: transparent; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧪 Test setup</h1>
+        <p>What the fake Reddit has for this test</p>
+    </header>
+    <h2>Accounts</h2>
+    <div id="accounts"></div>
+    <h2>Posts</h2>
+    <div id="posts"></div>
+    <script>
+        (function () {
+            "use strict";
+            var shown = null;
+            var seen = {};
+
+            function el(tag, className, text) {
+                var element = document.createElement(tag);
+                if (className) element.className = className;
+                if (text !== undefined) element.textContent = text;
+                return element;
+            }
+
+            // Marks an element that wasn't there before as new; the first page shows everything as it is.
+            function arrive(element, key, first, fresh) {
+                if (!first && !seen[key]) {
+                    element.classList.add("new");
+                    fresh.push(element);
+                }
+                seen[key] = true;
+                return element;
+            }
+
+            function render(data) {
+                var first = shown === null;
+                var fresh = [];
+                var accounts = document.getElementById("accounts");
+                accounts.textContent = "";
+                data.accounts.forEach(function (account) {
+                    var row = arrive(el("div", "box account"), "a:" + account.name + ":" + account.loggedIn, first, fresh);
+                    row.append(el("span", "", "👤"), el("span", "name", "u/" + account.name));
+                    if (account.unread > 0) row.append(el("span", "tag", account.unread + " unread"));
+                    row.append(el("span", "tag" + (account.loggedIn ? " on" : ""), account.loggedIn ? "logged in" : "not logged in"));
+                    accounts.append(row);
+                });
+                var posts = document.getElementById("posts");
+                posts.textContent = "";
+                if (data.posts.length === 0) posts.append(el("p", "empty", "None yet"));
+                data.posts.forEach(function (post) {
+                    var box = arrive(el("div", "box"), "p:" + post.id, first, fresh);
+                    box.append(el("div", "sub", "r/" + post.subreddit), el("div", "title", post.title), el("span", "tag", post.kind));
+                    post.comments.forEach(function (comment) {
+                        var line = arrive(el("div", "comment"), "c:" + comment.id, first, fresh);
+                        line.style.marginLeft = comment.depth * 14 + "px";
+                        line.append(el("div", "who", "u/" + comment.author), el("div", "", comment.body));
+                        box.append(line);
+                    });
+                    if (post.commentCount > post.comments.length) {
+                        box.append(el("div", "more", post.commentCount + " comments"));
+                    }
+                    posts.append(box);
+                });
+                if (fresh.length > 0) fresh[fresh.length - 1].scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+
+            function read() {
+                fetch("setup.json", { cache: "no-store" })
+                    .then(function (response) { return response.text(); })
+                    .then(function (text) {
+                        if (text !== shown) {
+                            render(JSON.parse(text));
+                            shown = text;
+                        }
+                    })
+                    .catch(function () { })
+                    .finally(function () { setTimeout(read, 250); });
+            }
+
+            read();
+        })();
+    </script>
+</body>
+</html>

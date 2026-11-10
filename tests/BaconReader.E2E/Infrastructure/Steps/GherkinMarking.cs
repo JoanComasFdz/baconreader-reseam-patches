@@ -21,12 +21,24 @@ public sealed partial class GherkinMarking
     /// <summary>How long the recording stays on each Then line.</summary>
     public static readonly TimeSpan Hold = TimeSpan.FromMilliseconds(800);
 
+    /// <summary>
+    /// How long the recording stays on each Given line that sets up the fake Reddit before the app opens, for the setup
+    /// page (<see cref="SetupPage"/>) to show what it made: it reads the fake 4 times a second.
+    /// </summary>
+    public static readonly TimeSpan SetupHold = TimeSpan.FromMilliseconds(1000);
+
     private readonly ScenarioSteps steps;
     private readonly ScreenRecording recording;
     private readonly Type scenario;
 
     // The last statement that started, an index in steps.Steps.
     private int reached = -1;
+
+    // Whether the last statement set up the fake Reddit before the app opened: the next one waits for the setup page.
+    private bool settingUp;
+
+    // Whether the scenario asked for the phone yet: once it has, the app is on the screen, not the setup page.
+    private bool phoneAsked;
 
     /// <summary>
     /// Marks the lines BaseE2E plays itself (<c>BaconReader is patched with …</c>) at <paramref name="started"/>, the
@@ -45,17 +57,25 @@ public sealed partial class GherkinMarking
     }
 
     /// <summary>
-    /// Called when the scenario asks for <c>Phone</c> or <c>Reddit</c>: if a new statement of it starts, holds on the
+    /// Called when the scenario asks for <c>Phone</c> or <c>Reddit</c> (<paramref name="reddit"/>): if a new statement of
+    /// it starts, holds on the Given line before it if that one set up the fake Reddit before the app opened, and on the
     /// Then lines whose assertions passed since the last one, then marks its own line.
     /// </summary>
-    public void NoteCaller()
+    public void NoteCaller(bool reddit = false)
     {
+        phoneAsked |= !reddit;
         var index = FindStatement();
         if (index <= reached)
         {
             return;
         }
 
+        if (settingUp)
+        {
+            Thread.Sleep(SetupHold);
+        }
+
+        settingUp = reddit && !phoneAsked;
         Thread.Sleep(HoldOnPassed(AssertionsSince(index)));
         reached = index;
         if (steps.Steps[index].Plays is { } line)
