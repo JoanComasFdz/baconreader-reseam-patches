@@ -77,3 +77,22 @@ test('a page\'s include comments become the files they name; an unknown one stay
   const html = '<style>/* include: a.css */</style><script>/* include: a.js */</script><!-- include: b.js -->';
   assert.equal(guide.inline(html, { 'a.css': 'C', 'a.js': 'J' }), '<style>C</style><script>J</script><!-- include: b.js -->');
 });
+
+test('the README\'s groups list their patches in its order, a header row and its separator left out', () => {
+  const readme = '**🔧 Fixes**: what broke\n\n| Patch | |\n|---|---|\n| Fix A | a |\n| Fix B | b |\n\n**✨ Features**\n\n| Patch | |\n|---|---|\n| Show C | c |\n\n**Nothing**\n';
+  assert.deepEqual(guide.readGroups(readme), [{ title: '🔧 Fixes', names: ['Fix A', 'Fix B'] }, { title: '✨ Features', names: ['Show C'] }]);
+});
+
+test('the pages come in their groups; a page in none comes under "More"', () => {
+  const pages = ['Fix B', 'Show C', 'Fix A', 'Extra'].map((name) => ({ name }));
+  const grouped = guide.groupPages([{ title: 'Fixes', names: ['Fix A', 'Fix B', 'Gone'] }, { title: 'Features', names: ['Show C'] }], pages);
+  assert.deepEqual(grouped.map((group) => [group.title, group.pages.map((page) => page.name)]),
+    [['Fixes', ['Fix A', 'Fix B']], ['Features', ['Show C']], ['More', ['Extra']]]);
+});
+
+test('the guide is its sidebar\'s links and its sections, in the same order', () => {
+  const page = (name, file) => ({ name, file, summary: 's', body: '', scenarioBlocks: [] });
+  const guideHtml = guide.renderGuide('O/r', [{ title: 'Fixes', pages: [page('Fix A', 'fix-a.md')] }, { title: 'More', pages: [page('Extra', 'extra.md')] }]);
+  assert.equal(guideHtml.nav, '<h2>Fixes</h2>\n<ul><li><a href="#fix-a">Fix A</a></li></ul>\n<h2>More</h2>\n<ul><li><a href="#extra">Extra</a></li></ul>');
+  assert.ok(guideHtml.sections.indexOf('id="fix-a"') < guideHtml.sections.indexOf('id="extra"'));
+});

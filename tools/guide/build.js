@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Builds the site GitHub Pages publishes (.github/workflows/pages.yml):
 //   node tools/guide/build.js <out folder>
-// - the user guide, index.html: each patch's page (docs/patches/<patch>.md, in docs/patches.md's order) with the
-//   newest recording of each e2e scenario its page names, played by the e2e player beside its Gherkin and its marks;
+// - the user guide, index.html: a sidebar listing the patches in the README's groups (Fixes, Features, Cleanups), and
+//   each patch's page (docs/patches/<patch>.md) with the newest recording of each e2e scenario its page names, played by
+//   the e2e player beside its Gherkin and its marks;
 // - site/'s other pages (e2e-player.html), as they are.
 // Each page gets e2e-player.css and e2e-player.js inlined where its "include" comments are, so a published page is one
 // file. The recordings are prs-resources' assets; a scenario's newest is the highest PR, then its highest version (the
@@ -96,6 +97,35 @@ function toAnchor(file) {
   return file.replace(/\.md$/, '');
 }
 
+/**
+ * The README's groups of patches ("**🔧 Fixes**: …", then a table with a row per patch: "| <name> | … |"), in its order:
+ * [{ title, names }]. The guide's sidebar lists the patches so, and a patch in none comes under "More".
+ */
+function readGroups(readme) {
+  const groups = [];
+  for (const line of readme.replace(/\r\n/g, '\n').split('\n')) {
+    const heading = /^\*\*(.+?)\*\*/.exec(line);
+    const row = /^\| ([^|]+?) \|/.exec(line);
+    if (heading) {
+      groups.push({ title: heading[1].trim(), names: [] });
+    } else if (row && groups.length > 0 && row[1] !== 'Patch' && !/^-+$/.test(row[1])) {
+      groups[groups.length - 1].names.push(row[1].trim());
+    }
+  }
+  return groups.filter((group) => group.names.length > 0);
+}
+
+/** The pages in the README's groups, each group in its order; those in no group come last, under "More". */
+function groupPages(groups, pages) {
+  const byName = new Map(pages.map((page) => [page.name, page]));
+  const grouped = groups
+    .map((group) => ({ title: group.title, pages: group.names.filter((name) => byName.has(name)).map((name) => byName.get(name)) }))
+    .filter((group) => group.pages.length > 0);
+  const listed = new Set(grouped.flatMap((group) => group.pages.map((page) => page.name)));
+  const rest = pages.filter((page) => !listed.has(page.name));
+  return rest.length > 0 ? [...grouped, { title: 'More', pages: rest }] : grouped;
+}
+
 // ---- Pure: the recordings ------------------------------------------------------------------------------------------
 
 /** The player data of each MP4 the posts link to, by its name: {"g": Gherkin, "m": marks}. */
@@ -147,10 +177,12 @@ ${scenarios}
 </section>`;
 }
 
-/** The guide's content: the patches' list, then each patch's section. */
-function renderGuide(repository, pages) {
-  const nav = pages.map((page) => `<li><a href="#${toAnchor(page.file)}">${escapeHtml(page.name)}</a></li>`).join('');
-  return `<nav aria-label="Patches"><ol>${nav}</ol></nav>\n${pages.map((page) => renderPatch(repository, page)).join('\n')}`;
+/** The guide: its sidebar, the groups' patches as links, and its content, each patch's section in the sidebar's order. */
+function renderGuide(repository, groups) {
+  const nav = groups.map((group) => `<h2>${renderInline(group.title)}</h2>\n<ul>${group.pages
+    .map((page) => `<li><a href="#${toAnchor(page.file)}">${escapeHtml(page.name)}</a></li>`).join('')}</ul>`).join('\n');
+  const sections = groups.flatMap((group) => group.pages.map((page) => renderPatch(repository, page))).join('\n');
+  return { nav, sections };
 }
 
 /** A page with its include comments replaced by the files they name, from `files` (name → text). */
@@ -244,7 +276,10 @@ async function build(root, out, repository, offline) {
   for (const name of fs.readdirSync(site)) {
     if (name in includes) continue;
     let text = fs.readFileSync(path.join(site, name), 'utf8');
-    if (name === 'index.html') text = text.replace('<!-- guide -->', renderGuide(repository, pages));
+    if (name === 'index.html') {
+      const guide = renderGuide(repository, groupPages(readGroups(fs.readFileSync(path.join(root, 'README.md'), 'utf8')), pages));
+      text = text.replace('<!-- guide-nav -->', () => guide.nav).replace('<!-- guide -->', () => guide.sections);
+    }
     fs.writeFileSync(path.join(out, name), name.endsWith('.html') ? inline(text, includes) : text);
   }
   return pages;
@@ -267,4 +302,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { readPage, orderPages, renderInline, renderMarkdown, toAnchor, readPlayerData, pickNewest, renderScenario, renderPatch, renderGuide, inline };
+module.exports = { readPage, orderPages, readGroups, groupPages, renderInline, renderMarkdown, toAnchor, readPlayerData, pickNewest, renderScenario, renderPatch, renderGuide, inline };
