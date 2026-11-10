@@ -75,9 +75,10 @@ Scenario: <what it proves, as a statement>
        with, each in quotes,** the fewest it needs, one line each: `And BaconReader is patched with "Spoof client"`;
      - a **LoggedIn** scenario (everything else): `And BaconReader is patched with every patch`, one line;
    - `And BaconReader is installed`: the app is installed, not opened yet;
-   - `And BaconReader is open`: opened on its main screen, its first-start dialogs answered (section 4.4);
-   - `And the test account is logged in`: logged in with the test account (section 7), back on the main screen's
-     posts. A LoggedIn scenario's Given ends with "is open" and this line.
+   - `And the test account is logged in`: the app starts logged in with the test account (section 7), as the fake
+     Reddit hands it the login; before "is open", as a recording's setup page shows it before the app opens;
+   - `And BaconReader is open`: opened on its main screen, its first-start dialogs answered (section 4.4); logged in,
+     on its feed's posts. A LoggedIn scenario's Given ends with "the test account is logged in" and this line.
 
    The test-only patches every scenario's app gets (its README, "The fake Reddit") are never named.
 4. **One Gherkin per patch.** Everything a patch does is one Gherkin, and one test: each case is a round of it, in

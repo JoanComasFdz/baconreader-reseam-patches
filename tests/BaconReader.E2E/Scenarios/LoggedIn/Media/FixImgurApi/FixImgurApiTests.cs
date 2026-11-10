@@ -30,8 +30,8 @@ public sealed class FixImgurApiTests : BaseE2E
           And Reddit has a post "Imgur thread" in r/e2e
           And the post "Imgur thread" has a comment "Reply here"
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Trip album"
           And I tap "imgur.com" in the post's header
           Then the album shows its image 1 of 3
@@ -84,8 +84,8 @@ public sealed class FixImgurApiTests : BaseE2E
         Reddit.HasALinkPostLinkingToTheImgurAlbum("Clips album", "e2e", "Clips");
         Reddit.HasAPost("Imgur thread", "e2e");
         Reddit.ThePost("Imgur thread").HasAComment("Reply here");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Trip album");

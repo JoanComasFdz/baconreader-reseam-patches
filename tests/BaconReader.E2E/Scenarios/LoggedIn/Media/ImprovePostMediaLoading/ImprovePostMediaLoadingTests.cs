@@ -36,8 +36,8 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
           And Reddit has a RedGIFs post "Missing clip" in r/e2e whose video RedGIFs never had
           And Reddit has a link post "Link with a preview" in r/e2e to a page that runs JavaScript
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I select the "e2e" feed
           And I tap "More options" in the toolbar
           And I tap "List View"
@@ -139,8 +139,8 @@ public sealed class ImprovePostMediaLoadingTests : BaseE2E
         Reddit.HasARedGifsPostWhoseVideoWasDeleted("Deleted clip", "e2e");
         Reddit.HasARedGifsPostWhoseVideoRedGifsNeverHad("Missing clip", "e2e");
         Reddit.HasALinkPostToAPageThatRunsJavaScript("Link with a preview", "e2e");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Toolbar.SelectFeedAsync(new Feed.Subreddit("e2e"));

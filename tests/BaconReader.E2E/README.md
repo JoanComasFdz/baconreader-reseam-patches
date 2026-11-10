@@ -314,8 +314,8 @@ with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](
   "Disable final release announcement", "Prompt to open Reddit links" and "Disable feedback popup". Each scenario is
   patched with only the patches its Given names, since it tests exactly those dialogs and steps.
 - **`Scenarios/LoggedIn/`: everything else.** Every scenario is patched with every patch, one APK for all of them, and
-  its Given opens the app and logs in: `And BaconReader is patched with every patch`, `And BaconReader is open`,
-  `And the test account is logged in`.
+  its Given logs in and opens the app: `And BaconReader is patched with every patch`, `And the test account is logged
+  in`, `And BaconReader is open`.
 
 Inside a group, folders follow the patches' areas (`account`, `comments`, `editor`, `inbox`, `links`, `media`, `misc`,
 `posts`, and `e2e` for the test-only patches): folder = area, class = one patch (`<Patch>Tests.cs`) in a folder of its
@@ -344,8 +344,9 @@ A scenario logs in as BaconReader does, through the fake Reddit's login, made li
 ids and buttons): "Add account" in the left menu, "Log In" with the test account, then "Accept" on the page asking to
 connect the app ("Spoof client" logs in as RedReader). Every scenario that loads posts or comments does it: logged out,
 Reddit refuses BaconReader ([SpoofClientTests.cs](Scenarios/Startup/Account/SpoofClient/SpoofClientTests.cs)). A
-LoggedIn scenario's Given says `And the test account is logged in` (`Phone.BaconReader.LogInWithTheTestAccountAsync()`);
-a Startup one that logs in names "Spoof client".
+LoggedIn scenario's Given says `And the test account is logged in` before `And BaconReader is open`
+(`Reddit.TheTestAccountIsLoggedIn()`): the fake hands the app the test account's login at its start, so it opens logged
+in, as it is after logging in through those screens. A Startup one that logs in names "Spoof client".
 
 ## Isolation
 

@@ -27,8 +27,8 @@ public sealed class FixMemeTemplatesTests : BaseE2E
           And Reddit has a post "Meme thread" in r/e2e
           And the post "Meme thread" has a comment "Reply here"
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Meme thread"
           And I swipe the comment "Reply here" to its action bar
           And I tap "Comment" in the comment's action bar
@@ -60,8 +60,8 @@ public sealed class FixMemeTemplatesTests : BaseE2E
         Reddit.ImgflipHasRemovedItsTemplate("Two Buttons");
         Reddit.HasAPost("Meme thread", "e2e");
         Reddit.ThePost("Meme thread").HasAComment("Reply here");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Meme thread");

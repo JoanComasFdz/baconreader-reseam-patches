@@ -40,8 +40,8 @@ public sealed class FixRedditLinksTests : BaseE2E
           And the post "Links" has a comment "Video" linking to the video of "Clip"
           And the post "Links" has a comment "Lone video" linking to a video Reddit has no post for
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Links"
           And I tap the link "Shared"
           Then BaconReader shows the post "Shared post"
@@ -130,8 +130,8 @@ public sealed class FixRedditLinksTests : BaseE2E
         Reddit.ThePost("Links").HasACommentLinkingToThePostOnTheTestAccountsProfile("On a profile", "Profile post");
         Reddit.ThePost("Links").HasACommentLinkingToTheVideoOf("Video", "Clip");
         Reddit.ThePost("Links").HasACommentLinkingToAVideoRedditHasNoPostFor("Lone video");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.WaitUntilPostShownAsync("Links");

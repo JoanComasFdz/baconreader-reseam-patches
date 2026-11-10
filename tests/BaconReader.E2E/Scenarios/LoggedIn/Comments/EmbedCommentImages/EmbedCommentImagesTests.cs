@@ -87,8 +87,8 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And the post "Bluesky thread" has a comment "Bluesky gallery" with a bare link to the Bluesky post "A gallery of photos"
           And the post "Bluesky thread" has a comment "Missing Bluesky post" with a bare link to a Bluesky post Bluesky doesn't have
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Weekly thread"
           Then the comment "Here is an image" shows 1 image
           And the comment "Here is an image" shows no picture twice
@@ -392,8 +392,8 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Bluesky link card", "Read this page");
         Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToTheBlueskyPost("Bluesky gallery", "A gallery of photos");
         Reddit.ThePost("Bluesky thread").HasACommentWithABareLinkToABlueskyPostBlueskyDoesntHave("Missing Bluesky post");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Weekly thread");

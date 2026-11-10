@@ -454,8 +454,9 @@ public sealed class RedditWorld
         return false;
     }
 
-    /// <summary>The accounts the app is logged in with: each one a token was given to.</summary>
-    internal IEnumerable<Account> LoggedInUnlocked => tokens.Values.Distinct();
+    /// <summary>The accounts the app is logged in with: each one a token was given to, or handed the app at its start.</summary>
+    internal IEnumerable<Account> LoggedInUnlocked =>
+        tokens.Values.Concat(loginAtStart is { } handed ? [handed] : []).Distinct();
 
     // How many accounts the fake had when the scenario began (MarkScenarioStart): the setup page shows only those made
     // after, and the ones logged in.

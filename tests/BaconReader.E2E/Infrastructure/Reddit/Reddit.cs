@@ -14,6 +14,14 @@ namespace BaconReader.E2E.Infrastructure.Reddit;
 /// </summary>
 public sealed partial class Reddit(RedditWorld world)
 {
+    /// <summary>
+    /// "the test account is logged in", before "BaconReader is open": the fake hands BaconReader the test account's login
+    /// at its start ("E2E fake Reddit"), what logging in through "Add account" and Reddit's "Log In" leaves, so the app
+    /// opens logged in (<see cref="Phone.BaconReader.BaconReaderApp.OpenAsync"/> waits for its feed). Logging in through
+    /// the screens took ~11 s of each scenario (2026-11-07); Spoof client's Startup scenario still does.
+    /// </summary>
+    public void TheTestAccountIsLoggedIn() => world.LogInAtStart(TestAccount.UserName);
+
     /// <summary>"Reddit has a post "&lt;title&gt;" in r/&lt;subreddit&gt;": a text post, made now.</summary>
     public void HasAPost(string title, string subreddit) => world.AddPost(subreddit, title);
 

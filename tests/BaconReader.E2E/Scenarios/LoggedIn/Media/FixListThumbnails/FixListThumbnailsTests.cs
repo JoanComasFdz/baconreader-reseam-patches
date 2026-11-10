@@ -37,8 +37,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
           And YouTube has a video "Listed video" on the channel "@e2ekitchen"
           And Reddit has a link post "YouTube video" in r/e2e linking to the YouTube video "Listed video"
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I select the "e2e" feed
           And I tap "More options" in the toolbar
           And I tap "List View"
@@ -95,8 +95,8 @@ public sealed class FixListThumbnailsTests : BaseE2E
         Reddit.HasARedGifsPost("Clip", "e2e");
         Reddit.YouTubeHasAVideo("Listed video", "@e2ekitchen");
         Reddit.HasALinkPostLinkingToTheYouTubeVideo("YouTube video", "e2e", "Listed video");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Toolbar.SelectFeedAsync(new Feed.Subreddit("e2e"));

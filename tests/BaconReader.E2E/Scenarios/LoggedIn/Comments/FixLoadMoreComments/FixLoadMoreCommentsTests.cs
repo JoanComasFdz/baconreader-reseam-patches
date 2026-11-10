@@ -27,8 +27,8 @@ public sealed class FixLoadMoreCommentsTests : BaseE2E
           And the comment "Comment 2" has the replies "Reply 1 to Comment 2", "Reply 2 to Comment 2" and "Reply 3 to Comment 2"
           And Reddit refuses "load more comments" with "403 Blocked", as it does to apps since October 2026
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Long thread"
           # "Up to 2 replies" of "Load more comments" loads them right after the post's comments.
           Then the comment "Comment 1" shows the replies "Reply 1 to Comment 1" and "Reply 2 to Comment 1"
@@ -49,8 +49,8 @@ public sealed class FixLoadMoreCommentsTests : BaseE2E
         Reddit.ThePost("Long thread").TheComment("Comment 1").HasTheReplies("Reply 1 to Comment 1", "Reply 2 to Comment 1");
         Reddit.ThePost("Long thread").TheComment("Comment 2").HasTheReplies("Reply 1 to Comment 2", "Reply 2 to Comment 2", "Reply 3 to Comment 2");
         Reddit.RefusesLoadMoreComments();
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Long thread");

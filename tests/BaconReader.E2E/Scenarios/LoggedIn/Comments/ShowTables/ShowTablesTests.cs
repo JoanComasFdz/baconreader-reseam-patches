@@ -35,8 +35,8 @@ public sealed class ShowTablesTests : BaseE2E
             | Rovers | 30     |
             | City   | 28     |
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Tables"
           Then the comment "Scores" shows a table with the rows "Player, Score", "Ann, 12" and "Bob, 7"
           And the columns of the comment "Scores"'s table don't overlap
@@ -86,8 +86,8 @@ public sealed class ShowTablesTests : BaseE2E
             ["Rovers", "30"],
             ["City", "28"],
         ]);
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Tables");

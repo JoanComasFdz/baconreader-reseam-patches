@@ -24,8 +24,8 @@ public sealed class FixRedgifsApiTests : BaseE2E
           Given Reddit has a RedGIFs post "First clip" in r/e2e
           And Reddit has a RedGIFs post "Second clip" in r/e2e
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "First clip"
           And I tap the thumbnail in the post's header
           Then the video plays
@@ -46,8 +46,8 @@ public sealed class FixRedgifsApiTests : BaseE2E
         // Given
         Reddit.HasARedGifsPost("First clip", "e2e");
         Reddit.HasARedGifsPost("Second clip", "e2e");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("First clip");

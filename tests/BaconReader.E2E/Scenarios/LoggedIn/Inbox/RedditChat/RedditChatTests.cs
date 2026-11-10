@@ -31,8 +31,8 @@ public sealed class RedditChatTests : BaseE2E
           # Reddit's chat is a website with no API: the fake Reddit answers it with a plain page of its own.
           And Reddit's chat has a link "A post someone shared" to the post "Weekly thread"
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I open the left menu
           # "Chat messages apart from the inbox" is on by default: Reddit's copies of chat messages count for Chat.
           Then the left menu shows "Chat (2)" after "Inbox"
@@ -70,8 +70,8 @@ public sealed class RedditChatTests : BaseE2E
         Reddit.TheTestAccountHasAnUnreadMessage("[direct chat room]", "Hey there");
         Reddit.TheTestAccountHasAnUnreadMessage("[direct chat room]", "Are you around?");
         Reddit.TheChatHasALinkToThePost("A post someone shared", "Weekly thread");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.LeftMenu.OpenAsync();

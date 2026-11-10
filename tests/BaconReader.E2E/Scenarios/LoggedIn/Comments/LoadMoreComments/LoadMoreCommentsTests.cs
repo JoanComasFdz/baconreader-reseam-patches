@@ -26,8 +26,8 @@ public sealed class LoadMoreCommentsTests : BaseE2E
           And the comment "Comment 1" has the replies "Reply 1 to Comment 1" and "Reply 2 to Comment 1"
           And the comment "Comment 2" has the replies "Reply 1 to Comment 2", "Reply 2 to Comment 2" and "Reply 3 to Comment 2"
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I tap the post "Long thread"
           # Not on the screen: the fake Reddit records what BaconReader sent.
           Then Reddit got the request for the comments of "Long thread" with the limit 500
@@ -113,8 +113,8 @@ public sealed class LoadMoreCommentsTests : BaseE2E
         Reddit.ThePost("Long thread").HasComments(500);
         Reddit.ThePost("Long thread").TheComment("Comment 1").HasTheReplies("Reply 1 to Comment 1", "Reply 2 to Comment 1");
         Reddit.ThePost("Long thread").TheComment("Comment 2").HasTheReplies("Reply 1 to Comment 2", "Reply 2 to Comment 2", "Reply 3 to Comment 2");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Posts.ClickPostAsync("Long thread");

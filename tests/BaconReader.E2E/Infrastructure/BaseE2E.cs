@@ -34,7 +34,7 @@ namespace BaconReader.E2E.Infrastructure;
 /// - a fresh app per scenario: stopped and its data cleared, as just installed but with its notifications denied (so
 ///   Android doesn't ask, on any device), and Downloads/BaconReader emptied, so scenarios share nothing (no login, no setting, no cache, no
 ///   saved image); a LoggedIn scenario's app starts logged in with the test account, as the fake hands it the login at
-///   its start (<see cref="FakeReddit.World.RedditWorld.LogInAtStart"/>);
+///   its start, once its Given says "the test account is logged in" (<see cref="Reddit.Reddit.TheTestAccountIsLoggedIn"/>);
 /// - an Appium session on the phone (<see cref="Screen.Phone"/>, the scenario's <c>[PlayOnPhone]</c>) that leaves the
 ///   app alone until the scenario opens it: one for the run, which the next scenario plays on too (opening one took
 ///   ~10 s and closing it ~2 s, 6 min of a 59 min run of the LoggedIn scenarios, 2026-11-07); a new one when it is gone
@@ -125,13 +125,6 @@ public abstract class BaseE2E : IAsyncLifetime
 
         screen = ReadScreen();
         patches = ReadPatches();
-        if (patches is PatchSet.Every)
-        {
-            // A LoggedIn scenario's Given ends with "the test account is logged in": its app starts logged in, as the
-            // fake hands it the login ("E2E fake Reddit"). Logging in through the screens took ~11 s of each scenario.
-            fake.World.LogInAtStart(TestAccount.UserName);
-        }
-
         fake.World.MarkScenarioStart();
         var apk = await PatchedApps.PatchAsync(patches);
         await PatchedApps.InstallAsync(apk);
