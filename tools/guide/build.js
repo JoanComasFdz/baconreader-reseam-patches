@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Builds the site GitHub Pages publishes (.github/workflows/pages.yml):
 //   node tools/guide/build.js <out folder>
-// - the user guide, index.html: a sidebar listing the patches in the README's groups (Fixes, Features, Cleanups), and
+// - the user guide, index.html: a sidebar listing the patches in docs/patches.md's groups (Fixes, Features, Cleanups), and
 //   each patch's page (docs/patches/<patch>.md), what it does only with this repository's patcher
 //   (docs/patcher-specific-patches/<patch>.md, if any), and the newest recording of each e2e scenario its page names,
 //   played by the e2e player beside its Gherkin and its marks; a patch with no scenario shows its page alone;
@@ -99,24 +99,24 @@ function toAnchor(file) {
 }
 
 /**
- * The README's groups of patches ("**🔧 Fixes**: …", then a table with a row per patch: "| <name> | … |"), in its order:
- * [{ title, names }]. The guide's sidebar lists the patches so, and a patch in none comes under "More".
+ * The index's groups of patches (docs/patches.md: "## 🔧 Fixes", then a table with a row per patch: "| [<name>](…) | … |"),
+ * in its order: [{ title, names }]. The guide's sidebar lists the patches so, and a patch in none comes under "More".
  */
-function readGroups(readme) {
+function readGroups(index) {
   const groups = [];
-  for (const line of readme.replace(/\r\n/g, '\n').split('\n')) {
-    const heading = /^\*\*(.+?)\*\*/.exec(line);
-    const row = /^\| ([^|]+?) \|/.exec(line);
+  for (const line of index.replace(/\r\n/g, '\n').split('\n')) {
+    const heading = /^## (.+)$/.exec(line);
+    const row = /^\| \[([^\]]+)\]\(/.exec(line);
     if (heading) {
       groups.push({ title: heading[1].trim(), names: [] });
-    } else if (row && groups.length > 0 && row[1] !== 'Patch' && !/^-+$/.test(row[1])) {
+    } else if (row && groups.length > 0) {
       groups[groups.length - 1].names.push(row[1].trim());
     }
   }
   return groups.filter((group) => group.names.length > 0);
 }
 
-/** The pages in the README's groups, each group in its order; those in no group come last, under "More". */
+/** The pages in the index's groups, each group in its order; those in no group come last, under "More". */
 function groupPages(groups, pages) {
   const byName = new Map(pages.map((page) => [page.name, page]));
   const grouped = groups
@@ -251,7 +251,8 @@ function findScenarioFiles(root) {
 
 async function build(root, out, repository, offline) {
   const docs = path.join(root, 'docs', 'patches');
-  const files = orderPages(fs.readFileSync(path.join(root, 'docs', 'patches.md'), 'utf8'), fs.readdirSync(docs).filter((file) => file.endsWith('.md')));
+  const index = fs.readFileSync(path.join(root, 'docs', 'patches.md'), 'utf8');
+  const files = orderPages(index, fs.readdirSync(docs).filter((file) => file.endsWith('.md')));
   const pages = files.map((file) => readPage(file, fs.readFileSync(path.join(docs, file), 'utf8')));
   // What a patch does only with this repository's patcher: docs/patcher-specific-patches/<patch>.md, after its title.
   for (const page of pages) {
@@ -298,7 +299,7 @@ async function build(root, out, repository, offline) {
     if (name in includes) continue;
     let text = fs.readFileSync(path.join(site, name), 'utf8');
     if (name === 'index.html') {
-      const guide = renderGuide(repository, groupPages(readGroups(fs.readFileSync(path.join(root, 'README.md'), 'utf8')), pages));
+      const guide = renderGuide(repository, groupPages(readGroups(index), pages));
       text = text.replace('<!-- guide-nav -->', () => guide.nav).replace('<!-- guide -->', () => guide.sections);
     }
     fs.writeFileSync(path.join(out, name), name.endsWith('.html') ? inline(text, includes) : text);
