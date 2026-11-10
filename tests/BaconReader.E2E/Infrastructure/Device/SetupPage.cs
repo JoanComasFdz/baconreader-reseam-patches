@@ -37,6 +37,16 @@ public static class SetupPage
     private static Task LaunchAsync(string package) =>
         Commands.ShellAsync($"monkey -p {package} -c android.intent.category.LAUNCHER 1 > /dev/null 2>&1");
 
-    /// <summary>Closes Chrome, so the next scenario starts from the home screen.</summary>
-    public static Task CloseAsync() => Commands.ShellAsync($"am force-stop {Chrome}");
+    /// <summary>
+    /// Closes the setup page's tab and Chrome, so the next scenario starts from the home screen: Back on the page closes
+    /// a tab another app opened, as it would go back to that app.
+    /// </summary>
+    public static async Task CloseAsync()
+    {
+        await BringToFrontAsync();
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        await Commands.ShellAsync("input keyevent KEYCODE_BACK");
+        await Task.Delay(TimeSpan.FromMilliseconds(500));
+        await Commands.ShellAsync($"am force-stop {Chrome}");
+    }
 }
