@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
+    <title>BaconReader patches for Reseam · User guide</title>
+    <!-- The user guide: what each patch does, from its page (docs/patches/<patch>.md), and the newest e2e recording of
+         each scenario that shows it, with its Gherkin and its marks. tools/guide/build.js puts the patches where the
+         "guide" comment is and inlines the player (e2e-player.css, e2e-player.js) where the include comments are; the
+         Pages workflow (.github/workflows/pages.yml) builds and publishes it. -->
+    <style>
+        :root { --bg: #0a0d13; --panel: #111620; --line: #263046; --text: #e7eaf0; --muted: #8a94a8; --arc: #6fe3ff; --fail: #ff6b6b;
+            --now: #1b3346; --video-height: 70vh; --gherkin-height: 70vh; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+        main { max-width: 1180px; margin: 0 auto; }
+        a { color: var(--arc); }
+        h1 { margin: 8px 0 4px; font-size: 28px; }
+        h2 { margin: 0 0 6px; font-size: 22px; }
+        h3 { margin: 0; font-size: 15px; font-weight: 600; }
+        code { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; font-size: 0.9em; }
+        .lead { color: var(--muted); margin: 0 0 16px; }
+        nav ol { columns: 3 220px; margin: 0 0 24px; padding: 12px 12px 12px 32px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+        nav li { break-inside: avoid; }
+        section { padding: 20px 0; border-top: 1px solid var(--line); scroll-margin-top: 8px; }
+        .summary { font-size: 18px; margin: 0 0 8px; }
+        .meta { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+        .scenario { margin: 16px 0 0; }
+        .no-recording .player { display: none; }
+        [hidden] { display: none !important; }
+        /* include: e2e-player.css */
+    </style>
+</head>
+
+<body>
+    <main>
+        <header>
+            <h1>BaconReader patches for Reseam</h1>
+            <p class="lead">What each patch does, and a recording of it on a phone: the test's steps beside the video, the step
+                the video is at highlighted, each step's time a button that plays from there. Install and update:
+                <a href="https://github.com/JoanComasFdz/baconreader-reseam-patches#-install">the README</a>.</p>
+        </header>
+        <!-- guide -->
+    </main>
+    <script>
+        /* include: e2e-player.js */
+    </script>
+    <script>
+        document.querySelectorAll(".recording").forEach(function (element) {
+            var data = JSON.parse(element.querySelector("script").textContent);
+            var src = element.getAttribute("data-src");
+            E2EPlayer.mount(element, { src: src, steps: E2EPlayer.toSteps(data), lazy: true });
+            if (!src) {
+                element.classList.add("no-recording");
+            }
+        });
+    </script>
+</body>
+
+</html>

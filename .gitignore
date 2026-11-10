@@ -30,3 +30,4 @@ node_modules/
 
 # The NAS runner's settings (tools/e2e/nas/.env.example)
 tools/e2e/nas/.env
+_site/

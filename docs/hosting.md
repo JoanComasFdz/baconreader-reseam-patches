@@ -1,5 +1,30 @@
 # Hosting
 
+## The user guide
+
+**`https://joancomasfdz.github.io/baconreader-reseam-patches/`**: what each patch does, with the newest recording of each
+of its e2e scenarios played beside its Gherkin and its marks.
+
+- **Built, not written:** `tools/guide/build.js` (Node, no dependencies; its tests: `node --test tools/guide/test/*.test.js`)
+  builds `site/` into `_site/`:
+  - `index.html` gets each patch's page, `docs/patches/<patch>.md` (AGENTS.md, "Patch pages"), in `docs/patches.md`'s
+    order, where its `<!-- guide -->` comment is;
+  - every page gets the player, `site/e2e-player.css` and `site/e2e-player.js`, inlined where its `include` comments
+    are, so a published page is one file and never meets a cached copy of another deploy's player;
+  - `E2EPlayer.mount(element, { src, steps, lazy })` puts a recording in any element; the guide's load only when they
+    come near the screen.
+- **Which recording:** a scenario's newest in `prs-resources`, the highest PR, then its highest version, as the VS Code
+  extension picks it (the builder uses its code). Its Gherkin and marks come from the player link in that PR's post,
+  whose fragment carries them, since no page can read a file from the release. A scenario with no recording shows its
+  Gherkin from its code, with no times.
+- **When:** `.github/workflows/pages.yml` builds and publishes it on a push to main that changes `site/`, the patch pages,
+  the scenarios or the builder; after each run of "E2E videos" and "E2E on the phone", which post and clean recordings;
+  every day; and on Run workflow.
+- **Locally:** `GITHUB_REPOSITORY=JoanComasFdz/baconreader-reseam-patches node tools/guide/build.js _site`, then open
+  `_site/index.html` (`GUIDE_OFFLINE=1` builds it without GitHub, every scenario unrecorded). In a cloud session, Node's
+  `fetch` takes the session's proxy only with `NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt`, and
+  `GITHUB_TOKEN` unset.
+
 ## E2E videos on pull requests
 
 Every pull request from a branch of this repository shows the end-to-end scenarios it added or changed
@@ -56,7 +81,7 @@ scenario's code.
 - **The player page for MP4s:** GitHub draws a video player only for a video it stored itself, and no markdown can show
   one for an MP4 in a release. The site has a page that plays one:
   **`https://joancomasfdz.github.io/baconreader-reseam-patches/e2e-player.html?v=<asset>`** (`site/e2e-player.html`,
-  published to the `gh-pages` branch by `.github/workflows/pages.yml` on every push to main that changes `site/`), with
+  built and published to the `gh-pages` branch by `.github/workflows/pages.yml`: "The user guide"), with
   the browser's own controls. `v` is an asset's name only,
   `pr-<n>-v<k>-<run>.mp4` (letters, digits and `-` in `<run>`); the page builds the URL itself,
   `https://github.com/JoanComasFdz/baconreader-reseam-patches/releases/download/prs-resources/<v>`, so it never plays a URL someone

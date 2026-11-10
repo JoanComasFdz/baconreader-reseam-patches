@@ -27,7 +27,7 @@ Each patch has a page, `docs/patches/<patch name, kebab-case>.md`, for its users
 - `**Settings** (BaconReader → Settings → Patches, under "<page>"):` with a bullet per setting (its title, its default, what it does), or `No settings.`
 - `**Limits**:`, only for what a user must know.
 
-A new patch, or a change to what one does or to its settings, updates its page and its row in `docs/patches.md` in the same PR. So does a new or renamed scenario, in its `scenarios` line.
+A new patch, or a change to what one does or to its settings, updates its page and its row in `docs/patches.md` in the same PR. So does a new or renamed scenario, in its `scenarios` line. The user guide on GitHub Pages is built from the pages and the scenarios' newest recordings after each merge and each posted recording (docs/hosting.md, "The user guide"): nothing else to update.
 
 ## Cloud sessions with both repos
 
