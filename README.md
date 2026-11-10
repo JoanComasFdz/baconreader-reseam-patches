@@ -55,7 +55,11 @@ fail. If Reseam Manager says the patches need a newer version, update Reseam Man
 
 Fixes for what broke since 2023, features BaconReader never had, and cleanups of what no longer works.
 
-**[📖 The user guide](https://joancomasfdz.github.io/baconreader-reseam-patches/)** shows what each patch does, its settings and its limits, with a video of it on a real phone and the test's steps beside it.
+<div align="center">
+
+[**📖 Explore the user guide**](https://joancomasfdz.github.io/baconreader-reseam-patches/)
+
+</div>
 
 ## 🛠️ Development
 
