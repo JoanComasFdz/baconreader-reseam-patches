@@ -7,7 +7,9 @@ of its e2e scenarios played beside its Gherkin and its marks.
 
 - **Built, not written:** `tools/guide/build.js` (Node, no dependencies; its tests: `node --test tools/guide/test/*.test.js`)
   builds `site/` into `_site/`:
-  - `index.html` is a user guide: a sidebar on the left lists the patches in docs/patches.md's groups (Fixes, Features,
+  - `index.html` is a user guide. It starts, under "Start here", with its pages on the patcher's manager,
+    `docs/manager/<page>.md` (how to install, with its Manager scenario's newest recording), and "How to update"
+    (`site/update.json`, below). Then a sidebar on the left lists the patches in docs/patches.md's groups (Fixes, Features,
     Cleanups; a patch in none comes under "More") where its `<!-- guide-nav -->` comment is, highlights the one being
     read and folds into a "Patches" menu on a phone; each patch's page, `docs/patches/<patch>.md` (AGENTS.md, "Patch
     pages"), comes in the same order where its `<!-- guide -->` comment is, with what it does only with this repo's
