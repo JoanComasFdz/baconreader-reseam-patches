@@ -91,5 +91,5 @@ In both repos, [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md):
 2. Find each fingerprint's method in BaconReader 6.1.4 (jadx or apktool) and write the patcher's target for it ([patcher-specific-code.md](patcher-specific-code.md)).
 3. Write the extension in the repo's extension language. Check that BaconReader reaches every branch you keep.
 4. Map its settings to the patcher's settings ([patcher-specific-code.md](patcher-specific-code.md)).
-5. Run the checks. Then add the patch's one-line row to the README, in Fixes, Features or Cleanups, its page to `docs/patches/` and its row to [docs/patches.md](docs/patches.md) ("Patch pages"), and its settings, keys and differences from ReVanced to [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md).
+5. Run the checks. Then add the patch's page to `docs/patches/` and its row to [docs/patches.md](docs/patches.md), under Fixes, Features or Cleanups ("Patch pages"), and its settings, keys and differences from ReVanced to [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md).
 6. Port it to the other repo too, or say in the PR why not.

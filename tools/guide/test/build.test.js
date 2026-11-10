@@ -78,9 +78,10 @@ test('a page\'s include comments become the files they name; an unknown one stay
   assert.equal(guide.inline(html, { 'a.css': 'C', 'a.js': 'J' }), '<style>C</style><script>J</script><!-- include: b.js -->');
 });
 
-test('the README\'s groups list their patches in its order, a header row and its separator left out', () => {
-  const readme = '**🔧 Fixes**: what broke\n\n| Patch | |\n|---|---|\n| Fix A | a |\n| Fix B | b |\n\n**✨ Features**\n\n| Patch | |\n|---|---|\n| Show C | c |\n\n**Nothing**\n';
-  assert.deepEqual(guide.readGroups(readme), [{ title: '🔧 Fixes', names: ['Fix A', 'Fix B'] }, { title: '✨ Features', names: ['Show C'] }]);
+test('the index\'s groups list their patches in its order, its header rows left out', () => {
+  const index = '# Patches\n\n## 🔧 Fixes\n\nWhat broke.\n\n| Patch | What it does |\n|---|---|\n| [Fix A](patches/fix-a.md) | a |\n'
+    + '| [Fix B](patches/fix-b.md) | b |\n\n## ✨ Features\n\n| Patch | What it does |\n|---|---|\n| [Show C](patches/show-c.md) | c |\n\n## Nothing\n';
+  assert.deepEqual(guide.readGroups(index), [{ title: '🔧 Fixes', names: ['Fix A', 'Fix B'] }, { title: '✨ Features', names: ['Show C'] }]);
 });
 
 test('the pages come in their groups; a page in none comes under "More"', () => {
