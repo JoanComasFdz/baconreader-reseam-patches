@@ -105,3 +105,21 @@ test('a patch with no scenario shows its page and no recording; one with a patch
   assert.match(html, /<aside class="patcher-note"><h3>Only in Morphe<\/h3>\n<ul><li>A row in <strong>Links<\/strong>\.<\/li><\/ul><\/aside>/);
   assert.equal(guide.toPatcher('JoanComasFdz/baconreader-reseam-patches'), 'Reseam');
 });
+
+test('"How to update" comes first, in the sidebar and the content, its steps numbered and marked when each starts', () => {
+  const update = { title: 'How to update', summary: 'Patch again.', caption: 'Updating', video: 'update.mp4',
+    steps: [{ text: 'Tap "Patch".', seconds: 1.5 }, { text: 'Tap "Update".', seconds: 9 }] };
+  const page = { name: 'Fix A', file: 'fix-a.md', summary: 's', body: '', scenarioBlocks: [] };
+  const rendered = guide.renderGuide('O/r', [{ title: 'Fixes', pages: [page] }], update);
+  assert.ok(rendered.nav.indexOf('href="#update"') < rendered.nav.indexOf('href="#fix-a"'));
+  assert.ok(rendered.sections.indexOf('id="update"') < rendered.sections.indexOf('id="fix-a"'));
+  const data = JSON.parse(/<script type="application\/json">(.*?)<\/script>/.exec(guide.renderUpdate(update))[1]);
+  assert.deepEqual(data, { g: '1. Tap "Patch".\n2. Tap "Update".', m: [[0, 1.5, 0], [1, 9, 0]] });
+  assert.ok(guide.renderUpdate(update).includes('data-src="update.mp4"'));
+});
+
+test('without an update, the guide is its patches alone', () => {
+  const page = { name: 'Fix A', file: 'fix-a.md', summary: 's', body: '', scenarioBlocks: [] };
+  const rendered = guide.renderGuide('O/r', [{ title: 'Fixes', pages: [page] }]);
+  assert.ok(!rendered.nav.includes('#update') && !rendered.sections.includes('id="update"'));
+});
