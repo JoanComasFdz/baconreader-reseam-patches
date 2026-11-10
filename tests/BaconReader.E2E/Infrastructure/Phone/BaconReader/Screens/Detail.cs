@@ -236,6 +236,9 @@ public sealed class Comments(AndroidDriver driver)
     internal const string Comment = "commentBodyContainer";
 
     private const string List = "listView";
+
+    // The time bar of a video's player, ExoPlayer's own id.
+    private const string TimeBar = "exo_progress";
     private const string Header = "commentSubText";
     private const string Text = "commentBody";
     private const string Position = "exo_position";
@@ -295,8 +298,31 @@ public sealed class Comments(AndroidDriver driver)
                 throw new InvalidOperationException($"{what} didn't show whole after scrolling 15 times.");
             }
 
-            await OnScreen.DoAsync(driver, () => OnScreen.ScrollGesture(driver, driver.FindElement(Locate.AppId(List)), direction, 0.3));
+            await OnScreen.DoAsync(driver, () => OnScreen.ScrollGesture(driver, ScrollArea(Screen(), direction, 0.3), direction, 0.3));
         }
+    }
+
+    // The list's area to scroll, cut short of a video's time bar where the finger would land on one: the bar keeps any
+    // touch that starts on it, and moves the video instead of the list.
+    private static Rectangle ScrollArea(ScreenSnapshot screen, string direction, double percent)
+    {
+        var area = (screen.WithAppId(List).FirstOrDefault() ?? throw new InvalidOperationException("The comments aren't on the screen.")).Bounds;
+        var bars = screen.WithAppId(TimeBar).Where(bar => bar.Displayed).Select(bar => bar.Bounds).ToList();
+        for (var cuts = 0; cuts < bars.Count; cuts++)
+        {
+            var start = OnScreen.ScrollStart(area, direction, percent);
+            var under = bars.FirstOrDefault(bar => bar.Top <= start.Y && start.Y <= bar.Bottom);
+            if (under.IsEmpty)
+            {
+                break;
+            }
+
+            area = direction == "up"
+                ? Rectangle.FromLTRB(area.Left, under.Bottom + 1, area.Right, area.Bottom)
+                : Rectangle.FromLTRB(area.Left, area.Top, area.Right, under.Top - 1);
+        }
+
+        return area;
     }
 
     /// <summary>
