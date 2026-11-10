@@ -21,11 +21,13 @@ The same BaconReader patches exist for two patchers: [baconreader-reseam-patches
 ## Patch pages
 
 Each patch has a page, `docs/patches/<patch name, kebab-case>.md`, for its users: what they get and see, its settings and its limits, in their words, short and straight to the point. It's checked against the code, never copied from an older description. Its shape is the other pages':
-- `<!-- scenarios: <TestClass>, … -->` under the license lines: the e2e scenario classes that show the patch (`PatchPagesTests` checks that every scenario is on one page).
+- `<!-- scenarios: <TestClass>, … -->` under the license lines: the e2e scenario classes that show the patch (`PatchPagesTests` checks that every scenario is on one page). A patch with no scenario yet has `<!-- scenarios: -->`; the user guide shows its page with no recording.
 - `# <the patch's name in the bundle>`, then one sentence of what the user gets: the patch's row in `docs/patches.md`, word for word.
 - Bullets of what changes in the app, quoting its texts as the screen shows them.
 - `**Settings** (BaconReader → Settings → Patches, under "<page>"):` with a bullet per setting (its title, its default, what it does), or `No settings.`
 - `**Limits**:`, only for what a user must know.
+
+What a patch does only with one patcher (a patcher limit, or a setting only one has) goes in that repo's `docs/patcher-specific-patches/<the page's file name>.md`, bullets in the same words: its user guide shows them under the patch as "Only in <patcher>".
 
 A new patch, or a change to what one does or to its settings, updates its page and its row in `docs/patches.md` in the same PR. So does a new or renamed scenario, in its `scenarios` line. The user guide on GitHub Pages is built from the pages and the scenarios' newest recordings after each merge and each posted recording (docs/hosting.md, "The user guide"): nothing else to update.
 

@@ -10,7 +10,9 @@ of its e2e scenarios played beside its Gherkin and its marks.
   - `index.html` is a user guide: a sidebar on the left lists the patches in the README's groups (Fixes, Features,
     Cleanups; a patch in none comes under "More") where its `<!-- guide-nav -->` comment is, highlights the one being
     read and folds into a "Patches" menu on a phone; each patch's page, `docs/patches/<patch>.md` (AGENTS.md, "Patch
-    pages"), comes in the same order where its `<!-- guide -->` comment is;
+    pages"), comes in the same order where its `<!-- guide -->` comment is, with what it does only with this repo's
+    patcher (`docs/patcher-specific-patches/<patch>.md`, if any) as an "Only in <patcher>" note; a patch with no
+    scenario shows its page and "No recording";
   - every page gets the player, `site/e2e-player.css` and `site/e2e-player.js`, inlined where its `include` comments
     are, so a published page is one file and never meets a cached copy of another deploy's player;
   - `E2EPlayer.mount(element, { src, steps, lazy })` puts a recording in any element; the guide's load only when they

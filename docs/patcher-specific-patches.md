@@ -87,7 +87,7 @@ On the Comments page, in the Load more comments section:
 | Setting | Key | Default |
 |---|---|---|
 | Comments to load: a number from 200 to 500 | `load_more_comments.comment_limit` | `500` |
-| Auto-load "load more comments": Off, or up to 1 to 5 replies | `load_more_comments.auto_load_more_comments` | Up to 2 replies (`2`) |
+| Auto-load "load more comments": "Off", "1 reply", "Up to 2 replies" … "Up to 5 replies" | `load_more_comments.auto_load_more_comments` | Up to 2 replies (`2`) |
 
 ### Reddit chat settings
 

@@ -3,8 +3,9 @@
 // Builds the site GitHub Pages publishes (.github/workflows/pages.yml):
 //   node tools/guide/build.js <out folder>
 // - the user guide, index.html: a sidebar listing the patches in the README's groups (Fixes, Features, Cleanups), and
-//   each patch's page (docs/patches/<patch>.md) with the newest recording of each e2e scenario its page names, played by
-//   the e2e player beside its Gherkin and its marks;
+//   each patch's page (docs/patches/<patch>.md), what it does only with this repository's patcher
+//   (docs/patcher-specific-patches/<patch>.md, if any), and the newest recording of each e2e scenario its page names,
+//   played by the e2e player beside its Gherkin and its marks; a patch with no scenario shows its page alone;
 // - site/'s other pages (e2e-player.html), as they are.
 // Each page gets e2e-player.css and e2e-player.js inlined where its "include" comments are, so a published page is one
 // file. The recordings are prs-resources' assets; a scenario's newest is the highest PR, then its highest version (the
@@ -164,16 +165,28 @@ function renderScenario(repository, scenario) {
 </figure>`;
 }
 
-/** A patch's section: its name, summary, page and scenarios. */
+/** "JoanComasFdz/baconreader-morphe-patches" → "Morphe": the patcher a repository's patches are for. */
+function toPatcher(repository) {
+  const name = /baconreader-(\w+)-patches/.exec(repository)?.[1] ?? '';
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/**
+ * A patch's section: its name, summary, page, what it does only with this repository's patcher (its page in
+ * docs/patcher-specific-patches/, if any) and its scenarios; a patch with none has no recording to show.
+ */
 function renderPatch(repository, page) {
   const scenarios = page.scenarioBlocks.length > 0
     ? page.scenarioBlocks.map((scenario) => renderScenario(repository, scenario)).join('\n')
-    : '<p class="meta">No e2e scenario shows this patch yet.</p>';
+    : '<p class="meta">No recording: this patch has no e2e test yet.</p>';
+  const only = page.patcherSpecific
+    ? `<aside class="patcher-note"><h3>Only in ${escapeHtml(toPatcher(repository))}</h3>\n${renderMarkdown(page.patcherSpecific)}</aside>\n`
+    : '';
   return `<section id="${toAnchor(page.file)}">
 <h2>${escapeHtml(page.name)}</h2>
 <p class="summary">${renderInline(page.summary)}</p>
 ${renderMarkdown(page.body)}
-${scenarios}
+${only}${scenarios}
 </section>`;
 }
 
@@ -240,6 +253,14 @@ async function build(root, out, repository, offline) {
   const docs = path.join(root, 'docs', 'patches');
   const files = orderPages(fs.readFileSync(path.join(root, 'docs', 'patches.md'), 'utf8'), fs.readdirSync(docs).filter((file) => file.endsWith('.md')));
   const pages = files.map((file) => readPage(file, fs.readFileSync(path.join(docs, file), 'utf8')));
+  // What a patch does only with this repository's patcher: docs/patcher-specific-patches/<patch>.md, after its title.
+  for (const page of pages) {
+    const only = path.join(root, 'docs', 'patcher-specific-patches', page.file);
+    if (fs.existsSync(only)) {
+      const lines = fs.readFileSync(only, 'utf8').replace(/<!--[\s\S]*?-->/g, '').split('\n');
+      page.patcherSpecific = lines.filter((line) => !line.startsWith('# ')).join('\n').trim();
+    }
+  }
   const scenarioFiles = findScenarioFiles(root);
   const assets = offline ? [] : await readAssets(repository);
   const comments = {};
@@ -302,4 +323,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { readPage, orderPages, readGroups, groupPages, renderInline, renderMarkdown, toAnchor, readPlayerData, pickNewest, renderScenario, renderPatch, renderGuide, inline };
+module.exports = { readPage, orderPages, readGroups, groupPages, toPatcher, renderInline, renderMarkdown, toAnchor, readPlayerData, pickNewest, renderScenario, renderPatch, renderGuide, inline };
