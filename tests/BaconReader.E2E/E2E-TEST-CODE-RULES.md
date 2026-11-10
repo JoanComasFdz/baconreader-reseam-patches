@@ -47,12 +47,12 @@ public sealed class SpoofClientTests : BaseE2E
           When I tap "Accept"
           # BaconReader comes back from the login with the left menu open.
           Then the left menu shows the test account's user name
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           And Reddit saw RedReader's client ID, redirect URI and User-Agent
           When I close the left menu
           Then the toolbar shows the "Front Page" feed
           And the feed shows the post "Hello from r/e2e"
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           And Reddit got the request for the posts with RedReader's User-Agent
         """)]
     public async Task BaconReaderPatchedWithSpoofClientLogsInToRedditAsRedReader(Screen screen)
@@ -105,7 +105,7 @@ public sealed class SpoofClientTests : BaseE2E
         // Then
         var toolbar = await Phone.BaconReader.Main.Toolbar.ReadAsync();
         var posts = await Phone.BaconReader.Main.Posts.ReadAsync();
-        // Not on the screen: the fake Reddit records what BaconReader sent.
+        // On the setup page: the fake Reddit records what BaconReader sent.
         var requestsForPosts = Reddit.ReadRequestsForPosts();
         Asserting.That(toolbar).ShowsFeed(new Feed.FrontPage());
         Asserting.That(posts).ShowsThePosts("Hello from r/e2e");
@@ -165,9 +165,10 @@ public sealed class SpoofClientTests : BaseE2E
   isn't the one installed (sending one takes 1–3 minutes over the slow link): the LoggedIn scenarios share one;
 - **a fresh app per scenario:** stopped and its data cleared (no login, no setting, no cache from the scenario before),
   as just installed, but with its notifications denied (`Device/PatchedApps`): Android doesn't ask, on any device. A
-  LoggedIn scenario's app starts logged in with the test account: the fake Reddit hands it the login at its start
-  (`LogInAtStart`, "E2E fake Reddit"), so `LogInWithTheTestAccountAsync` waits for the posts instead of going through
-  the login screens (~11 s a scenario); Spoof client's Startup scenario still logs in through them;
+  LoggedIn scenario's app starts logged in with the test account: its Given's `Reddit.TheTestAccountIsLoggedIn()` has
+  the fake Reddit hand it the login at its start (`LogInAtStart`, "E2E fake Reddit"), so `OpenAsync` waits for the
+  posts instead of going through the login screens (~11 s a scenario); Spoof client's Startup scenario still logs in
+  through them;
 - **the screen:** one Appium session on the phone, its UiAutomator2 helpers already installed
   (`skipServerInstallation`, `skipDeviceInitialization`; `E2E_APPIUM_INSTALL_HELPERS=1` installs them after the
   phone was reset), that never launches or resets the app itself: the scenario opens it, from Android's home screen,
@@ -303,8 +304,8 @@ Line for line, in the Gherkin's order:
 | `And BaconReader is patched with "Spoof client"`, one line a patch (Startup) | `[PatchedWith(Patch.SpoofClient, …)]`, every patch the Given names |
 | `And BaconReader is patched with every patch` (LoggedIn) | `[PatchedWithEveryPatch]` |
 | `And BaconReader is installed` | nothing: BaseE2E installed it |
-| `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data |
-| `And the test account is logged in` | `// Given`: `Phone.BaconReader.LogInWithTheTestAccountAsync()`, after it opens |
+| `And the test account is logged in` (LoggedIn) | `// Given`: `Reddit.TheTestAccountIsLoggedIn()`, with the Reddit data, before it opens |
+| `And BaconReader is open` | `// Given`: `Phone.BaconReader.OpenAsync()`, after the Reddit data; in a LoggedIn scenario it waits for the feed's posts |
 | A `When`, and the `And` lines after it | One `// When` block: one Act call per line, in order, ending with the `WaitUntil…` for what the Then reads |
 | `I open BaconReader` | `Phone.Launcher.OpenBaconReaderAsync()` |
 | `I tap "GOT IT :(" on "FINAL RELEASE ANNOUNCEMENT!"` | `Phone.BaconReader.FinalReleaseAnnouncement.WaitUntilShownAsync()`, `ClickGotItAsync()` |

@@ -22,8 +22,8 @@ public sealed class TextPostIconTests : BaseE2E
         Scenario: Text post icon opens a text post's text with a page icon whose chevron flips
           Given Reddit has a post "Read me" in r/e2e with the text "The hidden text"
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I select the "e2e" feed
           # BaconReader starts in the card view. The icon's description says what tapping it does.
           Then the post "Read me" shows "Show post text"
@@ -48,8 +48,8 @@ public sealed class TextPostIconTests : BaseE2E
     {
         // Given
         Reddit.HasAPostWithTheText("Read me", "e2e", "The hidden text");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Toolbar.SelectFeedAsync(new Feed.Subreddit("e2e"));

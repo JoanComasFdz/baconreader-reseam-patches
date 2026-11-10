@@ -37,8 +37,8 @@ public sealed class ShowUserAvatarsTests : BaseE2E
           And Reddit has a second account "e2e_second"
           And the user "e2e_second" has an avatar
           And BaconReader is patched with every patch
-          And BaconReader is open
           And the test account is logged in
+          And BaconReader is open
           When I select the "e2e" feed
           And I tap the post "Introductions"
           # "Show user avatars" is off by default.
@@ -139,8 +139,8 @@ public sealed class ShowUserAvatarsTests : BaseE2E
         Reddit.TheUserHasAnAvatar("e2e_user");
         Reddit.HasASecondAccount("e2e_second");
         Reddit.TheUserHasAnAvatar("e2e_second");
+        Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
-        await Phone.BaconReader.LogInWithTheTestAccountAsync();
 
         // When
         await Phone.BaconReader.Main.Toolbar.SelectFeedAsync(new Feed.Subreddit("e2e"));
