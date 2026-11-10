@@ -9,7 +9,7 @@ Follow [STYLE.md](STYLE.md). A change is done when the checks below pass for eve
 
 The same BaconReader patches exist for two patchers: [baconreader-reseam-patches](https://github.com/JoanComasFdz/baconreader-reseam-patches) (Reseam) and [baconreader-morphe-patches](https://github.com/JoanComasFdz/baconreader-morphe-patches) (Morphe).
 
-- **Shared, word for word in both repos:** `AGENTS.md`, `CLAUDE.md`, `STYLE.md`, `docs/patches.md`. The "Shared docs" workflow fails when one differs from the other repo's. Change them in both repos, in one PR each.
+- **Shared, word for word in both repos:** `AGENTS.md`, `CLAUDE.md`, `STYLE.md`, `docs/patches.md` and each patch's page in `docs/patches/`. The "Shared docs" workflow fails when one differs from the other repo's. Change them in both repos, in one PR each.
 - **Shared but for the patcher's name:** the VS Code e2e recordings extension (`tools/vscode-extension`), its e2e project (`tests/BaconReader.VsCodeExtension.E2E`), the e2e projects' shared code (`tests/BaconReader.E2E.Shared`) and the dev container (`.devcontainer`). The "Shared VS Code extension" workflow fails when the other repo's copy, with "Morphe" and "Reseam" swapped, differs from this one. Change them in both repos, in one PR each.
 - **Patcher-specific:** what really differs between the patchers, one set per repo:
   - [patcher-specific-build.md](patcher-specific-build.md): tools, build, list, patch, sign.
@@ -17,6 +17,17 @@ The same BaconReader patches exist for two patchers: [baconreader-reseam-patches
   - [patcher-specific-release.md](patcher-specific-release.md): branches, PRs, releases.
   - [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md): settings and keys, differences from ReVanced.
 - A new patch or a behavior change goes to both repos. A difference between them is either a patcher limit, written down in `docs/patcher-specific-patches.md`, or a bug.
+
+## Patch pages
+
+Each patch has a page, `docs/patches/<patch name, kebab-case>.md`, for its users: what they get and see, its settings and its limits, in their words, short and straight to the point. It's checked against the code, never copied from an older description. Its shape is the other pages':
+- `<!-- scenarios: <TestClass>, … -->` under the license lines: the e2e scenario classes that show the patch (`PatchPagesTests` checks that every scenario is on one page).
+- `# <the patch's name in the bundle>`, then one sentence of what the user gets: the patch's row in `docs/patches.md`, word for word.
+- Bullets of what changes in the app, quoting its texts as the screen shows them.
+- `**Settings** (BaconReader → Settings → Patches, under "<page>"):` with a bullet per setting (its title, its default, what it does), or `No settings.`
+- `**Limits**:`, only for what a user must know.
+
+A new patch, or a change to what one does or to its settings, updates its page and its row in `docs/patches.md` in the same PR. So does a new or renamed scenario, in its `scenarios` line.
 
 ## Cloud sessions with both repos
 
@@ -78,5 +89,5 @@ In both repos, [tests/BaconReader.E2E](tests/BaconReader.E2E/README.md):
 2. Find each fingerprint's method in BaconReader 6.1.4 (jadx or apktool) and write the patcher's target for it ([patcher-specific-code.md](patcher-specific-code.md)).
 3. Write the extension in the repo's extension language. Check that BaconReader reaches every branch you keep.
 4. Map its settings to the patcher's settings ([patcher-specific-code.md](patcher-specific-code.md)).
-5. Run the checks. Then add the patch's one-line row to the README, in Fixes, Features or Cleanups, its row to [docs/patches.md](docs/patches.md), and its settings, keys and differences from ReVanced to [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md).
+5. Run the checks. Then add the patch's one-line row to the README, in Fixes, Features or Cleanups, its page to `docs/patches/` and its row to [docs/patches.md](docs/patches.md) ("Patch pages"), and its settings, keys and differences from ReVanced to [docs/patcher-specific-patches.md](docs/patcher-specific-patches.md).
 6. Port it to the other repo too, or say in the PR why not.
