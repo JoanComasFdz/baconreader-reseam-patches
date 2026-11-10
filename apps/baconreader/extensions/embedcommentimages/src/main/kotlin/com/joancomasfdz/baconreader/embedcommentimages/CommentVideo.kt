@@ -10,6 +10,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -64,9 +65,13 @@ internal object CommentVideo {
     private const val DEFAULT_RATIO = 9f / 16f
     private const val PLAYER_USER_AGENT = "BaconReader"
     private const val BUTTON_SIZE_DP = 36
+    private const val ORIENTATION_RELEASE_DELAY_MS = 1000L
 
     // PlayerView.setShowBuffering: show the spinner while buffering when playing.
     private const val SHOW_BUFFERING_WHEN_PLAYING = 1
+
+    // Player.STATE_ENDED: the video played to its end.
+    private const val STATE_ENDED = 4
 
     private val loader = Executors.newFixedThreadPool(2)
     private val main = Handler(Looper.getMainLooper())
@@ -306,6 +311,8 @@ internal object CommentVideo {
             val root = FrameLayout(activity)
             root.setBackgroundColor(Color.BLACK)
             val playerView = newPlayerView(activity)
+            playerView.id =
+                CommentImages.resourceId(activity, "baconreader_patches_video_full_screen")
             root.addView(
                 playerView,
                 FrameLayout.LayoutParams(
@@ -324,19 +331,44 @@ internal object CommentVideo {
             exit.setOnClickListener { dialog.dismiss() }
 
             val orientation = activity.requestedOrientation
-            if (box.ratio < 1f) {
+            val turned = box.ratio < 1f
+            val before =
+                if (
+                    activity.resources.configuration.orientation ==
+                        Configuration.ORIENTATION_LANDSCAPE
+                ) {
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                }
+            if (turned) {
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
             dialog.setOnDismissListener {
                 if (fullScreen === dialog) fullScreen = null
-                activity.requestedOrientation = orientation
+                if (turned) {
+                    // Given back right away, the app's own orientation follows the sensor, which
+                    // keeps landscape while the phone lies flat. The screen turns back first.
+                    activity.requestedOrientation = before
+                    main.postDelayed(
+                        { if (fullScreen == null) activity.requestedOrientation = orientation },
+                        ORIENTATION_RELEASE_DELAY_MS,
+                    )
+                }
                 if (box.tag === player) PlayerView.switchTargetView(player, playerView, inline)
             }
 
+            // A new view shows no frame of a video that has ended: it starts over, paused.
+            if (player.playbackState == STATE_ENDED) player.seekTo(0, 0L)
             PlayerView.switchTargetView(player, inline, playerView)
             followControls(playerView, buttons)
             dialog.show()
-            hideSystemBars(dialog)
+            // The theme hides the status bar. Hiding the navigation bar too would show Android's
+            // "Viewing full screen" message over the video, the first time.
+            dialog.window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
             fullScreen = dialog
         } catch (exception: Exception) {
             ErrorDialog.report(TAG, "Could not show the video in full screen", exception)
@@ -351,19 +383,6 @@ internal object CommentVideo {
         } catch (exception: Exception) {
             Log.i(TAG, "Could not close the full screen", exception)
         }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun hideSystemBars(dialog: Dialog) {
-        val window = dialog.window ?: return
-        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
     }
 
     private fun activityOf(context: Context): Activity? {
