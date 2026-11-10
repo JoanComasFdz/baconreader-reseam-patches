@@ -358,8 +358,12 @@ internal object CommentVideo {
                 if (box.tag === player) PlayerView.switchTargetView(player, playerView, inline)
             }
 
-            // A new view shows no frame of a video that has ended: it starts over, paused.
-            if (player.playbackState == STATE_ENDED) player.seekTo(0, 0L)
+            // A new view shows no frame of a video that has ended: it starts over, paused. The
+            // player still wants to play once it has ended, so it's paused first.
+            if (player.playbackState == STATE_ENDED) {
+                player.setPlayWhenReady(false)
+                player.seekTo(0, 0L)
+            }
             PlayerView.switchTargetView(player, inline, playerView)
             followControls(playerView, buttons)
             dialog.show()
