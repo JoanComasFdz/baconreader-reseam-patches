@@ -43,7 +43,7 @@ public sealed class RedditChatTests : BaseE2E
           And I tap "Chat (2)"
           Then the toolbar shows "Chat" with only "Refresh"
           And the chat shows "Chats"
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           And Reddit marked the 2 chat messages read
           When I open the left menu
           Then the left menu shows "Chat" after "Inbox"
@@ -100,7 +100,7 @@ public sealed class RedditChatTests : BaseE2E
         await Reddit.WaitUntilMessagesMarkedAsReadAsync(2);
 
         // Then
-        // Not on the screen: the fake Reddit records what BaconReader sent.
+        // On the setup page: the fake Reddit records what BaconReader sent.
         var toolbar = await Phone.BaconReader.Main.Toolbar.ReadAsync();
         var chat = await Phone.BaconReader.Main.Chat.ReadAsync();
         var read = Reddit.ReadMessagesMarkedAsRead();

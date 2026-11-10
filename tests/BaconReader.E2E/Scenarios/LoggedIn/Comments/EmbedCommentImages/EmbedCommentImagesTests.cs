@@ -109,7 +109,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           # An emote is drawn in the comment's text, on its line.
           Then the comment "Love it" shows 1 emote after its text
           # Reddit sends the same placeholder, "dizzy_face", for every emote: the patch finds a Snoomoji's GIF from its name.
-          # Not on the screen: the fake Reddit records what BaconReader asked for.
+          # On the setup page: the fake Reddit records what BaconReader asked for.
           And Reddit served the Snoomoji "grin"
           And the comment "Stonks" shows 1 emote after its text
           # A subreddit's emote can't be found from its name: it shows Reddit's placeholder.
@@ -279,7 +279,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           And I tap the post "YouTube thread"
           # The thumbnail is drawn in the comment's text, on its own line under the link.
           Then the comment "Bare link" shows a thumbnail under its link
-          # Not on the screen: the fake YouTube records what BaconReader asked for.
+          # On the setup page: the fake YouTube records what BaconReader asked for.
           And YouTube served the thumbnail of "Cooking pasta at home"
           When I go back to the posts
           And I open the left menu
@@ -295,7 +295,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
           Then the comment "Plain X post" shows the post "E2E Writer @e2ewriter · Oct 2, 2025" saying "Just setting up my fake account"
           # The photo is drawn in the comment's text, on its own line under the post.
           And the comment "X photo" shows the post "E2E Writer @e2ewriter · Oct 2, 2025" saying "A photo from the beach", with a picture
-          # Not on the screen: the fake X records what BaconReader asked for. The patch asks X for the small photo.
+          # On the setup page: the fake X records what BaconReader asked for. The patch asks X for the small photo.
           And X served the small photo of "A photo from the beach"
           When I scroll to the comment "X video"
           # A video shows its still, with a play badge.
@@ -453,7 +453,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
 
         // Then
         // Reddit sends the same placeholder, "dizzy_face", for every emote: the patch finds a Snoomoji's GIF from its name.
-        // Not on the screen: the fake Reddit records what BaconReader asked for.
+        // On the setup page: the fake Reddit records what BaconReader asked for.
         var loveIt = await Phone.BaconReader.Detail.Comments.ReadAsync("Love it");
         var grin = Reddit.ReadRequestsForTheSnoomoji("grin");
         var stonks = await Phone.BaconReader.Detail.Comments.ReadAsync("Stonks");
@@ -895,7 +895,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         // Then
         // The thumbnail is drawn in the comment's text, on its own line under the link.
         var withThumbnail = await Phone.BaconReader.Detail.Comments.ReadAsync("Bare link");
-        // Not on the screen: the fake YouTube records what BaconReader asked for.
+        // On the setup page: the fake YouTube records what BaconReader asked for.
         var thumbnail = Reddit.ReadRequestsForTheYouTubeThumbnailOf("Cooking pasta at home");
         Asserting.That(withThumbnail).ShowsAThumbnailUnderItsLink();
         Asserting.That(thumbnail).Served();
@@ -933,7 +933,7 @@ public sealed class EmbedCommentImagesTests : BaseE2E
         var plainXPost = await Phone.BaconReader.Detail.Comments.ReadAsync("Plain X post");
         // The photo is drawn in the comment's text, on its own line under the post.
         var xPhoto = await Phone.BaconReader.Detail.Comments.ReadAsync("X photo");
-        // Not on the screen: the fake X records what BaconReader asked for. The patch asks X for the small photo.
+        // On the setup page: the fake X records what BaconReader asked for. The patch asks X for the small photo.
         var xPhotoRequests = Reddit.ReadRequestsForThePhotoOfTheXPost("A photo from the beach");
         Asserting.That(plainXPost).ShowsThePost("E2E Writer @e2ewriter · Oct 2, 2025", "Just setting up my fake account");
         Asserting.That(xPhoto).ShowsThePostWithAPicture("E2E Writer @e2ewriter · Oct 2, 2025", "A photo from the beach");

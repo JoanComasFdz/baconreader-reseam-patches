@@ -29,7 +29,7 @@ public sealed class LoadMoreCommentsTests : BaseE2E
           And the test account is logged in
           And BaconReader is open
           When I tap the post "Long thread"
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           Then Reddit got the request for the comments of "Long thread" with the limit 500
           # "Up to 2 replies", the default: the 2 replies of "Comment 1" load right after the post's comments.
           And the comment "Comment 1" shows the replies "Reply 1 to Comment 1" and "Reply 2 to Comment 1"
@@ -122,7 +122,7 @@ public sealed class LoadMoreCommentsTests : BaseE2E
         await Phone.BaconReader.Detail.Comments.WaitUntilLoadMoreShownAsync("load more comments (3 replies)");
 
         // Then
-        // Not on the screen: the fake Reddit records what BaconReader sent.
+        // On the setup page: the fake Reddit records what BaconReader sent.
         var first = Reddit.ReadRequestsForTheCommentsOf("Long thread");
         // "Up to 2 replies", the default: the 2 replies of "Comment 1" load right after the post's comments.
         var shown = await Phone.BaconReader.Detail.Comments.ReadShownAsync();

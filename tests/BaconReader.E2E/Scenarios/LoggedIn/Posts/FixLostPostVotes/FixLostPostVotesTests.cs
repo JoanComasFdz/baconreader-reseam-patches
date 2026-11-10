@@ -32,7 +32,7 @@ public sealed class FixLostPostVotesTests : BaseE2E
           And I wait until the comment "First comment" shows
           And I go back to the posts
           Then the post "Vote while loading" shows 2 points
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           And Reddit got an upvote on the post "Vote while loading"
           When I tap the post "Vote while loading"
           # Tapping the upvote again takes the vote back.
@@ -63,7 +63,7 @@ public sealed class FixLostPostVotesTests : BaseE2E
 
         // Then
         var upvoted = await Phone.BaconReader.Main.Posts.ReadPostAsync("Vote while loading");
-        // Not on the screen: the fake Reddit records what BaconReader sent.
+        // On the setup page: the fake Reddit records what BaconReader sent.
         var votes = Reddit.ReadVotes();
         Asserting.That(upvoted).ShowsPoints(2);
         Asserting.That(votes).GotAnUpvoteOn("Vote while loading");

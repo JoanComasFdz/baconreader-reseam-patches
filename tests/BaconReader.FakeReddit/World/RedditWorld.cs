@@ -143,6 +143,8 @@ public sealed class RedditWorld
             LoginPage = new LoginPageOptions();
             loginAtStart = null;
             accountsBeforeScenario = 0;
+            setupEvents.Clear();
+            scenario++;
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;
             // Reddit's ids are base 36; starting at 36^4 makes them five characters, like an old post's.
@@ -426,6 +428,29 @@ public sealed class RedditWorld
     internal IReadOnlyList<Subreddit> SubredditsUnlocked => subreddits;
 
     internal IReadOnlyList<Post> PostsUnlocked => posts;
+
+    // What the scenario did to the fake and read from it once the app was open, for the setup page, oldest first.
+    private readonly List<SetupEvent> setupEvents = [];
+
+    // Which scenario the fake is set up for: one more at each Reset, for the setup page to start afresh.
+    private int scenario;
+
+    /// <summary>
+    /// Shows on the setup page (<c>/_fake/setup</c>) that the scenario changed the fake (<paramref name="checkedJson"/>
+    /// null: "the phone joins another network") or read what it saw (<paramref name="checkedJson"/>: the snapshot it
+    /// read, as JSON), titled <paramref name="title"/>: a recording shows the page for such a line.
+    /// </summary>
+    public void NoteOnSetupPage(string title, string? checkedJson = null)
+    {
+        lock (Sync)
+        {
+            setupEvents.Add(new SetupEvent(setupEvents.Count, title, checkedJson));
+        }
+    }
+
+    internal IReadOnlyList<SetupEvent> SetupEventsUnlocked => setupEvents;
+
+    internal int ScenarioUnlocked => scenario;
 
     /// <summary>The version of what the fake has that the setup page last said it shows (Endpoints/Setup.cs).</summary>
     internal string? SetupShown { get; set; }

@@ -38,7 +38,7 @@ public sealed class FixLoadMoreCommentsTests : BaseE2E
           # 500 comments come with the post; the other 60 load at the end of the list, 50 and then 10.
           When I scroll to the end of the comments
           Then the comments end with "Comment 560"
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           And Reddit refused every "load more comments" BaconReader asked for
         """)]
     public async Task FixLoadMoreCommentsLoadsTheHiddenCommentsFromTheirThreadsWhenRedditRefusesLoadMoreComments(Screen screen)
@@ -78,7 +78,7 @@ public sealed class FixLoadMoreCommentsTests : BaseE2E
         // Then
         // 500 comments come with the post; the other 60 load at the end of the list, 50 and then 10.
         var end = await Phone.BaconReader.Detail.Comments.ReadShownAsync();
-        // Not on the screen: the fake Reddit records what BaconReader sent.
+        // On the setup page: the fake Reddit records what BaconReader sent.
         var asked = Reddit.ReadRequestsForLoadMoreComments();
         Asserting.That(end).EndsWithTheComment("Comment 560");
         Asserting.That(asked).WereAllRefused();

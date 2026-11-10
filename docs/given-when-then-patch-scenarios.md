@@ -35,12 +35,12 @@ Scenario: BaconReader patched with Spoof client logs in to Reddit as RedReader
   When I tap "Accept"
   # BaconReader comes back from the login with the left menu open.
   Then the left menu shows the test account's user name
-  # Not on the screen: the fake Reddit records what BaconReader sent.
+  # On the setup page: the fake Reddit records what BaconReader sent.
   And Reddit saw RedReader's client ID, redirect URI and User-Agent
   When I close the left menu
   Then the toolbar shows the "Front Page" feed
   And the feed shows the post "Hello from r/e2e"
-  # Not on the screen: the fake Reddit records what BaconReader sent.
+  # On the setup page: the fake Reddit records what BaconReader sent.
   And Reddit got the request for the posts with RedReader's User-Agent
 ```
 

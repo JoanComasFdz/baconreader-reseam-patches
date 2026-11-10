@@ -46,7 +46,7 @@ public sealed class FixUnreadMessagesTests : BaseE2E
           And I tap "Mark read"
           And I go back to the posts
           Then the left menu's button shows no orange envelope
-          # Not on the screen: the fake Reddit records what BaconReader sent.
+          # On the setup page: the fake Reddit records what BaconReader sent.
           And Reddit got "First subject" and "Second subject" marked as read
         """)]
     public async Task FixUnreadMessagesTurnsTheInboxEnvelopeBackToNormalOnceEveryMessageIsRead(Screen screen)
@@ -108,7 +108,7 @@ public sealed class FixUnreadMessagesTests : BaseE2E
 
         // Then
         var noneUnread = await Phone.BaconReader.Main.LeftMenu.ReadButtonAsync();
-        // Not on the screen: the fake Reddit records what BaconReader sent.
+        // On the setup page: the fake Reddit records what BaconReader sent.
         var read = Reddit.ReadMessagesMarkedAsRead();
         Asserting.That(noneUnread).ShowsNoOrangeEnvelope();
         Asserting.That(read).MarkedAsRead("First subject", "Second subject");

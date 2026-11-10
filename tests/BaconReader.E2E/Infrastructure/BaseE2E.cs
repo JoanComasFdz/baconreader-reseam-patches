@@ -297,13 +297,22 @@ public abstract class BaseE2E : IAsyncLifetime
         return new AndroidDriver(E2EDevice.AppiumUrl!, options, CommandTimeout);
     }
 
-    // Waits until the setup page in Chrome shows what the scenario made (SetupPage), and says so in the log when it
-    // doesn't in time: the recording then goes on without it.
-    private void WaitForSetupPage()
+    // The setup page in Chrome and the app, which a recording switches between (GherkinMarking). Off the test's own
+    // thread: GherkinMarking stands still in a property's getter, which can't await.
+    private sealed class Screens(BaseE2E scenario) : IRecordedScreens
     {
-        if (fakeReddit is { } fake && !fake.World.WaitUntilSetupShown(SetupPage.ShowingTimeout))
+        public void ShowSetupPage() => Task.Run(SetupPage.BringToFrontAsync).GetAwaiter().GetResult();
+
+        public void ShowApp() => Task.Run(SetupPage.ShowAppAsync).GetAwaiter().GetResult();
+
+        // Says so in the log when the page doesn't show it in time: the recording then goes on without it.
+        public void WaitUntilSetupPageShowsTheFake()
         {
-            TestContext.Current.SendDiagnosticMessage($"{GetType().Name}: the setup page didn't show the scenario's setup within {SetupPage.ShowingTimeout.TotalSeconds:0} s.");
+            if (fakeReddit is { } fake && !fake.World.WaitUntilSetupShown(SetupPage.ShowingTimeout))
+            {
+                TestContext.Current.SendDiagnosticMessage(
+                    $"{scenario.GetType().Name}: the setup page didn't show the fake's setup within {SetupPage.ShowingTimeout.TotalSeconds:0} s.");
+            }
         }
     }
 
@@ -339,7 +348,7 @@ public abstract class BaseE2E : IAsyncLifetime
         }
 
         return ScenarioSteps.Read(method, Gherkin.Read(gherkin).Text).Match<GherkinMarking?>(
-            read => new GherkinMarking(read.Steps, started, GetType(), at, WaitForSetupPage),
+            read => new GherkinMarking(read.Steps, started, GetType(), at, new Screens(this)),
             failed =>
             {
                 TestContext.Current.SendDiagnosticMessage($"{GetType().Name}.{method.Name}: no Gherkin marks: {failed.Why}");

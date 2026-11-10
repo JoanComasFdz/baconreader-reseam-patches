@@ -55,7 +55,7 @@ public sealed class ShowTablesTests : BaseE2E
           When I scroll to the comment "Links"
           And I tap "Open picture" in the comment "Links"'s table
           Then BaconReader's photo viewer shows
-          # Not on the screen: the fake Reddit records what BaconReader asked for.
+          # On the setup page: the fake Reddit records what BaconReader asked for.
           And Reddit served the image "Open picture" links to
           When I tap Back
           And I go back to the posts
@@ -144,7 +144,7 @@ public sealed class ShowTablesTests : BaseE2E
 
         // Then
         var viewer = await Phone.BaconReader.PhotoViewer.ReadAsync();
-        // Not on the screen: the fake Reddit records what BaconReader asked for.
+        // On the setup page: the fake Reddit records what BaconReader asked for.
         var served = Reddit.ReadMediaServed();
         Asserting.That(viewer).IsShown();
         Asserting.That(served).ServedTheImageOf("Open picture");

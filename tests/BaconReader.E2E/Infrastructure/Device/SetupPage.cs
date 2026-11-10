@@ -28,6 +28,15 @@ public static class SetupPage
         await Task.Delay(Loading);
     }
 
+    /// <summary>Brings Chrome, on the setup page, back in front of the app, without loading the page again.</summary>
+    public static Task BringToFrontAsync() => LaunchAsync(Chrome);
+
+    /// <summary>Brings the app back in front of Chrome, on the screen it was on: its launcher's intent resumes its task.</summary>
+    public static Task ShowAppAsync() => LaunchAsync(E2EDevice.Package);
+
+    private static Task LaunchAsync(string package) =>
+        Commands.ShellAsync($"monkey -p {package} -c android.intent.category.LAUNCHER 1 > /dev/null 2>&1");
+
     /// <summary>Closes Chrome, so the next scenario starts from the home screen.</summary>
     public static Task CloseAsync() => Commands.ShellAsync($"am force-stop {Chrome}");
 }

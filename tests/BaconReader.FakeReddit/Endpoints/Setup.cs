@@ -47,6 +47,13 @@ internal static class Setup
         var loggedIn = world.LoggedInUnlocked.Select(account => account.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var content = new
         {
+            scenario = world.ScenarioUnlocked,
+            events = world.SetupEventsUnlocked.Select(happened => new
+            {
+                number = happened.Number,
+                title = happened.Title,
+                @checked = happened.CheckedJson is { } json ? JsonDocument.Parse(json).RootElement : (JsonElement?)null,
+            }),
             accounts = world.SetupAccountsUnlocked.Select(account => new
             {
                 name = account.Name,

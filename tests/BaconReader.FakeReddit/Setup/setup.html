@@ -25,6 +25,10 @@
         .comment .who { color: #8a94a8; font-size: 13px; }
         .more { margin-top: 8px; color: #8a94a8; font-size: 13px; }
         .empty { margin: 8px 18px; color: #8a94a8; }
+        .event .title { margin-bottom: 4px; }
+        .event .kind { color: #6fe3ff; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+        .row { margin: 6px 0 0; padding: 6px 8px; background: #0a0d13; border-radius: 6px; font-size: 14px; overflow-wrap: anywhere; }
+        .row .key { color: #8a94a8; }
         .new { animation: arrive 1.2s ease-out; }
         @keyframes arrive { from { background: #2a5a3a; } to { background: #111620; } }
         .comment.new { animation: arrive-line 1.2s ease-out; }
@@ -36,6 +40,7 @@
         <h1>🧪 Test setup</h1>
         <p>What the fake Reddit has for this test</p>
     </header>
+    <div id="now"></div>
     <h2>Accounts</h2>
     <div id="accounts"></div>
     <h2>Posts</h2>
@@ -44,6 +49,7 @@
         (function () {
             "use strict";
             var shown = null;
+            var scenario = null;
             var version = "";
             var seen = {};
 
@@ -64,9 +70,60 @@
                 return element;
             }
 
+            // "requestedWithToken" → "requested with token".
+            function words(key) {
+                return key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+            }
+
+            function text(value) {
+                if (value === null || value === undefined) return "none";
+                if (typeof value === "boolean") return value ? "yes" : "no";
+                if (typeof value === "object") return JSON.stringify(value);
+                return String(value);
+            }
+
+            // A snapshot the scenario read: each list in it a row an item, each other field a row.
+            function snapshot(box, value) {
+                Object.keys(value || {}).forEach(function (key) {
+                    var field = value[key];
+                    var items = Array.isArray(field) ? field : [field];
+                    if (Array.isArray(field) && field.length === 0) {
+                        var none = el("div", "row");
+                        none.append(el("span", "key", words(key) + ": "), "none");
+                        box.append(none);
+                    }
+                    items.forEach(function (item) {
+                        var row = el("div", "row");
+                        if (item !== null && typeof item === "object" && !Array.isArray(item)) {
+                            Object.keys(item).forEach(function (name, at) {
+                                if (at > 0) row.append(" · ");
+                                row.append(el("span", "key", words(name) + " "), text(item[name]));
+                            });
+                        } else {
+                            row.append(el("span", "key", words(key) + ": "), text(item));
+                        }
+                        box.append(row);
+                    });
+                });
+            }
+
             function render(data) {
+                if (scenario !== data.scenario) {
+                    scenario = data.scenario;
+                    seen = {};
+                    shown = null;
+                }
                 var first = shown === null;
                 var fresh = [];
+                var now = document.getElementById("now");
+                now.textContent = "";
+                if (data.events.length > 0) now.append(el("h2", "", "Now"));
+                data.events.slice().reverse().forEach(function (happened) {
+                    var box = arrive(el("div", "box event"), "e:" + happened.number, false, fresh);
+                    box.append(el("div", "kind", happened.checked ? "Checked" : "Happened"), el("div", "title", happened.title));
+                    if (happened.checked) snapshot(box, happened.checked);
+                    now.append(box);
+                });
                 var accounts = document.getElementById("accounts");
                 accounts.textContent = "";
                 if (data.accounts.length === 0) accounts.append(el("p", "empty", "None yet"));
@@ -94,7 +151,9 @@
                     }
                     posts.append(box);
                 });
-                if (fresh.length > 0) fresh[fresh.length - 1].scrollIntoView({ block: "nearest", behavior: "smooth" });
+                // The newest thing: an event is the first of "Now", at the top; else the last of the others.
+                var newest = fresh.filter(function (element) { return element.classList.contains("event"); })[0] || fresh[fresh.length - 1];
+                if (newest) newest.scrollIntoView({ block: "nearest", behavior: "smooth" });
             }
 
             function read() {

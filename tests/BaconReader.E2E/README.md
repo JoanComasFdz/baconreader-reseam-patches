@@ -40,6 +40,10 @@ command takes milliseconds: the "E2E on the phone" workflow, which plays and rec
 It connects with the same script over the phone stack's network (`E2E_PHONE_LAN`), and shares the phone's lease with
 the cloud sessions.
 
+**Chrome** shows the fake's setup page in recordings ("Run and record"). A new or reset phone needs Chrome's first run
+done once, by hand: open Chrome, tap "Stay signed out", then "No thanks" when it asks about notifications. Until then,
+Chrome opens on its first-run screen instead of the page.
+
 Appium's helper apps (`io.appium.uiautomator2.server`, `.server.test`, `io.appium.settings`) stay installed on the
 phone, so a session starts without reinstalling them; a reset phone needs one run with
 `E2E_APPIUM_INSTALL_HELPERS=1` (the connection script sets it when they're missing).
@@ -186,6 +190,22 @@ them on the PR ([docs/hosting.md](../../docs/hosting.md)). Without the phone, `d
 runs only the shape and naming tests, and the fake Reddit's own tests (the "E2E CI" workflow does that).
 
 By hand: `dotnet test tests/BaconReader.E2E` (add `E2E_VIDEO_DIR=<dir>` to keep the raw videos and their records).
+
+**The setup page.** A recording shows what the fake Reddit does, not only the app: the fake serves a page of it,
+`/_fake/setup` (`BaconReader.FakeReddit/Setup/setup.html`), with what the scenario made (its accounts, which are logged
+in, its posts and comments) and, under "Now", what a step changed in it and what a check read from it (each snapshot a
+`Reddit.Read…` returns that a Then line checks). It reads the fake 4 times a second and says which version it shows, so
+the test waits until it shows what a line did (`Device/SetupPage`, `Steps/GherkinMarking`):
+
+- the recording starts on the page, in Chrome: each Given line that sets up the fake holds 1 s once the page shows it,
+  then the app opens over it;
+- once the app is open, a When line that changes the fake, and each Then line that checks what it saw
+  (`Steps/FakeChecks`: its assertion is one of `Infrastructure/Reddit`'s), bring the page in front for the line, and
+  the app comes back, as it was, for the next line on it.
+
+Only a recording opens Chrome; a run that doesn't record never does, and plays as fast. If the page doesn't show a
+line's result within 5 s, the run says so in its log and goes on. Chrome needs its first run done once on the phone
+("The phone").
 
 ## Exploring the app before writing a Gherkin
 

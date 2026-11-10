@@ -38,7 +38,7 @@ public sealed class FixMemeTemplatesTests : BaseE2E
           And I tap "Camera"
           And I tap "Memes"
           Then the meme templates show
-          # Not on the screen: the fake Imgflip records what BaconReader asked for. A thumbnail shows no text to read.
+          # On the setup page: the fake Imgflip records what BaconReader asked for. A thumbnail shows no text to read.
           And Imgflip served the thumbnail of every template shown
           # "Two Buttons" is the second template.
           When I tap the template "Two Buttons"
@@ -47,7 +47,7 @@ public sealed class FixMemeTemplatesTests : BaseE2E
           # "Drake Hotline Bling" is the first template.
           When I tap the template "Drake Hotline Bling"
           Then the drawing screen shows
-          # Not on the screen: the patch downloads the template at full size, not the grid's thumbnail.
+          # On the setup page: the patch downloads the template at full size, not the grid's thumbnail.
           And Imgflip served the template "Drake Hotline Bling" at full size
           When I tap "Accept"
           # BaconReader puts the drawing in the reply as a tag.
@@ -83,7 +83,7 @@ public sealed class FixMemeTemplatesTests : BaseE2E
         await Reddit.WaitUntilImgflipServedTheThumbnailsAsync(shownTemplates.Thumbnails);
 
         // Then
-        // Not on the screen: the fake Imgflip records what BaconReader asked for. A thumbnail shows no text to read.
+        // On the setup page: the fake Imgflip records what BaconReader asked for. A thumbnail shows no text to read.
         var templates = await Phone.BaconReader.MemeTemplates.ReadAsync();
         var thumbnails = Reddit.ReadRequestsForTheThumbnailsOfTheFirstTemplates(templates.Thumbnails);
         Asserting.That(templates).ShowTheTemplates();
@@ -106,7 +106,7 @@ public sealed class FixMemeTemplatesTests : BaseE2E
         await Phone.BaconReader.DrawChat.WaitUntilShownAsync();
 
         // Then
-        // Not on the screen: the patch downloads the template at full size, not the grid's thumbnail.
+        // On the setup page: the patch downloads the template at full size, not the grid's thumbnail.
         var drawing = await Phone.BaconReader.DrawChat.ReadAsync();
         var drake = Reddit.ReadRequestsForTheTemplateAtFullSize("Drake Hotline Bling");
         Asserting.That(drawing).IsShown();

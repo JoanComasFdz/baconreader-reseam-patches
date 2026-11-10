@@ -45,7 +45,7 @@ public sealed class FixRedditLinksTests : BaseE2E
           When I tap the post "Links"
           And I tap the link "Shared"
           Then BaconReader shows the post "Shared post"
-          # Not on the screen: the fake Reddit records what BaconReader asked for.
+          # On the setup page: the fake Reddit records what BaconReader asked for.
           And Reddit answered the share link with the post's address
           When I go back
           And I tap the link "Shared from a profile"
@@ -83,7 +83,7 @@ public sealed class FixRedditLinksTests : BaseE2E
           And I tap the post "Links"
           And I tap the link "Video"
           Then BaconReader shows the post "Clip"
-          # Not on the screen: the fake Reddit records what BaconReader asked for. Reddit redirects a video's address to its post only for a browser.
+          # On the setup page: the fake Reddit records what BaconReader asked for. Reddit redirects a video's address to its post only for a browser.
           And Reddit redirected the video of "Clip" to its post
           When I go back
           And I tap the link "Lone video"
@@ -142,7 +142,7 @@ public sealed class FixRedditLinksTests : BaseE2E
 
         // Then
         var shared = await Phone.BaconReader.Detail.ReadPostAsync();
-        // Not on the screen: the fake Reddit records what BaconReader asked for.
+        // On the setup page: the fake Reddit records what BaconReader asked for.
         var shareLinks = Reddit.ReadRequestsForShareLinks();
         Asserting.That(shared).ShowsThePost("Shared post");
         Asserting.That(shareLinks).AnsweredTheShareLinkWithTheAddressOf("Shared post");
@@ -256,7 +256,7 @@ public sealed class FixRedditLinksTests : BaseE2E
 
         // Then
         var video = await Phone.BaconReader.Detail.ReadPostAsync();
-        // Not on the screen: the fake Reddit records what BaconReader asked for.
+        // On the setup page: the fake Reddit records what BaconReader asked for.
         var videoRedirects = Reddit.ReadRequestsForVideoRedirects();
         Asserting.That(video).ShowsThePost("Clip");
         Asserting.That(videoRedirects).RedirectedTheVideoToItsPost("Clip");
