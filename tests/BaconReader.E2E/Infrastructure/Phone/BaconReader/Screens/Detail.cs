@@ -305,16 +305,18 @@ public sealed class Comments(AndroidDriver driver)
     // Scrolls the comments with UiAutomator's scroll gesture, unless the finger would land on a video's time bar, which
     // keeps a touch that starts on it and moves the video instead of the list: then a slow swipe as long, from just
     // past the bar.
+    // The list is found through Appium, which waits for it: after a check on the setup page, the app comes back in front
+    // as the step starts.
     private void Scroll(string direction, double percent)
     {
-        var screen = Screen();
-        var list = (screen.WithAppId(List).FirstOrDefault() ?? throw new InvalidOperationException("The comments aren't on the screen.")).Bounds;
+        var listView = driver.FindElement(Locate.AppId(List));
+        var list = new Rectangle(listView.Location, listView.Size);
         var (from, to) = OnScreen.ScrollGesturePath(list, direction, percent);
-        var bar = screen.WithAppId(TimeBar).Where(found => found.Displayed).Select(found => found.Bounds)
+        var bar = Screen().WithAppId(TimeBar).Where(found => found.Displayed).Select(found => found.Bounds)
             .FirstOrDefault(bounds => bounds.Top <= from.Y && from.Y <= bounds.Bottom);
         if (bar.IsEmpty)
         {
-            OnScreen.ScrollGesture(driver, driver.FindElement(Locate.AppId(List)), direction, percent);
+            OnScreen.ScrollGesture(driver, listView, direction, percent);
             return;
         }
 
