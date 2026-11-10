@@ -96,3 +96,11 @@ test('the guide is its sidebar\'s links and its sections, in the same order', ()
   assert.equal(guideHtml.nav, '<h2>Fixes</h2>\n<ul><li><a href="#fix-a">Fix A</a></li></ul>\n<h2>More</h2>\n<ul><li><a href="#extra">Extra</a></li></ul>');
   assert.ok(guideHtml.sections.indexOf('id="fix-a"') < guideHtml.sections.indexOf('id="extra"'));
 });
+
+test('a patch with no scenario shows its page and no recording; one with a patcher-specific page shows it as a note', () => {
+  const page = { name: 'Disable feedback popup', file: 'disable-feedback-popup.md', summary: 's', body: '', scenarioBlocks: [] };
+  assert.match(guide.renderPatch('O/baconreader-reseam-patches', page), /No recording: this patch has no e2e test yet\./);
+  const html = guide.renderPatch('O/baconreader-morphe-patches', { ...page, patcherSpecific: '- A row in **Links**.' });
+  assert.match(html, /<aside class="patcher-note"><h3>Only in Morphe<\/h3>\n<ul><li>A row in <strong>Links<\/strong>\.<\/li><\/ul><\/aside>/);
+  assert.equal(guide.toPatcher('JoanComasFdz/baconreader-reseam-patches'), 'Reseam');
+});
