@@ -298,31 +298,28 @@ public sealed class Comments(AndroidDriver driver)
                 throw new InvalidOperationException($"{what} didn't show whole after scrolling 15 times.");
             }
 
-            await OnScreen.DoAsync(driver, () => OnScreen.ScrollGesture(driver, ScrollArea(Screen(), direction, 0.3), direction, 0.3));
+            await OnScreen.DoAsync(driver, () => Scroll(direction, 0.3));
         }
     }
 
-    // The list's area to scroll, cut short of a video's time bar where the finger would land on one: the bar keeps any
-    // touch that starts on it, and moves the video instead of the list.
-    private static Rectangle ScrollArea(ScreenSnapshot screen, string direction, double percent)
+    // Scrolls the comments with UiAutomator's scroll gesture, unless the finger would land on a video's time bar, which
+    // keeps a touch that starts on it and moves the video instead of the list: then a slow swipe as long, from just
+    // past the bar.
+    private void Scroll(string direction, double percent)
     {
-        var area = (screen.WithAppId(List).FirstOrDefault() ?? throw new InvalidOperationException("The comments aren't on the screen.")).Bounds;
-        var bars = screen.WithAppId(TimeBar).Where(bar => bar.Displayed).Select(bar => bar.Bounds).ToList();
-        for (var cuts = 0; cuts < bars.Count; cuts++)
+        var screen = Screen();
+        var list = (screen.WithAppId(List).FirstOrDefault() ?? throw new InvalidOperationException("The comments aren't on the screen.")).Bounds;
+        var (from, to) = OnScreen.ScrollGesturePath(list, direction, percent);
+        var bar = screen.WithAppId(TimeBar).Where(found => found.Displayed).Select(found => found.Bounds)
+            .FirstOrDefault(bounds => bounds.Top <= from.Y && from.Y <= bounds.Bottom);
+        if (bar.IsEmpty)
         {
-            var start = OnScreen.ScrollStart(area, direction, percent);
-            var under = bars.FirstOrDefault(bar => bar.Top <= start.Y && start.Y <= bar.Bottom);
-            if (under.IsEmpty)
-            {
-                break;
-            }
-
-            area = direction == "up"
-                ? Rectangle.FromLTRB(area.Left, under.Bottom + 1, area.Right, area.Bottom)
-                : Rectangle.FromLTRB(area.Left, area.Top, area.Right, under.Top - 1);
+            OnScreen.ScrollGesture(driver, driver.FindElement(Locate.AppId(List)), direction, percent);
+            return;
         }
 
-        return area;
+        var start = new Point(from.X, direction == "up" ? bar.Bottom + 1 : bar.Top - 1);
+        Swipe(start, new Point(start.X, start.Y + (to.Y - from.Y)), [.. Enumerable.Repeat(TimeSpan.FromMilliseconds(60), 10)]);
     }
 
     /// <summary>

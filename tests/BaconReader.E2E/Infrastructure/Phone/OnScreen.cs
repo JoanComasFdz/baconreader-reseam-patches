@@ -186,36 +186,10 @@ public static class OnScreen
     }
 
     /// <summary>
-    /// Scrolls the screen's <paramref name="area"/>, in pixels, as <see cref="ScrollGesture"/> scrolls a view: for a
-    /// view whose edge the finger mustn't start on.
+    /// The finger's path when <see cref="ScrollGesture"/> scrolls a view of <paramref name="bounds"/> by
+    /// <paramref name="percent"/> in <paramref name="direction"/>.
     /// </summary>
-    public static object? ScrollGesture(AndroidDriver driver, Rectangle area, string direction, double percent)
-    {
-        var recording = TapsDrawnOn.TryGetValue(driver, out var drawing);
-        var moved = Stopwatch.GetTimestamp();
-        var canScrollMore = driver.ExecuteScript("mobile: scrollGesture", new Dictionary<string, object>
-        {
-            ["left"] = area.Left,
-            ["top"] = area.Top,
-            ["width"] = area.Width,
-            ["height"] = area.Height,
-            ["direction"] = direction,
-            ["percent"] = percent,
-        });
-        if (recording)
-        {
-            var (from, to) = ScrollPath(area, direction, percent);
-            NoteSwipe(driver, from, to, moved, Stopwatch.GetTimestamp());
-        }
-
-        return canScrollMore;
-    }
-
-    /// <summary>
-    /// Where the finger lands when <see cref="ScrollGesture(AndroidDriver, Rectangle, string, double)"/> scrolls
-    /// <paramref name="area"/> in <paramref name="direction"/>.
-    /// </summary>
-    public static Point ScrollStart(Rectangle area, string direction, double percent) => ScrollPath(area, direction, percent).From;
+    public static (Point From, Point To) ScrollGesturePath(Rectangle bounds, string direction, double percent) => ScrollPath(bounds, direction, percent);
 
     // The finger's path of a scroll gesture: UiAutomator swipes against the scroll's direction, from the edge of the view
     // less its margins, by percent of that area.
