@@ -302,6 +302,16 @@ public abstract class BaseE2E : IAsyncLifetime
         return new AndroidDriver(E2EDevice.AppiumUrl!, options, CommandTimeout);
     }
 
+    // Waits until the setup page in Chrome shows what the scenario made (SetupPage), and says so in the log when it
+    // doesn't in time: the recording then goes on without it.
+    private void WaitForSetupPage()
+    {
+        if (fakeReddit is { } fake && !fake.World.WaitUntilSetupShown(SetupPage.ShowingTimeout))
+        {
+            TestContext.Current.SendDiagnosticMessage($"{GetType().Name}: the setup page didn't show the scenario's setup within {SetupPage.ShowingTimeout.TotalSeconds:0} s.");
+        }
+    }
+
     // The first time the main screen shows, in seconds into the video: the run's startup time in the PR's post.
     private void NoteAppShown()
     {
@@ -334,7 +344,7 @@ public abstract class BaseE2E : IAsyncLifetime
         }
 
         return ScenarioSteps.Read(method, Gherkin.Read(gherkin).Text).Match<GherkinMarking?>(
-            read => new GherkinMarking(read.Steps, started, GetType(), at),
+            read => new GherkinMarking(read.Steps, started, GetType(), at, WaitForSetupPage),
             failed =>
             {
                 TestContext.Current.SendDiagnosticMessage($"{GetType().Name}.{method.Name}: no Gherkin marks: {failed.Why}");

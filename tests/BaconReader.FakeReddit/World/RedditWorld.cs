@@ -426,6 +426,33 @@ public sealed class RedditWorld
 
     internal IReadOnlyList<Post> PostsUnlocked => posts;
 
+    /// <summary>The version of what the fake has that the setup page last said it shows (Endpoints/Setup.cs).</summary>
+    internal string? SetupShown { get; set; }
+
+    /// <summary>
+    /// Waits until the phone's setup page (<c>/_fake/setup</c>) shows what the fake has now, up to
+    /// <paramref name="timeout"/>: a recording holds on a Given line only once its result is on the screen. False when
+    /// it didn't in time (no page open, or a slow link).
+    /// </summary>
+    public bool WaitUntilSetupShown(TimeSpan timeout)
+    {
+        var until = DateTime.UtcNow + timeout;
+        do
+        {
+            lock (Sync)
+            {
+                if (SetupShown == Endpoints.Setup.Version(this))
+                {
+                    return true;
+                }
+            }
+
+            Thread.Sleep(50);
+        }
+        while (DateTime.UtcNow < until);
+        return false;
+    }
+
     /// <summary>The accounts the app is logged in with: each one a token was given to, or handed the app at its start.</summary>
     internal IEnumerable<Account> LoggedInUnlocked =>
         tokens.Values.Concat(loginAtStart is { } handed ? [handed] : []).Distinct();

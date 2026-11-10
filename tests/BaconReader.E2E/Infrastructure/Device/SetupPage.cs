@@ -12,6 +12,9 @@ public static class SetupPage
 {
     private const string Chrome = "com.android.chrome";
 
+    /// <summary>How long a recording waits for the page to show a Given line's result before going on without it.</summary>
+    public static readonly TimeSpan ShowingTimeout = TimeSpan.FromSeconds(5);
+
     // Chrome takes a moment to start and show the page before the recording starts.
     private static readonly TimeSpan Loading = TimeSpan.FromMilliseconds(1500);
 

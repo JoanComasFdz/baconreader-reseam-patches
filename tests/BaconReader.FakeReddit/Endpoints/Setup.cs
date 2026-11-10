@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using BaconReader.FakeReddit.World;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -19,33 +22,54 @@ internal static class Setup
     {
         var page = ReadPage();
         app.MapGet("/_fake/setup", () => Results.Content(page, "text/html; charset=utf-8"));
-        app.MapGet("/_fake/setup.json", (HttpContext context) =>
+        app.MapGet("/_fake/setup.json", (HttpContext context, string? shown) =>
         {
             context.Response.Headers.CacheControl = "no-store";
             lock (world.Sync)
             {
-                var loggedIn = world.LoggedInUnlocked.Select(account => account.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                return Results.Json(new
+                // The page says which version it shows, for a recording to wait until it shows what the scenario made.
+                if (shown is not null)
                 {
-                    accounts = world.AccountsUnlocked.Select(account => new
-                    {
-                        name = account.Name,
-                        loggedIn = loggedIn.Contains(account.Name),
-                        unread = account.Inbox.Count(message => message.IsNew),
-                    }),
-                    posts = world.PostsUnlocked.Select(post => new
-                    {
-                        id = post.Id,
-                        subreddit = post.Subreddit.Name,
-                        title = post.Title,
-                        kind = KindOf(post),
-                        comments = Flatten(post.Comments, 0).Take(MostComments).ToList(),
-                        commentCount = post.CommentCount,
-                    }),
-                });
+                    world.SetupShown = shown;
+                }
+
+                return Results.Text(Read(world), "application/json");
             }
         });
     }
+
+    /// <summary>
+    /// What the fake has, as the page shows it: its accounts (logged in or not) and its posts with their first comments,
+    /// and its version, a digest of the rest, which changes whenever they do. Called under the world's lock.
+    /// </summary>
+    internal static string Read(RedditWorld world)
+    {
+        var loggedIn = world.LoggedInUnlocked.Select(account => account.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var content = new
+        {
+            accounts = world.AccountsUnlocked.Select(account => new
+            {
+                name = account.Name,
+                loggedIn = loggedIn.Contains(account.Name),
+                unread = account.Inbox.Count(message => message.IsNew),
+            }),
+            posts = world.PostsUnlocked.Select(post => new
+            {
+                id = post.Id,
+                subreddit = post.Subreddit.Name,
+                title = post.Title,
+                kind = KindOf(post),
+                comments = Flatten(post.Comments, 0).Take(MostComments).ToList(),
+                commentCount = post.CommentCount,
+            }),
+        };
+        var json = JsonSerializer.Serialize(content);
+        var version = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)))[..12];
+        return $"{{\"version\":\"{version}\",{json[1..]}";
+    }
+
+    /// <summary>The version <see cref="Read"/> gives now. Called under the world's lock.</summary>
+    internal static string Version(RedditWorld world) => JsonDocument.Parse(Read(world)).RootElement.GetProperty("version").GetString()!;
 
     // A post with hundreds of comments shows its first ones and their count.
     private const int MostComments = 12;

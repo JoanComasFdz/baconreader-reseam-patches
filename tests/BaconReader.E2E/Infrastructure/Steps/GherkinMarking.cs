@@ -30,6 +30,7 @@ public sealed partial class GherkinMarking
     private readonly ScenarioSteps steps;
     private readonly ScreenRecording recording;
     private readonly Type scenario;
+    private readonly Action waitForSetupPage;
 
     // The last statement that started, an index in steps.Steps.
     private int reached = -1;
@@ -45,8 +46,12 @@ public sealed partial class GherkinMarking
     /// recording's start (a <see cref="Stopwatch.GetTimestamp"/>), and the others as <paramref name="scenario"/>'s
     /// statements play them.
     /// </summary>
-    public GherkinMarking(ScenarioSteps steps, ScreenRecording recording, Type scenario, long started)
+    /// <param name="waitForSetupPage">
+    /// Waits until the setup page shows what the scenario made, before a Given line's <see cref="SetupHold"/>.
+    /// </param>
+    public GherkinMarking(ScenarioSteps steps, ScreenRecording recording, Type scenario, long started, Action? waitForSetupPage = null)
     {
+        this.waitForSetupPage = waitForSetupPage ?? (() => { });
         this.steps = steps;
         this.recording = recording;
         this.scenario = scenario;
@@ -72,6 +77,7 @@ public sealed partial class GherkinMarking
 
         if (settingUp)
         {
+            waitForSetupPage();
             Thread.Sleep(SetupHold);
         }
 

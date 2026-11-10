@@ -44,6 +44,7 @@
         (function () {
             "use strict";
             var shown = null;
+            var version = "";
             var seen = {};
 
             function el(tag, className, text) {
@@ -96,12 +97,15 @@
             }
 
             function read() {
-                fetch("setup.json", { cache: "no-store" })
+                // Says which version it shows, so a recording waits until it shows what the scenario made.
+                fetch("setup.json?shown=" + encodeURIComponent(version), { cache: "no-store" })
                     .then(function (response) { return response.text(); })
                     .then(function (text) {
                         if (text !== shown) {
-                            render(JSON.parse(text));
+                            var data = JSON.parse(text);
+                            render(data);
                             shown = text;
+                            version = data.version;
                         }
                     })
                     .catch(function () { })
