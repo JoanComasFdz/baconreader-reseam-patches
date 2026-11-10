@@ -142,6 +142,7 @@ public sealed class RedditWorld
             Chat.Reset();
             LoginPage = new LoginPageOptions();
             loginAtStart = null;
+            accountsBeforeScenario = 0;
             BlocksLoggedOut = true;
             BlocksMoreChildren = false;
             // Reddit's ids are base 36; starting at 36^4 makes them five characters, like an old post's.
@@ -453,9 +454,34 @@ public sealed class RedditWorld
         return false;
     }
 
-    /// <summary>The accounts the app is logged in with: each one a token was given to, or handed the app at its start.</summary>
-    internal IEnumerable<Account> LoggedInUnlocked =>
-        tokens.Values.Concat(loginAtStart is { } handed ? [handed] : []).Distinct();
+    /// <summary>The accounts the app is logged in with: each one a token was given to.</summary>
+    internal IEnumerable<Account> LoggedInUnlocked => tokens.Values.Distinct();
+
+    // How many accounts the fake had when the scenario began (MarkScenarioStart): the setup page shows only those made
+    // after, and the ones logged in.
+    private int accountsBeforeScenario;
+
+    /// <summary>The accounts the setup page shows: those the scenario made, and those the app is logged in with.</summary>
+    internal IEnumerable<Account> SetupAccountsUnlocked
+    {
+        get
+        {
+            var loggedIn = LoggedInUnlocked.ToHashSet();
+            return accounts.Where((account, index) => index >= accountsBeforeScenario || loggedIn.Contains(account));
+        }
+    }
+
+    /// <summary>
+    /// Notes that the scenario begins: the setup page (<c>/_fake/setup</c>) shows what the fake gets from now on, so an
+    /// account made for every scenario, before it (the test account), shows only once the app logs in with it.
+    /// </summary>
+    public void MarkScenarioStart()
+    {
+        lock (Sync)
+        {
+            accountsBeforeScenario = accounts.Count;
+        }
+    }
 
     /// <summary>
     /// A user's fullname, <c>t2_&lt;id&gt;</c>, as the JSON sends it in <c>author_fullname</c>: an account's own, or for

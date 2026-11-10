@@ -131,6 +131,8 @@ public abstract class BaseE2E : IAsyncLifetime
             // fake hands it the login ("E2E fake Reddit"). Logging in through the screens took ~11 s of each scenario.
             fake.World.LogInAtStart(TestAccount.UserName);
         }
+
+        fake.World.MarkScenarioStart();
         var apk = await PatchedApps.PatchAsync(patches);
         await PatchedApps.InstallAsync(apk);
         await FakeRedditLink.EnsureAsync();

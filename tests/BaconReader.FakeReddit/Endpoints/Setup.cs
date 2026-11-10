@@ -39,7 +39,7 @@ internal static class Setup
     }
 
     /// <summary>
-    /// What the fake has, as the page shows it: its accounts (logged in or not) and its posts with their first comments,
+    /// What the fake has, as the page shows it: the accounts the scenario made and those logged in and its posts with their first comments,
     /// and its version, a digest of the rest, which changes whenever they do. Called under the world's lock.
     /// </summary>
     internal static string Read(RedditWorld world)
@@ -47,7 +47,7 @@ internal static class Setup
         var loggedIn = world.LoggedInUnlocked.Select(account => account.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var content = new
         {
-            accounts = world.AccountsUnlocked.Select(account => new
+            accounts = world.SetupAccountsUnlocked.Select(account => new
             {
                 name = account.Name,
                 loggedIn = loggedIn.Contains(account.Name),

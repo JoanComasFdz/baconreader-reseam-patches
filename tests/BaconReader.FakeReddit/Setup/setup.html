@@ -69,6 +69,7 @@
                 var fresh = [];
                 var accounts = document.getElementById("accounts");
                 accounts.textContent = "";
+                if (data.accounts.length === 0) accounts.append(el("p", "empty", "None yet"));
                 data.accounts.forEach(function (account) {
                     var row = arrive(el("div", "box account"), "a:" + account.name + ":" + account.loggedIn, first, fresh);
                     row.append(el("span", "", "👤"), el("span", "name", "u/" + account.name));
