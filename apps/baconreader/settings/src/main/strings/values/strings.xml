@@ -256,6 +256,8 @@
     <string name="patch_remove_random_feeds_description">Removes Random and My Random, which no longer load, from the feed list.</string>
     <string name="patch_select_text">Select text</string>
     <string name="patch_select_text_description">Adds \"Select text\" to the menus of posts and comments, which shows their text in a dialog where any part of it can be selected and copied.</string>
+    <string name="patch_swipe_through_albums">Swipe through albums</string>
+    <string name="patch_swipe_through_albums_description">Goes to the next or previous image of a Reddit gallery or an Imgur album with a swipe left or right.</string>
     <string name="patch_text_post_icon">Text post icon</string>
     <string name="patch_text_post_icon_description">Shows the button that opens a text post\'s text in the post list as a page with a chevron, instead of a play button.</string>
     <string name="patch_spoof_client_client_id_title">Application client ID</string>

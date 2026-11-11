@@ -47,6 +47,7 @@ What broke since 2023.
 | [Video autoplay in detail view](patches/video-autoplay-in-detail-view.md) | A setting to stop videos from loading and playing by themselves when you open a post. |
 | [Account colors](patches/account-colors.md) | A color for each account, shown as a line under the toolbars, so you see which account is in use. |
 | [Select text](patches/select-text.md) | "Select text" in the menus of posts and comments lets you select and copy any part of their text. |
+| [Swipe through albums](patches/swipe-through-albums.md) | Swipe left or right on a Reddit gallery or an Imgur album to go to its next or previous image. |
 | [Patches entry in settings](patches/patches-entry-in-settings.md) | BaconReader's settings get a "Patches" entry, and the left menu tells which build of the patches is installed. |
 
 ## 🧹 Cleanups
