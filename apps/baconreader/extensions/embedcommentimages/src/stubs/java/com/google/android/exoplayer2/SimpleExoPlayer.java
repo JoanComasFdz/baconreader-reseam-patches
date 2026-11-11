@@ -15,6 +15,10 @@ public class SimpleExoPlayer implements Player {
 
     public native void release();
 
+    public native int getPlaybackState();
+
+    public native void seekTo(int windowIndex, long positionMs);
+
     public static final class Builder {
         public Builder(Context context) {}
 

@@ -17,4 +17,12 @@ public class PlayerView extends FrameLayout {
     public native void setShowBuffering(int showBuffering);
 
     public native void setShutterBackgroundColor(int color);
+
+    public native boolean isControllerVisible();
+
+    public native void setControllerVisibilityListener(
+            PlayerControlView.VisibilityListener listener);
+
+    public static native void switchTargetView(
+            Player player, PlayerView oldPlayerView, PlayerView newPlayerView);
 }

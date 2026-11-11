@@ -185,6 +185,12 @@ public static class OnScreen
         return canScrollMore;
     }
 
+    /// <summary>
+    /// The finger's path when <see cref="ScrollGesture"/> scrolls a view of <paramref name="bounds"/> by
+    /// <paramref name="percent"/> in <paramref name="direction"/>.
+    /// </summary>
+    public static (Point From, Point To) ScrollGesturePath(Rectangle bounds, string direction, double percent) => ScrollPath(bounds, direction, percent);
+
     // The finger's path of a scroll gesture: UiAutomator swipes against the scroll's direction, from the edge of the view
     // less its margins, by percent of that area.
     private static (Point From, Point To) ScrollPath(Rectangle bounds, string direction, double percent)

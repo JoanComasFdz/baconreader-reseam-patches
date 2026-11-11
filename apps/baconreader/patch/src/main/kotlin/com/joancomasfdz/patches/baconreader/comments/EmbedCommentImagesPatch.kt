@@ -70,6 +70,7 @@ val embedCommentImages =
             resources.addId("baconreader_patches_comment_gif")
             resources.addId("baconreader_patches_comment_video")
             resources.addId("baconreader_patches_image_viewer")
+            resources.addId("baconreader_patches_video_full_screen")
             resources.addId("baconreader_patches_comment_album")
             resources.addId("baconreader_patches_album_counter")
             // The copies of a text that show what follows each of its media links.

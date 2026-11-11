@@ -8,9 +8,16 @@ import android.content.Context
 import android.widget.FrameLayout
 
 /** A FrameLayout whose height follows its width (height = width * ratio), at most [maxHeight]. */
-internal class AspectRatioFrameLayout(context: Context, ratio: Float, private val maxHeight: Int) :
+internal class AspectRatioFrameLayout(context: Context, ratio: Float, maxHeight: Int) :
     FrameLayout(context) {
     var ratio: Float = ratio
+        set(value) {
+            if (field == value) return
+            field = value
+            requestLayout()
+        }
+
+    var maxHeight: Int = maxHeight
         set(value) {
             if (field == value) return
             field = value
