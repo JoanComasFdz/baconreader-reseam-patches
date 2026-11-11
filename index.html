@@ -128,7 +128,7 @@
                 <summary>Patches</summary>
                 <nav aria-label="Patches">
                     <h2>Start here</h2>
-<ul><li><a href="#install">How to install</a></li></ul>
+<ul><li><a href="#install">How to install</a></li><li><a href="#update">How to update</a></li></ul>
 <h2>🔧 Fixes</h2>
 <ul><li><a href="#spoof-client">Spoof client</a></li><li><a href="#fix-redgifs-api">Fix Redgifs API</a></li><li><a href="#fix-imgur-api">Fix Imgur API</a></li><li><a href="#fix-list-thumbnails">Fix list thumbnails</a></li><li><a href="#fix-unread-messages">Fix unread messages</a></li><li><a href="#fix-lost-post-votes">Fix lost post votes</a></li><li><a href="#fix-load-more-comments">Fix load more comments</a></li><li><a href="#fix-meme-templates">Fix meme templates</a></li><li><a href="#fix-empty-saved-files">Fix empty saved files</a></li><li><a href="#fix-slide-show">Fix slide show</a></li><li><a href="#fix-reddit-links">Fix Reddit links</a></li><li><a href="#save-videos-with-sound">Save videos with sound</a></li><li><a href="#show-request-errors">Show request errors</a></li></ul>
 <h2>✨ Features</h2>
@@ -151,6 +151,15 @@
 <figure class="scenario">
 <figcaption><h3>Reseam Manager patches BaconReader Premium with the BaconReader patches for the first time</h3><p class="meta">Recorded in <a href="https://github.com/JoanComasFdz/baconreader-reseam-patches/pull/119">PR #119</a> · V1</p></figcaption>
 <div class="recording" data-src="https://github.com/JoanComasFdz/baconreader-reseam-patches/releases/download/prs-resources/pr-119-v1-reseam-manager-patches-bacon-reader-premium-with-the-bacon-reader-patches-for-the-first-time-phone.mp4"><script type="application/json">{"g":"@phone\nScenario: Reseam Manager patches BaconReader Premium with the BaconReader patches for the first time\n  Given Reseam Manager is installed\n  And the BaconReader Premium 6.1.4 APK is in Downloads\n  When I open \"https://github.com/JoanComasFdz/baconreader-reseam-patches\" in Chrome\n  And I tap \"➕ Add to Reseam Manager\"\n  And I tap \"Add\" on \"Add baconreader-patches?\"\n  Then Reseam Manager shows the patch source \"baconreader-patches\" and its version\n  When I tap the back arrow\n  And I tap \"Pick an APK\"\n  And I tap \"BaconReaderPremium-6.1.4.apk\"\n  And I tap \"Patch\"\n  And I tap \"Don’t allow\" on \"Allow Reseam Manager to send you notifications?\"\n  And I tap \"Install\" on \"BaconReader Premium is ready\"\n  And I turn on \"Allow from this source\"\n  And I tap the back arrow on \"Install unknown apps\"\n  And I tap \"Install\"\n  And I tap \"Install\" on \"Install this app?\"\n  And I tap \"Open\"\n  And I tap \"Don’t allow\" on \"Allow BaconReader Premium to send you notifications?\"\n  And I tap \"Not now\" on \"Open Reddit links with BaconReader?\"\n  And I open the left menu\n  Then the bottom of the left menu shows \"Patches \u003cthat version> (Reseam \u003cits version>)\"","m":[[2,0.32,0],[3,0.32,0],[4,0.44,0],[5,2.79,0],[6,7.88,0],[7,10.56,0],[8,11.36,0],[9,12.05,0],[10,13.12,0],[11,14.54,0],[12,15.38,0],[13,16.24,0],[14,17.31,0],[15,17.99,0],[16,19.11,0],[17,20.42,0],[18,22.49,0],[19,23.44,0],[20,25.45,0],[21,26.03,0],[22,28.34,0]]}</script></div>
+</figure>
+</section>
+<section id="update">
+<h2>How to update</h2>
+<p class="summary">When new patches come out, patch BaconReader again with Reseam Manager: Android updates the app and keeps your login and settings.</p>
+<ul><li>Reseam Manager gets the new patches when it starts, but doesn't patch BaconReader again by itself.</li><li>Then, under <strong>Patched apps</strong>, tap <strong>BaconReader Premium</strong> (or <strong>BaconReader</strong>), then <strong>Patch again</strong>, then <strong>Install → Update</strong>. Reseam Manager patches its own copy of the APK you picked the first time: you don't need to keep the APK.</li><li>The bottom of BaconReader's left menu shows which patches are installed, such as &quot;Patches 0.1.20 (Reseam 0.40.0)&quot;.</li></ul>
+<figure class="scenario">
+<figcaption><h3>Updating BaconReader Premium from 0.1.19 to 0.1.20</h3><p class="meta">Recorded on a Pixel 6 Pro with Reseam Manager 0.41.0.</p></figcaption>
+<div class="recording" data-src="update.mp4"><script type="application/json">{"g":"1. BaconReader patched with Reseam Manager: the bottom of its left menu shows the patches installed, 0.1.19.\n2. New patches came out: open Reseam Manager, which gets them when it starts.\n3. Under Patched apps, tap BaconReader Premium, then Patch again.\n4. Reseam Manager patches it with 0.1.20. Tap Install, then Update: Android keeps your login and settings.\n5. Open BaconReader. Its left menu shows the new patches: 0.1.20.","m":[[0,1.76,0],[1,15.36,0],[2,22.09,0],[3,34.82,0],[4,49.11,0]]}</script></div>
 </figure>
 </section>
 <section id="spoof-client">
