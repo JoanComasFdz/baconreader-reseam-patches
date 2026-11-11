@@ -35,8 +35,9 @@ import java.util.Locale
 
 /**
  * Shows the errors of the patches in a dialog with all the details, instead of only logging them:
- * what failed, the error and its causes, the time, the app, patches and Android versions, and the
- * stack trace. The details can be copied or saved to a file, to report them.
+ * what failed, the patch whose code is in the stack trace, the error and its causes, the time, the
+ * app, patches and Android versions, the heap in use, and the stack trace. The details can be
+ * copied or saved to a file, to report them.
  */
 object ErrorDialog {
     private const val TAG = "ErrorDialog"
@@ -46,6 +47,49 @@ object ErrorDialog {
     private const val SEPARATOR = "\n\n────────────\n\n"
     private const val PATCHES_PACKAGE = "com.joancomasfdz."
     private const val CRASH_FILE = "patches_last_crash.txt"
+    private const val EXTENSIONS = "com.joancomasfdz.baconreader."
+    private const val MEGABYTE = 1024L * 1024L
+
+    // The patch each extension's code belongs to, by its package under EXTENSIONS. The shared
+    // extensions (common, settings) belong to no patch.
+    private val EXTENSION_PATCHES: Map<String, () -> String> =
+        mapOf(
+            "accountcolors" to { BaconReaderStrings.patchAccountColors },
+            "sidebar" to { BaconReaderStrings.patchDisableUnavailableSidebar },
+            "embedcommentimages" to { BaconReaderStrings.patchEmbedCommentImages },
+            "savedfiles" to { BaconReaderStrings.patchFixEmptySavedFiles },
+            "imgur" to { BaconReaderStrings.patchFixImgurApi },
+            "thumbnails" to { BaconReaderStrings.patchFixListThumbnails },
+            "votes" to { BaconReaderStrings.patchFixLostPostVotes },
+            "memes" to { BaconReaderStrings.patchFixMemeTemplates },
+            "redditlinks" to { BaconReaderStrings.patchFixRedditLinks },
+            "redgifs" to { BaconReaderStrings.patchFixRedgifsApi },
+            "slideshow" to { BaconReaderStrings.patchFixSlideShow },
+            "unread" to { BaconReaderStrings.patchFixUnreadMessages },
+            "flairs" to { BaconReaderStrings.patchFlairFilter },
+            "postmedia" to { BaconReaderStrings.patchImprovePostMediaLoading },
+            "inboxreply" to { BaconReaderStrings.patchInboxCommentReplyScreen },
+            "editor" to { BaconReaderStrings.patchMarkdownEditor },
+            "settingsentry" to { BaconReaderStrings.patchPatchesEntryInSettings },
+            "openlinks" to { BaconReaderStrings.patchPromptToOpenRedditLinks },
+            "chat" to { BaconReaderStrings.patchRedditChat },
+            "awards" to { BaconReaderStrings.patchRemoveAwards },
+            "videosound" to { BaconReaderStrings.patchSaveVideosWithSound },
+            "search" to { BaconReaderStrings.patchSearchComments },
+            "selecttext" to { BaconReaderStrings.patchSelectText },
+            "tables" to { BaconReaderStrings.patchShowTables },
+            "avatars" to { BaconReaderStrings.patchShowUserAvatars },
+            "textposticon" to { BaconReaderStrings.patchTextPostIcon },
+            "detailvideo" to { BaconReaderStrings.patchVideoAutoplayInDetailView },
+        )
+
+    // The comments extension serves three patches, so its classes name theirs.
+    private val CLASS_PATCHES: Map<String, () -> String> =
+        mapOf(
+            "comments.LoadMoreComments" to { BaconReaderStrings.patchLoadMoreComments },
+            "comments.MoreChildrenFallback" to { BaconReaderStrings.patchFixLoadMoreComments },
+            "comments.HiddenSpoilers" to { BaconReaderStrings.patchHideFormattedSpoilers },
+        )
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -195,6 +239,7 @@ object ErrorDialog {
 
     private fun details(tag: String, message: String, error: Throwable?): String = buildString {
         append(tag).append(": ").append(message).append('\n')
+        append(failedPatch(error)).append('\n')
         var cause = error
         while (cause != null) {
             append(if (cause === error) "\nError: " else "Caused by: ").append(cause.javaClass.name)
@@ -212,12 +257,46 @@ object ErrorDialog {
         append("Android: ").append(Build.VERSION.RELEASE).append(" (API ")
         append(Build.VERSION.SDK_INT).append("), ").append(Build.MANUFACTURER).append(' ')
         append(Build.MODEL).append('\n')
+        append(memory()).append('\n')
 
         append("\nStack trace:\n")
         val stackTrace = StringWriter()
         // Without an error, where it was reported from.
         (error ?: Throwable("Reported at")).printStackTrace(PrintWriter(stackTrace))
         append(stackTrace.toString().trim())
+    }
+
+    /** The patches whose code is in the stack trace, or that none of its frames is from. */
+    private fun failedPatch(error: Throwable?): String {
+        val patches = LinkedHashSet<String>()
+        var cause = error
+        while (cause != null) {
+            for (frame in cause.stackTrace) patchOf(frame.className)?.let { patches.add(it) }
+            cause = cause.cause.takeIf { it !== cause }
+        }
+        return if (patches.isEmpty()) {
+            "Failed patch: none of the stack trace's frames is from a patch's code"
+        } else {
+            "Failed patch: " + patches.joinToString(", ")
+        }
+    }
+
+    private fun patchOf(className: String): String? {
+        if (!className.startsWith(EXTENSIONS)) return null
+        val name = className.substringBefore('$').removeSuffix("Kt")
+        CLASS_PATCHES[name.removePrefix(EXTENSIONS)]?.let {
+            return it()
+        }
+        val extension = name.removePrefix(EXTENSIONS).substringBefore('.')
+        return EXTENSION_PATCHES[extension]?.invoke()
+    }
+
+    /** The heap in use against its limit: an out-of-memory error is about how full it was. */
+    private fun memory(): String {
+        val runtime = Runtime.getRuntime()
+        val used = (runtime.totalMemory() - runtime.freeMemory()) / MEGABYTE
+        val limit = runtime.maxMemory() / MEGABYTE
+        return "Memory: $used MB of the heap used, out of $limit MB"
     }
 
     @Suppress("DEPRECATION")
