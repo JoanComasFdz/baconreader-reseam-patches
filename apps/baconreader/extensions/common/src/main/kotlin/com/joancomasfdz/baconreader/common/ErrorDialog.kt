@@ -11,7 +11,10 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
+import android.graphics.Paint
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -20,6 +23,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.util.TypedValue
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import app.reseam.runtime.Export
@@ -49,6 +53,7 @@ object ErrorDialog {
     private const val CRASH_FILE = "patches_last_crash.txt"
     private const val EXTENSIONS = "com.joancomasfdz.baconreader."
     private const val MEGABYTE = 1024L * 1024L
+    private const val ISSUES = "https://github.com/JoanComasFdz/baconreader-reseam-patches/issues"
 
     // The patch each extension's code belongs to, by its package under EXTENSIONS. The shared
     // extensions (common, settings) belong to no patch.
@@ -330,11 +335,28 @@ object ErrorDialog {
                     setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                     setTextIsSelectable(true)
                 }
+            // Above the details, so that the link shows without scrolling to them.
+            val issue =
+                ui.text(
+                        BaconReaderStrings.errorIssue,
+                        ui.type.bodyMedium,
+                        ui.colors.onSurfaceVariant,
+                    )
+                    .apply {
+                        paintFlags = paintFlags or Paint.UNDERLINE_TEXT_FLAG
+                        setOnClickListener { openIssues(activity) }
+                    }
+            val content =
+                LinearLayout(activity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    addView(issue)
+                    addView(text)
+                }
             lateinit var created: Dialog
             created =
                 ui.dialog()
                     .title(BaconReaderStrings.errorTitle)
-                    .view(text)
+                    .view(content)
                     .action(BaconReaderStrings.errorCopy) { copy(activity, text.text.toString()) }
                     .action(BaconReaderStrings.errorSave) { save(activity, text.text.toString()) }
                     .dismissAction(BaconReaderStrings.errorClose)
@@ -356,6 +378,15 @@ object ErrorDialog {
         dialog = null
         dialogActivity = WeakReference(null)
         detailsView = null
+    }
+
+    /** The repo's issues, where the error can be reported. */
+    private fun openIssues(context: Context) {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ISSUES)))
+        } catch (exception: Exception) {
+            Toast.makeText(context, ISSUES, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun copy(context: Context, details: String) {
