@@ -150,22 +150,23 @@ object ErrorDialog {
         catchErrors(application)
     }
 
-    // A patch's error is caught wherever it escapes to, and shown here instead of closing the app.
-    // Any other crash still closes it, as it would without the patches, but its details are kept
-    // and shown when the app opens again.
+    // Every error is caught, on any thread, and shown here instead of closing the app. The dialog
+    // says "Patches" when a patch's code is in the error, else "BaconReader". Only if the dialog
+    // itself fails is the crash saved for the next start, and the app closes as it would without
+    // the patches.
     private fun catchErrors(application: Application) {
         showLastCrash(application)
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
-            if (thread !== Looper.getMainLooper().thread && fromPatches(error)) {
-                report("Patches", "A patch failed on the thread ${thread.name}", error)
-            } else {
+            try {
+                report(sourceOf(error), "An error stopped the thread ${thread.name}", error)
+            } catch (failed: Throwable) {
                 saveCrash(application, thread, error)
                 previous?.uncaughtException(thread, error)
             }
         }
         // An error on the main thread ends its message loop. Running the loop again inside a
-        // message lets a patch's error be caught there and the loop continue.
+        // message lets the error be shown there and the loop continue.
         main.post(::loopMainThread)
     }
 
@@ -175,20 +176,38 @@ object ErrorDialog {
                 Looper.loop()
                 return
             } catch (error: Throwable) {
-                if (!fromPatches(error)) throw error
-                report("Patches", "A patch failed", error)
+                try {
+                    report(sourceOf(error), "An error stopped a screen", error)
+                } catch (failed: Throwable) {
+                    Log.e(TAG, "Could not show the error", failed)
+                }
             }
         }
     }
 
+    private fun sourceOf(error: Throwable): String =
+        if (fromPatches(error)) "Patches" else "BaconReader"
+
+    // The dialog's own frames, and the code shared by the extensions, are not a patch's: they are
+    // in every error shown here.
     private fun fromPatches(error: Throwable): Boolean {
         var cause: Throwable? = error
         while (cause != null) {
-            if (cause.stackTrace.any { it.className.startsWith(PATCHES_PACKAGE) }) return true
+            if (
+                cause.stackTrace.any {
+                    it.className.startsWith(PATCHES_PACKAGE) && !isShared(it.className)
+                }
+            ) {
+                return true
+            }
             cause = cause.cause.takeIf { it !== cause }
         }
         return false
     }
+
+    private fun isShared(className: String): Boolean =
+        className.startsWith("com.joancomasfdz.baconreader.common.") ||
+            className.startsWith("com.joancomasfdz.baconreader.settings.")
 
     private fun saveCrash(application: Application, thread: Thread, error: Throwable) {
         try {
