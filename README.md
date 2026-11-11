@@ -41,7 +41,7 @@ In Reseam Manager, open **Patched apps → BaconReader Premium** (or **BaconRead
 the same key, so Android updates the app and keeps your login and settings: you don't need to keep the APK.
 
 Reseam Manager doesn't tell you when new patches come out: patch again to get them. The bottom of BaconReader's left
-menu shows the version of the patches installed, such as "Patches 0.1.18 (Reseam 0.39.1)".
+menu shows the version of the patches installed, such as "Patches 0.1.20 (Reseam 0.40.0)".
 
 Don't patch the installed BaconReader: it's patched already, and the patches look for the original code, so several
 fail. If Reseam Manager says the patches need a newer version, update Reseam Manager first.
