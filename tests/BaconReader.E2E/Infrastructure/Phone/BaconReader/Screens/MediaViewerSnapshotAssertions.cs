@@ -56,6 +56,21 @@ public static class MediaViewerSnapshotAssertions
         return that;
     }
 
+    /// <summary>
+    /// The gallery shows its image <paramref name="position"/> of <paramref name="count"/>: its image over
+    /// <paramref name="count"/> thumbnails, with an arrow to the image before unless it's the first, and one to the image
+    /// after unless it's the last.
+    /// </summary>
+    public static AssertingThat<MediaViewerSnapshot> ShowsItsImage(this AssertingThat<MediaViewerSnapshot> that, int position, int count)
+    {
+        var viewer = that.InstanceToAssert;
+        Assert.True(
+            viewer.GalleryThumbnails == count && viewer.ShowsGalleryBack == position > 1 && viewer.ShowsGalleryForward == position < count,
+            $"The gallery shows {viewer.GalleryThumbnails} thumbnails, {(viewer.ShowsGalleryBack ? "an" : "no")} arrow to the image before and "
+            + $"{(viewer.ShowsGalleryForward ? "an" : "no")} arrow to the image after, but its image {position} of {count} was expected.");
+        return that;
+    }
+
     /// <summary>The media shows the message "<paramref name="text"/>" in its place.</summary>
     public static AssertingThat<MediaViewerSnapshot> ShowsTheMessage(this AssertingThat<MediaViewerSnapshot> that, string text)
     {
