@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 JoanComasFdz -->
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<resources>
+    <!-- The test-only patches' names and descriptions, as the patcher lists them. -->
+    <string name="patch_e2e_fake_reddit">E2E fake Reddit</string>
+    <string name="patch_e2e_fake_reddit_description">Test only: points BaconReader at a fake Reddit server instead of Reddit, and starts it logged in when the fake hands it a login.</string>
+    <string name="patch_e2e_fake_reddit_base_url_title">Base URL</string>
+    <string name="patch_e2e_fake_reddit_base_url_description">The fake Reddit server\'s URL, such as http://127.0.0.1:5080.</string>
+    <string name="patch_e2e_inbox_envelope_label">E2E inbox envelope label</string>
+    <string name="patch_e2e_inbox_envelope_label_description">Test only: adds \"orange envelope\" to the left-menu button\'s description while it shows the orange envelope.</string>
+</resources>
