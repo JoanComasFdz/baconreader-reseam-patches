@@ -8,8 +8,7 @@ namespace BaconReader.E2E.Infrastructure;
 /// <summary>
 /// Each patch's page, docs/patches/&lt;patch&gt;.md (AGENTS.md, "Patch pages"), names the e2e scenarios that show it, and
 /// its one-line summary is its row in docs/patches.md, so the user guide built from them shows each scenario once, under
-/// its patch; a Manager scenario, on one of the guide's pages on the patcher's manager (docs/manager/). Runs without the
-/// phone.
+/// its patch. Runs without the phone.
 /// </summary>
 public sealed partial class PatchPagesTests
 {
@@ -19,7 +18,7 @@ public sealed partial class PatchPagesTests
     [Fact]
     public void Every_scenario_is_on_one_patch_page()
     {
-        var listed = ReadPages().Concat(ReadManagerPages()).SelectMany(page => page.Scenarios.Select(scenario => (page.File, Scenario: scenario))).ToList();
+        var listed = ReadPages().SelectMany(page => page.Scenarios.Select(scenario => (page.File, Scenario: scenario))).ToList();
         var scenarios = ScenarioShapeTests.FindScenarios()
             .Select(method => method.DeclaringType!)
             .Where(type => type.Namespace != TestOnlyDomain)
@@ -38,7 +37,7 @@ public sealed partial class PatchPagesTests
         var scenarios = ScenarioShapeTests.FindScenarios().Select(method => method.DeclaringType!.Name).ToHashSet();
 
         Assert.All(
-            ReadPages().Concat(ReadManagerPages()).SelectMany(page => page.Scenarios.Select(scenario => (page.File, Scenario: scenario))),
+            ReadPages().SelectMany(page => page.Scenarios.Select(scenario => (page.File, Scenario: scenario))),
             page => Assert.True(scenarios.Contains(page.Scenario), $"docs/patches/{page.File} names {page.Scenario}, which isn't a scenario."));
     }
 
@@ -52,13 +51,6 @@ public sealed partial class PatchPagesTests
 
     private static List<Page> ReadPages() =>
         [.. Directory.GetFiles(Path.Combine(FindRepository(), "docs", "patches"), "*.md").Order(StringComparer.Ordinal).Select(Page.Read)];
-
-    // The user guide's pages on the patcher's manager, docs/manager/<page>.md (how to install): a Manager scenario is on
-    // one of them, not on a patch's.
-    private static List<Page> ReadManagerPages() =>
-        Directory.Exists(Path.Combine(FindRepository(), "docs", "manager"))
-            ? [.. Directory.GetFiles(Path.Combine(FindRepository(), "docs", "manager"), "*.md").Order(StringComparer.Ordinal).Select(Page.Read)]
-            : [];
 
     // The repository's root: the first folder up from the test's output that holds AGENTS.md.
     private static string FindRepository()

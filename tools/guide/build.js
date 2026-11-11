@@ -6,8 +6,6 @@
 //   each patch's page (docs/patches/<patch>.md), what it does only with this repository's patcher
 //   (docs/patcher-specific-patches/<patch>.md, if any), and the newest recording of each e2e scenario its page names,
 //   played by the e2e player beside its Gherkin and its marks; a patch with no scenario shows its page alone;
-//   It starts with the guide's pages on the patcher's manager, docs/manager/<page>.md (how to install), each with its
-//   scenario's newest recording, as a patch's page has, under "Start here".
 //   With site/update.json (a video of updating BaconReader with the patcher's manager, site/update.mp4, and its steps,
 //   each with when it starts), the guide starts with "How to update", played by the same player beside its steps;
 // - site/'s other pages (e2e-player.html), and its other files (favicon.png, preview.jpg, update.mp4), as they are.
@@ -213,15 +211,13 @@ ${renderMarkdown(update.body ?? '')}
 
 /**
  * The guide: its sidebar, the groups' patches as links, and its content, each patch's section in the sidebar's order;
- * first, under "Start here", the pages on the patcher's manager (`start`: how to install, with its scenario's
- * recording) and "How to update", when there are.
+ * "How to update" first, under "Start here", when there is one.
  */
-function renderGuide(repository, groups, update = null, start = []) {
-  const startLinks = [...start.map((page) => `<li><a href="#${toAnchor(page.file)}">${escapeHtml(page.name)}</a></li>`),
-    ...(update ? [`<li><a href="#update">${escapeHtml(update.title)}</a></li>`] : [])];
-  const nav = (startLinks.length > 0 ? `<h2>Start here</h2>\n<ul>${startLinks.join('')}</ul>\n` : '') + groups.map((group) => `<h2>${renderInline(group.title)}</h2>\n<ul>${group.pages
+function renderGuide(repository, groups, update = null) {
+  const start = update ? `<h2>Start here</h2>\n<ul><li><a href="#update">${escapeHtml(update.title)}</a></li></ul>\n` : '';
+  const nav = start + groups.map((group) => `<h2>${renderInline(group.title)}</h2>\n<ul>${group.pages
     .map((page) => `<li><a href="#${toAnchor(page.file)}">${escapeHtml(page.name)}</a></li>`).join('')}</ul>`).join('\n');
-  const sections = start.map((page) => renderPatch(repository, page) + '\n').join('') + (update ? renderUpdate(update) + '\n' : '') + groups.flatMap((group) => group.pages.map((page) => renderPatch(repository, page))).join('\n');
+  const sections = (update ? renderUpdate(update) + '\n' : '') + groups.flatMap((group) => group.pages.map((page) => renderPatch(repository, page))).join('\n');
   return { nav, sections };
 }
 
@@ -289,15 +285,10 @@ async function build(root, out, repository, offline) {
       page.patcherSpecific = lines.filter((line) => !line.startsWith('# ')).join('\n').trim();
     }
   }
-  // The guide's pages on the patcher's manager (how to install), docs/manager/<page>.md: first, under "Start here".
-  const manager = path.join(root, 'docs', 'manager');
-  const managerPages = fs.existsSync(manager)
-    ? fs.readdirSync(manager).filter((file) => file.endsWith('.md')).sort().map((file) => readPage(file, fs.readFileSync(path.join(manager, file), 'utf8')))
-    : [];
   const scenarioFiles = findScenarioFiles(root);
   const assets = offline ? [] : await readAssets(repository);
   const comments = {};
-  for (const page of [...managerPages, ...pages]) {
+  for (const page of pages) {
     page.scenarioBlocks = [];
     for (const className of page.scenarios) {
       const source = scenarioFiles[className];
@@ -338,7 +329,7 @@ async function build(root, out, repository, offline) {
     if (name === 'index.html') {
       const updateFile = path.join(site, 'update.json');
       const update = fs.existsSync(updateFile) ? JSON.parse(fs.readFileSync(updateFile, 'utf8')) : null;
-      const guide = renderGuide(repository, groupPages(readGroups(index), pages), update, managerPages);
+      const guide = renderGuide(repository, groupPages(readGroups(index), pages), update);
       text = text.replace('<!-- guide-nav -->', () => guide.nav).replace('<!-- guide -->', () => guide.sections);
     }
     fs.writeFileSync(path.join(out, name), inline(text, includes));

@@ -11,8 +11,7 @@ namespace BaconReader.E2E.Infrastructure.Steps;
 /// <summary>
 /// Which Gherkin line each statement of a scenario plays, read from the scenario's source (embedded in this assembly)
 /// by E2E-TEST-CODE-RULES.md, rule h: in <c>// Given</c>, a statement a line, but for the lines BaseE2E plays itself
-/// (<c>BaconReader is patched with …</c>, <c>BaconReader is installed</c>, a Manager scenario's <c>Reseam Manager is
-/// installed</c> and <c>the BaconReader Premium 6.1.4 APK is in Downloads</c>); in each <c>// When</c>, an Act a line, its
+/// (<c>BaconReader is patched with …</c>, <c>BaconReader is installed</c>); in each <c>// When</c>, an Act a line, its
 /// <c>WaitUntil…</c> calls none; in each <c>// Then</c>, an assertion a line, its reads and waits none. The recording
 /// marks each line when its statement starts, or, for a Then line, when its assertion passed
 /// (<see cref="GherkinMarking"/>). A line is an index in <see cref="Gherkin.Text"/>'s lines.
@@ -228,9 +227,7 @@ public sealed partial record ScenarioSteps(ImmutableArray<int> PlayedByBaseE2E, 
             [.. section.Statements.Select(statement => Statement.Read(statement.Line, [.. statement.Text]))]))];
     }
 
-    // BaseE2E's lines: what it patches the app with and installs; for a Manager scenario, the manager it installs and the
-    // APK it puts in Downloads.
-    [GeneratedRegex(@"^(?:Given|And) (?:BaconReader is (?:patched with .+|installed)|(?:Morphe|Reseam) Manager is installed|the BaconReader Premium 6\.1\.4 APK is in Downloads)$")]
+    [GeneratedRegex(@"^(?:Given|And) BaconReader is (?:patched with .+|installed)$")]
     private static partial Regex BaseE2ELine();
 
     private enum StatementKind

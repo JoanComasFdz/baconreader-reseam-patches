@@ -22,18 +22,4 @@ public static class LeftMenuFooterSnapshotAssertions
                 : $"The left menu shows \"{footer.PatchesVersion}\"{(footer.BelowTheMenu ? "" : " above its last entry")}, but \"Patches <version> (<patcher>)\" at its bottom was expected.");
         return that;
     }
-
-    /// <summary>
-    /// The drawer shows, at its bottom, the patches the patcher's manager patched the app with:
-    /// "Patches &lt;<paramref name="version"/>&gt; (Reseam &lt;the Reseam its bundle was built with&gt;)".
-    /// </summary>
-    public static AssertingThat<LeftMenuFooterSnapshot> ShowsThePatches(this AssertingThat<LeftMenuFooterSnapshot> that, string? version)
-    {
-        var footer = that.InstanceToAssert;
-        var expected = $"Patches {version} (Reseam <version>)";
-        Assert.True(
-            footer.PatchesVersion is { } line && line.StartsWith($"Patches {version} (Reseam ", StringComparison.Ordinal) && line.EndsWith(')') && footer.BelowTheMenu,
-            $"The left menu shows {(footer.PatchesVersion is { } shown ? $"\"{shown}\"" : "no patches' version")} at its bottom, but \"{expected}\" was expected.");
-        return that;
-    }
 }
