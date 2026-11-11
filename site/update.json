@@ -1,7 +1,7 @@
 {
   "title": "How to update",
   "summary": "When new patches come out, patch BaconReader again with Reseam Manager: Android updates the app and keeps your login and settings.",
-  "body": "- Reseam Manager gets the new patches when it starts. It doesn't tell you when new ones come out: patch again to get them.\n- Open **Patched apps → BaconReader Premium** (or **BaconReader**), tap **Patch again**, then **Install → Update**. Reseam Manager patches its own copy of the APK you picked the first time: you don't need to keep the APK.\n- The bottom of BaconReader's left menu shows which patches are installed, such as \"Patches 0.1.20 (Reseam 0.40.0)\".",
+  "body": "- Reseam Manager gets the new patches when it starts, but doesn't patch BaconReader again by itself.\n- Then, under **Patched apps**, tap **BaconReader Premium** (or **BaconReader**), then **Patch again**, then **Install → Update**. Reseam Manager patches its own copy of the APK you picked the first time: you don't need to keep the APK.\n- The bottom of BaconReader's left menu shows which patches are installed, such as \"Patches 0.1.20 (Reseam 0.40.0)\".",
   "caption": "Updating BaconReader Premium from 0.1.19 to 0.1.20",
   "recorded": "Recorded on a Pixel 6 Pro with Reseam Manager 0.41.0.",
   "video": "update.mp4",
