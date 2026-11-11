@@ -12,6 +12,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.reserveLocal
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.thumbnails.bindings.FixListThumbnails
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -27,10 +28,8 @@ private const val DETAIL_LINK_FRAGMENT = "com.onelouder.baconreader.adapters.Det
 // in
 // the card of a gallery.
 val fixListThumbnails =
-    patch("Fix list thumbnails") {
-        description(
-            "Fixes empty thumbnails in the post list, shows a preview as thumbnail for link posts and crossposted galleries and as image in the card of galleries, and blurs the thumbnails of NSFW and spoiler posts."
-        )
+    patch(BaconReaderStrings.patchFixListThumbnails) {
+        description(BaconReaderStrings.patchFixListThumbnailsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

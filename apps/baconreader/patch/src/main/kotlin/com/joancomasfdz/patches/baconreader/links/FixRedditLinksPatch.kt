@@ -11,6 +11,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import com.joancomasfdz.baconreader.redditlinks.bindings.RedditLinks
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -31,10 +32,8 @@ private const val DETAIL_LINK_HELPER =
 // media viewer, which looks the post up through www.reddit.com/video/<video>, and Reddit refuses
 // that. It looks a gallery's post up through www.reddit.com/<post>, which no longer redirects.
 val fixRedditLinks =
-    patch("Fix Reddit links") {
-        description(
-            "Opens Reddit's share links, and links to galleries, to videos, to posts without their subreddit and to posts on a user's profile, in the app instead of its browser."
-        )
+    patch(BaconReaderStrings.patchFixRedditLinks) {
+        description(BaconReaderStrings.patchFixRedditLinksDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

@@ -11,6 +11,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import com.joancomasfdz.baconreader.savedfiles.bindings.FixEmptySavedFiles
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -20,8 +21,8 @@ private const val SAVE_IMAGE_SERVICE = "com.onelouder.baconreader.imageutils.Sav
 // Saving media creates "<title>.jpg" first, then downloads to "<title>.<extension of the URL>", so
 // every save of media whose URL doesn't end in .jpg leaves an empty file next to the saved one.
 val fixEmptySavedFiles =
-    patch("Fix empty saved files") {
-        description("Fixes saving media to the device also creating an empty file.")
+    patch(BaconReaderStrings.patchFixEmptySavedFiles) {
+        description(BaconReaderStrings.patchFixEmptySavedFilesDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

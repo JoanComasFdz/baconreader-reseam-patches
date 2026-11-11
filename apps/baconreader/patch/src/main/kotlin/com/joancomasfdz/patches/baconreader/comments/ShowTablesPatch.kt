@@ -10,6 +10,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.tables.bindings.ShowTables
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -24,10 +25,8 @@ private const val COMMENT_HOLDER = "com.onelouder.baconreader.adapters.CommentHo
 // set. Comment bodies have the app's own touch listener, which is wrapped so the grid's button,
 // sideways scrolling and links get their touches too.
 val showTables =
-    patch("Show tables") {
-        description(
-            "Shows tables in comments and posts as a grid, with wide tables that expand and scroll sideways."
-        )
+    patch(BaconReaderStrings.patchShowTables) {
+        description(BaconReaderStrings.patchShowTablesDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

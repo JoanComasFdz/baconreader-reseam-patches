@@ -8,6 +8,7 @@ import app.reseam.patch.before
 import app.reseam.patch.field
 import app.reseam.patch.method
 import app.reseam.patch.patch
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.sidebar.bindings.DisableUnavailableSidebar
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -19,10 +20,8 @@ import com.joancomasfdz.patches.baconreader.core.mainActivityPrepareMenu
 // BaconReader offers "View Sidebar" on every feed, but only subreddits have a sidebar. On the
 // others it only shows "This subreddit does not have a sidebar".
 val disableUnavailableSidebar =
-    patch("Disable unavailable sidebar") {
-        description(
-            "Disables \"View Sidebar\" on Front Page, All, Popular, Friends and multireddits, which have no sidebar."
-        )
+    patch(BaconReaderStrings.patchDisableUnavailableSidebar) {
+        description(BaconReaderStrings.patchDisableUnavailableSidebarDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

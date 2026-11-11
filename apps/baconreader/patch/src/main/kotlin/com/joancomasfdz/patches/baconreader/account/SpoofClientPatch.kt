@@ -8,6 +8,7 @@ import app.reseam.patch.alwaysReturn
 import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -23,35 +24,30 @@ private const val REDREADER_USER_AGENT = "org.quantumbadger.redreader/1.25.1"
 // logging in and loading anything fails. Another app's client still works, as long as the redirect
 // URI and user agent match what Reddit has on record for it. RedReader's is the default.
 val spoofClient =
-    patch("Spoof client") {
-        description(
-            "Makes logging in to Reddit work again by using another Reddit app's client ID."
-        )
+    patch(BaconReaderStrings.patchSpoofClient) {
+        description(BaconReaderStrings.patchSpoofClientDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         val clientId =
             stringOption(
                 "clientId",
-                title = "Application client ID",
-                description =
-                    "The client ID of an \"Installed app\" from https://www.reddit.com/prefs/apps.",
+                title = BaconReaderStrings.patchSpoofClientClientIdTitle,
+                description = BaconReaderStrings.patchSpoofClientClientIdDescription,
                 default = REDREADER_CLIENT_ID,
                 required = true,
             )
         val redirectUri =
             stringOption(
                 "redirectUri",
-                title = "Application redirect URI",
-                description =
-                    "The redirect URI of that Reddit app. Empty keeps BaconReader's own, $ORIGINAL_REDIRECT_URI.",
+                title = BaconReaderStrings.patchSpoofClientRedirectUriTitle,
+                description = BaconReaderStrings.patchSpoofClientRedirectUriDescription,
                 default = REDREADER_REDIRECT_URI,
             )
         val userAgent =
             stringOption(
                 "userAgent",
-                title = "Application user agent",
-                description =
-                    "The user agent of that Reddit app, ideally. Empty keeps BaconReader's own.",
+                title = BaconReaderStrings.patchSpoofClientUserAgentTitle,
+                description = BaconReaderStrings.patchSpoofClientUserAgentDescription,
                 default = REDREADER_USER_AGENT,
             )
 

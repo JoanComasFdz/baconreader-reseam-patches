@@ -9,14 +9,15 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.skipWhen
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
 // Reddit removed r/random and r/myrandom in December 2024, so the Random and My Random feeds never
 // load.
 val removeRandomFeeds =
-    patch("Remove Random feeds") {
-        description("Removes Random and My Random, which no longer load, from the feed list.")
+    patch(BaconReaderStrings.patchRemoveRandomFeeds) {
+        description(BaconReaderStrings.patchRemoveRandomFeedsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

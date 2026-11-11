@@ -7,6 +7,7 @@ package com.joancomasfdz.patches.baconreader.links
 import app.reseam.patch.before
 import app.reseam.patch.patch
 import com.joancomasfdz.baconreader.openlinks.bindings.OpenLinks
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -16,10 +17,8 @@ import com.joancomasfdz.patches.baconreader.core.mainActivityResume
 // apps the site verifies, and reddit.com only verifies Reddit's official app. Users must select
 // the links themselves on the app's "Open by default" screen, which most never find.
 val promptToOpenRedditLinks =
-    patch("Prompt to open Reddit links") {
-        description(
-            "Asks once to set up Reddit links to open in BaconReader, which Android doesn't let the app do by itself."
-        )
+    patch(BaconReaderStrings.patchPromptToOpenRedditLinks) {
+        description(BaconReaderStrings.patchPromptToOpenRedditLinksDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

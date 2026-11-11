@@ -9,6 +9,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import com.joancomasfdz.baconreader.flairs.bindings.FlairFilter
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -17,10 +18,8 @@ import com.joancomasfdz.patches.baconreader.core.mainActivityOpenLinkset
 // BaconReader can't filter a subreddit by flair. Reddit's search can, and BaconReader already
 // loads a feed whose key has a query as a search in the subreddit, so the filter is a search.
 val flairFilter =
-    patch("Flair filter") {
-        description(
-            "Adds a Flair button to the sort bar of subreddits, to show only the posts with the chosen flairs."
-        )
+    patch(BaconReaderStrings.patchFlairFilter) {
+        description(BaconReaderStrings.patchFlairFilterDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

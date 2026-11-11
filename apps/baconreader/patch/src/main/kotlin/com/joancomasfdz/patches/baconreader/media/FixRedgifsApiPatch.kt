@@ -10,6 +10,7 @@ import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.redirectTo
 import com.joancomasfdz.baconreader.redgifs.bindings.RedgifsFix
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -18,8 +19,8 @@ private const val REDGIFS_MANAGER = "com.onelouder.baconreader.media.gfycat.RedG
 // Redgifs dropped the OAuth client flow BaconReader's own interceptor authenticates with, so
 // every Redgifs video fails to load. Redgifs now hands out temporary tokens instead.
 val fixRedgifsApi =
-    patch("Fix Redgifs API") {
-        description("Makes Redgifs videos play again.")
+    patch(BaconReaderStrings.patchFixRedgifsApi) {
+        description(BaconReaderStrings.patchFixRedgifsApiDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute { headerInterceptor.redirectTo(RedgifsFix.replaceInterceptor) }

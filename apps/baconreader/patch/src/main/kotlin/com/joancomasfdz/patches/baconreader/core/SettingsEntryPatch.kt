@@ -12,6 +12,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.settings.openSettings
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.settingsentry.bindings.SettingsEntry
 
 private const val SETTINGS_FRAGMENT = "com.onelouder.baconreader.SettingsFragment"
@@ -19,10 +20,8 @@ private const val SETTINGS_FRAGMENT = "com.onelouder.baconreader.SettingsFragmen
 // BaconReader's settings menu lists the titles of its sections, and opens a section by its
 // position in that list. The entry goes last, so the app's own positions stay the same.
 val settingsEntry =
-    patch("Patches entry in settings") {
-        description(
-            "Adds a Patches entry at the end of BaconReader's settings, which opens the patches' settings, and shows the patches' version at the bottom of the menu."
-        )
+    patch(BaconReaderStrings.patchPatchesEntryInSettings) {
+        description(BaconReaderStrings.patchPatchesEntryInSettingsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

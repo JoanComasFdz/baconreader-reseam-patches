@@ -11,6 +11,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import com.joancomasfdz.baconreader.memes.bindings.FixMemeTemplates
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -21,10 +22,8 @@ private const val IMAGE_GRID_FRAGMENT = "com.handmark.drawchat.bitmapfun.ui.Imag
 // The meme templates of the drawing screen were on BaconReader's server, which answers 404 for
 // all of them, so none of them load.
 val fixMemeTemplates =
-    patch("Fix meme templates") {
-        description(
-            "Makes the meme templates of the drawing screen load again, with Imgflip's most used templates."
-        )
+    patch(BaconReaderStrings.patchFixMemeTemplates) {
+        description(BaconReaderStrings.patchFixMemeTemplatesDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

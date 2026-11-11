@@ -8,16 +8,15 @@ import app.reseam.patch.alwaysReturn
 import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
 // Every screen reports its time to ReviewLegacyImpl, which asks for feedback about BaconReader once
 // enough time was spent in the app. The time tracking and the popup are turned off.
 val disableFeedbackPopup =
-    patch("Disable feedback popup") {
-        description(
-            "Disables the \"Please take a few moments to provide feedback about BaconReader\" popup."
-        )
+    patch(BaconReaderStrings.patchDisableFeedbackPopup) {
+        description(BaconReaderStrings.patchDisableFeedbackPopupDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

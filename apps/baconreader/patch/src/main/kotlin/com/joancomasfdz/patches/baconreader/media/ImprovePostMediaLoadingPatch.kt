@@ -32,10 +32,8 @@ private const val IMAGE_HELPER = "com.onelouder.baconreader.imageutils.ImageHelp
 // runs JavaScript only for a list of sites from before most of today's web needed it, several of
 // which shut down, so many pages show nothing.
 val improvePostMediaLoading =
-    patch("Improve post media loading") {
-        description(
-            "Shows a progress bar, the downloaded size and, by a setting, a still preview while post media and gallery images load, uses small previews for the thumbnails of galleries, shows a message instead of a broken page when a RedGIFs video was deleted, and adds settings for which link post pages run JavaScript."
-        )
+    patch(BaconReaderStrings.patchImprovePostMediaLoading) {
+        description(BaconReaderStrings.patchImprovePostMediaLoadingDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
             baconReaderSettings,

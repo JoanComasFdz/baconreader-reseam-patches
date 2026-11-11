@@ -10,6 +10,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.votes.bindings.FixLostVotes
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -18,10 +19,8 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 // to the post list. A vote made while they load is missing from that copy, requested before the
 // vote, so the post list shows the post as not voted. Reddit still has the vote.
 val fixLostVotes =
-    patch("Fix lost post votes") {
-        description(
-            "Keeps votes on a post in the post list when they're made while its comments load."
-        )
+    patch(BaconReaderStrings.patchFixLostPostVotes) {
+        description(BaconReaderStrings.patchFixLostPostVotesDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

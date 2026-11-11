@@ -8,6 +8,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.skipWhen
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -15,10 +16,8 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 // be logged in to again. It's rarely needed, and sits right above the accounts. Each account's ✕
 // still removes that account.
 val removeLogOut =
-    patch("Remove Log out") {
-        description(
-            "Removes \"Log out\", which logs out of every account at once, from the menu's accounts."
-        )
+    patch(BaconReaderStrings.patchRemoveLogOut) {
+        description(BaconReaderStrings.patchRemoveLogOutDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute { logOutItem.skipWhen { bool(true) } }

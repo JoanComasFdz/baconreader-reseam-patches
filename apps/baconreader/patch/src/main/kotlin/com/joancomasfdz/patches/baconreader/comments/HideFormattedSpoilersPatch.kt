@@ -12,6 +12,7 @@ import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.replace
 import com.joancomasfdz.baconreader.comments.bindings.HiddenSpoilers
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -24,8 +25,8 @@ private const val ELEMENT = "com.onelouder.baconreader.parser.RedditParser\$Elem
 // now, and the box covers all of it. Accessibility reads a hidden spoiler as "spoiler", not its
 // text, which the box only paints over.
 val hideFormattedSpoilers =
-    patch("Hide formatted spoilers") {
-        description("Hides spoilers that contain formatting, links or code, like other spoilers.")
+    patch(BaconReaderStrings.patchHideFormattedSpoilers) {
+        description(BaconReaderStrings.patchHideFormattedSpoilersDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 
