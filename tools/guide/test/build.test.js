@@ -123,3 +123,14 @@ test('without an update, the guide is its patches alone', () => {
   const rendered = guide.renderGuide('O/r', [{ title: 'Fixes', pages: [page] }]);
   assert.ok(!rendered.nav.includes('#update') && !rendered.sections.includes('id="update"'));
 });
+
+test('the pages on the patcher\'s manager come first, under "Start here", then "How to update", then the patches', () => {
+  const page = (name, file) => ({ name, file, summary: 's', body: '', scenarioBlocks: [] });
+  const update = { title: 'How to update', summary: 'Patch again.', caption: 'Updating', video: 'update.mp4', steps: [] };
+  const rendered = guide.renderGuide('O/r', [{ title: 'Fixes', pages: [page('Fix A', 'fix-a.md')] }], update, [page('How to install', 'install.md')]);
+  const order = ['href="#install"', 'href="#update"', 'href="#fix-a"'].map((link) => rendered.nav.indexOf(link));
+  assert.deepEqual([...order].sort((a, b) => a - b), order);
+  assert.ok(rendered.nav.startsWith('<h2>Start here</h2>'));
+  const sections = ['id="install"', 'id="update"', 'id="fix-a"'].map((id) => rendered.sections.indexOf(id));
+  assert.deepEqual([...sections].sort((a, b) => a - b), sections);
+});
