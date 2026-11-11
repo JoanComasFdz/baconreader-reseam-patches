@@ -14,6 +14,8 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 /// </summary>
 internal static class AlbumGestures
 {
+    private const int SwipeMoves = 6;
+
     /// <summary>
     /// Swipes across <paramref name="media"/>, at its middle: toward its left side (<paramref name="toTheLeft"/>), which
     /// goes to the next image, or toward its right, which goes to the one before.
@@ -28,7 +30,13 @@ internal static class AlbumGestures
         var swipe = new ActionSequence(finger, 0);
         swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, from, y, TimeSpan.Zero));
         swipe.AddAction(finger.CreatePointerDown(MouseButton.Touch));
-        swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, to, y, TimeSpan.FromMilliseconds(200)));
+        // In small moves from the start, as a finger moves: a finger that stays put is a long press, which on an Imgur
+        // album's video asks to download it.
+        for (var move = 1; move <= SwipeMoves; move++)
+        {
+            swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, from + ((to - from) * move / SwipeMoves), y, TimeSpan.FromMilliseconds(30)));
+        }
+
         swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
         OnScreen.PerformSwipe(driver, swipe, new Point(from, y), new Point(to, y));
     }

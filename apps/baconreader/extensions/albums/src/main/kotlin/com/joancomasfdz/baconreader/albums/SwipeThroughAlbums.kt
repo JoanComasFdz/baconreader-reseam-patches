@@ -20,7 +20,7 @@ private const val TAG = "SwipeThroughAlbums"
 private const val MIN_DISTANCE_DP = 48
 
 /** Longest swipe on a video, in milliseconds: a slower drag is no swipe. */
-private const val MAX_SWIPE_MS = 600L
+private const val MAX_SWIPE_MS = 1000L
 
 /**
  * Called at the end of RedditGalleryViewer.createView and ImgurGalleryViewer.createView, with the
