@@ -11,7 +11,10 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
+import android.graphics.Paint
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -20,6 +23,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.util.TypedValue
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import app.reseam.runtime.Export
@@ -35,8 +39,9 @@ import java.util.Locale
 
 /**
  * Shows the errors of the patches in a dialog with all the details, instead of only logging them:
- * what failed, the error and its causes, the time, the app, patches and Android versions, and the
- * stack trace. The details can be copied or saved to a file, to report them.
+ * what failed, the patch whose code is in the stack trace, the error and its causes, the time, the
+ * app, patches and Android versions, the heap in use, and the stack trace. The details can be
+ * copied or saved to a file, to report them.
  */
 object ErrorDialog {
     private const val TAG = "ErrorDialog"
@@ -46,6 +51,50 @@ object ErrorDialog {
     private const val SEPARATOR = "\n\n────────────\n\n"
     private const val PATCHES_PACKAGE = "com.joancomasfdz."
     private const val CRASH_FILE = "patches_last_crash.txt"
+    private const val EXTENSIONS = "com.joancomasfdz.baconreader."
+    private const val MEGABYTE = 1024L * 1024L
+    private const val ISSUES = "https://github.com/JoanComasFdz/baconreader-reseam-patches/issues"
+
+    // The patch each extension's code belongs to, by its package under EXTENSIONS. The shared
+    // extensions (common, settings) belong to no patch.
+    private val EXTENSION_PATCHES: Map<String, () -> String> =
+        mapOf(
+            "accountcolors" to { BaconReaderStrings.patchAccountColors },
+            "sidebar" to { BaconReaderStrings.patchDisableUnavailableSidebar },
+            "embedcommentimages" to { BaconReaderStrings.patchEmbedCommentImages },
+            "savedfiles" to { BaconReaderStrings.patchFixEmptySavedFiles },
+            "imgur" to { BaconReaderStrings.patchFixImgurApi },
+            "thumbnails" to { BaconReaderStrings.patchFixListThumbnails },
+            "votes" to { BaconReaderStrings.patchFixLostPostVotes },
+            "memes" to { BaconReaderStrings.patchFixMemeTemplates },
+            "redditlinks" to { BaconReaderStrings.patchFixRedditLinks },
+            "redgifs" to { BaconReaderStrings.patchFixRedgifsApi },
+            "slideshow" to { BaconReaderStrings.patchFixSlideShow },
+            "unread" to { BaconReaderStrings.patchFixUnreadMessages },
+            "flairs" to { BaconReaderStrings.patchFlairFilter },
+            "postmedia" to { BaconReaderStrings.patchImprovePostMediaLoading },
+            "inboxreply" to { BaconReaderStrings.patchInboxCommentReplyScreen },
+            "editor" to { BaconReaderStrings.patchMarkdownEditor },
+            "settingsentry" to { BaconReaderStrings.patchPatchesEntryInSettings },
+            "openlinks" to { BaconReaderStrings.patchPromptToOpenRedditLinks },
+            "chat" to { BaconReaderStrings.patchRedditChat },
+            "awards" to { BaconReaderStrings.patchRemoveAwards },
+            "videosound" to { BaconReaderStrings.patchSaveVideosWithSound },
+            "search" to { BaconReaderStrings.patchSearchComments },
+            "selecttext" to { BaconReaderStrings.patchSelectText },
+            "tables" to { BaconReaderStrings.patchShowTables },
+            "avatars" to { BaconReaderStrings.patchShowUserAvatars },
+            "textposticon" to { BaconReaderStrings.patchTextPostIcon },
+            "detailvideo" to { BaconReaderStrings.patchVideoAutoplayInDetailView },
+        )
+
+    // The comments extension serves three patches, so its classes name theirs.
+    private val CLASS_PATCHES: Map<String, () -> String> =
+        mapOf(
+            "comments.LoadMoreComments" to { BaconReaderStrings.patchLoadMoreComments },
+            "comments.MoreChildrenFallback" to { BaconReaderStrings.patchFixLoadMoreComments },
+            "comments.HiddenSpoilers" to { BaconReaderStrings.patchHideFormattedSpoilers },
+        )
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -101,22 +150,23 @@ object ErrorDialog {
         catchErrors(application)
     }
 
-    // A patch's error is caught wherever it escapes to, and shown here instead of closing the app.
-    // Any other crash still closes it, as it would without the patches, but its details are kept
-    // and shown when the app opens again.
+    // Every error is caught, on any thread, and shown here instead of closing the app. The dialog
+    // says "Patches" when a patch's code is in the error, else "BaconReader". Only if the dialog
+    // itself fails is the crash saved for the next start, and the app closes as it would without
+    // the patches.
     private fun catchErrors(application: Application) {
         showLastCrash(application)
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
-            if (thread !== Looper.getMainLooper().thread && fromPatches(error)) {
-                report("Patches", "A patch failed on the thread ${thread.name}", error)
-            } else {
+            try {
+                report(sourceOf(error), "An error stopped the thread ${thread.name}", error)
+            } catch (failed: Throwable) {
                 saveCrash(application, thread, error)
                 previous?.uncaughtException(thread, error)
             }
         }
         // An error on the main thread ends its message loop. Running the loop again inside a
-        // message lets a patch's error be caught there and the loop continue.
+        // message lets the error be shown there and the loop continue.
         main.post(::loopMainThread)
     }
 
@@ -126,20 +176,38 @@ object ErrorDialog {
                 Looper.loop()
                 return
             } catch (error: Throwable) {
-                if (!fromPatches(error)) throw error
-                report("Patches", "A patch failed", error)
+                try {
+                    report(sourceOf(error), "An error stopped a screen", error)
+                } catch (failed: Throwable) {
+                    Log.e(TAG, "Could not show the error", failed)
+                }
             }
         }
     }
 
+    private fun sourceOf(error: Throwable): String =
+        if (fromPatches(error)) "Patches" else "BaconReader"
+
+    // The dialog's own frames, and the code shared by the extensions, are not a patch's: they are
+    // in every error shown here.
     private fun fromPatches(error: Throwable): Boolean {
         var cause: Throwable? = error
         while (cause != null) {
-            if (cause.stackTrace.any { it.className.startsWith(PATCHES_PACKAGE) }) return true
+            if (
+                cause.stackTrace.any {
+                    it.className.startsWith(PATCHES_PACKAGE) && !isShared(it.className)
+                }
+            ) {
+                return true
+            }
             cause = cause.cause.takeIf { it !== cause }
         }
         return false
     }
+
+    private fun isShared(className: String): Boolean =
+        className.startsWith("com.joancomasfdz.baconreader.common.") ||
+            className.startsWith("com.joancomasfdz.baconreader.settings.")
 
     private fun saveCrash(application: Application, thread: Thread, error: Throwable) {
         try {
@@ -195,6 +263,7 @@ object ErrorDialog {
 
     private fun details(tag: String, message: String, error: Throwable?): String = buildString {
         append(tag).append(": ").append(message).append('\n')
+        append(failedPatch(error)).append('\n')
         var cause = error
         while (cause != null) {
             append(if (cause === error) "\nError: " else "Caused by: ").append(cause.javaClass.name)
@@ -212,12 +281,46 @@ object ErrorDialog {
         append("Android: ").append(Build.VERSION.RELEASE).append(" (API ")
         append(Build.VERSION.SDK_INT).append("), ").append(Build.MANUFACTURER).append(' ')
         append(Build.MODEL).append('\n')
+        append(memory()).append('\n')
 
         append("\nStack trace:\n")
         val stackTrace = StringWriter()
         // Without an error, where it was reported from.
         (error ?: Throwable("Reported at")).printStackTrace(PrintWriter(stackTrace))
         append(stackTrace.toString().trim())
+    }
+
+    /** The patches whose code is in the stack trace, or that none of its frames is from. */
+    private fun failedPatch(error: Throwable?): String {
+        val patches = LinkedHashSet<String>()
+        var cause = error
+        while (cause != null) {
+            for (frame in cause.stackTrace) patchOf(frame.className)?.let { patches.add(it) }
+            cause = cause.cause.takeIf { it !== cause }
+        }
+        return if (patches.isEmpty()) {
+            "Failed patch: none of the stack trace's frames is from a patch's code"
+        } else {
+            "Failed patch: " + patches.joinToString(", ")
+        }
+    }
+
+    private fun patchOf(className: String): String? {
+        if (!className.startsWith(EXTENSIONS)) return null
+        val name = className.substringBefore('$').removeSuffix("Kt")
+        CLASS_PATCHES[name.removePrefix(EXTENSIONS)]?.let {
+            return it()
+        }
+        val extension = name.removePrefix(EXTENSIONS).substringBefore('.')
+        return EXTENSION_PATCHES[extension]?.invoke()
+    }
+
+    /** The heap in use against its limit: an out-of-memory error is about how full it was. */
+    private fun memory(): String {
+        val runtime = Runtime.getRuntime()
+        val used = (runtime.totalMemory() - runtime.freeMemory()) / MEGABYTE
+        val limit = runtime.maxMemory() / MEGABYTE
+        return "Memory: $used MB of the heap used, out of $limit MB"
     }
 
     @Suppress("DEPRECATION")
@@ -251,11 +354,28 @@ object ErrorDialog {
                     setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                     setTextIsSelectable(true)
                 }
+            // Above the details, so that the link shows without scrolling to them.
+            val issue =
+                ui.text(
+                        BaconReaderStrings.errorIssue,
+                        ui.type.bodyMedium,
+                        ui.colors.onSurfaceVariant,
+                    )
+                    .apply {
+                        paintFlags = paintFlags or Paint.UNDERLINE_TEXT_FLAG
+                        setOnClickListener { openIssues(activity) }
+                    }
+            val content =
+                LinearLayout(activity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    addView(issue)
+                    addView(text)
+                }
             lateinit var created: Dialog
             created =
                 ui.dialog()
                     .title(BaconReaderStrings.errorTitle)
-                    .view(text)
+                    .view(content)
                     .action(BaconReaderStrings.errorCopy) { copy(activity, text.text.toString()) }
                     .action(BaconReaderStrings.errorSave) { save(activity, text.text.toString()) }
                     .dismissAction(BaconReaderStrings.errorClose)
@@ -277,6 +397,15 @@ object ErrorDialog {
         dialog = null
         dialogActivity = WeakReference(null)
         detailsView = null
+    }
+
+    /** The repo's issues, where the error can be reported. */
+    private fun openIssues(context: Context) {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ISSUES)))
+        } catch (exception: Exception) {
+            Toast.makeText(context, ISSUES, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun copy(context: Context, details: String) {
