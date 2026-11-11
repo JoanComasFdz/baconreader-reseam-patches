@@ -24,10 +24,8 @@ private const val DRAWER_ADAPTER = "com.onelouder.baconreader.adapters.DrawerAda
 // BaconReader switches between several Reddit accounts from the menu, but every account looks the
 // same once it is in use: only the menu's header names it.
 val accountColors =
-    patch("Account colors") {
-        description(
-            "Lets you pick a color for each account in the menu, and shows the color of the account in use as a line under the toolbars."
-        )
+    patch(BaconReaderStrings.patchAccountColors) {
+        description(BaconReaderStrings.patchAccountColorsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
             baconReaderSettings,

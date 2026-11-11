@@ -15,6 +15,7 @@ import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.skipWhen
 import com.joancomasfdz.baconreader.awards.bindings.RemoveAwards
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -27,10 +28,8 @@ private const val SETTING_IDS = "com.onelouder.baconreader.adapters.SettingIds"
 // Reddit's API no longer reports awards, so BaconReader's award icons never show anything, and
 // giving awards used Reddit's coins, which are discontinued.
 val removeAwards =
-    patch("Remove awards") {
-        description(
-            "Removes the award icons and the \"Give Award\" and \"View Award Details\" actions, which no longer work."
-        )
+    patch(BaconReaderStrings.patchRemoveAwards) {
+        description(BaconReaderStrings.patchRemoveAwardsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

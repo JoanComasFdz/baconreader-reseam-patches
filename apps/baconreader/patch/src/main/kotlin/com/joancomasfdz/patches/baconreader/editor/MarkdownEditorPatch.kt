@@ -10,6 +10,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import com.joancomasfdz.baconreader.editor.bindings.MarkdownEditor
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -23,10 +24,8 @@ private const val SUBMIT_ACTIVITY = "com.onelouder.baconreader.SubmitActivity"
 // instead, with a bar of Reddit's formats and a character counter above them, and show the
 // markdown formatted while typing.
 val markdownEditor =
-    patch("Markdown editor") {
-        description(
-            "Makes the text box of comments, replies, edits, messages and text posts as big as possible, with a bar of Reddit's formats and a character counter, and shows the formatting while typing."
-        )
+    patch(BaconReaderStrings.patchMarkdownEditor) {
+        description(BaconReaderStrings.patchMarkdownEditorDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

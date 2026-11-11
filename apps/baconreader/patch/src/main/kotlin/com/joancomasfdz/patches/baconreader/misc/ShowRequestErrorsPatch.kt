@@ -11,6 +11,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -21,10 +22,8 @@ private const val IO_EXCEPTION = "java.io.IOException"
 // Found", Reddit's explanation, a dropped connection, parse errors; Reddit requests have no
 // timeout), so the handler throws the caught error again instead.
 val showRequestErrors =
-    patch("Show request errors") {
-        description(
-            "Shows the actual error when a Reddit request fails, instead of the message saying that BaconReader stopped working in July 2023."
-        )
+    patch(BaconReaderStrings.patchShowRequestErrors) {
+        description(BaconReaderStrings.patchShowRequestErrorsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

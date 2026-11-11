@@ -12,6 +12,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import com.joancomasfdz.baconreader.inboxreply.bindings.InboxReply
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -22,10 +23,8 @@ private const val POST_ACTIVITY = "com.onelouder.baconreader.PostActivity"
 // Replying from the inbox opens a plain "Send message" form, without the comment or message being
 // replied to. The comment reply screen shows it, with formatting, and posts the same reply.
 val inboxCommentReply =
-    patch("Inbox comment reply screen") {
-        description(
-            "Opens the comment reply screen, with the replied comment or message, when replying from the inbox, instead of the plain \"Send message\" form."
-        )
+    patch(BaconReaderStrings.patchInboxCommentReplyScreen) {
+        description(BaconReaderStrings.patchInboxCommentReplyScreenDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

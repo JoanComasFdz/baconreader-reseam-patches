@@ -12,6 +12,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import com.joancomasfdz.baconreader.search.bindings.CommentSearch
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -23,10 +24,8 @@ private const val COMMENT_HOLDER = "com.onelouder.baconreader.adapters.CommentHo
 // Reddit's API has no comment search, unlike its website, and BaconReader has none either. The
 // comments of a post are already loaded, so the search runs on them.
 val commentSearch =
-    patch("Search comments") {
-        description(
-            "Adds a search button to the sort bar of posts, to find, highlight and jump between the comments with a text or user name, or show only those comments."
-        )
+    patch(BaconReaderStrings.patchSearchComments) {
+        description(BaconReaderStrings.patchSearchCommentsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings, threadAccess)
 

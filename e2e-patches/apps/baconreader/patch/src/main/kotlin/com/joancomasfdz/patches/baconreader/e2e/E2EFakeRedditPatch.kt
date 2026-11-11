@@ -27,17 +27,15 @@ private const val DEFAULT_BASE_URL = "http://127.0.0.1:5080"
 // recognizes Reddit and Imgur links in posts by bare domains (reddit.com, v.redd.it, imgur.com),
 // and those stay.
 val e2eFakeReddit =
-    patch("E2E fake Reddit") {
-        description(
-            "Test only: points BaconReader at a fake Reddit server instead of Reddit, and starts it logged in when the fake hands it a login."
-        )
+    patch(E2EStrings.patchE2eFakeReddit) {
+        description(E2EStrings.patchE2eFakeRedditDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         val baseUrl =
             stringOption(
                 "baseUrl",
-                title = "Base URL",
-                description = "The fake Reddit server's URL, such as $DEFAULT_BASE_URL.",
+                title = E2EStrings.patchE2eFakeRedditBaseUrlTitle,
+                description = E2EStrings.patchE2eFakeRedditBaseUrlDescription,
                 default = DEFAULT_BASE_URL,
                 required = true,
             )
@@ -52,9 +50,9 @@ val e2eFakeReddit =
                 whenTrue(E2EFakeReddit.isMovedRedditVideo(param(0))) { returnTrue() }
             }
             savedVideoUrl.after { returnValue(E2EFakeReddit.keepFakeScheme(param(0), result)) }
-            // A LoggedIn scenario starts logged in, as the fake hands the app the login: logging in through the
-            // screens took ~11 s of each scenario. Right after the app's first step, before SessionManager reads
-            // the sessions.
+            // A LoggedIn scenario starts logged in, as the fake hands the app the login: logging in
+            // through the screens took ~11 s of each scenario. Right after the app's first step,
+            // before SessionManager reads the sessions.
             applicationSet.after { E2EFakeReddit.logInAtStart() }
         }
 

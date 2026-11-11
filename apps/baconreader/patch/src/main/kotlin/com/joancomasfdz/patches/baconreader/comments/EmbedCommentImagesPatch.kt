@@ -35,10 +35,8 @@ private const val BUFFER_TYPE = "android.widget.TextView\$BufferType"
 // doesn't play them. Imgur albums are listed with the app's Imgur client, which needs Fix Imgur
 // API.
 val embedCommentImages =
-    patch("Embed comment images") {
-        description(
-            "Shows images, GIFs, emotes, Imgur albums and videos in comments and posts, YouTube links with their title and thumbnail, and X and Bluesky links as the post."
-        )
+    patch(BaconReaderStrings.patchEmbedCommentImages) {
+        description(BaconReaderStrings.patchEmbedCommentImagesDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(fixImgurApi)
         settings(

@@ -22,10 +22,8 @@ import com.joancomasfdz.patches.baconreader.core.threadAccess
 // BaconReader requests a post's comments without a limit, so Reddit returns its default of about
 // 200 and hides the rest behind "load more comments", often for one or two replies.
 val loadMoreComments =
-    patch("Load more comments") {
-        description(
-            "Adds options to load up to 500 comments when opening a post instead of about 200, and to load the \"load more comments\" with few replies automatically."
-        )
+    patch(BaconReaderStrings.patchLoadMoreComments) {
+        description(BaconReaderStrings.patchLoadMoreCommentsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(threadAccess)
         settings(

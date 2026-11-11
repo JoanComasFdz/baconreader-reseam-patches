@@ -11,6 +11,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.points
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.videosound.bindings.SaveVideosWithSound
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -21,10 +22,8 @@ private const val SAVE_IMAGE_SERVICE = "com.onelouder.baconreader.imageutils.Sav
 // Reddit videos keep the sound in a separate file, and "Save to device" saves only the picture,
 // the video's fallback URL.
 val saveVideosWithSound =
-    patch("Save videos with sound") {
-        description(
-            "Adds the sound to Reddit videos saved with \"Save to device\", which were saved without it."
-        )
+    patch(BaconReaderStrings.patchSaveVideosWithSound) {
+        description(BaconReaderStrings.patchSaveVideosWithSoundDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

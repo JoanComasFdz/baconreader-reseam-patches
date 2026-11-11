@@ -12,6 +12,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import com.joancomasfdz.baconreader.imgur.bindings.ImgurFix
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -23,10 +24,8 @@ private const val IMGUR_API_URL = "https://api.imgur.com/3/"
 // sends without a content type. It also sends every still image with an empty "mp4", which
 // BaconReader's album viewer takes for a video: it plays "" and never shows the image.
 val fixImgurApi =
-    patch("Fix Imgur API") {
-        description(
-            "Makes Imgur albums and galleries load again, and image uploads in comments and posts work."
-        )
+    patch(BaconReaderStrings.patchFixImgurApi) {
+        description(BaconReaderStrings.patchFixImgurApiDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

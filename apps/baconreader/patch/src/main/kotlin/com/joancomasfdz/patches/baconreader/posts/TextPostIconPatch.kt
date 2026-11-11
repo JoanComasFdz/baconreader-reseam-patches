@@ -12,6 +12,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.textposticon.bindings.TextPostIcon
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -21,10 +22,8 @@ import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
 // BaconReader draws it as a triangle in a circle, which looks like a video that did not load, and
 // rotates it when the text opens. It becomes a page icon with a chevron that flips instead.
 val textPostIcon =
-    patch("Text post icon") {
-        description(
-            "Shows the button that opens a text post's text in the post list as a page with a chevron, instead of a play button."
-        )
+    patch(BaconReaderStrings.patchTextPostIcon) {
+        description(BaconReaderStrings.patchTextPostIconDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

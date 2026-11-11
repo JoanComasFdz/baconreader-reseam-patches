@@ -8,6 +8,7 @@ import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
 import com.joancomasfdz.baconreader.comments.bindings.MoreChildrenFallback
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.threadAccess
@@ -17,8 +18,8 @@ import com.joancomasfdz.patches.baconreader.core.threadAccess
 // loaded at the end of a long thread stay hidden. Reddit still serves a comment's thread, which
 // holds the same comments. The app asks api/morechildren first, in case Reddit serves it again.
 val fixLoadMoreComments =
-    patch("Fix load more comments") {
-        description("Makes \"load more comments\" load the hidden comments again.")
+    patch(BaconReaderStrings.patchFixLoadMoreComments) {
+        description(BaconReaderStrings.patchFixLoadMoreCommentsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(threadAccess)
 

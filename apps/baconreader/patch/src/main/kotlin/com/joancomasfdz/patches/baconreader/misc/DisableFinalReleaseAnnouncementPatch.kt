@@ -7,6 +7,7 @@ import app.reseam.patch.alwaysReturn
 import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 
@@ -14,10 +15,8 @@ import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 // working on July 1, 2023. The patches keep it working, and a fresh install of a patched app shows
 // the popup again.
 val disableFinalReleaseAnnouncement =
-    patch("Disable final release announcement") {
-        description(
-            "Disables the \"FINAL RELEASE ANNOUNCEMENT!\" popup that says goodbye when the app starts."
-        )
+    patch(BaconReaderStrings.patchDisableFinalReleaseAnnouncement) {
+        description(BaconReaderStrings.patchDisableFinalReleaseAnnouncementDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute { showAnnouncement.alwaysReturn() }

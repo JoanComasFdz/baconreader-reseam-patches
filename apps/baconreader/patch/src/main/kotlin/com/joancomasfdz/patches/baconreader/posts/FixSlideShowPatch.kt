@@ -8,6 +8,7 @@ import app.reseam.patch.before
 import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.slideshow.bindings.FixSlideShow
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -19,10 +20,8 @@ import com.joancomasfdz.patches.baconreader.core.postMediaText
 // text, a gallery's thumbnails and the page's border don't show, and the media sits low. An image
 // post's text, expanded, also grows past the page's bottom, where it is cut off.
 val fixSlideShow =
-    patch("Fix slide show") {
-        description(
-            "Fits each post of the Slide Show View to the screen, and lets a post's long text scroll in it."
-        )
+    patch(BaconReaderStrings.patchFixSlideShow) {
+        description(BaconReaderStrings.patchFixSlideShowDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute {

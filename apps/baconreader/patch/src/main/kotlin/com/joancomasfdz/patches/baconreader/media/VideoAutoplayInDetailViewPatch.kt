@@ -23,10 +23,8 @@ private const val POST_MEDIA_HANDLER = "com.onelouder.baconreader.PostMediaHandl
 // BaconReader starts every video as soon as the detail view of a post shows it, on mobile data too,
 // and has no setting to wait for a tap.
 val videoAutoplayInDetailView =
-    patch("Video autoplay in detail view") {
-        description(
-            "Adds a setting to stop videos, such as v.redd.it videos, from loading and playing by themselves in a post's detail view: the post shows its preview image, and a tap on it plays the video."
-        )
+    patch(BaconReaderStrings.patchVideoAutoplayInDetailView) {
+        description(BaconReaderStrings.patchVideoAutoplayInDetailViewDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
             baconReaderSettings,

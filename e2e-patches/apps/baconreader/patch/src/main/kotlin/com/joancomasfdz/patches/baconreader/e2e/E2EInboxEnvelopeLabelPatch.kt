@@ -14,10 +14,8 @@ import com.joancomasfdz.baconreader.envelope.bindings.InboxEnvelopeLabel
 // menu icon, an image UiAutomator can't tell apart: both buttons are "Navigate up". The e2e tests
 // of "Fix unread messages" check the envelope by the button's description, which this names.
 val e2eInboxEnvelopeLabel =
-    patch("E2E inbox envelope label") {
-        description(
-            "Test only: adds \"orange envelope\" to the left-menu button's description while it shows the orange envelope."
-        )
+    patch(E2EStrings.patchE2eInboxEnvelopeLabel) {
+        description(E2EStrings.patchE2eInboxEnvelopeLabelDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
 
         execute { navigationIcons.forEach { redirectTo(InboxEnvelopeLabel.setNavigationIcon) } }

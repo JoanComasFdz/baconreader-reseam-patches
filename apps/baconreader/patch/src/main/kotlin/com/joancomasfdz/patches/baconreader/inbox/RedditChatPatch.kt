@@ -33,10 +33,8 @@ private const val LISTING = "com.onelouder.baconreader.reddit.Listing"
 // has the chat, but it needs a login to the website: the app's OAuth login doesn't carry over. The
 // chat shows over the main screen's post list, below its toolbar, so the drawer stays.
 val redditChat =
-    patch("Reddit chat") {
-        description(
-            "Adds Chat to the menu, next to the Inbox, which shows Reddit's chat from its mobile website on the main screen. The chat messages Reddit also sends to the inbox are counted next to Chat and notified as chat messages instead."
-        )
+    patch(BaconReaderStrings.patchRedditChat) {
+        description(BaconReaderStrings.patchRedditChatDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
             baconReaderSettings,

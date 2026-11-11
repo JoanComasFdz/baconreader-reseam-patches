@@ -12,6 +12,7 @@ import app.reseam.patch.patch
 import app.reseam.patch.point
 import app.reseam.patch.replace
 import app.reseam.patch.skipWhen
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.baconreader.unread.bindings.UnreadMessages
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
@@ -22,10 +23,8 @@ private const val INBOX_HELPER = "com.onelouder.baconreader.adapters.InboxHelper
 // "Mark read" only told Reddit, and never turned the orange inbox envelope back to normal. And
 // Reddit answers api/unread_message with 404, so "Mark unread" did nothing.
 val fixUnreadMessages =
-    patch("Fix unread messages") {
-        description(
-            "Turns the orange inbox envelope back to normal when the last unread message is marked as read, and removes \"Mark unread\", which Reddit no longer supports."
-        )
+    patch(BaconReaderStrings.patchFixUnreadMessages) {
+        description(BaconReaderStrings.patchFixUnreadMessagesDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

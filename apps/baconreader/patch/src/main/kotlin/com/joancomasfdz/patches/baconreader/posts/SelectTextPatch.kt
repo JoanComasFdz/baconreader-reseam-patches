@@ -12,6 +12,7 @@ import app.reseam.patch.method
 import app.reseam.patch.patch
 import app.reseam.patch.point
 import com.joancomasfdz.baconreader.selecttext.bindings.SelectText
+import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import com.joancomasfdz.patches.baconreader.core.BACONREADER
 import com.joancomasfdz.patches.baconreader.core.BACONREADER_PREMIUM
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
@@ -25,10 +26,8 @@ private const val POPUP_MENU = "androidx.appcompat.widget.PopupMenu"
 // press for the list (showing the action bar), and "Copy" copies the whole text as markdown. A
 // dialog shows the text as the app draws it, where it can be selected.
 val selectText =
-    patch("Select text") {
-        description(
-            "Adds \"Select text\" to the menus of posts and comments, which shows their text in a dialog where any part of it can be selected and copied."
-        )
+    patch(BaconReaderStrings.patchSelectText) {
+        description(BaconReaderStrings.patchSelectTextDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(baconReaderSettings)
 

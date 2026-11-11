@@ -28,10 +28,8 @@ private const val MESSAGE = "com.onelouder.baconreader.reddit.Message"
 // BaconReader shows no avatars. Reddit sends the author's id with every comment and message, and
 // its API gives the avatar of up to 100 ids at once.
 val userAvatars =
-    patch("Show user avatars") {
-        description(
-            "Adds an option to show the author's avatar before the name in comments, as on Reddit's website, and always shows each account's avatar before its name in the drawer."
-        )
+    patch(BaconReaderStrings.patchShowUserAvatars) {
+        description(BaconReaderStrings.patchShowUserAvatarsDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         settings(
             baconReaderSettings,

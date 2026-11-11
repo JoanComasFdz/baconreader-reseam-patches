@@ -30,8 +30,8 @@ e2e-patches/apps/baconreader/patch/src/main/kotlin/com/joancomasfdz/patches/baco
 ```kotlin
 // Why the patch exists: what broke, or what the app does that it shouldn't.
 val fixSomething =
-    patch("Fix something") {
-        description("Makes something work again.")
+    patch(BaconReaderStrings.patchFixSomething) {
+        description(BaconReaderStrings.patchFixSomethingDescription)
         compatibleWith(BACONREADER, BACONREADER_PREMIUM)
         dependsOn(...)
         settings(baconReaderSettings, section(...))
@@ -44,6 +44,8 @@ val fixSomething =
 // Why this method is the one to change, when the name doesn't say.
 private val target = method("target") { strings("...") }
 ```
+
+- A patch's name and description, and its options' titles and descriptions, are strings of `BaconReaderStrings` (Reseam 0.40 and later take a `StringRef`): `patch_<name in snake case>` and `patch_<name>_description` in `strings.xml`, under its `<!-- The patches' names and descriptions … -->` comment, `\'` and `\"` escaped. The patcher lists the patch by the English text, so it stays the name users and `--enable` know.
 
 - **Order inside the block:** `description`, `compatibleWith`, `dependsOn`, `settings`, options, then `execute`.
 - **Compatibility:** `compatibleWith(BACONREADER, BACONREADER_PREMIUM)` from `core/BaconReader.kt`.
