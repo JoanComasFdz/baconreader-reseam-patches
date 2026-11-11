@@ -58,6 +58,11 @@
     <string name="embed_image_tap_to_load">Tap to load image</string>
     <string name="embed_image_downloading">Downloading image…</string>
     <string name="embed_image_download_failed">Could not download image</string>
+    <!-- What the buttons over a video playing in a comment say to screen readers. -->
+    <string name="embed_video_shrink">Shrink video</string>
+    <string name="embed_video_enlarge">Enlarge video</string>
+    <string name="embed_video_full_screen">Full screen</string>
+    <string name="embed_video_exit_full_screen">Exit full screen</string>
     <!-- Improve post media loading -->
     <string name="section_post_media">Link posts</string>
     <string name="section_post_media_loading">Post media</string>
