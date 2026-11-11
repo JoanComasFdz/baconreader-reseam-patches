@@ -23,8 +23,10 @@ of its e2e scenarios played beside its Gherkin and its marks.
     (1200 × 630) is the preview a shared link to the guide shows, through `index.html`'s Open Graph tags. Both are
     copied as they are;
   - `site/update.json`, if any, makes the guide start with "How to update": its summary and bullets, and a video of
-    updating BaconReader with the patcher's manager, `site/update.mp4`, beside its steps, each marked when it starts. A
-    one-off recording, not an e2e scenario's: it is recorded again by hand when the manager's screens change.
+    updating BaconReader with the patcher's manager, `site/update.mp4`, beside its Gherkin, each line marked when it
+    starts. A one-off recording, not an e2e scenario's: it is recorded again by hand when the manager's screens change,
+    and its Gherkin follows the Gherkin rules ([given-when-then-test-rules.md](given-when-then-test-rules.md)) as a
+    scenario's does.
 - **Which recording:** a scenario's newest in `prs-resources`, the highest PR, then its highest version, as the VS Code
   extension picks it (the builder uses its code). Its Gherkin and marks come from the player link in that PR's post,
   whose fragment carries them, since no page can read a file from the release. A scenario with no recording shows its
