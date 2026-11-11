@@ -14,32 +14,14 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 /// </summary>
 internal static class AlbumGestures
 {
-    private const int SwipeMoves = 6;
-
     /// <summary>
     /// Swipes across <paramref name="media"/>, at its middle: toward its left side (<paramref name="toTheLeft"/>), which
-    /// goes to the next image, or toward its right, which goes to the one before.
+    /// goes to the next image, or toward its right, which goes to the one before. UiAutomator's swipe, sent in one
+    /// command: Appium's actions reach the phone with pauses between them, which a view takes for a slow drag, or for a
+    /// long press, which on an Imgur album's video asks to download it.
     /// </summary>
-    public static void Swipe(AndroidDriver driver, Rectangle media, bool toTheLeft)
-    {
-        var y = media.Top + (media.Height / 2);
-        var near = media.Left + (media.Width / 6);
-        var far = media.Right - (media.Width / 6);
-        var (from, to) = toTheLeft ? (far, near) : (near, far);
-        var finger = new PointerInputDevice(PointerKind.Touch, "finger");
-        var swipe = new ActionSequence(finger, 0);
-        swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, from, y, TimeSpan.Zero));
-        swipe.AddAction(finger.CreatePointerDown(MouseButton.Touch));
-        // In small moves from the start, as a finger moves: a finger that stays put is a long press, which on an Imgur
-        // album's video asks to download it.
-        for (var move = 1; move <= SwipeMoves; move++)
-        {
-            swipe.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, from + ((to - from) * move / SwipeMoves), y, TimeSpan.FromMilliseconds(30)));
-        }
-
-        swipe.AddAction(finger.CreatePointerUp(MouseButton.Touch));
-        OnScreen.PerformSwipe(driver, swipe, new Point(from, y), new Point(to, y));
-    }
+    public static void Swipe(AndroidDriver driver, Rectangle media, bool toTheLeft) =>
+        OnScreen.SwipeGesture(driver, media, toTheLeft ? "left" : "right", 0.6);
 
     /// <summary>Zooms in on <paramref name="media"/>: two fingers at its middle move apart, along its width.</summary>
     public static void ZoomIn(AndroidDriver driver, Rectangle media)

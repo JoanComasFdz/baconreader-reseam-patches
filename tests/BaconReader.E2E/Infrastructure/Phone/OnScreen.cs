@@ -208,6 +208,29 @@ public static class OnScreen
     }
 
     /// <summary>
+    /// Swipes across <paramref name="area"/> with UiAutomator's swipe gesture, the finger moving in
+    /// <paramref name="direction"/> ("left", "right") by <paramref name="percent"/> of its width, at a finger's speed:
+    /// one command, so the phone gets the moves as a finger makes them, and a view that tells a fling by its speed sees
+    /// one. The recording shows the finger's path.
+    /// </summary>
+    public static void SwipeGesture(AndroidDriver driver, Rectangle area, string direction, double percent)
+    {
+        var moved = Stopwatch.GetTimestamp();
+        driver.ExecuteScript("mobile: swipeGesture", new Dictionary<string, object>
+        {
+            ["left"] = area.Left,
+            ["top"] = area.Top,
+            ["width"] = area.Width,
+            ["height"] = area.Height,
+            ["direction"] = direction,
+            ["percent"] = percent,
+        });
+        // A swipe left is the finger's path of a scroll right, and the other way round.
+        var (from, to) = ScrollPath(area, direction == "left" ? "right" : "left", percent);
+        NoteSwipe(driver, from, to, moved, Stopwatch.GetTimestamp());
+    }
+
+    /// <summary>
     /// The finger's path when <see cref="ScrollGesture"/> scrolls a view of <paramref name="bounds"/> by
     /// <paramref name="percent"/> in <paramref name="direction"/>.
     /// </summary>
