@@ -8,8 +8,8 @@
 //   played by the e2e player beside its Gherkin and its marks; a patch with no scenario shows its page alone;
 //   It starts with the guide's pages on the patcher's manager, docs/manager/<page>.md (how to install), each with its
 //   scenario's newest recording, as a patch's page has, under "Start here".
-//   With site/update.json (a video of updating BaconReader with the patcher's manager, site/update.mp4, and its steps,
-//   each with when it starts), the guide starts with "How to update", played by the same player beside its steps;
+//   With site/update.json (a video of updating BaconReader with the patcher's manager, site/update.mp4, and its
+//   Gherkin, each line with when it starts), the guide starts with "How to update", played by the same player beside it;
 // - site/'s other pages (e2e-player.html), and its other files (favicon.png, preview.jpg, update.mp4), as they are.
 // Each page gets e2e-player.css and e2e-player.js inlined where its "include" comments are, so a published page is one
 // file. The recordings are prs-resources' assets; a scenario's newest is the highest PR, then its highest version (the
@@ -195,11 +195,12 @@ ${only}${scenarios}
 }
 
 /**
- * "How to update", from site/update.json: its summary and bullets, and its video, `video` beside its steps, numbered,
- * each marked when it starts (`seconds`), for the player to highlight it and play from it.
+ * "How to update", from site/update.json: its summary and bullets, and its video, `video` beside its Gherkin, as a
+ * scenario's: `gherkin` written by the Gherkin rules, `marks` the [line, seconds] each of its lines starts at, for the
+ * player to highlight it and play from it.
  */
 function renderUpdate(update) {
-  const data = { g: update.steps.map((step, at) => `${at + 1}. ${step.text}`).join('\n'), m: update.steps.map((step, at) => [at, step.seconds, 0]) };
+  const data = { g: update.gherkin, m: update.marks.map(([line, seconds]) => [line, seconds, 0]) };
   return `<section id="update">
 <h2>${escapeHtml(update.title)}</h2>
 <p class="summary">${renderInline(update.summary)}</p>
