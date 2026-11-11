@@ -2,29 +2,25 @@
   "title": "How to update",
   "summary": "When new patches come out, patch BaconReader again with Reseam Manager: Android updates the app and keeps your login and settings.",
   "body": "- Reseam Manager gets the new patches when it starts, but doesn't patch BaconReader again by itself.\n- Then, under **Patched apps**, tap **BaconReader Premium** (or **BaconReader**), then **Patch again**, then **Install → Update**. Reseam Manager patches its own copy of the APK you picked the first time: you don't need to keep the APK.\n- The bottom of BaconReader's left menu shows which patches are installed, such as \"Patches 0.1.20 (Reseam 0.40.0)\".",
-  "caption": "Updating BaconReader Premium from 0.1.19 to 0.1.20",
+  "caption": "Reseam Manager updates BaconReader Premium to the newest BaconReader patches",
   "recorded": "Recorded on a Pixel 6 Pro with Reseam Manager 0.41.0.",
   "video": "update.mp4",
-  "steps": [
-    {
-      "text": "BaconReader patched with Reseam Manager: the bottom of its left menu shows the patches installed, 0.1.19.",
-      "seconds": 1.76
-    },
-    {
-      "text": "New patches came out: open Reseam Manager, which gets them when it starts.",
-      "seconds": 15.36
-    },
-    {
-      "text": "Under Patched apps, tap BaconReader Premium, then Patch again.",
-      "seconds": 22.09
-    },
-    {
-      "text": "Reseam Manager patches it with 0.1.20. Tap Install, then Update: Android keeps your login and settings.",
-      "seconds": 34.82
-    },
-    {
-      "text": "Open BaconReader. Its left menu shows the new patches: 0.1.20.",
-      "seconds": 49.11
-    }
+  "gherkin": "@phone\nScenario: Reseam Manager updates BaconReader Premium to the newest BaconReader patches\n  Given Reseam Manager is installed\n  And BaconReader Premium is patched with the BaconReader patches 0.1.19 by Reseam Manager\n  And the BaconReader patches 0.1.20 are released\n  And BaconReader is open\n  When I open the left menu\n  Then the bottom of the left menu shows \"Patches 0.1.19 (Reseam 0.40.0)\"\n  When I open Reseam Manager\n  And I tap \"BaconReader Premium\" under \"Patched apps\"\n  And I tap \"Patch again\"\n  Then Reseam Manager shows \"BaconReader Premium is ready\"\n  When I tap \"Install\"\n  And I tap \"Update\" on \"Update this app?\"\n  And I tap \"Open\"\n  And I open the left menu\n  Then the bottom of the left menu shows \"Patches 0.1.20 (Reseam 0.40.0)\"",
+  "marks": [
+    [2, 0],
+    [3, 0],
+    [4, 0],
+    [5, 0],
+    [6, 6.54],
+    [7, 9.53],
+    [8, 16.4],
+    [9, 26.55],
+    [10, 31.98],
+    [11, 34.82],
+    [12, 40.72],
+    [13, 43.91],
+    [14, 53.8],
+    [15, 57.6],
+    [16, 60.61]
   ]
 }
