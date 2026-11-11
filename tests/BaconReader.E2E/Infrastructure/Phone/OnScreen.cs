@@ -160,6 +160,28 @@ public static class OnScreen
     }
 
     /// <summary>
+    /// Performs a pinch, two fingers moving at once, <paramref name="first"/> along <paramref name="firstPath"/> and
+    /// <paramref name="second"/> along <paramref name="secondPath"/>, and has the recording show it: a ring following
+    /// each finger, both at the same time.
+    /// </summary>
+    public static void PerformPinch(
+        AndroidDriver driver,
+        OpenQA.Selenium.Interactions.ActionSequence first,
+        (Point From, Point To) firstPath,
+        OpenQA.Selenium.Interactions.ActionSequence second,
+        (Point From, Point To) secondPath)
+    {
+        var moved = Stopwatch.GetTimestamp();
+        driver.PerformActions([first, second]);
+        var lifted = Stopwatch.GetTimestamp();
+        if (TapsDrawnOn.TryGetValue(driver, out var recording))
+        {
+            recording.NoteSwipe(firstPath.From.X, firstPath.From.Y, firstPath.To.X, firstPath.To.Y, moved, moved, lifted);
+            recording.NoteSwipe(secondPath.From.X, secondPath.From.Y, secondPath.To.X, secondPath.To.Y, moved, moved, lifted);
+        }
+    }
+
+    /// <summary>
     /// Scrolls <paramref name="scrollable"/> by <paramref name="percent"/> of its size in <paramref name="direction"/>
     /// ("up", "down", "left", "right"), with UiAutomator's scroll gesture, and returns whether it can scroll further. The
     /// recording shows the finger's path, worked out as UiAutomator makes it: from the view's edge, inside its margins,
