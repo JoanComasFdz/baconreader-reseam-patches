@@ -15,13 +15,18 @@ namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Screens;
 internal static class AlbumGestures
 {
     /// <summary>
-    /// Swipes across <paramref name="media"/>, at its middle: toward its left side (<paramref name="toTheLeft"/>), which
-    /// goes to the next image, or toward its right, which goes to the one before. UiAutomator's swipe, sent in one
-    /// command: Appium's actions reach the phone with pauses between them, which a view takes for a slow drag, or for a
-    /// long press, which on an Imgur album's video asks to download it.
+    /// Swipes across <paramref name="media"/>, a little above its middle, where the arrows are: toward its left side
+    /// (<paramref name="toTheLeft"/>), which goes to the next image, or toward its right, which goes to the one before.
+    /// Android's own swipe (<see cref="OnScreen.InputSwipe"/>): Appium's reach the phone too slowly to be a fling.
     /// </summary>
-    public static void Swipe(AndroidDriver driver, Rectangle media, bool toTheLeft) =>
-        OnScreen.SwipeGesture(driver, media, toTheLeft ? "left" : "right", 0.6);
+    public static void Swipe(AndroidDriver driver, Rectangle media, bool toTheLeft)
+    {
+        var y = media.Top + (media.Height * 2 / 5);
+        var near = media.Left + (media.Width / 6);
+        var far = media.Right - (media.Width / 6);
+        var (from, to) = toTheLeft ? (far, near) : (near, far);
+        OnScreen.InputSwipe(driver, new Point(from, y), new Point(to, y), TimeSpan.FromMilliseconds(150));
+    }
 
     /// <summary>Zooms in on <paramref name="media"/>: two fingers at its middle move apart, along its width.</summary>
     public static void ZoomIn(AndroidDriver driver, Rectangle media)

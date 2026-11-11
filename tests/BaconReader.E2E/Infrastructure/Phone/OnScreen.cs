@@ -208,25 +208,15 @@ public static class OnScreen
     }
 
     /// <summary>
-    /// Swipes across <paramref name="area"/> with UiAutomator's swipe gesture, the finger moving in
-    /// <paramref name="direction"/> ("left", "right") by <paramref name="percent"/> of its width, at a finger's speed:
-    /// one command, so the phone gets the moves as a finger makes them, and a view that tells a fling by its speed sees
-    /// one. The recording shows the finger's path.
+    /// Swipes from <paramref name="from"/> to <paramref name="to"/> in <paramref name="duration"/> with Android's own
+    /// <c>input swipe</c>, which sends the moves as a finger makes them, and has the recording show the finger's path.
+    /// A view that tells a fling by its speed sees one: Appium's actions reach the phone with pauses between them, which
+    /// it takes for a slow drag, or for a long press.
     /// </summary>
-    public static void SwipeGesture(AndroidDriver driver, Rectangle area, string direction, double percent)
+    public static void InputSwipe(AndroidDriver driver, Point from, Point to, TimeSpan duration)
     {
         var moved = Stopwatch.GetTimestamp();
-        driver.ExecuteScript("mobile: swipeGesture", new Dictionary<string, object>
-        {
-            ["left"] = area.Left,
-            ["top"] = area.Top,
-            ["width"] = area.Width,
-            ["height"] = area.Height,
-            ["direction"] = direction,
-            ["percent"] = percent,
-        });
-        // A swipe left is the finger's path of a scroll right, and the other way round.
-        var (from, to) = ScrollPath(area, direction == "left" ? "right" : "left", percent);
+        Commands.ShellAsync($"input swipe {from.X} {from.Y} {to.X} {to.Y} {(int)duration.TotalMilliseconds}").GetAwaiter().GetResult();
         NoteSwipe(driver, from, to, moved, Stopwatch.GetTimestamp());
     }
 
