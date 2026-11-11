@@ -22,6 +22,9 @@
     <string name="text_post_icon_content_description_open">Hide post text</string>
     <!-- Detail view videos -->
     <string name="section_detail_video">Detail view</string>
+    <string name="section_open_web_pages">Web pages</string>
+    <string name="open_web_pages_in_browser">Open web pages in the browser</string>
+    <string name="open_web_pages_in_browser_summary">Links to web pages open in your browser, not in BaconReader. Images, GIFs, galleries and videos still open in BaconReader, whether or not \"Open links inside app\" is on.</string>
     <string name="autoplay_videos_in_detail_view">Autoplay videos in Detail View</string>
     <string name="autoplay_videos_in_detail_view_summary">Videos in a post\'s detail view, such as v.redd.it videos, start playing when the post opens. When off, the post shows its preview image with a play button, and the video loads when you tap it. GIFs are not affected.</string>
     <string name="detail_video_play">Play video</string>
@@ -236,6 +239,8 @@
     <string name="patch_save_videos_with_sound_description">Adds the sound to Reddit videos saved with \"Save to device\", which were saved without it.</string>
     <string name="patch_video_autoplay_in_detail_view">Video autoplay in detail view</string>
     <string name="patch_video_autoplay_in_detail_view_description">Adds a setting to stop videos, such as v.redd.it videos, from loading and playing by themselves in a post\'s detail view: the post shows its preview image, and a tap on it plays the video.</string>
+    <string name="patch_open_web_pages_in_browser">Open web pages in the browser</string>
+    <string name="patch_open_web_pages_in_browser_description">Adds a setting that opens links to web pages in your own browser, while images, galleries and videos keep opening in BaconReader.</string>
     <string name="patch_disable_feedback_popup">Disable feedback popup</string>
     <string name="patch_disable_feedback_popup_description">Disables the \"Please take a few moments to provide feedback about BaconReader\" popup.</string>
     <string name="patch_disable_final_release_announcement">Disable final release announcement</string>

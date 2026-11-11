@@ -20,6 +20,7 @@ import android.view.ViewTreeObserver
 import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.common.BaconReaderPatches
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
+import com.joancomasfdz.baconreader.settings.LinkSettings
 import java.lang.ref.WeakReference
 import java.util.Locale
 import java.util.WeakHashMap
@@ -44,6 +45,39 @@ private var showing = WeakReference<Dialog>(null)
 
 /** Activities already waiting for their window to get the focus back. */
 private val waiting = WeakHashMap<Activity, Boolean>()
+
+/**
+ * Called at the start of LinkProcessor.getIntent. With "Open web pages in the browser" on, returns
+ * the intent that opens a web page in the user's browser, or null to let the app decide. Links to
+ * Reddit, and to the images, GIFs, galleries and videos BaconReader shows itself, stay in the app.
+ */
+@Export
+fun webPageIntent(context: Context?, url: String?, forceBrowser: Boolean): Intent? {
+    if (context == null || url == null || forceBrowser) return null
+    if (!LinkSettings.openWebPagesInBrowser.value) return null
+    try {
+        val uri = Uri.parse(url)
+        val scheme = uri.scheme?.lowercase(Locale.ROOT)
+        if (scheme != "http" && scheme != "https") return null
+        if (showsInApp(uri)) return null
+        return Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not read the link $url", exception)
+        return null
+    }
+}
+
+// The hosts of Reddit and of the media services BaconReader shows in its own viewer, and the files
+// it shows or plays.
+private val OWN_HOSTS = listOf("reddit.com", "redd.it", "redgifs.com", "imgur.com")
+private val OWN_FILES = setOf("jpg", "jpeg", "png", "gif", "gifv", "webp", "mp4", "webm")
+
+private fun showsInApp(uri: Uri): Boolean {
+    val host = uri.host?.lowercase(Locale.ROOT) ?: return true
+    if (OWN_HOSTS.any { host == it || host.endsWith(".$it") }) return true
+    val file = uri.lastPathSegment?.substringAfterLast('.', "")?.lowercase(Locale.ROOT)
+    return file in OWN_FILES
+}
 
 /** Called at the start of MainActivity.onResume. */
 @Export
