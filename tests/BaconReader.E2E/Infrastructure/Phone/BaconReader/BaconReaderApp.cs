@@ -99,6 +99,9 @@ public sealed class BaconReaderApp(
     /// <summary>The patches' settings, which "Patches" in BaconReader's settings opens.</summary>
     public PatchesSettings PatchesSettings { get; } = new(driver);
 
+    /// <summary>"Restart to apply changes?", over BaconReader's settings once the patches' settings close after a change.</summary>
+    public RestartToApplyChanges RestartToApplyChanges { get; } = new(driver);
+
     /// <summary>
     /// Opens BaconReader on its main screen, as a scenario's "Given BaconReader … is open" says: opens it from the
     /// launcher, taps "GOT IT :(" on the final release announcement

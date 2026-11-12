@@ -21,6 +21,10 @@ public sealed class MediaViewer(AndroidDriver driver)
     private static readonly OpenQA.Selenium.By GalleryStrip = Locate.AppId("recyclerView");
     private static readonly OpenQA.Selenium.By GalleryThumbnail = Locate.AppId("imageView");
     private static readonly OpenQA.Selenium.By Video = Locate.AppId("videoView");
+    // An image, zoomable, in the media's view.
+    private static readonly OpenQA.Selenium.By Image = Locate.AppId("subsamplingScaleImageContainer");
+    // The toolbar's title: the host of the post's link ("127.0.0.1", "v.redd.it").
+    private static readonly OpenQA.Selenium.By ToolbarTitle = Locate.AppId("toolbarTitle");
     // A gallery's arrows, at each side of its image: the first image shows only the one after, the last only the one
     // before.
     private static readonly OpenQA.Selenium.By GalleryBack = Locate.AppId("backButton");
@@ -78,6 +82,10 @@ public sealed class MediaViewer(AndroidDriver driver)
     public Task WaitUntilVideoPlaysAsync() =>
         Waiting.UntilShownAsync(driver, Video, TimeSpan.FromSeconds(15), "The video playing");
 
+    /// <summary>Waits until the media shows an image.</summary>
+    public Task WaitUntilImageShownAsync() =>
+        Waiting.UntilShownAsync(driver, Image, TimeSpan.FromSeconds(15), "The image");
+
     /// <summary>Waits until the media shows the message "<paramref name="text"/>" in its place.</summary>
     public Task WaitUntilMessageShownAsync(string text) =>
         Waiting.UntilAsync(() => ShownMessage() == text, TimeSpan.FromSeconds(15), $"The message \"{text}\"");
@@ -100,6 +108,9 @@ public sealed class MediaViewer(AndroidDriver driver)
             ShowsGalleryForward = GalleryArrowShown(GalleryForward),
             PlaysAVideo = driver.FindElements(Video).Any(video => video.Displayed),
             Message = ShownMessage(),
+            ShowsAnImage = driver.FindElements(Image).Any(image => image.Displayed),
+            ShowsAPage = driver.FindElements(Page).Any(page => page.Displayed),
+            Title = driver.FindElements(ToolbarTitle).FirstOrDefault(title => title.Displayed)?.Text,
         });
 
     // The description of the media's view on the screen, while the loading bar shows; null without one. The viewer is a
@@ -147,4 +158,13 @@ public sealed record MediaViewerSnapshot(string? Loading, int GalleryThumbnails)
 
     /// <summary>Whether a gallery shows its arrow to the image after: every image but the last.</summary>
     public bool ShowsGalleryForward { get; init; }
+
+    /// <summary>Whether the media shows an image.</summary>
+    public bool ShowsAnImage { get; init; }
+
+    /// <summary>Whether the screen shows a web page.</summary>
+    public bool ShowsAPage { get; init; }
+
+    /// <summary>The toolbar's title, the host of the post's link ("127.0.0.1"); null without one.</summary>
+    public string? Title { get; init; }
 }

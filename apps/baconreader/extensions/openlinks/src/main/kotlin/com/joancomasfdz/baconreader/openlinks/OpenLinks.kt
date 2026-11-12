@@ -14,12 +14,15 @@ import android.content.pm.verify.domain.DomainVerificationManager
 import android.content.pm.verify.domain.DomainVerificationUserState
 import android.net.Uri
 import android.os.Build
+import android.os.Parcelable
 import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.view.ViewTreeObserver
 import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.common.BaconReaderPatches
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
+import com.joancomasfdz.baconreader.settings.LinkSettings
 import java.lang.ref.WeakReference
 import java.util.Locale
 import java.util.WeakHashMap
@@ -44,6 +47,172 @@ private var showing = WeakReference<Dialog>(null)
 
 /** Activities already waiting for their window to get the focus back. */
 private val waiting = WeakHashMap<Activity, Boolean>()
+
+/**
+ * Called at the start of LinkProcessor.getIntent. With "Open web pages in the browser" on, returns
+ * the intent that opens a web page in the user's browser, or, while "Open links inside app" is off,
+ * the one that opens an image, GIF or video in BaconReader's own viewer, as the app does with that
+ * setting on. Returns null to let the app decide: always for a link to Reddit.
+ */
+@Export
+fun webPageIntent(context: Context?, url: String?, forceBrowser: Boolean): Intent? {
+    if (context == null || url == null || forceBrowser) return null
+    if (!LinkSettings.openWebPagesInBrowser.value) return null
+    try {
+        val uri = Uri.parse(url)
+        return when (kindOf(uri)) {
+            Kind.WEB -> Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            Kind.MEDIA -> if (internalBrowser()) null else viewer(context).setData(uri)
+            else -> null
+        }
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not read the link $url", exception)
+        return null
+    }
+}
+
+/**
+ * Called at the start of LinkProcessor.getBrowserIntent, the link a post's header and its link
+ * button open. The same rule as [webPageIntent], for a post's link.
+ */
+@Export
+fun webLinkIntent(context: Context?, link: Any?): Intent? {
+    val url =
+        try {
+            // Link.url is a public field, with no getter.
+            link?.javaClass?.getField("url")?.get(link) as String?
+        } catch (exception: Exception) {
+            Log.w(TAG, "Could not read the link", exception)
+            null
+        }
+    // A Reddit video or gallery, which the app shows itself whatever the post's address.
+    if (link != null && showsOwnMedia(link)) return null
+    val intent = webPageIntent(context, url, false) ?: return null
+    // The app's viewer also takes the post, as getBrowserIntent gives it.
+    if (intent.component != null && link is Parcelable) intent.putExtra("link", link)
+    return intent
+}
+
+/**
+ * Called at the start of ClickableLinkSpan.onClick, the link next to a post's title, which starts
+ * LinkProcessor's intent only when it opens BaconReader's browser. Opens the link by
+ * [webLinkIntent] and returns true; returns false to let the app open it.
+ */
+@Export
+fun openWebLink(view: View?, link: Any?): Boolean {
+    val context = view?.context ?: return false
+    val intent = webLinkIntent(context, link) ?: return false
+    try {
+        context.startActivity(intent)
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not open the link", exception)
+    }
+    return true
+}
+
+/**
+ * Called where the text of posts and comments reads "Open links inside app" for a link
+ * (RedditSpanner.internalBrowser), which decides whether it opens through LinkProcessor. With "Open
+ * web pages in the browser" on, an image, GIF or video does, whatever that setting says, so
+ * [webPageIntent] opens it in the app.
+ */
+@Export
+fun mediaOpensInApp(inApp: Boolean, element: Any?): Boolean {
+    if (inApp || element == null || !LinkSettings.openWebPagesInBrowser.value) return inApp
+    try {
+        var href =
+            element.javaClass.getMethod("getAttribute", String::class.java).invoke(element, "href")
+                as String? ?: return false
+        href = href.replace("&amp;", "&")
+        if (href.startsWith("//")) href = "https:$href"
+        return kindOf(Uri.parse(href)) == Kind.MEDIA
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not read the link", exception)
+        return inApp
+    }
+}
+
+/**
+ * Whether the post is a Reddit video or gallery: Link.isRedditVideo,
+ * LinkProcessor.isValidRedditGallery.
+ */
+private fun showsOwnMedia(link: Any): Boolean =
+    try {
+        val video = link.javaClass.getMethod("isRedditVideo").invoke(link) as Boolean
+        val gallery =
+            Class.forName("com.onelouder.baconreader.LinkProcessor")
+                .getMethod("isValidRedditGallery", link.javaClass)
+                .invoke(null, link) as Boolean
+        video || gallery
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not check the media of the post", exception)
+        false
+    }
+
+/**
+ * Called after ControlbarBase.createButton, which makes each button of a post's bar for its
+ * [action]: gives the link button (R.id.action_link) a label, which it lacks, so that screen
+ * readers, and the e2e tests, can name it.
+ */
+@Export
+fun labelLinkButton(button: View?, action: Int) {
+    if (button == null || linkButtonId == 0 || action != linkButtonId) return
+    button.contentDescription = BaconReaderStrings.openLinkButton
+}
+
+// R.id.action_link, which BaconReader gives the link button of a post's bar; 0 when it isn't found.
+private val linkButtonId: Int by lazy {
+    try {
+        Class.forName("com.onelouder.baconreader.R\$id").getField("action_link").getInt(null)
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not find the link button's id", exception)
+        0
+    }
+}
+
+private enum class Kind {
+    WEB,
+    MEDIA,
+    REDDIT,
+    OTHER,
+}
+
+// Reddit's pages, which the app opens itself.
+private val REDDIT_HOSTS = listOf("reddit.com", "redd.it")
+
+// The hosts of images, GIFs, galleries and videos BaconReader shows in its own viewer, and the
+// files
+// it shows or plays.
+private val MEDIA_HOSTS = listOf("i.redd.it", "preview.redd.it", "imgur.com", "redgifs.com")
+private val MEDIA_FILES = setOf("jpg", "jpeg", "png", "gif", "gifv", "webp", "mp4", "webm")
+
+private fun kindOf(uri: Uri): Kind {
+    val scheme = uri.scheme?.lowercase(Locale.ROOT)
+    if (scheme != "http" && scheme != "https") return Kind.OTHER
+    val host = uri.host?.lowercase(Locale.ROOT) ?: return Kind.OTHER
+    val file = uri.lastPathSegment?.substringAfterLast('.', "")?.lowercase(Locale.ROOT)
+    if (MEDIA_HOSTS.any { matches(host, it) } || file in MEDIA_FILES) return Kind.MEDIA
+    if (REDDIT_HOSTS.any { matches(host, it) }) return Kind.REDDIT
+    return Kind.WEB
+}
+
+private fun matches(host: String, domain: String) = host == domain || host.endsWith(".$domain")
+
+private const val BROWSER_ACTIVITY = "com.onelouder.baconreader.BrowserActivity"
+
+/** BaconReader's own viewer, which "Open links inside app" opens a link in. */
+private fun viewer(context: Context): Intent = Intent().setClassName(context, BROWSER_ACTIVITY)
+
+/** BaconReader's "Open links inside app" (Preferences.getInternalBrowser). */
+private fun internalBrowser(): Boolean =
+    try {
+        Class.forName("com.onelouder.baconreader.Preferences")
+            .getMethod("getInternalBrowser")
+            .invoke(null) as Boolean
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not read Open links inside app", exception)
+        true
+    }
 
 /** Called at the start of MainActivity.onResume. */
 @Export

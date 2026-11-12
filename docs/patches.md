@@ -44,6 +44,7 @@ What broke since 2023.
 | [Hide formatted spoilers](patches/hide-formatted-spoilers.md) | Every spoiler in comments and posts stays hidden until you tap it. |
 | [Text post icon](patches/text-post-icon.md) | Text posts in the post list get a page icon instead of a button that looks like a video's play button. |
 | [Prompt to open Reddit links](patches/prompt-to-open-reddit-links.md) | BaconReader asks once to set up Reddit links to open in it, which Android doesn't let an app do by itself. |
+| [Open web pages in the browser](patches/open-web-pages-in-browser.md) | Links to web pages open in your browser, while images, galleries and videos keep opening in BaconReader. |
 | [Video autoplay in detail view](patches/video-autoplay-in-detail-view.md) | A setting to stop videos from loading and playing by themselves when you open a post. |
 | [Account colors](patches/account-colors.md) | A color for each account, shown as a line under the toolbars, so you see which account is in use. |
 | [Select text](patches/select-text.md) | "Select text" in the menus of posts and comments lets you select and copy any part of their text. |
