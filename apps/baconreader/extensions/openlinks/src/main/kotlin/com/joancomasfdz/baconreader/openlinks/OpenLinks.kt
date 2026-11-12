@@ -149,6 +149,27 @@ private fun showsOwnMedia(link: Any): Boolean =
         false
     }
 
+/**
+ * Called after ControlbarBase.createButton, which makes each button of a post's bar for its
+ * [action]: gives the link button (R.id.action_link) a label, which it lacks, so that screen
+ * readers, and the e2e tests, can name it.
+ */
+@Export
+fun labelLinkButton(button: View?, action: Int) {
+    if (button == null || linkButtonId == 0 || action != linkButtonId) return
+    button.contentDescription = BaconReaderStrings.openLinkButton
+}
+
+// R.id.action_link, which BaconReader gives the link button of a post's bar; 0 when it isn't found.
+private val linkButtonId: Int by lazy {
+    try {
+        Class.forName("com.onelouder.baconreader.R\$id").getField("action_link").getInt(null)
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not find the link button's id", exception)
+        0
+    }
+}
+
 private enum class Kind {
     WEB,
     MEDIA,

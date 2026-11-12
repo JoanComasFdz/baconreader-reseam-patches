@@ -1,6 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2026 JoanComasFdz -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
-<!-- scenarios: -->
+<!-- scenarios: OpenWebPagesInBrowserTests -->
 
 # Open web pages in the browser
 
@@ -11,6 +11,7 @@ Links to web pages open in your browser, while images, galleries and videos keep
 - Images, GIFs, galleries, Imgur albums and Reddit videos keep opening in BaconReader, also with BaconReader's "Open
   links inside app" off, which otherwise opens them in your browser.
 - Links to Reddit open in BaconReader as before.
+- The link icon in a post's bar gets the label "Open link", which screen readers read.
 
 **Settings** (BaconReader → Settings → Patches, under "Links"):
 - **Open web pages in the browser** (off by default): links to web pages open in your browser. Images, GIFs, galleries

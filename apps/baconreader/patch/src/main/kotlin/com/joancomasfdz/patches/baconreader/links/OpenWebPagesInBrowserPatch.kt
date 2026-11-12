@@ -3,6 +3,7 @@
 
 package com.joancomasfdz.patches.baconreader.links
 
+import app.reseam.patch.Type
 import app.reseam.patch.after
 import app.reseam.patch.before
 import app.reseam.patch.field
@@ -41,6 +42,9 @@ val openWebPagesInBrowser =
         )
 
         execute {
+            // The link button of a post's bar has no label for screen readers.
+            buttonCreated.after { OpenLinks.labelLinkButton(result, param(1)) }
+
             // A post's header and its link button open through getBrowserIntent instead.
             browserIntent.before {
                 val intent = OpenLinks.webLinkIntent(param(0), param(1))
@@ -97,3 +101,9 @@ private val webSpannerLink =
 private val linkSpan = klass(CLICKABLE_LINK_SPAN)
 private val linkSpanClick = linkSpan.method("onClick") { params("android.view.View") }
 private val spanLink = linkSpan.field("link")
+
+// Makes a button of a post's bar: its image, the action it's tagged with, and its view id.
+private val buttonCreated =
+    klass("com.onelouder.baconreader.controlbar.ControlbarBase").method("createButton") {
+        params(Type.Int, Type.Int, Type.Int)
+    }

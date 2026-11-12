@@ -25,6 +25,7 @@
     <string name="section_open_web_pages">Web pages</string>
     <string name="open_web_pages_in_browser">Open web pages in the browser</string>
     <string name="open_web_pages_in_browser_summary">Links to web pages open in your browser, not in BaconReader. Images, GIFs, galleries and videos still open in BaconReader, whether or not \"Open links inside app\" is on.</string>
+    <string name="open_link_button">Open link</string>
     <string name="autoplay_videos_in_detail_view">Autoplay videos in Detail View</string>
     <string name="autoplay_videos_in_detail_view_summary">Videos in a post\'s detail view, such as v.redd.it videos, start playing when the post opens. When off, the post shows its preview image with a play button, and the video loads when you tap it. GIFs are not affected.</string>
     <string name="detail_video_play">Play video</string>
