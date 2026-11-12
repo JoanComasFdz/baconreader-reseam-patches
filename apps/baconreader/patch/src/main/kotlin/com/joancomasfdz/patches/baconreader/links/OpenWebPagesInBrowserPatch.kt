@@ -22,6 +22,7 @@ import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
 private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 private const val LINK = "com.onelouder.baconreader.reddit.Link"
 private const val REDDIT_SPANNER = "com.onelouder.baconreader.parser.RedditSpanner"
+private const val CLICKABLE_LINK_SPAN = "com.onelouder.baconreader.ClickableLinkSpan"
 private const val ELEMENT = "com.onelouder.baconreader.parser.RedditParser\$Element"
 
 // LinkProcessor opens a web page in BaconReader's own browser, or in the user's browser when
@@ -44,6 +45,14 @@ val openWebPagesInBrowser =
             browserIntent.before {
                 val intent = OpenLinks.webLinkIntent(param(0), param(1))
                 whenNotNull(intent) { returnValue(intent) }
+            }
+
+            // The link next to a post's title starts LinkProcessor's intent only when it opens
+            // BaconReader's browser, so it would drop the intents above and do nothing.
+            linkSpanClick.before {
+                whenTrue(OpenLinks.openWebLink(param(0), thisObject.field(spanLink))) {
+                    returnVoid()
+                }
             }
 
             // A link in a text opens through LinkProcessor only with "Open links inside app" on, so
@@ -84,3 +93,7 @@ private val webSpannerLink =
             }
         }
         .captureAs("inApp")
+
+private val linkSpan = klass(CLICKABLE_LINK_SPAN)
+private val linkSpanClick = linkSpan.method("onClick") { params("android.view.View") }
+private val spanLink = linkSpan.field("link")

@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.Parcelable
 import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.view.ViewTreeObserver
 import app.reseam.runtime.Export
 import com.joancomasfdz.baconreader.common.BaconReaderPatches
@@ -90,6 +91,23 @@ fun webLinkIntent(context: Context?, link: Any?): Intent? {
     // The app's viewer also takes the post, as getBrowserIntent gives it.
     if (intent.component != null && link is Parcelable) intent.putExtra("link", link)
     return intent
+}
+
+/**
+ * Called at the start of ClickableLinkSpan.onClick, the link next to a post's title, which starts
+ * LinkProcessor's intent only when it opens BaconReader's browser. Opens the link by
+ * [webLinkIntent] and returns true; returns false to let the app open it.
+ */
+@Export
+fun openWebLink(view: View?, link: Any?): Boolean {
+    val context = view?.context ?: return false
+    val intent = webLinkIntent(context, link) ?: return false
+    try {
+        context.startActivity(intent)
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not open the link", exception)
+    }
+    return true
 }
 
 /**
