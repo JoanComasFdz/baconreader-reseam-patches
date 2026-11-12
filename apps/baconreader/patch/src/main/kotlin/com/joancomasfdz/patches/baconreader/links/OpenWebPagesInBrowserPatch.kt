@@ -3,11 +3,13 @@
 
 package com.joancomasfdz.patches.baconreader.links
 
+import app.reseam.patch.after
 import app.reseam.patch.before
 import app.reseam.patch.field
 import app.reseam.patch.klass
 import app.reseam.patch.method
 import app.reseam.patch.patch
+import app.reseam.patch.point
 import app.reseam.patch.settings.section
 import com.joancomasfdz.baconreader.openlinks.bindings.OpenLinks
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
@@ -19,6 +21,8 @@ import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
 
 private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
 private const val LINK = "com.onelouder.baconreader.reddit.Link"
+private const val REDDIT_SPANNER = "com.onelouder.baconreader.parser.RedditSpanner"
+private const val ELEMENT = "com.onelouder.baconreader.parser.RedditParser\$Element"
 
 // LinkProcessor opens a web page in BaconReader's own browser, or in the user's browser when
 // "Open links inside app" is off. This sends a web page to the user's browser either way.
@@ -42,6 +46,13 @@ val openWebPagesInBrowser =
                 whenNotNull(intent) { returnValue(intent) }
             }
 
+            // A link in a text opens through LinkProcessor only with "Open links inside app" on, so
+            // an
+            // image there would open in the browser.
+            webSpannerLink.after {
+                capture("inApp").assign(OpenLinks.mediaOpensInApp(capture("inApp"), param(1)))
+            }
+
             getIntent.before {
                 val intent =
                     OpenLinks.webPageIntent(
@@ -61,3 +72,15 @@ private val browserIntent =
 private val processorContext = processor.field("context")
 private val processorUrl = processor.field("url")
 private val processorForceBrowser = processor.field("forceBrowser")
+
+// Where the text of posts, comments and messages reads "Open links inside app" for a link.
+private val webSpannerLink =
+    klass(REDDIT_SPANNER)
+        .method("appendElementInternal") { params("android.text.SpannableStringBuilder", ELEMENT) }
+        .point("webSpannerLink") {
+            field {
+                owner(REDDIT_SPANNER)
+                name("internalBrowser")
+            }
+        }
+        .captureAs("inApp")
