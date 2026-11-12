@@ -75,7 +75,8 @@ fun webPageIntent(context: Context?, url: String?, forceBrowser: Boolean): Inten
 fun webLinkIntent(context: Context?, link: Any?): Intent? {
     val url =
         try {
-            link?.javaClass?.getMethod("getUrl")?.invoke(link) as String?
+            // Link.url is a public field, with no getter.
+            link?.javaClass?.getField("url")?.get(link) as String?
         } catch (exception: Exception) {
             Log.w(TAG, "Could not read the link", exception)
             null
