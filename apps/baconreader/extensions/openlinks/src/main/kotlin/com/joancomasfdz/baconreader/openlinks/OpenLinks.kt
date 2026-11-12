@@ -67,6 +67,22 @@ fun webPageIntent(context: Context?, url: String?, forceBrowser: Boolean): Inten
     }
 }
 
+/**
+ * Called at the start of LinkProcessor.getBrowserIntent, the link a post's header and its link
+ * button open. The same rule as [webPageIntent], for a post's link.
+ */
+@Export
+fun webLinkIntent(context: Context?, link: Any?): Intent? {
+    val url =
+        try {
+            link?.javaClass?.getMethod("getUrl")?.invoke(link) as String?
+        } catch (exception: Exception) {
+            Log.w(TAG, "Could not read the link", exception)
+            null
+        }
+    return webPageIntent(context, url, false)
+}
+
 // The hosts of Reddit and of the media services BaconReader shows in its own viewer, and the files
 // it shows or plays.
 private val OWN_HOSTS = listOf("reddit.com", "redd.it", "redgifs.com", "imgur.com")

@@ -18,6 +18,7 @@ import com.joancomasfdz.patches.baconreader.core.SettingsPages
 import com.joancomasfdz.patches.baconreader.core.baconReaderSettings
 
 private const val LINK_PROCESSOR = "com.onelouder.baconreader.LinkProcessor"
+private const val LINK = "com.onelouder.baconreader.reddit.Link"
 
 // LinkProcessor opens a web page in BaconReader's own browser, or in the user's browser when
 // "Open links inside app" is off. This sends a web page to the user's browser either way.
@@ -35,6 +36,12 @@ val openWebPagesInBrowser =
         )
 
         execute {
+            // A post's header and its link button open through getBrowserIntent instead.
+            browserIntent.before {
+                val intent = OpenLinks.webLinkIntent(param(0), param(1))
+                whenNotNull(intent) { returnValue(intent) }
+            }
+
             getIntent.before {
                 val intent =
                     OpenLinks.webPageIntent(
@@ -49,6 +56,8 @@ val openWebPagesInBrowser =
 
 private val processor = klass(LINK_PROCESSOR)
 private val getIntent = processor.method("getIntent") { params() }
+private val browserIntent =
+    processor.method("getBrowserIntent") { params("android.content.Context", LINK) }
 private val processorContext = processor.field("context")
 private val processorUrl = processor.field("url")
 private val processorForceBrowser = processor.field("forceBrowser")
