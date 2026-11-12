@@ -84,6 +84,8 @@ fun webLinkIntent(context: Context?, link: Any?): Intent? {
             Log.w(TAG, "Could not read the link", exception)
             null
         }
+    // A Reddit video or gallery, which the app shows itself whatever the post's address.
+    if (link != null && showsOwnMedia(link)) return null
     val intent = webPageIntent(context, url, false) ?: return null
     // The app's viewer also takes the post, as getBrowserIntent gives it.
     if (intent.component != null && link is Parcelable) intent.putExtra("link", link)
@@ -111,6 +113,23 @@ fun mediaOpensInApp(inApp: Boolean, element: Any?): Boolean {
         return inApp
     }
 }
+
+/**
+ * Whether the post is a Reddit video or gallery: Link.isRedditVideo,
+ * LinkProcessor.isValidRedditGallery.
+ */
+private fun showsOwnMedia(link: Any): Boolean =
+    try {
+        val video = link.javaClass.getMethod("isRedditVideo").invoke(link) as Boolean
+        val gallery =
+            Class.forName("com.onelouder.baconreader.LinkProcessor")
+                .getMethod("isValidRedditGallery", link.javaClass)
+                .invoke(null, link) as Boolean
+        video || gallery
+    } catch (exception: Exception) {
+        Log.w(TAG, "Could not check the media of the post", exception)
+        false
+    }
 
 private enum class Kind {
     WEB,
