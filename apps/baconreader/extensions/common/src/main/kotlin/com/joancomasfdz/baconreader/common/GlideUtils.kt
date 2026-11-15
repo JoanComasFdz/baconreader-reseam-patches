@@ -4,6 +4,8 @@
 
 package com.joancomasfdz.baconreader.common
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.View
@@ -53,6 +55,18 @@ object GlideUtils {
     fun with(view: View): RequestManager = Glide.with(view.context)
 
     /**
+     * Whether the view's activity is closing or closed: Glide refuses to load into a destroyed one.
+     */
+    fun isClosed(view: View): Boolean {
+        var context = view.context
+        while (context is ContextWrapper) {
+            if (context is Activity) return context.isFinishing || context.isDestroyed
+            context = context.baseContext
+        }
+        return false
+    }
+
+    /**
      * Loads an image into the view. [thumbnailUrl] is shown until the image is loaded. [callback]
      * is called when the image is ready or failed to load.
      */
@@ -73,6 +87,11 @@ object GlideUtils {
         request: Any,
         attempt: Int,
     ) {
+        // An image downloaded in the background can arrive after its screen closed.
+        if (isClosed(imageView)) {
+            Log.i(TAG, "Not loading the image: its screen is closed")
+            return
+        }
         latest[imageView] = request
         val manager = with(imageView)
         var builder = model(manager)
