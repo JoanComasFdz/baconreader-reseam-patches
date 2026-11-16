@@ -115,6 +115,20 @@ In the Account colors section, on the screen itself rather than on a page:
 
 The accounts' colors aren't settings: they're kept in the app's `baconreader_patches` preferences, as `account_colors.color.<user name in lower case>`.
 
+### Export and import settings
+
+In the Backup section, on the screen itself rather than on a page, two rows that run code, not settings: Export settings (`settings_backup.export_settings`) and Import settings (`settings_backup.import_settings`).
+
+The file has `format: 1` and three maps:
+
+- `baconreader`: BaconReader's default preferences, by their own keys, without its accounts, logins and what it keeps about the device and install (`accounts`, `username`, `device_identifier`, `storage_uri`, first-start and review timestamps, ad consent strings, any key with "token").
+- `patches`: the settings of the applied patches, read from the settings host's `settings.json`, by their key without its group (`embed_comment_images.show_images` is `show_images`). Morphe's keys without `revanced_baconreader_` are the same names, so a file imports with either patcher. Texts and choices are strings here, numbers in Morphe; each patcher reads either.
+- `account_colors`: Account colors' `account_colors.color.<name>` from the `baconreader_patches` preferences, by user name.
+
+Booleans and ints are written as YAML writes them, longs as `!long`, floats as `!float`, strings double-quoted and string sets as `!set [...]`. An import converts each value to the type the key has in the app. Each map the file has replaces what's set: keys it doesn't list are removed, or set back to their default.
+
+The settings screen's own export and import cover only the patches' settings, as JSON.
+
 ## Spoof client options
 
 | Key | Default | Empty value |

@@ -62,6 +62,7 @@ object ErrorDialog {
             "accountcolors" to { BaconReaderStrings.patchAccountColors },
             "sidebar" to { BaconReaderStrings.patchDisableUnavailableSidebar },
             "embedcommentimages" to { BaconReaderStrings.patchEmbedCommentImages },
+            "settingsbackup" to { BaconReaderStrings.patchExportAndImportSettings },
             "savedfiles" to { BaconReaderStrings.patchFixEmptySavedFiles },
             "imgur" to { BaconReaderStrings.patchFixImgurApi },
             "thumbnails" to { BaconReaderStrings.patchFixListThumbnails },
