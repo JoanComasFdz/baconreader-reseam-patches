@@ -23,9 +23,9 @@ public static class SettingsFileSnapshotAssertions
     public static AssertingThat<SettingsFileSnapshot> HasOn(this AssertingThat<SettingsFileSnapshot> that, BaconReaderSetting setting) =>
         that.Has("baconreader", Key(setting), "true", $"\"{setting.ToShownText()}\" on");
 
-    /// <summary>The file has the patches' <paramref name="setting"/> off.</summary>
-    public static AssertingThat<SettingsFileSnapshot> HasOff(this AssertingThat<SettingsFileSnapshot> that, PatchSetting setting) =>
-        that.Has("patches", Key(setting), "false", $"\"{setting.ToShownText()}\" off");
+    /// <summary>The file has the patches' <paramref name="setting"/> on.</summary>
+    public static AssertingThat<SettingsFileSnapshot> HasOn(this AssertingThat<SettingsFileSnapshot> that, PatchSetting setting) =>
+        that.Has("patches", Key(setting), "true", $"\"{setting.ToShownText()}\" on");
 
     /// <summary>The file has <paramref name="account"/>'s color <paramref name="color"/>.</summary>
     public static AssertingThat<SettingsFileSnapshot> HasTheColor(this AssertingThat<SettingsFileSnapshot> that, string account, AccountColorChoice color) =>
@@ -51,7 +51,7 @@ public static class SettingsFileSnapshotAssertions
     private static string Key(PatchSetting setting) =>
         setting switch
         {
-            PatchSetting.AccountColors => "account_colors",
+            PatchSetting.ShowUserAvatars => "user_avatars",
             _ => throw new ArgumentException($"No key for \"{setting.ToShownText()}\" yet.", nameof(setting)),
         };
 

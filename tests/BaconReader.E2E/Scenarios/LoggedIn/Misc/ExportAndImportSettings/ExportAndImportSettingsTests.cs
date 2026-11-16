@@ -44,7 +44,8 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
           And I open the left menu
           And I tap "Settings"
           And I tap "Patches"
-          And I tap "Account colors" in the "Account colors" section
+          And I tap "Comments"
+          And I tap "Show user avatars"
           And I go back to the posts
           And I open the left menu
           And I open the list of accounts
@@ -57,7 +58,7 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
           When I tap "SAVE"
           Then a toast says "Settings exported to baconreader-settings-<today's date>.yaml"
           # Not on the screen: the test reads the phone's files.
-          And Downloads holds "baconreader-settings-<today's date>.yaml", with "Show large image" on, "Account colors" off and e2e_user's color Green
+          And Downloads holds "baconreader-settings-<today's date>.yaml", with "Show large image" on, "Show user avatars" on and e2e_user's color Green
           # Undoing all three, so the import has something to bring back.
           When I go back to the posts
           And I open the left menu
@@ -68,7 +69,8 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
           And I open the left menu
           And I tap "Settings"
           And I tap "Patches"
-          And I tap "Account colors" in the "Account colors" section
+          And I tap "Comments"
+          And I tap "Show user avatars"
           And I go back to the posts
           And I open the left menu
           And I open the list of accounts
@@ -80,8 +82,10 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
           And I tap "baconreader-settings-<today's date>.yaml"
           Then "Import settings?" says "baconreader-settings-<today's date>.yaml has 32 settings. They replace BaconReader's settings, the patches' settings and the accounts' colors: a setting the file doesn't list goes back to its default. BaconReader then restarts."
           When I tap "Cancel"
-          Then the setting "Account colors" is on
-          When I tap "Import settings"
+          And I tap "Comments"
+          Then the setting "Show user avatars" is off
+          When I go back
+          And I tap "Import settings"
           And I tap "baconreader-settings-<today's date>.yaml"
           And I tap "Import and restart"
           # BaconReader restarts on its main screen, still logged in.
@@ -94,7 +98,8 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
           And I open the left menu
           And I tap "Settings"
           And I tap "Patches"
-          Then the setting "Account colors" is off
+          And I tap "Comments"
+          Then the setting "Show user avatars" is on
           When I go back to the posts
           And I open the left menu
           And I open the list of accounts
@@ -105,7 +110,8 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
           And I tap "notes.yaml"
           Then "Could not import the settings" says "This file has no BaconReader settings. Pick a file made by "Export settings"."
           When I tap "Close"
-          Then the setting "Account colors" is off
+          And I tap "Comments"
+          Then the setting "Show user avatars" is on
         """)]
     public async Task ExportAndImportSettingsSavesTheSettingsToAFileAndBringsThemBackFromIt(Screen screen)
     {
@@ -144,8 +150,9 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
         await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
         await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
-        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.AccountColors(), new PatchesSection.AccountColors());
-        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.AccountColors(), new PatchesSection.AccountColors());
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowUserAvatars());
         await Phone.BaconReader.GoBackToThePostsAsync();
         await Phone.BaconReader.Main.LeftMenu.OpenAsync();
         await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
@@ -175,7 +182,7 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
         // Not on the screen: the test reads the phone's files.
         var file = await Phone.Downloads.ReadSettingsFileAsync(settingsFile);
         Asserting.That(exported).Says($"Settings exported to {settingsFile}");
-        Asserting.That(file).IsThere().HasOn(new BaconReaderSetting.ShowLargeImage()).HasOff(new PatchSetting.AccountColors()).HasTheColor("e2e_user", new AccountColorChoice.Green());
+        Asserting.That(file).IsThere().HasOn(new BaconReaderSetting.ShowLargeImage()).HasOn(new PatchSetting.ShowUserAvatars()).HasTheColor("e2e_user", new AccountColorChoice.Green());
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();
@@ -193,8 +200,9 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
         await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
         await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
-        await Phone.BaconReader.PatchesSettings.ScrollToAsync(new PatchSetting.AccountColors(), new PatchesSection.AccountColors());
-        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.AccountColors(), new PatchesSection.AccountColors());
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.TickAsync(new PatchSetting.ShowUserAvatars());
         await Phone.BaconReader.GoBackToThePostsAsync();
         await Phone.BaconReader.Main.LeftMenu.OpenAsync();
         await Phone.BaconReader.Main.LeftMenu.WaitUntilShownAsync();
@@ -222,12 +230,16 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
         // When
         await Phone.BaconReader.ImportSettings.ClickCancelAsync();
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync(new PatchesAction.ImportSettings());
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Comments());
 
         // Then
-        var cancelled = await Phone.BaconReader.PatchesSettings.ReadSwitchAsync(new PatchSetting.AccountColors());
-        Asserting.That(cancelled).IsOn();
+        var cancelled = await Phone.BaconReader.PatchesSettings.ReadSwitchAsync(new PatchSetting.ShowUserAvatars());
+        Asserting.That(cancelled).IsOff();
 
         // When
+        await Phone.BaconReader.PatchesSettings.ClickBackAsync();
+        await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync(new PatchesAction.ImportSettings());
         await Phone.BaconReader.PatchesSettings.ClickAsync(new PatchesAction.ImportSettings());
         await Phone.FilePicker.WaitUntilFileShownAsync(settingsFile);
         await Phone.FilePicker.ClickFileAsync(settingsFile);
@@ -261,10 +273,12 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
         await Phone.BaconReader.Settings.WaitUntilShownAsync(new SettingsSection.Patches());
         await Phone.BaconReader.Settings.ClickAsync(new SettingsSection.Patches());
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync();
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Comments());
 
         // Then
-        var accountColors = await Phone.BaconReader.PatchesSettings.ReadSwitchAsync(new PatchSetting.AccountColors());
-        Asserting.That(accountColors).IsOff();
+        var avatars = await Phone.BaconReader.PatchesSettings.ReadSwitchAsync(new PatchSetting.ShowUserAvatars());
+        Asserting.That(avatars).IsOn();
 
         // When
         await Phone.BaconReader.GoBackToThePostsAsync();
@@ -294,9 +308,11 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
         // When
         await Phone.BaconReader.ImportSettings.ClickCloseAsync();
         await Phone.BaconReader.PatchesSettings.WaitUntilShownAsync(new PatchesAction.ImportSettings());
+        await Phone.BaconReader.PatchesSettings.ClickAsync(new SettingsPage.Comments());
+        await Phone.BaconReader.PatchesSettings.WaitUntilPageShownAsync(new SettingsPage.Comments());
 
         // Then
-        var unchanged = await Phone.BaconReader.PatchesSettings.ReadSwitchAsync(new PatchSetting.AccountColors());
-        Asserting.That(unchanged).IsOff();
+        var unchanged = await Phone.BaconReader.PatchesSettings.ReadSwitchAsync(new PatchSetting.ShowUserAvatars());
+        Asserting.That(unchanged).IsOn();
     }
 }
