@@ -66,6 +66,9 @@ private val PRIVATE_KEYS =
         "reviewVisible",
         "WhatsNewDialogShownNew",
         "KEY_ALREADY_SHOWN",
+        // The analytics key BaconReader stores, and its flag to clear its cache once.
+        "FLURRY_KEY",
+        "clear_app_data_cache",
         // A folder Android gave this install access to, which another one can't use.
         "storage_uri",
         "storage_image",

@@ -121,7 +121,7 @@ In the Backup section, on the screen itself rather than on a page, two rows that
 
 The file has `format: 1` and three maps:
 
-- `baconreader`: BaconReader's default preferences, by their own keys, without its accounts, logins and what it keeps about the device and install (`accounts`, `username`, `device_identifier`, `storage_uri`, first-start and review timestamps, ad consent strings, any key with "token").
+- `baconreader`: BaconReader's default preferences, by their own keys, without its accounts, logins and what it keeps about the device and install (`accounts`, `username`, `device_identifier`, `storage_uri`, first-start and review timestamps, its analytics key `FLURRY_KEY` and `clear_app_data_cache`, ad consent strings, any key with "token").
 - `patches`: the settings of the applied patches, read from the settings host's `settings.json`, by their key without its group (`embed_comment_images.show_images` is `show_images`). Morphe's keys without `revanced_baconreader_` are the same names, so a file imports with either patcher. Texts and choices are strings here, numbers in Morphe; each patcher reads either.
 - `account_colors`: Account colors' `account_colors.color.<name>` from the `baconreader_patches` preferences, by user name.
 
