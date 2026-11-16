@@ -134,6 +134,7 @@ What the patches share. Use these names; don't add a second of any.
    ```
 
 4. Read in the extension: `UserAvatarsSettings.userAvatars.value`, `UserAvatarsSettings.userAvatarSize.value.toInt()`. In the patch, `gate(...)` or `whenEnabled(...)` instead of an extension call when that is all it does.
+   An action's screen is the settings host's, whose result methods can't be hooked: an extension that asks Android for a file gets the result in a fragment without a view (`settingsbackup/DocumentRequest`).
 
 `settings(...)` makes the host a dependency. A patch without settings that uses `ErrorDialog`, `BaconReaderStrings` or `BaconReaderPatches.bundle()` adds `dependsOn(baconReaderSettings)`: without the host, the app has no runtime assets and those fail.
 
@@ -147,7 +148,7 @@ What the patches share. Use these names; don't add a second of any.
 | `TextPreference` (multiline) | `text(default, multiline = true)`, one entry per line. |
 | `IntegerSetting` with a custom dialog (`CommentLimitPreference`) | `text(default = "500")`. The extension clamps it and falls back to the default when it isn't a number. No slider. |
 | `NonInteractivePreference` with only text (`images_gestures`) | No info row. Fold the text into a related setting's summary. |
-| A row that runs code (`OpenLinksPreference`) | No action row. Can't be mapped: leave it out and say so in `docs/patcher-specific-patches.md`. |
+| A row that runs code | `action(key = "...")`, run by `onAction(setting) { Extension.method(activity) }` in the patch's `execute` (Export and import settings). Its summary can't change, so a row that shows a live value (`OpenLinksPreference`) can't be mapped: leave it out and say so in `docs/patcher-specific-patches.md`. |
 | A hidden setting (`OPEN_LINKS_PROMPT_SHOWN`) | Not a setting. Use the app's `SharedPreferences` file `baconreader_patches`. |
 | The About row | The screen's own about card. |
 
