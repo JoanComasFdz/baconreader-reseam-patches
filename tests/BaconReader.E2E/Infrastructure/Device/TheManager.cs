@@ -16,7 +16,7 @@ public static class TheManager
     public const string Package = "app.reseam.manager";
 
     /// <summary>The version the Manager scenarios play with, whose screens their Gherkins quote.</summary>
-    public const string Version = "0.41.0";
+    public const string Version = "1.0.1";
 
     /// <summary>Where the clean APK is on the phone: what the scenario picks in Android's file picker.</summary>
     public const string ApkInDownloads = "/sdcard/Download/BaconReaderPremium-6.1.4.apk";
