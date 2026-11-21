@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 JoanComasFdz
 // SPDX-License-Identifier: GPL-3.0-only
 
-using BaconReader.E2E.Infrastructure.Phone.ReseamManager.Dialogs;
 using BaconReader.E2E.Infrastructure.Phone.ReseamManager.Screens;
 using OpenQA.Selenium.Appium.Android;
 
@@ -16,9 +15,6 @@ public sealed class ReseamManagerApp(AndroidDriver driver)
     /// <summary>The page to add "baconreader-patches", when a link hands it a patch source.</summary>
     public AddSource AddSource { get; } = new(driver);
 
-    /// <summary>The patch source's page, "baconreader-patches": its version, its signing key, its apps and patches.</summary>
-    public PatchSource PatchSource { get; } = new(driver);
-
     /// <summary>Its home screen: the apps its patch sources patch, and "Pick an APK".</summary>
     public Home Home { get; } = new(driver);
 
@@ -27,4 +23,7 @@ public sealed class ReseamManagerApp(AndroidDriver driver)
 
     /// <summary>"BaconReader Premium is ready", once it patched the app: "Install", then "Open".</summary>
     public Ready Ready { get; } = new(driver);
+
+    /// <summary>Opens Reseam Manager, as tapping its icon does: its home screen.</summary>
+    public Task OpenAsync() => OnScreen.DoAsync(driver, () => driver.ActivateApp(Device.TheManager.Package));
 }

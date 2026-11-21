@@ -11,8 +11,9 @@ namespace BaconReader.E2E.Scenarios.Manager.Patching;
 
 /// <summary>
 /// How a user patches BaconReader the first time, with Reseam Manager, as the README's "Install" says: the repository's
-/// "➕ Add to Reseam Manager" opens Reseam Manager, which adds the patch source at its newest release, then patches the
-/// user's APK, picked with "Pick an APK", and installs it once Android lets it install apps. The user guide starts with
+/// "➕ Add to Reseam Manager" opens Reseam Manager, which adds the patch source at its newest release and goes back to
+/// Chrome; opened again, it patches the user's APK, picked with "Pick an APK", and installs it once Android lets it
+/// install apps. The user guide starts with
 /// its recording.
 /// </summary>
 public sealed class PatchWithReseamManagerTests : BaseE2E
@@ -30,9 +31,9 @@ public sealed class PatchWithReseamManagerTests : BaseE2E
           And the BaconReader Premium 6.1.4 APK is in Downloads
           When I open "https://github.com/JoanComasFdz/baconreader-reseam-patches" in Chrome
           And I tap "➕ Add to Reseam Manager"
-          And I tap "Add" on "baconreader-patches"
           Then Reseam Manager shows the patch source "baconreader-patches" and its version
-          When I tap the back arrow
+          When I tap "Add"
+          And I open Reseam Manager
           And I tap "Pick an APK"
           And I tap "BaconReaderPremium-6.1.4.apk"
           And I tap "Patch"
@@ -57,15 +58,15 @@ public sealed class PatchWithReseamManagerTests : BaseE2E
         await Phone.Chrome.GitHubRepository.WaitUntilShownAsync();
         await Phone.Chrome.GitHubRepository.ClickAddToReseamManagerAsync();
         await Phone.ReseamManager.AddSource.WaitUntilShownAsync();
-        await Phone.ReseamManager.AddSource.ClickAddAsync();
-        await Phone.ReseamManager.PatchSource.WaitUntilShownAsync();
 
         // Then
-        var source = await Phone.ReseamManager.PatchSource.ReadAsync();
+        var source = await Phone.ReseamManager.AddSource.ReadAsync();
         Asserting.That(source).ShowsThePatchSource(Source);
 
         // When
-        await Phone.ReseamManager.PatchSource.ClickBackAsync();
+        await Phone.ReseamManager.AddSource.ClickAddAsync();
+        await Phone.Chrome.WaitUntilPageShownAsync();
+        await Phone.ReseamManager.OpenAsync();
         await Phone.ReseamManager.Home.WaitUntilShownAsync();
         await Phone.ReseamManager.Home.ClickPickAnApkAsync();
         await Phone.FilePicker.WaitUntilFileShownAsync(Apk);
