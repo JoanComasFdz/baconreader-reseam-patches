@@ -102,18 +102,28 @@ public sealed class Downloads(AndroidDriver driver)
     /// <summary>Android's Downloads folder itself, where Android's file picker starts.</summary>
     public const string Root = "/sdcard/Download";
 
+    /// <summary>The YAML file of the user's own, not a settings file, that "Export and import settings" puts in Downloads.</summary>
+    public const string NotASettingsFile = "notes.yaml";
+
     /// <summary>
-    /// Puts <paramref name="name"/> in Downloads, a YAML file of the user's own that isn't a settings file, and takes
-    /// away the settings files a scenario before exported there. They go through Android's media index, which the file
-    /// picker lists: a file only deleted from the folder stays listed in it.
+    /// Puts <see cref="NotASettingsFile"/> in Downloads, a YAML file of the user's own that isn't a settings file, and
+    /// takes away the settings files a scenario before exported there.
     /// </summary>
-    public async Task HoldsAFileThatIsntASettingsFileAsync(string name)
+    public async Task HoldsAFileThatIsntASettingsFileAsync()
     {
-        await Commands.ShellAsync(
-            "content delete --uri content://media/external/file --where \"_display_name LIKE 'baconreader-settings-%'\" > /dev/null 2>&1; "
-            + $"rm -f {Root}/baconreader-settings-*.yaml {Root}/{name}; true");
-        await Commands.ShellAsync($"printf '# Shopping list\\nmilk: 2\\n' > {Root}/{name}");
+        await TakeAwayTheSettingsFilesAsync();
+        await Commands.ShellAsync($"printf '# Shopping list\\nmilk: 2\\n' > {Root}/{NotASettingsFile}");
     }
+
+    /// <summary>
+    /// Takes away from Downloads what "Export and import settings" leaves there: the settings files it exported and
+    /// <see cref="NotASettingsFile"/>. They go through Android's media index, which the file picker lists: a file only
+    /// deleted from the folder stays listed in it.
+    /// </summary>
+    public static Task TakeAwayTheSettingsFilesAsync() =>
+        Commands.ShellAsync(
+            $"content delete --uri content://media/external/file --where \"_display_name LIKE 'baconreader-settings-%' OR _display_name = '{NotASettingsFile}'\" > /dev/null 2>&1; "
+            + $"rm -f {Root}/baconreader-settings-*.yaml {Root}/{NotASettingsFile}; true");
 
     /// <summary>The name "Export settings" gives today's file: baconreader-settings-&lt;the phone's date&gt;.yaml.</summary>
     public async Task<string> ReadTodaysSettingsFileNameAsync() =>

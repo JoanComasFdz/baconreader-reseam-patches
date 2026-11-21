@@ -16,7 +16,7 @@ public static class TheManager
     public const string Package = "app.reseam.manager";
 
     /// <summary>The version the Manager scenarios play with, whose screens their Gherkins quote.</summary>
-    public const string Version = "0.41.0";
+    public const string Version = "1.0.1";
 
     /// <summary>Where the clean APK is on the phone: what the scenario picks in Android's file picker.</summary>
     public const string ApkInDownloads = "/sdcard/Download/BaconReaderPremium-6.1.4.apk";
@@ -26,7 +26,8 @@ public static class TheManager
     /// <summary>
     /// Leaves the phone as a Manager scenario starts: no BaconReader, the manager installed at <see cref="Version"/> with
     /// its data cleared and its permission to install apps back to Android's default (it asks), Chrome stopped, and the
-    /// clean APK alone in Downloads (Downloads/BaconReader, which the other scenarios fill, emptied).
+    /// clean APK alone in Downloads (Downloads/BaconReader, which the other scenarios fill, emptied, and the files
+    /// "Export and import settings" leaves taken away), so the file picker shows it without scrolling.
     /// </summary>
     public static async Task PrepareAsync()
     {
@@ -40,6 +41,7 @@ public static class TheManager
         await Commands.ShellAsync($"appops set {Package} REQUEST_INSTALL_PACKAGES default");
         await Commands.ShellAsync("am force-stop com.android.chrome");
         await Commands.ShellAsync("rm -rf /sdcard/Download/BaconReader");
+        await Phone.Downloads.TakeAwayTheSettingsFilesAsync();
         if ((await Commands.ShellAsync($"ls {ApkInDownloads} 2> /dev/null || true")).Trim().Length == 0)
         {
             await Commands.AdbAsync("push", E2EDevice.BaseApk, ApkInDownloads);

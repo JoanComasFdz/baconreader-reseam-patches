@@ -341,7 +341,7 @@ with the VS Code extension's scenarios ([tests/BaconReader.VsCodeExtension.E2E](
   its Given logs in and opens the app: `And BaconReader is patched with every patch`, `And the test account is logged
   in`, `And BaconReader is open`.
 - **`Scenarios/Manager/`: how a user patches BaconReader with the patcher's manager.** BaseE2E patches nothing: it leaves
-  Reseam Manager installed as just installed (0.41.0, downloaded once from reseam.app), no BaconReader, and the clean APK
+  Reseam Manager installed as just installed (1.0.1, downloaded once from reseam.app), no BaconReader, and the clean APK
   in Downloads (`Device/TheManager`); the scenario adds the source from the repository's page on GitHub, patches and
   installs, as the README's "Install" says. It needs the phone online (GitHub, reseam.app). Its page is the user
   guide's `docs/manager/<page>.md`, which the guide shows first.

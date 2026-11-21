@@ -18,7 +18,7 @@ namespace BaconReader.E2E.Scenarios.LoggedIn.Misc;
 public sealed class ExportAndImportSettingsTests : BaseE2E
 {
     private const string Circle = "Color of e2e_user";
-    private const string Notes = "notes.yaml";
+    private const string Notes = Downloads.NotASettingsFile;
 
     [Theory, PlayOnPhone]
     [PatchedWithEveryPatch]
@@ -117,7 +117,7 @@ public sealed class ExportAndImportSettingsTests : BaseE2E
     {
         // Given
         Reddit.HasAPost("Hello from r/e2e", "e2e");
-        await Phone.Downloads.HoldsAFileThatIsntASettingsFileAsync(Notes);
+        await Phone.Downloads.HoldsAFileThatIsntASettingsFileAsync();
         var settingsFile = await Phone.Downloads.ReadTodaysSettingsFileNameAsync();
         Reddit.TheTestAccountIsLoggedIn();
         await Phone.BaconReader.OpenAsync();
