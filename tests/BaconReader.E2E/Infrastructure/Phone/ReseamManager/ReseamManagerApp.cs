@@ -13,7 +13,7 @@ namespace BaconReader.E2E.Infrastructure.Phone.ReseamManager;
 /// </summary>
 public sealed class ReseamManagerApp(AndroidDriver driver)
 {
-    /// <summary>"Add baconreader-patches?", when a link hands it a patch source.</summary>
+    /// <summary>The page to add "baconreader-patches", when a link hands it a patch source.</summary>
     public AddSource AddSource { get; } = new(driver);
 
     /// <summary>The patch source's page, "baconreader-patches": its version, its signing key, its apps and patches.</summary>

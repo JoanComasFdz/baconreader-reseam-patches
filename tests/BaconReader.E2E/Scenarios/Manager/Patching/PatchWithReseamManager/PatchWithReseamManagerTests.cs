@@ -30,7 +30,7 @@ public sealed class PatchWithReseamManagerTests : BaseE2E
           And the BaconReader Premium 6.1.4 APK is in Downloads
           When I open "https://github.com/JoanComasFdz/baconreader-reseam-patches" in Chrome
           And I tap "➕ Add to Reseam Manager"
-          And I tap "Add" on "Add baconreader-patches?"
+          And I tap "Add" on "baconreader-patches"
           Then Reseam Manager shows the patch source "baconreader-patches" and its version
           When I tap the back arrow
           And I tap "Pick an APK"
