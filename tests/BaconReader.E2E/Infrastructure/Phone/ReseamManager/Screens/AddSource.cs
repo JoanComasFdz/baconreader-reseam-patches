@@ -30,8 +30,12 @@ public sealed class AddSource(AndroidDriver driver)
             return new PatchSourceSnapshot(lines.FirstOrDefault(), version);
         });
 
-    /// <summary>Taps "Add": Reseam Manager adds the source and goes back to Chrome.</summary>
-    public Task ClickAddAsync() => OnScreen.PressAsync(driver, Add);
+    /// <summary>Taps "Add", and waits until Reseam Manager added the source: the page is gone.</summary>
+    public async Task ClickAddAsync()
+    {
+        await OnScreen.PressAsync(driver, Add);
+        await Waiting.UntilAsync(() => driver.FindElements(Warning).Count == 0, TimeSpan.FromSeconds(30), "Reseam Manager adding \"baconreader-patches\"");
+    }
 }
 
 /// <summary>What Reseam Manager's page of a patch source shows: its name and its version ("0.1.18").</summary>

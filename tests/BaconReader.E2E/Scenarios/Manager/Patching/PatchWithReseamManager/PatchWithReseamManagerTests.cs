@@ -11,8 +11,8 @@ namespace BaconReader.E2E.Scenarios.Manager.Patching;
 
 /// <summary>
 /// How a user patches BaconReader the first time, with Reseam Manager, as the README's "Install" says: the repository's
-/// "➕ Add to Reseam Manager" opens Reseam Manager, which adds the patch source at its newest release and goes back to
-/// Chrome; opened again, it patches the user's APK, picked with "Pick an APK", and installs it once Android lets it
+/// "➕ Add to Reseam Manager" opens Reseam Manager, which adds the patch source at its newest release; opened on its
+/// home screen, it patches the user's APK, picked with "Pick an APK", and installs it once Android lets it
 /// install apps. The user guide starts with
 /// its recording.
 /// </summary>
@@ -65,7 +65,6 @@ public sealed class PatchWithReseamManagerTests : BaseE2E
 
         // When
         await Phone.ReseamManager.AddSource.ClickAddAsync();
-        await Phone.Chrome.WaitUntilPageShownAsync();
         await Phone.ReseamManager.OpenAsync();
         await Phone.ReseamManager.Home.WaitUntilShownAsync();
         await Phone.ReseamManager.Home.ClickPickAnApkAsync();

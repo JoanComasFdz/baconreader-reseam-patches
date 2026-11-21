@@ -24,6 +24,19 @@ public sealed class ReseamManagerApp(AndroidDriver driver)
     /// <summary>"BaconReader Premium is ready", once it patched the app: "Install", then "Open".</summary>
     public Ready Ready { get; } = new(driver);
 
-    /// <summary>Opens Reseam Manager, as tapping its icon does: its home screen.</summary>
-    public Task OpenAsync() => OnScreen.DoAsync(driver, () => driver.ActivateApp(Device.TheManager.Package));
+    // The source's page, which "Add" sometimes leaves open.
+    private static readonly OpenQA.Selenium.By SourcePage = Locate.Text("Use this patch source");
+
+    /// <summary>
+    /// Opens Reseam Manager, as tapping its icon does, on its home screen: the back arrow closes the source's page when
+    /// "Add" left it open, as a user does to get to "Pick an APK".
+    /// </summary>
+    public async Task OpenAsync()
+    {
+        await OnScreen.DoAsync(driver, () => driver.ActivateApp(Device.TheManager.Package));
+        if (await Waiting.FindWithinAsync(driver, SourcePage, TimeSpan.FromSeconds(2), "Reseam Manager's page of the source") is not null)
+        {
+            await OnScreen.PressBackAsync(driver);
+        }
+    }
 }
