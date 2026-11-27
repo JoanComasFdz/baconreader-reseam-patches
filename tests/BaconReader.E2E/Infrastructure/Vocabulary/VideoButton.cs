@@ -6,8 +6,9 @@ using Dunet;
 namespace BaconReader.E2E.Infrastructure.Vocabulary;
 
 /// <summary>
-/// A button over a video playing in a comment ("Embed comment images"), shown with the player's controls, by what it
-/// says to a screen reader: it switches the video's size, or opens and closes its full screen.
+/// A button over a video playing in a comment ("Embed comment images") or a post ("Full screen post videos"), shown with
+/// the player's controls, by what it says to a screen reader: it switches the video's size, or opens and closes its
+/// full screen.
 /// </summary>
 [Union]
 public partial record VideoButton

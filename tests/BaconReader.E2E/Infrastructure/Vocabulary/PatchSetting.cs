@@ -29,6 +29,7 @@ public partial record PatchSetting
     public partial record AvatarSize;
     public partial record AvatarBackground;
     public partial record AutoplayVideosInDetailView;
+    public partial record FullScreenButton;
     public partial record PreviewWhileLoading;
     public partial record ShowYouTubeVideoTitles;
     public partial record ShowYouTubeThumbnails;
@@ -69,6 +70,7 @@ public static class PatchSettingShowing
         new PatchSetting.AvatarSize(),
         new PatchSetting.AvatarBackground(),
         new PatchSetting.AutoplayVideosInDetailView(),
+        new PatchSetting.FullScreenButton(),
         new PatchSetting.PreviewWhileLoading(),
         new PatchSetting.ShowYouTubeVideoTitles(),
         new PatchSetting.ShowYouTubeThumbnails(),
@@ -97,6 +99,7 @@ public static class PatchSettingShowing
             avatarSize => "Avatar size",
             avatarBackground => "Avatar background",
             autoplayVideosInDetailView => "Autoplay videos in Detail View",
+            fullScreenButton => "Full screen button",
             previewWhileLoading => "Preview while loading",
             showYouTubeVideoTitles => "Show YouTube video titles",
             showYouTubeThumbnails => "Show YouTube thumbnails",

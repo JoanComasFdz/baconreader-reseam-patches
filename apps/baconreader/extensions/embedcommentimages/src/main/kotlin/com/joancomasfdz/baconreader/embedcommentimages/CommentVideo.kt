@@ -5,21 +5,10 @@
 package com.joancomasfdz.baconreader.embedcommentimages
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.Dialog
 import android.content.Context
-import android.content.ContextWrapper
-import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorFilter
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.PixelFormat
 import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
@@ -34,18 +23,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.MediaSourceFactory
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.source.dash.DashMediaSource
-import com.google.android.exoplayer2.ui.PlayerControlView
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.joancomasfdz.baconreader.common.ErrorDialog
 import com.joancomasfdz.baconreader.common.GlideUtils
+import com.joancomasfdz.baconreader.common.VideoFullScreen
 import com.joancomasfdz.baconreader.embedcommentimages.CommentImages.dp
 import com.joancomasfdz.baconreader.settings.BaconReaderStrings
 import java.io.IOException
@@ -65,14 +53,9 @@ internal object CommentVideo {
     private const val TAG = "CommentVideo"
     private const val DEFAULT_RATIO = 9f / 16f
     private const val PLAYER_USER_AGENT = "BaconReader"
-    private const val BUTTON_SIZE_DP = 36
-    private const val ORIENTATION_RELEASE_DELAY_MS = 1000L
 
     // PlayerView.setShowBuffering: show the spinner while buffering when playing.
     private const val SHOW_BUFFERING_WHEN_PLAYING = 1
-
-    // Player.STATE_ENDED: the video played to its end.
-    private const val STATE_ENDED = 4
 
     private val loader = Executors.newFixedThreadPool(2)
     private val main = Handler(Looper.getMainLooper())
@@ -82,9 +65,6 @@ internal object CommentVideo {
 
     // The video playing in a comment. Only one plays at a time.
     private var currentPlayer: SimpleExoPlayer? = null
-
-    // The full screen showing the playing video, if any.
-    private var fullScreen: Dialog? = null
 
     /**
      * What identifies the video of a link: the id of a comment video, the link itself for a video
@@ -253,7 +233,7 @@ internal object CommentVideo {
         val box = slot.getChildAt(0) ?: return
         val player = box.tag as? SimpleExoPlayer ?: return
         box.tag = null
-        if (currentPlayer === player) closeFullScreen()
+        VideoFullScreen.closeShowing(player, null)
         releasePlayer(player)
     }
 
@@ -270,15 +250,17 @@ internal object CommentVideo {
     ) {
         val context = box.context
         var expanded = true
-        val size = button(context)
-        val sizeIcon = ButtonDrawable(ButtonDrawable.SHRINK)
+        val size = VideoFullScreen.button(context)
+        val sizeIcon = VideoFullScreen.ButtonDrawable(VideoFullScreen.ButtonDrawable.SHRINK)
         size.setImageDrawable(sizeIcon)
 
         fun applySize() {
             slot.layoutParams.width = if (expanded) ViewGroup.LayoutParams.MATCH_PARENT else boxSize
             slot.requestLayout()
             box.maxHeight = if (expanded) maxHeight else boxSize
-            sizeIcon.kind = if (expanded) ButtonDrawable.SHRINK else ButtonDrawable.ENLARGE
+            sizeIcon.kind =
+                if (expanded) VideoFullScreen.ButtonDrawable.SHRINK
+                else VideoFullScreen.ButtonDrawable.ENLARGE
             size.contentDescription =
                 if (expanded) BaconReaderStrings.embedVideoShrink
                 else BaconReaderStrings.embedVideoEnlarge
@@ -296,155 +278,19 @@ internal object CommentVideo {
             applySize()
         }
 
-        val full = button(context)
-        full.setImageDrawable(ButtonDrawable(ButtonDrawable.FULL_SCREEN))
-        full.contentDescription = BaconReaderStrings.embedVideoFullScreen
-        full.setOnClickListener { openFullScreen(box, playerView) }
-
-        val buttons = buttonRow(context, size, full)
-        box.addView(buttons, buttonRowParams(context))
-        followControls(playerView, buttons)
-    }
-
-    /**
-     * Shows the playing video of [box] over the whole screen, turned to landscape when the video is
-     * wider than high. Back or the button closes it, and the video plays on in the comment.
-     */
-    private fun openFullScreen(box: AspectRatioFrameLayout, inline: PlayerView) {
-        try {
-            val player = box.tag as? SimpleExoPlayer ?: return
-            val activity = activityOf(box.context) ?: return
-            closeFullScreen()
-
-            val root = FrameLayout(activity)
-            root.setBackgroundColor(Color.BLACK)
-            val playerView = newPlayerView(activity)
-            playerView.id =
-                CommentImages.resourceId(activity, "baconreader_patches_video_full_screen")
-            root.addView(
+        val player = box.tag as? SimpleExoPlayer ?: return
+        val full =
+            VideoFullScreen.fullScreenButton(
                 playerView,
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                ),
+                player,
+                { box.ratio < 1f },
+                VideoFullScreen.Owner { box.tag === it },
             )
-            val exit = button(activity)
-            exit.setImageDrawable(ButtonDrawable(ButtonDrawable.EXIT_FULL_SCREEN))
-            exit.contentDescription = BaconReaderStrings.embedVideoExitFullScreen
-            val buttons = buttonRow(activity, exit)
-            root.addView(buttons, buttonRowParams(activity))
 
-            val dialog = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-            dialog.setContentView(root)
-            exit.setOnClickListener { dialog.dismiss() }
-
-            val orientation = activity.requestedOrientation
-            val turned = box.ratio < 1f
-            val before =
-                if (
-                    activity.resources.configuration.orientation ==
-                        Configuration.ORIENTATION_LANDSCAPE
-                ) {
-                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                } else {
-                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                }
-            if (turned) {
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            }
-            dialog.setOnDismissListener {
-                if (fullScreen === dialog) fullScreen = null
-                if (turned) {
-                    // Given back right away, the app's own orientation follows the sensor, which
-                    // keeps landscape while the phone lies flat. The screen turns back first.
-                    activity.requestedOrientation = before
-                    main.postDelayed(
-                        { if (fullScreen == null) activity.requestedOrientation = orientation },
-                        ORIENTATION_RELEASE_DELAY_MS,
-                    )
-                }
-                if (box.tag === player) PlayerView.switchTargetView(player, playerView, inline)
-            }
-
-            // A new view shows no frame of a video that has ended: it starts over, paused. The
-            // player still wants to play once it has ended, so it's paused first.
-            if (player.playbackState == STATE_ENDED) {
-                player.setPlayWhenReady(false)
-                player.seekTo(0, 0L)
-            }
-            PlayerView.switchTargetView(player, inline, playerView)
-            followControls(playerView, buttons)
-            dialog.show()
-            // The theme hides the status bar. Hiding the navigation bar too would show Android's
-            // "Viewing full screen" message over the video, the first time.
-            dialog.window?.setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            )
-            fullScreen = dialog
-        } catch (exception: Exception) {
-            ErrorDialog.report(TAG, "Could not show the video in full screen", exception)
-        }
+        val buttons = VideoFullScreen.buttonRow(context, size, full)
+        box.addView(buttons, VideoFullScreen.buttonRowParams(context))
+        VideoFullScreen.followControls(playerView, buttons)
     }
-
-    private fun closeFullScreen() {
-        val dialog = fullScreen ?: return
-        fullScreen = null
-        try {
-            dialog.dismiss()
-        } catch (exception: Exception) {
-            Log.i(TAG, "Could not close the full screen", exception)
-        }
-    }
-
-    private fun activityOf(context: Context): Activity? {
-        var current: Context? = context
-        while (current != null) {
-            if (current is Activity) return current
-            current = (current as? ContextWrapper)?.baseContext
-        }
-        return null
-    }
-
-    /** Shows [buttons] while the player's controls show, and hides them with the controls. */
-    private fun followControls(playerView: PlayerView, buttons: View) {
-        buttons.visibility = if (playerView.isControllerVisible) View.VISIBLE else View.GONE
-        playerView.setControllerVisibilityListener(
-            PlayerControlView.VisibilityListener { visibility -> buttons.visibility = visibility }
-        )
-    }
-
-    private fun button(context: Context): ImageView {
-        val button = ImageView(context)
-        button.scaleType = ImageView.ScaleType.FIT_CENTER
-        return button
-    }
-
-    private fun buttonRow(context: Context, vararg buttons: ImageView): LinearLayout {
-        val row = LinearLayout(context)
-        row.orientation = LinearLayout.HORIZONTAL
-        val size = dp(context, BUTTON_SIZE_DP)
-        for ((index, button) in buttons.withIndex()) {
-            row.addView(
-                button,
-                LinearLayout.LayoutParams(size, size).apply {
-                    if (index > 0) leftMargin = dp(context, 8)
-                },
-            )
-        }
-        return row
-    }
-
-    private fun buttonRowParams(context: Context): FrameLayout.LayoutParams =
-        FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.TOP or Gravity.END,
-            )
-            .apply {
-                val margin = dp(context, 6)
-                setMargins(margin, margin, margin, margin)
-            }
 
     /**
      * The size and duration from the video's DASH playlist, a small text, without the first frame,
@@ -666,90 +512,6 @@ internal object CommentVideo {
             Log.i(TAG, "Could not release the video", exception)
         }
         if (currentPlayer === player) currentPlayer = null
-    }
-
-    /**
-     * A button's icon over a video: a white sign on a dark circle, like the play button. Shrink is
-     * "<", enlarge ">", full screen four outward corners and exit full screen four inward ones.
-     */
-    private class ButtonDrawable(kind: Int) : Drawable() {
-        var kind: Int = kind
-            set(value) {
-                if (field == value) return
-                field = value
-                invalidateSelf()
-            }
-
-        private val circle = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val sign = Paint(Paint.ANTI_ALIAS_FLAG)
-        private val path = Path()
-
-        init {
-            circle.color = 0x99000000.toInt()
-            sign.color = 0xFFFFFFFF.toInt()
-            sign.style = Paint.Style.STROKE
-            sign.strokeCap = Paint.Cap.ROUND
-            sign.strokeJoin = Paint.Join.ROUND
-        }
-
-        override fun draw(canvas: Canvas) {
-            val b = bounds
-            val cx = b.exactCenterX()
-            val cy = b.exactCenterY()
-            val r = Math.min(b.width(), b.height()) / 2f
-            canvas.drawCircle(cx, cy, r, circle)
-            sign.strokeWidth = r * 0.14f
-            val t = r * 0.4f
-            path.reset()
-            when (kind) {
-                SHRINK -> chevron(cx + t * 0.4f, cy, -t)
-                ENLARGE -> chevron(cx - t * 0.4f, cy, t)
-                else -> {
-                    val c = t * 0.5f
-                    val outward = kind == FULL_SCREEN
-                    for (dx in intArrayOf(-1, 1)) {
-                        for (dy in intArrayOf(-1, 1)) {
-                            val x = cx + dx * t
-                            val y = cy + dy * t
-                            // Outward corners point away from the center; inward ones toward it.
-                            val ix = if (outward) -dx * c else dx * c
-                            val iy = if (outward) -dy * c else dy * c
-                            val px = if (outward) x else x - dx * c
-                            val py = if (outward) y else y - dy * c
-                            path.moveTo(px + ix, py)
-                            path.lineTo(px, py)
-                            path.lineTo(px, py + iy)
-                        }
-                    }
-                }
-            }
-            canvas.drawPath(path, sign)
-        }
-
-        /** A chevron with its tip at ([x] + [depth], [y]). */
-        private fun chevron(x: Float, y: Float, depth: Float) {
-            path.moveTo(x, y - Math.abs(depth))
-            path.lineTo(x + depth, y)
-            path.lineTo(x, y + Math.abs(depth))
-        }
-
-        override fun setAlpha(alpha: Int) {
-            circle.alpha = alpha
-            sign.alpha = alpha
-        }
-
-        override fun setColorFilter(colorFilter: ColorFilter?) {
-            sign.colorFilter = colorFilter
-        }
-
-        @Deprecated("Deprecated in Java") override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
-
-        companion object {
-            const val SHRINK = 0
-            const val ENLARGE = 1
-            const val FULL_SCREEN = 2
-            const val EXIT_FULL_SCREEN = 3
-        }
     }
 
     /**

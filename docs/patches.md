@@ -46,6 +46,7 @@ What broke since 2023.
 | [Prompt to open Reddit links](patches/prompt-to-open-reddit-links.md) | BaconReader asks once to set up Reddit links to open in it, which Android doesn't let an app do by itself. |
 | [Open web pages in the browser](patches/open-web-pages-in-browser.md) | Links to web pages open in your browser, while images, galleries and videos keep opening in BaconReader. |
 | [Video autoplay in detail view](patches/video-autoplay-in-detail-view.md) | A setting to stop videos from loading and playing by themselves when you open a post. |
+| [Full screen post videos](patches/full-screen-post-videos.md) | A full screen button on a post's video, as on videos in comments. |
 | [Account colors](patches/account-colors.md) | A color for each account, shown as a line under the toolbars, so you see which account is in use. |
 | [Select text](patches/select-text.md) | "Select text" in the menus of posts and comments lets you select and copy any part of their text. |
 | [Swipe through albums](patches/swipe-through-albums.md) | Swipe left or right on a Reddit gallery or an Imgur album to go to its next or previous image. |

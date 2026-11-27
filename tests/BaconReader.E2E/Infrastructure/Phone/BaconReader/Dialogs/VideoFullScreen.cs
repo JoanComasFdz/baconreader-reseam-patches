@@ -8,9 +8,9 @@ using OpenQA.Selenium.Appium.Android;
 namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 
 /// <summary>
-/// The full screen "Full screen" over a comment's video opens ("Embed comment images"): the video on black, which the
-/// patch names <c>baconreader_patches_video_full_screen</c>, with "Exit full screen" while the player's controls show.
-/// The button or Back closes it.
+/// The full screen "Full screen" over a comment's video ("Embed comment images") or a post's ("Full screen post videos")
+/// opens: the video on black, which the patches name <c>baconreader_patches_video_full_screen</c>, with "Exit full
+/// screen" while the player's controls show. The button or Back closes it.
 /// </summary>
 public sealed class VideoFullScreen(AndroidDriver driver)
 {
