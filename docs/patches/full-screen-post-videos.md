@@ -1,6 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2026 JoanComasFdz -->
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
-<!-- scenarios: -->
+<!-- scenarios: FullScreenPostVideosTests -->
 
 # Full screen post videos
 

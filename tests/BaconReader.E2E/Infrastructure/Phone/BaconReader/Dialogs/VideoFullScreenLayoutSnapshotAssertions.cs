@@ -5,7 +5,7 @@ using JoanComasFdz.AssertingThat;
 
 namespace BaconReader.E2E.Infrastructure.Phone.BaconReader.Dialogs;
 
-/// <summary>What a test checks on a comment's video in full screen.</summary>
+/// <summary>What a test checks on a video in full screen.</summary>
 public static class VideoFullScreenLayoutSnapshotAssertions
 {
     /// <summary>The video fills the screen: its view covers the whole window.</summary>

@@ -32,6 +32,15 @@ public static class DetailMediaSnapshotAssertions
         return that;
     }
 
+    /// <summary>The post's video shows its controls, but no "Full screen".</summary>
+    public static AssertingThat<DetailMediaSnapshot> ShowsNoFullScreen(this AssertingThat<DetailMediaSnapshot> that)
+    {
+        var media = that.InstanceToAssert;
+        Assert.True(media.ShowsControls, "The post's video shows no controls, but its controls, without \"Full screen\", were expected.");
+        Assert.False(media.ShowsFullScreen, "The post's video shows \"Full screen\" with its controls, but no \"Full screen\" was expected.");
+        return that;
+    }
+
     private static string Shows(DetailMediaSnapshot media) =>
         media switch
         {
