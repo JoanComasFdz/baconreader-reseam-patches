@@ -66,6 +66,16 @@ On the Images and videos page, in the Detail view section:
 |---|---|---|
 | Autoplay videos in Detail View | `detail_video.autoplay_videos_in_detail_view` | On |
 
+### Full screen post videos settings
+
+On the Images and videos page, in the Post videos section:
+
+| Setting | Key | Default |
+|---|---|---|
+| Full screen button | `post_video_full_screen.full_screen_button` | On |
+
+The button shows over the video of a post's detail view, whose `PostMediaHandler` listener is `DetailLinkFragment$6`, while its controls show. The full screen is the one of videos in comments, shared by both patches.
+
 ### Open web pages in the browser settings
 
 On the Links page, in the Web pages section:
